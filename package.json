@@ -5,8 +5,8 @@
   "scripts": {
     "build:pug": "pug src/views/ -o docs/",
     "build:scss": "node-sass src/scss/styles.scss docs/css/styles.css",
-    "build:js": "mkdir docs/js && cp src/js/script.js docs/js/",
-    "build:assets": "mkdir docs/assets && cp -r src/assets/* docs/assets/",
+    "build:js": "cp src/js/script.js docs/js/",
+    "build:assets": "cp -r src/assets/* docs/assets/",
     "build": "npm run build:pug && npm run build:scss && npm run build:js && npm run build:assets",
     "watch:pug": "pug src/views/ -o docs/ -w",
     "watch:scss": "node-sass src/scss/styles.scss docs/css/styles.css --watch",
