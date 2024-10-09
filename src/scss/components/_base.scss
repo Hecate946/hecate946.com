@@ -1,0 +1,54 @@
+:root {
+    --dark-blue: #060e16;
+    --lighter-dark-blue: #0b1c2c;
+    --pink: #ff62ef;
+    --purple: #3f048d;
+    --white: #FFFFFF;
+    --off-white: #f5f2d0;
+    --lighter-off-white: #f0ecd6;
+    --black: #000000;
+    --light-gray: #cccccc;
+    --gray: #7d7d7d;
+    --dark-gray: #505050;
+    --gray-blue: #314659;
+    --green: #11575C;
+    --blue: #0F5284;
+    --darker-blue: #083252;
+    --red: #FF0000;
+    --orange: #be6f00;
+
+    --background-color: var(--dark-blue);
+    --secondary-color: var(--lighter-dark-blue);
+    --link-color: var(--dark-gray);
+    --text-color: var(--light-gray);
+    --hover-text-color: var(--gray);
+    --border-color: var(--dark-gray);
+}
+
+.light-theme {
+    --background-color: var(--off-white);
+    --secondary-color: var(--lighter-off-white);
+    --link-color: var(--dark-gray);
+    --text-color: var(--blue);
+    --hover-text-color: var(--darker-blue);
+    --border-color: var(--light-gray);
+}
+
+body {
+    margin: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    // fond-family: 'Roboto Mono', monospace;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+a {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+#page-content {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 60px);
+}

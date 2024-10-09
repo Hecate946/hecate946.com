@@ -1,0 +1,10 @@
+// Import all SCSS files from components
+@import 'components/navbar';
+@import 'components/footer';
+@import 'components/base';
+
+// // Import all SCSS files from pages
+@import 'pages/resume';
+@import 'pages/projects';
+@import 'pages/about';
+@import 'pages/index';

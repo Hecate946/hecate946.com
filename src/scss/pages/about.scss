@@ -1,0 +1,71 @@
+.about-container {
+    display: grid;
+    grid-template-columns: 1fr repeat(4, 1fr) 1fr; /* 6-column layout with spacers on the sides */
+}
+
+.about-content {
+    grid-column: 2 / span 4; /* Make the content span the middle 4 columns */
+    border-right: 1px solid var(--border-color);
+}
+
+.spacer {
+    border-right: 1px solid var(--border-color);
+}
+.about-header {
+    text-align: center;
+    font-size: 40px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.about-section {
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 20px;
+}
+
+.interests-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns for the interests */
+    grid-template-rows: repeat(2, auto); /* Two rows for the interests */
+}
+
+.interest {
+    padding: 20px;
+}
+
+.coding {
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+}
+
+.music {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.games {
+    border-right: 1px solid var(--border-color);
+}
+/* Responsive styles for smaller screens */
+@media (max-width: 768px) {
+    .about-container {
+        grid-template-columns: 1fr; /* Full-width layout */
+    }
+
+    .about-content {
+        grid-column: 1 / -1; /* Span full width */
+    }
+
+    .about-section {
+        border-bottom: none;
+    }
+
+    .interests-section {
+        grid-template-columns: 1fr; /* One column */
+    }
+
+    .interest {
+        border: none;
+        border-top: 1px solid var(--border-color);
+    }
+}
+
+

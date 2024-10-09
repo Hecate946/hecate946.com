@@ -1,0 +1,44 @@
+.projects-container {
+  display: flex;
+  justify-content: center;
+  padding: 50px 0;
+
+  .projects-card {
+    background: var(--secondary-color);
+    padding: 0 30px 10px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    text-align: center;
+    transition: transform 0.3s;
+
+    &:hover {
+      transform: translateY(-5px);
+    }
+
+    h2 {
+      font-size: 2em;
+    }
+
+    ul.project-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        margin: 75px 0;
+        a {
+          text-decoration: none;
+          font-size: 1.5em;
+          color: var(--link-color);
+          font-weight: bold;
+          transition: color 0.3s;
+
+          &:hover {
+            color: var(--text-color);
+          }
+        }
+      }
+    }
+  }
+}

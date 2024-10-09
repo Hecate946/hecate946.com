@@ -1,0 +1,28 @@
+{
+  "name": "hecate946.com",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build:pug": "pug src/views/ -o docs/",
+    "build:scss": "node-sass src/scss/styles.scss docs/css/styles.css",
+    "build:js": "mkdir docs/js && cp src/js/script.js docs/js/",
+    "build:assets": "mkdir docs/assets && cp -r src/assets/* docs/assets/",
+    "build": "npm run build:pug && npm run build:scss && npm run build:js && npm run build:assets",
+    "watch:pug": "pug src/views/ -o docs/ -w",
+    "watch:scss": "node-sass src/scss/styles.scss docs/css/styles.css --watch",
+    "watch:js": "cp src/js/script.js docs/js/ && watch 'cp src/js/script.js docs/js/' src/js",
+    "watch:assets": "watch 'cp -r src/assets/* docs/assets/'",
+    "watch": "concurrently \"npm run watch:pug\" \"npm run watch:scss\" \"npm run watch:js\" \"npm run watch:assets\"",
+    "serve": "concurrently \"npm run watch\" \"live-server docs --watch=css,js,html --port=8080\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "live-server": "^1.2.2",
+    "node-sass": "^9.0.0",
+    "pug-cli": "^1.0.0-alpha6"
+  }
+}

@@ -1,0 +1,21 @@
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+    height: 60px;
+    padding: 0 30px;
+}
+
+.footer-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.copywrite {
+    font-size: 24px;
+    padding: 0 10px;
+    margin-bottom: -3px;
+}

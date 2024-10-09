@@ -1,0 +1,100 @@
+//- resume.pug
+extends layout
+
+block content
+  .resume-container
+    .spacer
+    .resume
+      .resume-header
+        h1 Cyrus Asasi
+        .contact-info
+          p 
+            | Email: 
+            a(href="mailto:cyrusasasi@gmail.com") cyrusasasi@gmail.com
+            |  | Phone: 
+            a(href="tel:+17607039509") +1 (760) 703-9509
+            |  | GitHub: 
+            a(href="https://github.com/hecate946" target="_blank") hecate946
+            |  | Portfolio: 
+            a(href="https://hecate946.com" target="_blank") hecate946.com
+            
+        .download
+          a.play-redirect(href="/assets/cyrus_resume.pdf" download) Download PDF Version
+
+      .section.education
+        h2 Education
+        p.subtitle UCLA - B.S. in Computer Science (Expected Jun. 2026), GPA: 3.85
+        ul.courses
+          li Machine Learning, Database Systems, Operating Systems
+          li Web Applications, Networking Principles, Computer Architecture
+          li Software Construction, Distributed Systems, Computer Security
+
+      .section.experience
+        h2 Work Experience
+        .job
+          h3 Taiki Inc (June 2024 - Ongoing)
+          p.subtitle Universal API for Tax Documents (Python, Django, Dart, Flutter, Git, Bootstrap, CSS, HTML)
+          ul
+            li Reverse-engineered 20+ bank APIs to automate tax document extraction.
+            li Developed a client dashboard with optimized UI/UX using Django.
+            li Built and deployed cross-platform mobile app (iOS/Android) using Flutter/Dart.
+            li Integrated 20+ dynamic data extractions from banks and financial services via Dart.
+            li Co-designed database architecture and backend server using Django and Postgres.
+
+      .section.projects
+        h2 Projects
+        .project
+          h3 Neutra (Sep 2019 - Dec. 2021)
+          p.subtitle A moderation and stat tracking bot used by 500,000 users.
+          ul
+            li Designed a secure and efficient database schema using Postgres.
+            li Delivered comprehensive statistics to server owners on message/user data for security.
+            li Developed a music playing feature with custom audio effects using FFMPEG.
+            li Engineered a versatile auto-moderation system for user management.
+            li Wrote detailed documentation outlining all 320 commands that users can run.
+          a(href="https://github.com/hecate946/neutra" target="_blank") View on GitHub
+
+        .project
+          h3 Key Duplicator (Sep 2022 - Mar. 2023)
+          p.subtitle 3D modeling software to generate models from physical keys.
+          ul
+            li Applied OpenCV to analyze images, computing precise key dimensions.
+            li Utilized Selenium to scrape key metadata from 100+ key manufacturing manuals.
+            li Crafted 100+ OpenSCAD scripts to generate STL files from key data.
+
+        .project
+          h3 C Webserver (Jun 2023 - Sep 2023)
+          p.subtitle A lightweight webserver written in C.
+          ul
+            li Constructed a C-based web server using socket calls, handling POST and request calls without external libraries.
+            li Devised a caching mechanism employing linked lists and a hash map for efficient data storage.
+            li Integrated Pthreads module for concurrent task handling when sending packet data.
+            li Connected dynamic frontend components to the C web server without using any third-party libraries.
+          a(href="https://github.com/hecate946/webserver" target="_blank") View on GitHub
+
+        .project
+          h3 Sketyl (May 2022 - Sep. 2022)
+          p.subtitle A Spotify stats and insights web application.
+          ul
+            li Showcased user’s Spotify top tracks, insights, and listening history through visualizations.
+            li Integrated Spotify's OAuth2, API scopes, and endpoints to access user data for further processing with Flask.
+          a(href="https://github.com/hecate946/sketyl" target="_blank") View on GitHub
+
+        .project
+          h3 IsabellaWeaverArt.com (Jul 2024 - Ongoing)
+          p.subtitle A commissioned portfolio website.
+          ul
+            li Used Pug and SCSS for a clean development environment and templating.
+            li Focused on good website SEO practices and visibility.
+            li Created a modern design template using CSS grid and dynamic resizing queries.
+            li Implemented dynamic frontend features using vanilla JavaScript.
+          a(href="https://isabellaweaverart.com" target="_blank") View Website
+
+      .section.volunteering
+        h2 Leadership and Volunteering
+        p
+          | Discord.py source code contributor and tutor.
+          | Tutored aspiring developers by offering useful programming insights and project help.
+          | Organized coding tutoring sessions and events to enhance skills and encourage involvement.
+
+    .spacer

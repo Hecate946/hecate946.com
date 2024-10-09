@@ -1,0 +1,75 @@
+.resume-container {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  justify-content: center;
+}
+
+.resume {
+  grid-column: span 4;
+  padding: 30px;
+}
+
+.resume-container > *:not(:last-child) {
+  border-right: 1px solid var(--border-color);
+}
+
+/* Header and contact info styling */
+.resume-header {
+  text-align: center;
+  margin-bottom: 30px;
+
+  h1 {
+    font-size: 3em;
+  }
+
+  .contact-info {
+    font-size: 1.2em;
+    line-height: 1.6;
+
+    a {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* Section styles */
+.section {
+  margin-bottom: 40px;
+
+  h2 {
+    font-size: 2.2em;
+    margin-bottom: 15px;
+    color: #f39c12;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 5px;
+  }
+
+  .subtitle {
+    font-style: italic;
+    margin-bottom: 15px;
+  }
+
+  ul {
+    list-style-type: disc;
+    margin-left: 20px;
+  }
+}
+
+/* Download button styling */
+.download {
+  text-align: center;
+  margin-top: 30px;
+
+  a {
+    background-color: var(--text-color);
+    color: var(--background-color);
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background 0.5s;
+
+    &:hover {
+      background-color: var(--hover-text-color);
+    }
+  }
+}

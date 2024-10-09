@@ -1,0 +1,50 @@
+//- layout.pug
+doctype html
+html(lang="en")
+  head
+    //- Favicon
+    link(rel="icon" type="image/x-icon" href= '/assets/icons/palette_bird.png')
+
+    //- Meta tags
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+
+    //- Relevant keywords for SEO
+    meta(name="keywords" content="Cyrus Asasi, hecate946, developer, computer science, software, resume")
+
+    //- Author and copyright
+    meta(name="author" content="Cyrus Asasi")
+    meta(name="copyright" content="Cyrus Asasi 2024")
+
+    //- Website title
+    title Cyrus Asasi - Personal Website
+
+    //- Website description for SEO
+    meta(name="description" content="Explore the personal portfolio of Cyrus Asasi.")
+
+    //- Social media embeds (Open Graph tags)
+    meta(property="og:title" content="Cyrus Asasi - Personal Website")
+    meta(property="og:description" content="Explore the personal portfolio website of Cyrus Asasi.")
+    meta(property="og:type" content="website")
+    meta(property="og:image" content= '/assets/icons/palette_bird.png')
+    meta(property="og:url" content="https://hecate946.com")
+    meta(property="og:color" content="#E74C36")
+
+    //- Twitter card tags (for better appearance on Twitter)
+    meta(name="twitter:card" content="summary_large_image")
+    meta(name="twitter:title" content="Cyrus Asasi - Developer")
+    meta(name="twitter:description" content="Explore the personal portfolio website of Cyrus Asasi.")
+    meta(name="twitter:image" content= '/assets/icons/palette_bird.png')
+    meta(name="twitter:url" content="https://hecate946.com")
+
+    link(rel="stylesheet" href= '/css/styles.css')
+
+  body
+    include partials/navbar.pug
+    
+    #page-content
+      block content
+    
+    include partials/footer.pug
+
+    script(src="/js/script.js")
