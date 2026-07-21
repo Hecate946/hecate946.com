@@ -1,0 +1,50 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '@/layouts/PageLayout.astro';
+import CardGrid from '@/components/ui/CardGrid.astro';
+import ContentCard from '@/components/ui/ContentCard.astro';
+import Section from '@/components/ui/Section.astro';
+
+const entries = await getCollection('pickleball', ({ data }) => !data.draft);
+---
+
+<PageLayout
+  eyebrow="Movement & reaction"
+  title="Pickleball"
+  description="Training, strategy, matches, and future motion data organized around readable entries and optional visual simulations."
+>
+  <CardGrid>
+    {
+      entries.map((entry) => (
+        <ContentCard
+          title={entry.data.title}
+          description={entry.data.description}
+          eyebrow={entry.data.kind}
+          tags={entry.data.tags}
+          href={`/pickleball/${entry.id}/`}
+          symbol="◉"
+        />
+      ))
+    }
+  </CardGrid>
+
+  <Section eyebrow="Future island" title="Motion Lab">
+    <div class="placeholder surface">
+      <strong>Interactive court boundary</strong>
+      <p>
+        Add shot trajectories, heat maps, reaction tests, video overlays, or
+        point construction tools here.
+      </p>
+    </div>
+  </Section>
+</PageLayout>
+
+<style>
+  .placeholder {
+    padding: 1.5rem;
+  }
+  .placeholder p {
+    margin-bottom: 0;
+    color: var(--muted);
+  }
+</style>

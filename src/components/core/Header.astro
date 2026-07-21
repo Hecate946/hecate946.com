@@ -1,0 +1,152 @@
+---
+import { navigation, siteConfig } from '@/config/site';
+import { isCurrentPath, withBase } from '@/lib/paths';
+import SeasonSelector from '@/components/islands/SeasonSelector.svelte';
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a
+      class="brand"
+      href={withBase('/')}
+      aria-label={`${siteConfig.name} home`}
+    >
+      <span aria-hidden="true">CA</span>
+      <span class="visually-hidden">{siteConfig.name}</span>
+    </a>
+
+    <nav aria-label="Primary navigation">
+      <ul>
+        {
+          navigation.slice(1).map((item) => (
+            <li>
+              <a
+                href={withBase(item.href)}
+                aria-current={
+                  isCurrentPath(currentPath, item.href) ? 'page' : undefined
+                }
+                data-astro-prefetch
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="header-tools">
+      <SeasonSelector client:load />
+      <span class="shortcut" aria-hidden="true">⌘K</span>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    min-height: var(--header-height);
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(1rem);
+  }
+
+  .header-inner,
+  .header-tools {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-inner {
+    min-height: var(--header-height);
+    gap: 1rem;
+  }
+
+  .brand {
+    display: grid;
+    flex: 0 0 auto;
+    width: 2.75rem;
+    aspect-ratio: 1;
+    place-items: center;
+    background: var(--accent-strong);
+    border-radius: 50%;
+    color: var(--bg);
+    font-family: var(--font-mono);
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  nav {
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  ul {
+    display: flex;
+    gap: 0.2rem;
+    min-width: max-content;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  nav a {
+    display: block;
+    padding: 0.55rem 0.65rem;
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-weight: 650;
+    text-decoration: none;
+  }
+
+  nav a:hover,
+  nav a[aria-current='page'] {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  .header-tools {
+    flex: 0 0 auto;
+    gap: 0.5rem;
+  }
+
+  .shortcut {
+    padding: 0.35rem 0.48rem;
+    border: 1px solid var(--line);
+    border-radius: 0.4rem;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+  }
+
+  @media (max-width: 50rem) {
+    nav {
+      order: 3;
+      width: 100%;
+      flex-basis: 100%;
+    }
+
+    .header-inner {
+      flex-wrap: wrap;
+      padding-block: 0.7rem;
+    }
+
+    .header-tools {
+      margin-left: auto;
+    }
+
+    .shortcut {
+      display: none;
+    }
+  }
+</style>

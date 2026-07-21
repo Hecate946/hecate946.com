@@ -1,0 +1,53 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate } from '@/lib/date';
+
+interface Props {
+  title: string;
+  description: string;
+  publishedAt: Date;
+  tags?: string[];
+}
+
+const { title, description, publishedAt, tags = [] } = Astro.props;
+---
+
+<BaseLayout title={`${title} — Cyrus Asasi`} {description}>
+  <article class="container entry">
+    <header>
+      <p class="eyebrow">{formatDate(publishedAt)}</p>
+      <h1>{title}</h1>
+      <p class="lede">{description}</p>
+      {tags.length > 0 && <p class="tags">{tags.join(' · ')}</p>}
+    </header>
+    <div class="prose">
+      <slot />
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .entry {
+    padding-block: var(--space-8) var(--space-9);
+  }
+
+  header {
+    width: min(100%, 56rem);
+    margin-bottom: var(--space-7);
+  }
+
+  h1 {
+    margin: 0.35rem 0 1rem;
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    line-height: 0.96;
+  }
+
+  .tags {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+</style>

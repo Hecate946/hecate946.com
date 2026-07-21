@@ -1,0 +1,50 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '@/layouts/PageLayout.astro';
+import CardGrid from '@/components/ui/CardGrid.astro';
+import ContentCard from '@/components/ui/ContentCard.astro';
+import Section from '@/components/ui/Section.astro';
+
+const entries = await getCollection('chess', ({ data }) => !data.draft);
+---
+
+<PageLayout
+  eyebrow="Decisions & lookahead"
+  title="Chess"
+  description="Games and positions remain readable as essays, while interactive boards can hydrate only when visitors choose to explore them."
+>
+  <CardGrid>
+    {
+      entries.map((entry) => (
+        <ContentCard
+          title={entry.data.title}
+          description={entry.data.description}
+          eyebrow={entry.data.result}
+          tags={entry.data.tags}
+          href={`/chess/${entry.id}/`}
+          symbol="♞"
+        />
+      ))
+    }
+  </CardGrid>
+
+  <Section eyebrow="Future island" title="Decision Tree">
+    <div class="placeholder surface">
+      <strong>Interactive chessboard boundary</strong>
+      <p>
+        Mount a board, PGN viewer, puzzle controller, or branching analysis tree
+        here with client:visible.
+      </p>
+    </div>
+  </Section>
+</PageLayout>
+
+<style>
+  .placeholder {
+    padding: 1.5rem;
+  }
+  .placeholder p {
+    margin-bottom: 0;
+    color: var(--muted);
+  }
+</style>

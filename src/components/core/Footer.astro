@@ -1,0 +1,57 @@
+---
+import { siteConfig } from '@/config/site';
+import { withBase } from '@/lib/paths';
+---
+
+<footer>
+  <div class="container footer-grid">
+    <div>
+      <strong>{siteConfig.name}</strong>
+      <p>Software, music, strategy, and motion.</p>
+    </div>
+    <div class="links">
+      <a href={withBase('/notes/')}>Writing</a>
+      <a href={siteConfig.social.github}>GitHub</a>
+      <a href={siteConfig.social.linkedin}>LinkedIn</a>
+      <a href={siteConfig.social.youtube}>YouTube</a>
+    </div>
+    <p class="copyright">© {new Date().getFullYear()} {siteConfig.name}</p>
+  </div>
+</footer>
+
+<style>
+  footer {
+    padding-block: var(--space-7);
+    border-top: 1px solid var(--line);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    align-items: end;
+  }
+
+  p {
+    margin: 0.3rem 0 0;
+    color: var(--muted);
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .copyright {
+    grid-column: 1 / -1;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 38rem) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+  }
+</style>

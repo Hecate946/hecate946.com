@@ -1,0 +1,19 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/ui/PageIntro.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  eyebrow: string;
+}
+
+const { title, description, eyebrow } = Astro.props;
+---
+
+<BaseLayout title={`${title} — Cyrus Asasi`} {description}>
+  <div class="container">
+    <PageIntro {title} {description} {eyebrow} />
+    <slot />
+  </div>
+</BaseLayout>

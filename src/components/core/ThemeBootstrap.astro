@@ -1,0 +1,22 @@
+<script is:inline>
+  (() => {
+    try {
+      const saved = localStorage.getItem('season-preference') || 'auto';
+      const month = new Date().getMonth();
+      const automatic =
+        month >= 2 && month <= 4
+          ? 'spring'
+          : month >= 5 && month <= 7
+            ? 'summer'
+            : month >= 8 && month <= 10
+              ? 'autumn'
+              : 'winter';
+      const resolved = saved === 'auto' ? automatic : saved;
+      document.documentElement.dataset.seasonPreference = saved;
+      document.documentElement.dataset.season = resolved;
+    } catch {
+      document.documentElement.dataset.season = 'summer';
+      document.documentElement.dataset.seasonPreference = 'auto';
+    }
+  })();
+</script>

@@ -1,0 +1,35 @@
+html[data-season='spring'] {
+  --season-1: #6f9d70;
+  --season-2: #d39aaa;
+  --season-3: #f0d7bc;
+  --accent: #41744c;
+  --accent-strong: #224d2b;
+  --accent-soft: rgba(65, 116, 76, 0.14);
+}
+
+html[data-season='summer'] {
+  --season-1: #33745a;
+  --season-2: #c28e35;
+  --season-3: #7aa380;
+  --accent: #276d53;
+  --accent-strong: #12452f;
+  --accent-soft: rgba(39, 109, 83, 0.14);
+}
+
+html[data-season='autumn'] {
+  --season-1: #9a5534;
+  --season-2: #ca8a3c;
+  --season-3: #6e5638;
+  --accent: #9a5534;
+  --accent-strong: #65351f;
+  --accent-soft: rgba(154, 85, 52, 0.15);
+}
+
+html[data-season='winter'] {
+  --season-1: #7998a7;
+  --season-2: #b6cad2;
+  --season-3: #5b6f82;
+  --accent: #557c91;
+  --accent-strong: #315466;
+  --accent-soft: rgba(85, 124, 145, 0.15);
+}

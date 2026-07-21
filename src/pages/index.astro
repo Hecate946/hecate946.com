@@ -1,0 +1,173 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CardGrid from '@/components/ui/CardGrid.astro';
+import ContentCard from '@/components/ui/ContentCard.astro';
+import Section from '@/components/ui/Section.astro';
+import { interests } from '@/config/site';
+import { withBase } from '@/lib/paths';
+
+const featuredProjects = (
+  await getCollection('projects', ({ data }) => data.featured && !data.draft)
+).slice(0, 3);
+---
+
+<BaseLayout>
+  <section class="hero container">
+    <div class="hero-copy">
+      <p class="eyebrow">Cyrus Asasi · Systems in motion</p>
+      <h1 class="display">I build, perform, calculate, and move.</h1>
+      <p class="lede">
+        A modular portfolio connecting computer science, clarinet, piano, chess,
+        and pickleball through pattern, timing, and deliberate practice.
+      </p>
+      <div class="actions">
+        <a class="button-link" href={withBase('/about/')}>Enter the story</a>
+        <a class="button-link secondary" href={withBase('/lab/')}
+          >Open the laboratory</a
+        >
+      </div>
+    </div>
+    <div class="system-diagram" aria-label="Five connected disciplines">
+      <div class="center">CA</div>
+      {
+        interests.map((interest, index) => (
+          <span style={`--index:${index}`}>{interest.symbol}</span>
+        ))
+      }
+    </div>
+  </section>
+
+  <div class="container">
+    <Section
+      eyebrow="Five worlds"
+      title="One underlying way of thinking"
+      description="Each section gets its own visual language while sharing the same content, accessibility, motion, and navigation infrastructure."
+    >
+      <CardGrid>
+        {interests.map((interest) => <ContentCard {...interest} />)}
+      </CardGrid>
+    </Section>
+
+    <Section
+      eyebrow="Current build"
+      title="Start with stable systems"
+      description="The project already has typed content, reusable layouts, seasonal tokens, a command palette, a static analytics pipeline, and isolated interactive components."
+    >
+      <CardGrid>
+        {
+          featuredProjects.map((project) => (
+            <ContentCard
+              title={project.data.title}
+              description={project.data.description}
+              href={`/code/${project.id}/`}
+              eyebrow={project.data.status}
+              tags={project.data.technologies}
+            />
+          ))
+        }
+      </CardGrid>
+    </Section>
+  </div>
+</BaseLayout>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: center;
+    min-height: calc(100vh - var(--header-height));
+    padding-block: var(--space-8);
+  }
+
+  .hero-copy {
+    max-width: 55rem;
+  }
+
+  h1 {
+    margin: 0.4rem 0 1.4rem;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 2rem;
+  }
+
+  .system-diagram {
+    position: relative;
+    width: min(100%, 25rem);
+    aspect-ratio: 1;
+    justify-self: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent-soft), transparent 65%);
+  }
+
+  .center,
+  .system-diagram span {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 4.2rem;
+    aspect-ratio: 1;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface-strong);
+    box-shadow: var(--shadow);
+  }
+
+  .center {
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
+    color: var(--accent-strong);
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+  }
+
+  .system-diagram span {
+    --angle: calc(var(--index) * 72deg - 90deg);
+    top: calc(50% + sin(var(--angle)) * 39%);
+    left: calc(50% + cos(var(--angle)) * 39%);
+    transform: translate(-50%, -50%);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .system-diagram {
+      animation: slow-turn 40s linear infinite;
+    }
+
+    .center,
+    .system-diagram span {
+      animation: counter-turn 40s linear infinite;
+    }
+  }
+
+  @keyframes slow-turn {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  @keyframes counter-turn {
+    to {
+      rotate: -1turn;
+    }
+  }
+
+  @media (max-width: 52rem) {
+    .hero {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+
+    .system-diagram {
+      width: min(80vw, 22rem);
+    }
+  }
+</style>

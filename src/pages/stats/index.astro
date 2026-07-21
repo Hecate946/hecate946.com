@@ -1,0 +1,16 @@
+---
+import PageLayout from '@/layouts/PageLayout.astro';
+import StatsDashboard from '@/components/islands/StatsDashboard.svelte';
+import statsJson from '@/data/stats.json';
+import type { StatsSnapshot } from '@/types/stats';
+
+const stats: StatsSnapshot = statsJson;
+---
+
+<PageLayout
+  eyebrow="The observatory"
+  title="Website Statistics"
+  description="A public, privacy-conscious view of attention, interaction, and engineering quality. The current numbers are sample data generated at build time."
+>
+  <StatsDashboard client:visible {stats} />
+</PageLayout>

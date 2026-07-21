@@ -1,0 +1,74 @@
+---
+import PageLayout from '@/layouts/PageLayout.astro';
+import CardGrid from '@/components/ui/CardGrid.astro';
+import ContentCard from '@/components/ui/ContentCard.astro';
+---
+
+<PageLayout
+  eyebrow="Unfinished on purpose"
+  title="Laboratory"
+  description="A safe home for visual experiments that should not destabilize the core portfolio. Promote an experiment into a domain page only after it is fast, accessible, and maintainable."
+>
+  <CardGrid>
+    <ContentCard
+      title="Seasonal edge-growth engine"
+      description="Canvas layers, cached foliage, flowers, leaves, and ice systems controlled through one theme contract."
+      href="/code/seasonal-portfolio-engine/"
+      eyebrow="Prototype"
+      tags={['Canvas', 'Performance', 'Themes']}
+      symbol="✣"
+    />
+    <ContentCard
+      title="Audio particle field"
+      description="Reserved boundary for a Web Audio and Canvas experiment attached to music recordings."
+      href="#audio-field"
+      eyebrow="Future"
+      tags={['Web Audio', 'Canvas']}
+      symbol="≈"
+    />
+    <ContentCard
+      title="Cross-discipline transitions"
+      description="Experiments that transform notation, code, chess coordinates, and ball trajectories into one another."
+      href="#transitions"
+      eyebrow="Future"
+      tags={['View Transitions', 'Motion']}
+      symbol="⇄"
+    />
+  </CardGrid>
+
+  <section id="audio-field" class="future surface">
+    <p class="eyebrow">Reserved experiment</p>
+    <h2>Audio particle field</h2>
+    <p>
+      Keep the recording and written program notes outside the island; hydrate
+      only the reactive visualization.
+    </p>
+  </section>
+
+  <section id="transitions" class="future surface">
+    <p class="eyebrow">Reserved experiment</p>
+    <h2>Cross-discipline transitions</h2>
+    <p>
+      Prototype shared visual transformations here before promoting them into
+      persistent navigation.
+    </p>
+  </section>
+</PageLayout>
+
+<style>
+  .future {
+    margin-top: 1rem;
+    padding: clamp(1.2rem, 4vw, 2rem);
+    scroll-margin-top: 8rem;
+  }
+  .future h2 {
+    margin: 0.25rem 0 0.5rem;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 500;
+  }
+  .future p:last-child {
+    margin-bottom: 0;
+    color: var(--muted);
+  }
+</style>

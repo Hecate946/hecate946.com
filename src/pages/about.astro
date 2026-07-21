@@ -1,0 +1,52 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/ui/PageIntro.astro';
+import Section from '@/components/ui/Section.astro';
+---
+
+<BaseLayout
+  title="About — Cyrus Asasi"
+  description="The connective story behind Cyrus Asasi's work in music, software, chess, and sport."
+>
+  <div class="container">
+    <PageIntro
+      eyebrow="The intersection"
+      title="Different disciplines. Shared instincts."
+      description="This page should become the narrative center of the portfolio: how sound, systems, anticipation, movement, and precision reinforce one another."
+    />
+
+    <Section
+      eyebrow="Draft structure"
+      title="Build this as a story, not a résumé"
+    >
+      <div class="prose surface">
+        <p>
+          <strong>Opening:</strong> what connects the disciplines and why the combination
+          matters.
+        </p>
+        <p>
+          <strong>Music:</strong> formative teachers, performances, ensembles, repertoire,
+          and current artistic direction.
+        </p>
+        <p>
+          <strong>Technology:</strong> the kinds of systems you enjoy building and
+          the problems you want to solve.
+        </p>
+        <p>
+          <strong>Strategy and movement:</strong> how chess and pickleball sharpen
+          anticipation, adaptation, and decision-making.
+        </p>
+        <p>
+          <strong>Current chapter:</strong> graduate study, active projects, and the
+          questions you are pursuing now.
+        </p>
+      </div>
+    </Section>
+  </div>
+</BaseLayout>
+
+<style>
+  .surface {
+    padding: clamp(1.2rem, 4vw, 2.5rem);
+  }
+</style>

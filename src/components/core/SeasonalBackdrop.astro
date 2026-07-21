@@ -1,0 +1,79 @@
+<div class="seasonal-backdrop" aria-hidden="true">
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<style>
+  .seasonal-backdrop {
+    position: fixed;
+    inset: var(--header-height) 0 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    contain: strict;
+  }
+
+  span {
+    position: absolute;
+    width: clamp(8rem, 18vw, 18rem);
+    aspect-ratio: 1;
+    background: color-mix(in srgb, var(--season-1) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--season-1) 20%, transparent);
+    border-radius: 62% 38% 58% 42%;
+    filter: blur(0.2px);
+    opacity: 0.55;
+    transform: rotate(var(--rotation, 0deg));
+  }
+
+  span:nth-child(1) {
+    top: 8%;
+    left: -7%;
+    --rotation: 22deg;
+  }
+
+  span:nth-child(2) {
+    top: 36%;
+    right: -8%;
+    --rotation: -28deg;
+  }
+
+  span:nth-child(3) {
+    bottom: 5%;
+    left: -9%;
+    --rotation: 70deg;
+    background: color-mix(in srgb, var(--season-2) 13%, transparent);
+  }
+
+  span:nth-child(4) {
+    right: 13%;
+    bottom: -12%;
+    --rotation: 12deg;
+    background: color-mix(in srgb, var(--season-3) 12%, transparent);
+  }
+
+  html[data-season='winter'] span {
+    border-radius: 22% 78% 28% 72%;
+  }
+
+  html[data-season='autumn'] span {
+    border-radius: 70% 30% 65% 35%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    span {
+      animation: breathe 9s ease-in-out infinite alternate;
+    }
+
+    span:nth-child(even) {
+      animation-delay: -4s;
+    }
+  }
+
+  @keyframes breathe {
+    to {
+      transform: rotate(calc(var(--rotation, 0deg) + 3deg)) scale(1.04);
+    }
+  }
+</style>

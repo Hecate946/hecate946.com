@@ -1,0 +1,34 @@
+---
+import { siteConfig } from '@/config/site';
+import { withBase } from '@/lib/paths';
+
+interface Props {
+  title?: string | undefined;
+  description?: string | undefined;
+  image?: string | undefined;
+  canonicalURL?: URL | undefined;
+}
+
+const {
+  title = siteConfig.title,
+  description = siteConfig.description,
+  image,
+  canonicalURL = new URL(Astro.url.pathname, Astro.site),
+} = Astro.props;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+<meta name="description" content={description} />
+<meta name="theme-color" content="#17211b" />
+<link rel="canonical" href={canonicalURL} />
+<link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+<title>{title}</title>
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL} />
+{image && <meta property="og:image" content={new URL(image, Astro.site)} />}
+<meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />

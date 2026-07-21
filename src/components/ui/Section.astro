@@ -1,0 +1,42 @@
+---
+interface Props {
+  id?: string;
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+}
+
+const { id, eyebrow, title, description } = Astro.props;
+---
+
+<section {id}>
+  {
+    (eyebrow || title || description) && (
+      <header>
+        {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+        {title && <h2 class="section-title">{title}</h2>}
+        {description && <p class="lede">{description}</p>}
+      </header>
+    )
+  }
+  <slot />
+</section>
+
+<style>
+  section {
+    padding-block: var(--space-8);
+  }
+
+  header {
+    width: min(100%, 50rem);
+    margin-bottom: var(--space-6);
+  }
+
+  h2 {
+    margin: 0.25rem 0 1rem;
+  }
+
+  header .lede {
+    margin-bottom: 0;
+  }
+</style>

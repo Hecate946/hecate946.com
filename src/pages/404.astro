@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { withBase } from '@/lib/paths';
+---
+
+<BaseLayout title="Page not found — Cyrus Asasi">
+  <section class="container not-found">
+    <p class="eyebrow">404 · wrong turn</p>
+    <h1 class="display">This path does not resolve.</h1>
+    <p class="lede">
+      The experiment may have moved, changed names, or not exist yet.
+    </p>
+    <a class="button-link" href={withBase('/')}>Return home</a>
+  </section>
+</BaseLayout>
+
+<style>
+  .not-found {
+    padding-block: var(--space-9);
+  }
+  h1 {
+    max-width: 50rem;
+    margin: 0.5rem 0 1.2rem;
+  }
+  .lede {
+    margin-bottom: 2rem;
+  }
+</style>

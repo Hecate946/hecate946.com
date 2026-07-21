@@ -1,0 +1,112 @@
+---
+import { withBase } from '@/lib/paths';
+
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+  eyebrow?: string;
+  tags?: string[];
+  symbol?: string;
+}
+
+const {
+  title,
+  description,
+  href,
+  eyebrow,
+  tags = [],
+  symbol = '↗',
+} = Astro.props;
+const isSpecialHref = /^(https?:|mailto:|tel:|#)/.test(href);
+const resolvedHref = isSpecialHref ? href : withBase(href);
+---
+
+<article class="content-card">
+  <a href={resolvedHref}>
+    <div class="topline">
+      <span class="eyebrow">{eyebrow ?? 'Explore'}</span>
+      <span class="symbol" aria-hidden="true">{symbol}</span>
+    </div>
+    <h3>{title}</h3>
+    <p>{description}</p>
+    {
+      tags.length > 0 && (
+        <ul aria-label="Tags">
+          {tags.slice(0, 4).map((tag) => (
+            <li>{tag}</li>
+          ))}
+        </ul>
+      )
+    }
+  </a>
+</article>
+
+<style>
+  .content-card {
+    min-height: 100%;
+  }
+
+  a {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    padding: clamp(1.15rem, 3vw, 1.6rem);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    box-shadow: var(--shadow);
+    color: inherit;
+    transform: translateY(-0.2rem);
+  }
+
+  .topline {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .symbol {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 1.4rem;
+  }
+
+  h3 {
+    margin: 1.8rem 0 0.65rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    font-weight: 500;
+    line-height: 1.05;
+  }
+
+  p {
+    flex: 1;
+    margin-bottom: 1.25rem;
+    color: var(--muted);
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  li {
+    padding: 0.24rem 0.55rem;
+    background: var(--accent-soft);
+    border-radius: var(--radius-pill);
+    color: var(--accent-strong);
+    font-size: 0.75rem;
+  }
+</style>
