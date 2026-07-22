@@ -24,12 +24,7 @@
   const SHOWER_INTERVAL_MS = 30_000;
   const MAX_PIXEL_RATIO = 2;
   const SPRITE_SIZE = 160;
-  const VALID_SEASONS: Season[] = [
-    'spring',
-    'summer',
-    'autumn',
-    'winter',
-  ];
+  const VALID_SEASONS: Season[] = ['spring', 'summer', 'autumn', 'winter'];
 
   let canvas: HTMLCanvasElement;
   let active = false;
@@ -66,7 +61,10 @@
     return sprite;
   }
 
-  function drawSpringFlower(context: CanvasRenderingContext2D, variant: number) {
+  function drawSpringFlower(
+    context: CanvasRenderingContext2D,
+    variant: number,
+  ) {
     const petals = 5 + (variant % 2);
     const petalLength = 47 + (variant % 3) * 3;
     const petalWidth = 23 + ((variant + 1) % 3) * 2;
@@ -165,7 +163,12 @@
     for (let index = 0; index < petals; index += 1) {
       context.save();
       context.rotate((index / petals) * Math.PI * 2);
-      const petalGradient = context.createLinearGradient(0, -15, 0, -outerRadius);
+      const petalGradient = context.createLinearGradient(
+        0,
+        -15,
+        0,
+        -outerRadius,
+      );
       petalGradient.addColorStop(0, '#f4a70c');
       petalGradient.addColorStop(0.55, '#ffd84e');
       petalGradient.addColorStop(1, '#f6b516');
@@ -291,7 +294,6 @@
     context.stroke();
     context.restore();
   }
-
   function drawSnowflake(context: CanvasRenderingContext2D, variant: number) {
     const branches = 6;
     const length = 62;
@@ -299,14 +301,17 @@
 
     context.save();
     context.rotate((variant * Math.PI) / 24);
-    context.shadowColor = 'rgba(145, 210, 255, 0.85)';
-    context.shadowBlur = 8;
-    context.strokeStyle = 'rgba(242, 251, 255, 0.98)';
+
+    context.shadowColor = 'rgba(90, 165, 220, 0.6)';
+    context.shadowBlur = 7;
+
+    context.strokeStyle = 'rgba(165, 215, 245, 0.95)';
     context.lineWidth = 3.2;
 
     for (let index = 0; index < branches; index += 1) {
       context.save();
       context.rotate((index / branches) * Math.PI * 2);
+
       context.beginPath();
       context.moveTo(0, 0);
       context.lineTo(0, -length);
@@ -319,20 +324,23 @@
         context.beginPath();
         context.moveTo(0, y);
         context.lineTo(-branchLength, y - branchLength * 0.72);
+
         context.moveTo(0, y);
         context.lineTo(branchLength, y - branchLength * 0.72);
+
         context.stroke();
       }
+
       context.restore();
     }
 
-    context.fillStyle = 'rgba(255, 255, 255, 0.98)';
+    context.fillStyle = 'rgba(190, 228, 250, 0.98)';
     context.beginPath();
     context.arc(0, 0, 4.4, 0, Math.PI * 2);
     context.fill();
+
     context.restore();
   }
-
   function buildSpriteSet(season: Season) {
     const cached = spriteCache.get(season);
     if (cached) return cached;
@@ -396,9 +404,11 @@
         const x =
           particle.startX +
           particle.drift * liveTime +
-          Math.sin(liveTime * particle.swayRate + particle.phase) * particle.sway;
+          Math.sin(liveTime * particle.swayRate + particle.phase) *
+            particle.sway;
 
-        const flutter = 0.72 + Math.abs(Math.cos(liveTime * particle.flutterRate)) * 0.28;
+        const flutter =
+          0.72 + Math.abs(Math.cos(liveTime * particle.flutterRate)) * 0.28;
         const enteringOpacity = Math.min(1, liveTime / 0.32);
         const leavingOpacity = Math.min(
           1,
@@ -450,9 +460,7 @@
       resize();
       const season = currentSeason();
       const sprites = buildSpriteSet(season);
-      const count = Math.round(
-        Math.min(155, Math.max(72, viewportWidth / 11)),
-      );
+      const count = Math.round(Math.min(155, Math.max(72, viewportWidth / 11)));
 
       const seasonScale =
         season === 'winter' ? 0.86 : season === 'summer' ? 1.08 : 1;
@@ -519,7 +527,10 @@
       window.clearTimeout(showerTimer);
       stopShower();
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('seasonal-shower:trigger', handleManualTrigger);
+      window.removeEventListener(
+        'seasonal-shower:trigger',
+        handleManualTrigger,
+      );
       motionQuery.removeEventListener('change', handleMotionChange);
     };
   });
