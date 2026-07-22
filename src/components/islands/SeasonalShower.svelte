@@ -21,7 +21,7 @@
     sprite: HTMLCanvasElement;
   }
 
-  const SHOWER_INTERVAL_MS = 30_000;
+  const SHOWER_INTERVAL_MS = 60_000; // 1 minute
   const MAX_PIXEL_RATIO = 2;
   const SPRITE_SIZE = 160;
   const VALID_SEASONS: Season[] = ['spring', 'summer', 'autumn', 'winter'];
