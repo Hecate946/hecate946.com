@@ -1,35 +1,189 @@
-html[data-season='spring'] {
-  --season-1: #6f9d70;
-  --season-2: #d39aaa;
-  --season-3: #f0d7bc;
-  --accent: #41744c;
-  --accent-strong: #224d2b;
-  --accent-soft: rgba(65, 116, 76, 0.14);
+/*
+ * Eight complete palettes: four seasons × light/dark.
+ * Components consume semantic variables, so future animation systems can use
+ * --season-1/2/3 without knowing anything about the selected color mode.
+ */
+
+html[data-season='spring'][data-theme='light'] {
+  --bg: #f8f4ed;
+  --surface: rgba(255, 252, 247, 0.78);
+  --surface-strong: #fffdf8;
+  --text: #263b30;
+  --muted: #6b7d71;
+  --line: rgba(61, 101, 76, 0.19);
+  --accent: #b75d7a;
+  --accent-strong: #783d57;
+  --accent-soft: rgba(183, 93, 122, 0.14);
+  --season-1: #71a37e;
+  --season-2: #e0a2b5;
+  --season-3: #f0c985;
+  --shadow: 0 1.25rem 3rem rgba(67, 86, 71, 0.11);
+  --header-bg: #e7f0e5;
+  --header-text: #315843;
+  --header-muted: #557461;
+  --header-line: rgba(49, 88, 67, 0.24);
+  --header-hover: rgba(255, 255, 255, 0.42);
+  --header-active-text: #71364f;
+  --header-accent: #e6819f;
 }
 
-html[data-season='summer'] {
-  --season-1: #33745a;
-  --season-2: #c28e35;
-  --season-3: #7aa380;
-  --accent: #276d53;
-  --accent-strong: #12452f;
-  --accent-soft: rgba(39, 109, 83, 0.14);
+html[data-season='spring'][data-theme='dark'] {
+  --bg: #101813;
+  --surface: rgba(25, 37, 29, 0.8);
+  --surface-strong: #1b2920;
+  --text: #eef4ed;
+  --muted: #aab9ad;
+  --line: rgba(221, 238, 225, 0.15);
+  --accent: #ee9db7;
+  --accent-strong: #ffc1d2;
+  --accent-soft: rgba(238, 157, 183, 0.16);
+  --season-1: #79b98a;
+  --season-2: #d9799b;
+  --season-3: #d8b361;
+  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.31);
+  --header-bg: #17271d;
+  --header-text: #e9f3e9;
+  --header-muted: #b8cbbd;
+  --header-line: rgba(222, 241, 225, 0.16);
+  --header-hover: rgba(238, 157, 183, 0.1);
+  --header-active-text: #ffc1d2;
+  --header-accent: #ee86a5;
 }
 
-html[data-season='autumn'] {
-  --season-1: #9a5534;
-  --season-2: #ca8a3c;
-  --season-3: #6e5638;
-  --accent: #9a5534;
-  --accent-strong: #65351f;
-  --accent-soft: rgba(154, 85, 52, 0.15);
+html[data-season='summer'][data-theme='light'] {
+  --bg: #fff8e8;
+  --surface: rgba(255, 253, 245, 0.78);
+  --surface-strong: #fffdf5;
+  --text: #173d3b;
+  --muted: #607874;
+  --line: rgba(24, 92, 87, 0.2);
+  --accent: #0f7773;
+  --accent-strong: #07524f;
+  --accent-soft: rgba(15, 119, 115, 0.13);
+  --season-1: #1b8c81;
+  --season-2: #f2b84a;
+  --season-3: #ef7766;
+  --shadow: 0 1.25rem 3rem rgba(44, 73, 64, 0.12);
+  --header-bg: #dff1e9;
+  --header-text: #174b45;
+  --header-muted: #2f6861;
+  --header-line: rgba(23, 75, 69, 0.25);
+  --header-hover: rgba(255, 255, 255, 0.4);
+  --header-active-text: #063f3b;
+  --header-accent: #e76e5d;
 }
 
-html[data-season='winter'] {
-  --season-1: #7998a7;
-  --season-2: #b6cad2;
-  --season-3: #5b6f82;
-  --accent: #557c91;
-  --accent-strong: #315466;
-  --accent-soft: rgba(85, 124, 145, 0.15);
+html[data-season='summer'][data-theme='dark'] {
+  --bg: #07191d;
+  --surface: rgba(13, 39, 42, 0.8);
+  --surface-strong: #102b2e;
+  --text: #eff8f4;
+  --muted: #a4bfba;
+  --line: rgba(218, 241, 235, 0.15);
+  --accent: #73d0c3;
+  --accent-strong: #a7eee2;
+  --accent-soft: rgba(115, 208, 195, 0.15);
+  --season-1: #3fb8a6;
+  --season-2: #efbd55;
+  --season-3: #ee7767;
+  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.34);
+  --header-bg: #0b2930;
+  --header-text: #eef8f5;
+  --header-muted: #b8d2cd;
+  --header-line: rgba(223, 244, 239, 0.16);
+  --header-hover: rgba(115, 208, 195, 0.1);
+  --header-active-text: #ffe09a;
+  --header-accent: #f27863;
+}
+
+html[data-season='autumn'][data-theme='light'] {
+  --bg: #f7ead5;
+  --surface: rgba(255, 248, 234, 0.8);
+  --surface-strong: #fff8eb;
+  --text: #472e25;
+  --muted: #7d6559;
+  --line: rgba(109, 64, 42, 0.21);
+  --accent: #ad4d2c;
+  --accent-strong: #73301d;
+  --accent-soft: rgba(173, 77, 44, 0.14);
+  --season-1: #b54f2e;
+  --season-2: #d8912d;
+  --season-3: #788054;
+  --shadow: 0 1.25rem 3rem rgba(93, 58, 36, 0.13);
+  --header-bg: #eed6ad;
+  --header-text: #5d3525;
+  --header-muted: #7d5540;
+  --header-line: rgba(93, 53, 37, 0.25);
+  --header-hover: rgba(255, 250, 239, 0.42);
+  --header-active-text: #6b2919;
+  --header-accent: #b84f2f;
+}
+
+html[data-season='autumn'][data-theme='dark'] {
+  --bg: #1a100c;
+  --surface: rgba(47, 29, 21, 0.82);
+  --surface-strong: #352117;
+  --text: #faeee3;
+  --muted: #c8ad9a;
+  --line: rgba(247, 222, 202, 0.15);
+  --accent: #ef8a55;
+  --accent-strong: #ffb17f;
+  --accent-soft: rgba(239, 138, 85, 0.16);
+  --season-1: #d16235;
+  --season-2: #dba13f;
+  --season-3: #8d9562;
+  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.36);
+  --header-bg: #301b13;
+  --header-text: #f8e9dc;
+  --header-muted: #d1b49f;
+  --header-line: rgba(250, 229, 211, 0.16);
+  --header-hover: rgba(239, 138, 85, 0.11);
+  --header-active-text: #ffc39e;
+  --header-accent: #d9603a;
+}
+
+html[data-season='winter'][data-theme='light'] {
+  --bg: #eef5f7;
+  --surface: rgba(250, 253, 254, 0.8);
+  --surface-strong: #fbfeff;
+  --text: #263e4d;
+  --muted: #687f8c;
+  --line: rgba(57, 91, 111, 0.2);
+  --accent: #557f9a;
+  --accent-strong: #315a73;
+  --accent-soft: rgba(85, 127, 154, 0.14);
+  --season-1: #79a7bc;
+  --season-2: #b9d6e2;
+  --season-3: #8d8eb0;
+  --shadow: 0 1.25rem 3rem rgba(48, 78, 96, 0.12);
+  --header-bg: #dceaf0;
+  --header-text: #34566b;
+  --header-muted: #597486;
+  --header-line: rgba(52, 86, 107, 0.23);
+  --header-hover: rgba(255, 255, 255, 0.44);
+  --header-active-text: #274b63;
+  --header-accent: #7ea9bf;
+}
+
+html[data-season='winter'][data-theme='dark'] {
+  --bg: #0a131d;
+  --surface: rgba(18, 33, 47, 0.82);
+  --surface-strong: #17293a;
+  --text: #edf5fa;
+  --muted: #a7bbc8;
+  --line: rgba(224, 239, 249, 0.15);
+  --accent: #8fc0d8;
+  --accent-strong: #c5e7f5;
+  --accent-soft: rgba(143, 192, 216, 0.16);
+  --season-1: #6fa3bd;
+  --season-2: #bddbe8;
+  --season-3: #9093bd;
+  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.36);
+  --header-bg: #102536;
+  --header-text: #eef7fb;
+  --header-muted: #b1c7d3;
+  --header-line: rgba(224, 241, 250, 0.16);
+  --header-hover: rgba(143, 192, 216, 0.11);
+  --header-active-text: #d4effb;
+  --header-accent: #79abc4;
 }

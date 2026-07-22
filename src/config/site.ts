@@ -13,8 +13,23 @@ export const siteConfig = {
   },
 } as const;
 
+/**
+ * The deliberately small navigation shown in the site header.
+ * Contact information belongs on the About page and in the footer, keeping the
+ * persistent navigation focused on the three things most visitors need.
+ */
+export const headerNavigation = [
+  { label: 'About', href: '/about/' },
+  { label: 'Interests', href: '/interests/' },
+  { label: 'Stats', href: '/stats/' },
+] as const;
+
+/**
+ * The complete site map used by the command palette and other discovery UI.
+ */
 export const navigation = [
   { label: 'Home', href: '/' },
+  { label: 'Interests', href: '/interests/' },
   { label: 'Code', href: '/code/' },
   { label: 'Clarinet', href: '/clarinet/' },
   { label: 'Piano', href: '/piano/' },

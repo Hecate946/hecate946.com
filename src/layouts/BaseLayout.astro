@@ -5,6 +5,7 @@ import Header from '@/components/core/Header.astro';
 import SeasonalBackdrop from '@/components/core/SeasonalBackdrop.astro';
 import SkipLink from '@/components/core/SkipLink.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
+import SeasonalShower from '@/components/islands/SeasonalShower.svelte';
 import CommandPalette from '@/components/islands/CommandPalette.svelte';
 import { navigation } from '@/config/site';
 import { withBase } from '@/lib/paths';
@@ -24,7 +25,12 @@ const commandItems = navigation.map((item) => ({
 ---
 
 <!doctype html>
-<html lang="en" data-season="summer" data-season-preference="auto">
+<html
+  lang="en"
+  data-season="summer"
+  data-season-preference="auto"
+  data-theme="light"
+>
   <head>
     <ThemeBootstrap />
     <BaseHead {title} {description} {image} />
@@ -32,6 +38,7 @@ const commandItems = navigation.map((item) => ({
   <body>
     <SkipLink />
     <SeasonalBackdrop />
+    <SeasonalShower client:load transition:persist="seasonal-shower" />
     <Header />
     <main id="main-content">
       <slot />

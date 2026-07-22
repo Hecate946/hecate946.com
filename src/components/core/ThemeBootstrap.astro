@@ -1,22 +1,94 @@
 <script is:inline>
   (() => {
-    try {
-      const saved = localStorage.getItem('season-preference') || 'auto';
+    const seasonNames = ['spring', 'summer', 'autumn', 'winter'];
+    const themeNames = ['light', 'dark'];
+    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const automaticSeason = () => {
       const month = new Date().getMonth();
-      const automatic =
-        month >= 2 && month <= 4
-          ? 'spring'
-          : month >= 5 && month <= 7
-            ? 'summer'
-            : month >= 8 && month <= 10
-              ? 'autumn'
-              : 'winter';
-      const resolved = saved === 'auto' ? automatic : saved;
-      document.documentElement.dataset.seasonPreference = saved;
-      document.documentElement.dataset.season = resolved;
-    } catch {
-      document.documentElement.dataset.season = 'summer';
-      document.documentElement.dataset.seasonPreference = 'auto';
+      if (month >= 2 && month <= 4) return 'spring';
+      if (month >= 5 && month <= 7) return 'summer';
+      if (month >= 8 && month <= 10) return 'autumn';
+      return 'winter';
+    };
+
+    const readPreference = (key) => {
+      try {
+        return localStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    };
+
+    const resolvePreferences = () => {
+      const savedSeason = readPreference('season-preference');
+      const seasonPreference = seasonNames.includes(savedSeason)
+        ? savedSeason
+        : 'auto';
+      const season =
+        seasonPreference === 'auto' ? automaticSeason() : seasonPreference;
+
+      const savedTheme = readPreference('color-theme');
+      const theme = themeNames.includes(savedTheme)
+        ? savedTheme
+        : darkModeQuery.matches
+          ? 'dark'
+          : 'light';
+
+      return { seasonPreference, season, theme };
+    };
+
+    const applyPreferences = (targetDocument = document) => {
+      const { seasonPreference, season, theme } = resolvePreferences();
+      const root = targetDocument.documentElement;
+
+      root.dataset.seasonPreference = seasonPreference;
+      root.dataset.season = season;
+      root.dataset.theme = theme;
+      root.dataset.themeReady = 'true';
+      root.style.colorScheme = theme;
+    };
+
+    const updateThemeColor = () => {
+      requestAnimationFrame(() => {
+        const themeColor = getComputedStyle(document.documentElement)
+          .getPropertyValue('--header-bg')
+          .trim();
+
+        if (themeColor) {
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute('content', themeColor);
+        }
+      });
+    };
+
+    /* Apply stored/system preferences before the first paint. */
+    applyPreferences();
+
+    if (!window.__cyrusThemeBootstrapInstalled) {
+      window.__cyrusThemeBootstrapInstalled = true;
+
+      /* Apply the same attributes before an incoming Astro page is displayed. */
+      document.addEventListener('astro:before-swap', (event) => {
+        applyPreferences(event.newDocument);
+      });
+
+      document.addEventListener('astro:after-swap', () => {
+        applyPreferences();
+        updateThemeColor();
+      });
+
+      document.addEventListener('DOMContentLoaded', updateThemeColor, {
+        once: true,
+      });
+
+      darkModeQuery.addEventListener('change', () => {
+        if (!readPreference('color-theme')) {
+          applyPreferences();
+          updateThemeColor();
+        }
+      });
     }
   })();
 </script>

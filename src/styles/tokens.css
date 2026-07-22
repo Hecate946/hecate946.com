@@ -1,11 +1,16 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
+  /*
+   * One typography family across the complete interface. Existing components
+   * can keep using the semantic sans/display/mono tokens without visually
+   * switching typefaces.
+   */
   --font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     'Segoe UI', sans-serif;
-  --font-display: Georgia, 'Times New Roman', serif;
-  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --font-display: var(--font-sans);
+  --font-mono: var(--font-sans);
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -24,39 +29,37 @@
 
   --content-width: 72rem;
   --reading-width: 46rem;
-  --header-height: 4.5rem;
+  --header-height: 3rem;
 
   --duration-fast: 140ms;
   --duration-medium: 280ms;
   --duration-slow: 700ms;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  --bg: #f3f0e8;
-  --surface: rgba(255, 255, 255, 0.62);
-  --surface-strong: #fffdf7;
-  --text: #17211b;
-  --muted: #667069;
-  --line: rgba(23, 33, 27, 0.16);
-  --accent: #355f4c;
-  --accent-strong: #193e2f;
-  --accent-soft: rgba(53, 95, 76, 0.12);
-  --season-1: #527a63;
-  --season-2: #9a7f48;
-  --season-3: #c9b989;
-  --shadow: 0 1.25rem 3rem rgba(22, 35, 27, 0.09);
+  /* Summer-light fallbacks. themes.css replaces these from data attributes. */
+  --bg: #fff8e8;
+  --surface: rgba(255, 253, 245, 0.76);
+  --surface-strong: #fffdf5;
+  --text: #173d3b;
+  --muted: #607874;
+  --line: rgba(24, 92, 87, 0.2);
+  --accent: #0f7773;
+  --accent-strong: #07524f;
+  --accent-soft: rgba(15, 119, 115, 0.13);
+  --season-1: #1b8c81;
+  --season-2: #f2b84a;
+  --season-3: #ef7766;
+  --shadow: 0 1.25rem 3rem rgba(44, 73, 64, 0.12);
+
+  --header-bg: #dff1e9;
+  --header-text: #174b45;
+  --header-muted: #2f6861;
+  --header-line: rgba(23, 75, 69, 0.25);
+  --header-hover: rgba(255, 255, 255, 0.38);
+  --header-active-text: #063f3b;
+  --header-accent: #e76e5d;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d1210;
-    --surface: rgba(24, 32, 27, 0.7);
-    --surface-strong: #171f1b;
-    --text: #edf3ee;
-    --muted: #a5b0a8;
-    --line: rgba(237, 243, 238, 0.14);
-    --accent: #9bc2aa;
-    --accent-strong: #d6ebde;
-    --accent-soft: rgba(155, 194, 170, 0.14);
-    --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.28);
-  }
+html[data-theme='dark'] {
+  color-scheme: dark;
 }
