@@ -1,4 +1,6 @@
 ---
+import '@/styles/footer.css';
+
 const year = new Date().getFullYear();
 
 const footerLinks = [
@@ -23,7 +25,7 @@ const footerLinks = [
 <footer class="site-footer">
   <p class="footer-copyright">© {year} Cyrus Asasi</p>
 
-  <nav class="footer-links" aria-label="contact links">
+  <nav class="footer-links" aria-label="Contact links">
     {
       footerLinks.map((link) => (
         <a

@@ -82,18 +82,30 @@
     >
       {#if season.id === 'spring'}
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <path d="M16 18v10M16 23c-4-1-6 0-8 3M16 24c4-2 6-1 8 1"></path>
-          <circle cx="16" cy="14" r="2.4"></circle>
-          <path
-            d="M16 11C12 7 12 3 16 3s4 4 0 8ZM19 14c4-4 8-4 8 0s-4 4-8 0ZM16 17c4 4 4 8 0 8s-4-4 0-8ZM13 14c-4 4-8 4-8 0s4-4 8 0Z"
-          ></path>
+          <g>
+            <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z"></path>
+            <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z" transform="rotate(72 16 16)"></path>
+            <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z" transform="rotate(144 16 16)"></path>
+            <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z" transform="rotate(216 16 16)"></path>
+            <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z" transform="rotate(288 16 16)"></path>
+          </g>
+          <circle cx="16" cy="16" r="2.1"></circle>
+          <path d="m14.8 15.2-1.2-1.1M17.2 15.2l1.2-1.1M16 17.2v1.7"></path>
         </svg>
       {:else if season.id === 'summer'}
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <circle cx="16" cy="16" r="6"></circle>
-          <path
-            d="M16 2v5M16 25v5M2 16h5M25 16h5M6.1 6.1l3.5 3.5M22.4 22.4l3.5 3.5M25.9 6.1l-3.5 3.5M9.6 22.4l-3.5 3.5"
-          ></path>
+          <g>
+            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z"></path>
+            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(45 16 16)"></path>
+            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(90 16 16)"></path>
+            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(135 16 16)"></path>
+            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(180 16 16)"></path>
+            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(225 16 16)"></path>
+            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(270 16 16)"></path>
+            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(315 16 16)"></path>
+          </g>
+          <circle cx="16" cy="16" r="4.7"></circle>
+          <path d="M14.2 14.3h.1M17.7 14.3h.1M14.2 17.7h.1M17.7 17.7h.1M16 16h.1"></path>
         </svg>
       {:else if season.id === 'autumn'}
         <svg viewBox="0 0 32 32" aria-hidden="true">
@@ -102,9 +114,7 @@
         </svg>
       {:else}
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <path
-            d="M16 2v28M4 9l24 14M4 23 28 9M12 5l4 4 4-4M12 27l4-4 4 4M5 13l6 1-2-6M27 19l-6-1 2 6M9 24l2-6-6 1M23 8l-2 6 6-1"
-          ></path>
+          <path d="M16 2v28M4 9l24 14M4 23 28 9M12 5l4 4 4-4M12 27l4-4 4 4M5 13l6 1-2-6M27 19l-6-1 2 6M9 24l2-6-6 1M23 8l-2 6 6-1"></path>
         </svg>
       {/if}
     </button>
