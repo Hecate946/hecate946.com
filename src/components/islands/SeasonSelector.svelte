@@ -81,13 +81,19 @@
     >
       {#if season.id === 'spring'}
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <g stroke="currentColor" stroke-width="1.25">
-            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2"></ellipse>
-            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2" transform="rotate(72 16 16)"></ellipse>
-            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2" transform="rotate(144 16 16)"></ellipse>
-            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2" transform="rotate(216 16 16)"></ellipse>
-            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2" transform="rotate(288 16 16)"></ellipse>
-            <circle cx="16" cy="16" r="4" fill="#fff"></circle>
+          <g
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.55"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <ellipse cx="16" cy="8.9" rx="3.85" ry="6.15"></ellipse>
+            <ellipse cx="16" cy="8.9" rx="3.85" ry="6.15" transform="rotate(72 16 16)"></ellipse>
+            <ellipse cx="16" cy="8.9" rx="3.85" ry="6.15" transform="rotate(144 16 16)"></ellipse>
+            <ellipse cx="16" cy="8.9" rx="3.85" ry="6.15" transform="rotate(216 16 16)"></ellipse>
+            <ellipse cx="16" cy="8.9" rx="3.85" ry="6.15" transform="rotate(288 16 16)"></ellipse>
+            <circle cx="16" cy="16" r="2.65"></circle>
           </g>
         </svg>
       {:else if season.id === 'summer'}
