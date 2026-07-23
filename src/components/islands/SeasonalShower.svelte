@@ -4,6 +4,7 @@
   type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
   interface Particle {
+    season: Season;
     startX: number;
     y: number;
     size: number;
@@ -82,65 +83,72 @@
     context: CanvasRenderingContext2D,
     variant: number,
   ) {
-    const petals = 5 + (variant % 2);
-    const petalLength = 47 + (variant % 3) * 3;
-    const petalWidth = 23 + ((variant + 1) % 3) * 2;
-    const hues = [337, 344, 329, 350, 320, 340];
-    const hue = hues[variant % hues.length];
+    const petalCount = 5;
+    const rotation = (variant * Math.PI) / 20;
+    const petalFill = ['#ec9eb1', '#ed9fb3', '#eba0b4', '#eea4b8'][variant % 4];
+    const petalHighlight = ['#f3bccb', '#f2b7c8', '#f4bfcd', '#f1b8c8'][variant % 4];
+    const stamenPink = '#f989a7';
+    const innerFill = '#f2d8e1';
 
     context.save();
-    context.rotate((variant * Math.PI) / 15);
-    context.shadowColor = 'rgba(78, 31, 54, 0.28)';
-    context.shadowBlur = 8;
-    context.shadowOffsetY = 4;
+    context.rotate(rotation);
+    context.shadowColor = 'rgba(124, 67, 90, 0.12)';
+    context.shadowBlur = 6;
+    context.shadowOffsetY = 3;
 
-    for (let index = 0; index < petals; index += 1) {
+    for (let index = 0; index < petalCount; index += 1) {
       context.save();
-      context.rotate((index / petals) * Math.PI * 2);
+      context.rotate((index / petalCount) * Math.PI * 2);
 
-      const gradient = context.createRadialGradient(
-        0,
-        -12,
-        3,
-        0,
-        -petalLength * 0.58,
-        petalLength,
-      );
-      gradient.addColorStop(0, `hsla(${hue}, 78%, 87%, 0.98)`);
-      gradient.addColorStop(0.55, `hsla(${hue}, 74%, 72%, 0.98)`);
-      gradient.addColorStop(1, `hsla(${hue - 8}, 64%, 52%, 0.88)`);
-
-      context.fillStyle = gradient;
+      context.fillStyle = petalFill;
       context.beginPath();
-      context.moveTo(0, -4);
-      context.bezierCurveTo(
-        -petalWidth,
-        -petalLength * 0.32,
-        -petalWidth * 0.72,
-        -petalLength,
-        0,
-        -petalLength,
-      );
-      context.bezierCurveTo(
-        petalWidth * 0.72,
-        -petalLength,
-        petalWidth,
-        -petalLength * 0.32,
-        0,
-        -4,
-      );
+      context.moveTo(0, -10);
+      context.bezierCurveTo(-13, -15, -35, -31, -36, -45);
+      context.bezierCurveTo(-37, -57, -23, -64, -9, -57);
+      context.bezierCurveTo(-2, -53, -0.5, -44, 0, -39);
+      context.bezierCurveTo(0.5, -44, 2, -53, 9, -57);
+      context.bezierCurveTo(23, -64, 37, -57, 36, -45);
+      context.bezierCurveTo(35, -31, 13, -15, 0, -10);
+      context.closePath();
+      context.fill();
+
+      context.fillStyle = petalHighlight;
+      context.beginPath();
+      context.moveTo(-2, -18);
+      context.bezierCurveTo(-14, -23, -24, -31, -24, -42);
+      context.bezierCurveTo(-24, -49, -15, -52, -9, -47);
+      context.bezierCurveTo(-4, -43, -2, -30, -2, -18);
+      context.closePath();
       context.fill();
       context.restore();
     }
 
-    const center = context.createRadialGradient(-5, -6, 2, 0, 0, 22);
-    center.addColorStop(0, '#fff3b6');
-    center.addColorStop(0.55, '#efb74b');
-    center.addColorStop(1, '#9d5a2c');
-    context.fillStyle = center;
-    context.beginPath();
-    context.arc(0, 0, 20, 0, Math.PI * 2);
-    context.fill();
+    context.strokeStyle = stamenPink;
+    context.lineWidth = 5;
+    for (let index = 0; index < petalCount; index += 1) {
+      const angle = -Math.PI / 2 + (index / petalCount) * Math.PI * 2;
+      context.beginPath();
+      context.moveTo(0, 2);
+      context.lineTo(Math.cos(angle) * 24, Math.sin(angle) * 24 + 2);
+      context.stroke();
+    }
+
+    for (let index = 0; index < petalCount; index += 1) {
+      context.save();
+      context.rotate((index / petalCount) * Math.PI * 2 + Math.PI / 10);
+      context.fillStyle = innerFill;
+      context.beginPath();
+      context.moveTo(0, -1);
+      context.bezierCurveTo(-6, -5, -13, -13, -10, -21);
+      context.bezierCurveTo(-8, -26, -1.5, -24, 1, -18);
+      context.bezierCurveTo(3.5, -24, 10, -26, 12, -21);
+      context.bezierCurveTo(15, -13, 8, -5, 2, -1);
+      context.bezierCurveTo(3, 7, -3, 7, 0, -1);
+      context.closePath();
+      context.fill();
+      context.restore();
+    }
+
     context.restore();
   }
 
@@ -149,96 +157,113 @@
     variant: number,
   ) {
     const radius = 58;
-    const palettes = [
-      ['#ef5b5b', '#f6c94c', '#50a9e8'],
-      ['#ff7b54', '#ffd56b', '#5db7de'],
-      ['#ee6c8a', '#f8d66d', '#5cb8a5'],
-      ['#e95d78', '#f7bc4b', '#5b91e5'],
-    ];
-    const palette = palettes[variant % palettes.length];
-    const rotation = (variant * Math.PI) / 10;
+    const rotation = (variant * Math.PI) / 22;
+    const hubX = 7.5;
+    const hubY = 7.5;
+    const whitePanel = '#fbfbfb';
+    const panelColors = [whitePanel, '#ef4a47', whitePanel, '#f4d438', whitePanel, '#7fb7e7'];
+    const seamColor = 'rgba(235, 237, 240, 0.92)';
 
     context.save();
     context.rotate(rotation);
-    context.shadowColor = 'rgba(29, 70, 93, 0.25)';
-    context.shadowBlur = 9;
-    context.shadowOffsetY = 5;
+    context.shadowColor = 'rgba(14, 34, 56, 0.18)';
+    context.shadowBlur = 7;
+    context.shadowOffsetY = 4;
 
     context.beginPath();
     context.arc(0, 0, radius, 0, Math.PI * 2);
     context.clip();
 
-    const base = context.createRadialGradient(-20, -25, 2, 5, 8, 78);
+    const base = context.createRadialGradient(-16, -22, 0, 8, 10, radius * 1.08);
     base.addColorStop(0, '#ffffff');
-    base.addColorStop(0.72, '#fffdf3');
-    base.addColorStop(1, '#d9e3e9');
+    base.addColorStop(0.78, '#fbfbfb');
+    base.addColorStop(1, '#ececec');
     context.fillStyle = base;
-    context.fillRect(-radius, -radius, radius * 2, radius * 2);
+    context.fillRect(-radius - 8, -radius - 8, radius * 2 + 16, radius * 2 + 16);
 
-    const capX = 14;
-    const capY = -16;
-    const panelColors = [
-      palette[0],
-      '#fffdf4',
-      palette[1],
-      '#fffdf4',
-      palette[2],
-      '#fffdf4',
-    ];
+    for (let index = 0; index < panelColors.length; index += 1) {
+      const startAngle = -Math.PI / 2 + (index / panelColors.length) * Math.PI * 2;
+      const endAngle = -Math.PI / 2 + ((index + 1) / panelColors.length) * Math.PI * 2;
+      const color = panelColors[index];
 
-    for (let index = 0; index < 6; index += 1) {
-      const start = -Math.PI / 2 + (index / 6) * Math.PI * 2;
-      const end = -Math.PI / 2 + ((index + 1) / 6) * Math.PI * 2;
-
-      context.fillStyle = panelColors[index];
+      context.fillStyle = color;
       context.beginPath();
-      context.moveTo(capX, capY);
-      context.lineTo(Math.cos(start) * radius * 1.3, Math.sin(start) * radius * 1.3);
-      context.arc(0, 0, radius, start, end);
+      context.moveTo(hubX, hubY);
+      context.bezierCurveTo(
+        Math.cos(startAngle) * radius * 0.26 + hubX * 0.72,
+        Math.sin(startAngle) * radius * 0.26 + hubY * 0.72,
+        Math.cos(startAngle) * radius * 0.68,
+        Math.sin(startAngle) * radius * 0.68,
+        Math.cos(startAngle) * radius * 1.01,
+        Math.sin(startAngle) * radius * 1.01,
+      );
+      context.arc(0, 0, radius, startAngle, endAngle);
+      context.bezierCurveTo(
+        Math.cos(endAngle) * radius * 0.68,
+        Math.sin(endAngle) * radius * 0.68,
+        Math.cos(endAngle) * radius * 0.26 + hubX * 0.72,
+        Math.sin(endAngle) * radius * 0.26 + hubY * 0.72,
+        hubX,
+        hubY,
+      );
       context.closePath();
       context.fill();
     }
 
-    context.strokeStyle = 'rgba(26, 74, 99, 0.35)';
-    context.lineWidth = 2.1;
-    for (let index = 0; index < 6; index += 1) {
-      const angle = -Math.PI / 2 + (index / 6) * Math.PI * 2;
+    context.lineWidth = 1.5;
+    context.strokeStyle = seamColor;
+    for (let index = 0; index < panelColors.length; index += 1) {
+      const angle = -Math.PI / 2 + (index / panelColors.length) * Math.PI * 2;
       context.beginPath();
-      context.moveTo(capX, capY);
-      context.quadraticCurveTo(
-        Math.cos(angle + 0.18) * radius * 0.55,
-        Math.sin(angle + 0.18) * radius * 0.55,
-        Math.cos(angle) * radius,
-        Math.sin(angle) * radius,
+      context.moveTo(hubX, hubY);
+      context.bezierCurveTo(
+        Math.cos(angle) * radius * 0.30 + hubX * 0.66,
+        Math.sin(angle) * radius * 0.30 + hubY * 0.66,
+        Math.cos(angle) * radius * 0.72,
+        Math.sin(angle) * radius * 0.72,
+        Math.cos(angle) * radius * 0.99,
+        Math.sin(angle) * radius * 0.99,
       );
       context.stroke();
     }
 
-    context.fillStyle = palette[(variant + 1) % palette.length];
-    context.beginPath();
-    context.arc(capX, capY, 10.5, 0, Math.PI * 2);
-    context.fill();
-    context.strokeStyle = 'rgba(22, 65, 88, 0.5)';
-    context.lineWidth = 2;
-    context.stroke();
-
-    const highlight = context.createRadialGradient(-27, -31, 0, -27, -31, 22);
-    highlight.addColorStop(0, 'rgba(255,255,255,0.9)');
-    highlight.addColorStop(1, 'rgba(255,255,255,0)');
-    context.fillStyle = highlight;
-    context.beginPath();
-    context.ellipse(-23, -28, 21, 13, -0.55, 0, Math.PI * 2);
-    context.fill();
-
-    context.restore();
-
-    context.save();
-    context.rotate(rotation);
-    context.strokeStyle = 'rgba(21, 61, 82, 0.72)';
-    context.lineWidth = 3.2;
+    const shadow = context.createRadialGradient(18, 20, 10, 18, 20, radius * 1.02);
+    shadow.addColorStop(0, 'rgba(0,0,0,0)');
+    shadow.addColorStop(0.72, 'rgba(0,0,0,0.02)');
+    shadow.addColorStop(1, 'rgba(0,0,0,0.10)');
+    context.fillStyle = shadow;
     context.beginPath();
     context.arc(0, 0, radius, 0, Math.PI * 2);
-    context.stroke();
+    context.fill();
+
+    const wideShine = context.createRadialGradient(-23, -22, 0, -24, -23, 45);
+    wideShine.addColorStop(0, 'rgba(255,255,255,0.94)');
+    wideShine.addColorStop(0.18, 'rgba(255,255,255,0.76)');
+    wideShine.addColorStop(0.48, 'rgba(255,255,255,0.24)');
+    wideShine.addColorStop(1, 'rgba(255,255,255,0)');
+    context.fillStyle = wideShine;
+    context.beginPath();
+    context.ellipse(-22, -20, 34, 27, -0.62, 0, Math.PI * 2);
+    context.fill();
+
+    const spotShine = context.createRadialGradient(-34, -35, 0, -34, -35, 13);
+    spotShine.addColorStop(0, 'rgba(255,255,255,0.96)');
+    spotShine.addColorStop(0.42, 'rgba(255,255,255,0.65)');
+    spotShine.addColorStop(1, 'rgba(255,255,255,0)');
+    context.fillStyle = spotShine;
+    context.beginPath();
+    context.ellipse(-33, -34, 13, 9, -0.55, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = '#ffffff';
+    context.beginPath();
+    context.arc(hubX, hubY, 9.6, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = 'rgba(187, 199, 212, 0.92)';
+    context.beginPath();
+    context.arc(hubX, hubY, 5.8, 0, Math.PI * 2);
+    context.fill();
+
     context.restore();
   }
 
@@ -381,13 +406,15 @@
     const count = particleCount(season, width);
 
     return Array.from({ length: count }, (_, index) => {
-      const summerScale = season === 'summer' ? 1.18 : 1;
+      const seasonalScale =
+        season === 'summer' ? 0.82 : season === 'spring' ? 0.72 : 1;
       const baseSize =
         season === 'winter'
           ? randomBetween(22, 43)
-          : randomBetween(29, 52) * summerScale;
+          : randomBetween(29, 52) * seasonalScale;
 
       return {
+        season,
         startX: randomBetween(-width * 0.05, width * 1.05),
         y: -baseSize * randomBetween(1.2, 4.8),
         size: baseSize,
@@ -410,7 +437,7 @@
         flutterRate: randomBetween(1.2, 2.5),
         delay: index * randomBetween(0.045, 0.13) + randomBetween(0, 1.1),
         age: 0,
-        opacity: randomBetween(0.82, 1),
+        opacity: season === 'summer' ? randomBetween(0.985, 1) : randomBetween(0.82, 1),
         sprite: sprites[index % sprites.length],
       };
     });
@@ -494,7 +521,9 @@
         context.globalAlpha = particle.opacity;
         context.translate(x, particle.y);
         context.rotate(particle.rotation);
-        context.scale(flutter, 1);
+        if (particle.season !== 'summer') {
+          context.scale(flutter, 1);
+        }
         context.drawImage(
           particle.sprite,
           -particle.size,

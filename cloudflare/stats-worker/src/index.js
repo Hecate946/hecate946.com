@@ -1,5 +1,6 @@
 const EVENT_NAMES = new Set([
   'page_view',
+  'heartbeat',
   'resume_download',
   'project_open',
   'graph_drag',
@@ -77,12 +78,10 @@ function withDatabaseBinding(env) {
 
   if (!database) {
     throw new Error(
-      'D1 binding is missing. Set wrangler.jsonc d1_databases[0].binding to "hecate_stats" or "DB".',
+      'D1 binding is missing. Set the Wrangler D1 binding to "hecate_stats" or "DB".',
     );
   }
 
-  // Keep the Worker compatible with either the renamed binding used by the
-  // current project or the original DB binding from the first configuration.
   const runtimeEnv = Object.create(env);
   runtimeEnv.hecate_stats = database;
   return runtimeEnv;
@@ -130,10 +129,37 @@ async function ingestEvent(request, env) {
     return json({ error: 'Page view requires a valid path' }, 400, request, env);
   }
 
+  if (eventName === 'heartbeat') {
+    await env.hecate_stats.batch([
+      env.hecate_stats.prepare(
+        `UPDATE visitors
+         SET last_seen = ?
+         WHERE visitor_hash = ?`,
+      ).bind(timestamp, visitorHash),
+      env.hecate_stats.prepare(
+        `UPDATE sessions
+         SET last_seen = ?
+         WHERE session_hash = ? AND visitor_hash = ?`,
+      ).bind(timestamp, sessionHash, visitorHash),
+    ]);
+
+    return json({ accepted: true }, 202, request, env);
+  }
+
   await upsertEventCount(env.hecate_stats, eventName, timestamp);
 
   if (eventName !== 'page_view') {
     await env.hecate_stats.batch([
+      env.hecate_stats.prepare(
+        `UPDATE visitors
+         SET last_seen = ?
+         WHERE visitor_hash = ?`,
+      ).bind(timestamp, visitorHash),
+      env.hecate_stats.prepare(
+        `UPDATE sessions
+         SET last_seen = ?
+         WHERE session_hash = ? AND visitor_hash = ?`,
+      ).bind(timestamp, sessionHash, visitorHash),
       env.hecate_stats.prepare(
         `UPDATE totals
          SET events = events + 1,
@@ -237,6 +263,15 @@ async function ingestEvent(request, env) {
 
   const location = readApproximateLocation(request);
   if (location) {
+    // Keep one current public location mapping per anonymous visitor. This also
+    // removes an older one-decimal mapping after the visitor returns.
+    await env.hecate_stats.prepare(
+      `DELETE FROM visitor_locations
+       WHERE visitor_hash = ? AND location_key <> ?`,
+    )
+      .bind(visitorHash, location.key)
+      .run();
+
     const newVisitorLocationResult = await env.hecate_stats.prepare(
       `INSERT OR IGNORE INTO visitor_locations (visitor_hash, location_key)
        VALUES (?, ?)`,
@@ -273,9 +308,10 @@ async function ingestEvent(request, env) {
 
 async function readStats(request, env, url) {
   const days = clampInteger(url.searchParams.get('days'), 7, 365, 30);
-  // Each anonymous visitor-location row is public as its own rounded dot.
-  // No raw IP address or exact coordinate is stored or returned.
-  const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  // Each anonymous visitor-location row is public as its own dot.
+  // Raw IP addresses are never stored; Cloudflare's approximate coordinates
+  // are retained to four decimal places.
+  const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
 
   const [
     totals,
@@ -351,9 +387,11 @@ async function readStats(request, env, url) {
        LIMIT 2000`,
     ).all(),
     env.hecate_stats.prepare(
-      `SELECT COUNT(DISTINCT country_code) AS count
-       FROM location_stats
-       WHERE country_code IS NOT NULL`,
+      `SELECT COUNT(DISTINCT locations.country_code) AS count
+       FROM visitor_locations
+       INNER JOIN location_stats AS locations
+         ON locations.location_key = visitor_locations.location_key
+       WHERE locations.country_code IS NOT NULL`,
     ).first(),
   ]);
 
@@ -442,8 +480,8 @@ function readApproximateLocation(request) {
 
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
 
-  const roundedLatitude = Math.round(latitude * 10) / 10;
-  const roundedLongitude = Math.round(longitude * 10) / 10;
+  const roundedLatitude = Math.round(latitude * 10_000) / 10_000;
+  const roundedLongitude = Math.round(longitude * 10_000) / 10_000;
   const city = cleanText(cf?.city, 80);
   const region = cleanText(cf?.region, 80);
   const country = cleanText(cf?.country, 80);
@@ -452,8 +490,8 @@ function readApproximateLocation(request) {
     countryCode ?? 'XX',
     region ?? '',
     city ?? '',
-    roundedLatitude.toFixed(1),
-    roundedLongitude.toFixed(1),
+    roundedLatitude.toFixed(4),
+    roundedLongitude.toFixed(4),
   ].join('|');
 
   return {
