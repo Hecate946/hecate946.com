@@ -1,0 +1,32 @@
+---
+import StatsDashboard from '@/components/islands/StatsDashboard.svelte';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { withBase } from '@/lib/paths';
+import '@/styles/stats.css';
+
+const statsApiBase = String(import.meta.env.PUBLIC_STATS_API_URL ?? '').replace(
+  /\/$/,
+  '',
+);
+const codeStatsUrl = withBase('/generated/code-stats.json');
+---
+
+<BaseLayout
+  title="Stats"
+  description="Live website activity and automatically generated code statistics for hecate946.com."
+>
+  <section class="stats-page" aria-labelledby="stats-title">
+    <header class="stats-heading">
+      <h1 id="stats-title">Stats</h1>
+      <p>
+        A live, privacy-conscious record of this website and the code behind it.
+      </p>
+    </header>
+
+    <StatsDashboard
+      client:load
+      apiBase={statsApiBase}
+      {codeStatsUrl}
+    />
+  </section>
+</BaseLayout>

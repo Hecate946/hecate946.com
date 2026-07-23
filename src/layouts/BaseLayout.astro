@@ -4,13 +4,12 @@ import Footer from '@/components/core/Footer.astro';
 import Header from '@/components/core/Header.astro';
 import SkipLink from '@/components/core/SkipLink.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
-import CommandPalette from '@/components/islands/CommandPalette.svelte';
 import SeasonalShower from '@/components/islands/SeasonalShower.svelte';
+import CommandPalette from '@/components/islands/CommandPalette.svelte';
 import { headerNavigation } from '@/config/navigation';
 import { navigation } from '@/config/site';
 import { withBase } from '@/lib/paths';
 import '@/styles/global.css';
-import '@/styles/footer.css';
 
 interface Props {
   title?: string;
@@ -55,5 +54,10 @@ const commandItems = Array.from(
 
     <Footer />
     <CommandPalette client:load items={commandItems} />
+
+    <script>
+      import { initAnalytics } from '@/lib/analytics';
+      initAnalytics();
+    </script>
   </body>
 </html>

@@ -1,9 +1,8 @@
-name: Deploy Astro to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,31 +12,35 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    env:
+      PUBLIC_STATS_API_URL: ${{ vars.PUBLIC_STATS_API_URL }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # The stats generator needs the complete history for an accurate count.
+          fetch-depth: 0
 
-      - name: Install, build, and upload site
+      - name: Build Astro site
         uses: withastro/action@v6
         with:
+          path: .
           node-version: 22
           package-manager: npm
+          build-cmd: node scripts/generate-code-stats.mjs && npm run build
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4

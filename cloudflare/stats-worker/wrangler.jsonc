@@ -1,0 +1,23 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "hecate-stats",
+	"main": "src/index.js",
+	"compatibility_date": "2026-07-23",
+	"workers_dev": true,
+	"triggers": {
+		"crons": [
+			"17 4 * * *"
+		]
+	},
+	"vars": {
+		"ALLOWED_ORIGINS": "https://hecate946.com,https://www.hecate946.com,http://localhost:4321,http://127.0.0.1:4321",
+		"LOCATION_PRIVACY_THRESHOLD": "2"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "hecate-stats",
+			"database_id": "678bd7e8-49bd-409d-9b04-f02d418c2103"
+		}
+	]
+}

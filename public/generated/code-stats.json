@@ -1,0 +1,24 @@
+{
+  "generatedAt": "2026-07-23T00:00:00.000Z",
+  "commit": {
+    "count": 0,
+    "latestSha": null,
+    "latestDate": null,
+    "latestMessage": null,
+    "firstDate": null
+  },
+  "repository": {
+    "files": 0,
+    "countedFiles": 0,
+    "directories": 0,
+    "totalLines": 0,
+    "sourceLines": 0
+  },
+  "site": {
+    "pages": 0,
+    "components": 0,
+    "layouts": 0,
+    "assets": 0
+  },
+  "languages": []
+}
