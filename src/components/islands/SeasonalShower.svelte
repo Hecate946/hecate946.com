@@ -21,13 +21,19 @@
     sprite: HTMLCanvasElement;
   }
 
-  const SHOWER_INTERVAL_MS = 60_000; // 1 minute
+  const SHOWER_INTERVAL_MS = 60_000;
   const MAX_PIXEL_RATIO = 2;
   const SPRITE_SIZE = 160;
-  const VALID_SEASONS: Season[] = ['spring', 'summer', 'autumn', 'winter'];
+  const VALID_SEASONS: Season[] = [
+    'spring',
+    'summer',
+    'autumn',
+    'winter',
+  ];
 
-  let canvas: HTMLCanvasElement;
+  let canvas!: HTMLCanvasElement;
   let active = false;
+
   const spriteCache = new Map<Season, HTMLCanvasElement[]>();
 
   function currentSeason(): Season {
@@ -37,8 +43,8 @@
       : 'summer';
   }
 
-  function randomBetween(min: number, max: number) {
-    return min + Math.random() * (max - min);
+  function randomBetween(minimum: number, maximum: number) {
+    return minimum + Math.random() * (maximum - minimum);
   }
 
   function createSprite(season: Season, variant: number) {
@@ -54,11 +60,22 @@
     context.lineJoin = 'round';
 
     if (season === 'spring') drawSpringFlower(context, variant);
-    if (season === 'summer') drawSunflower(context, variant);
+    if (season === 'summer') drawBeachBall(context, variant);
     if (season === 'autumn') drawAutumnLeaf(context, variant);
     if (season === 'winter') drawSnowflake(context, variant);
 
     return sprite;
+  }
+
+  function spritesFor(season: Season) {
+    const cached = spriteCache.get(season);
+    if (cached) return cached;
+
+    const sprites = Array.from({ length: 8 }, (_, variant) =>
+      createSprite(season, variant),
+    );
+    spriteCache.set(season, sprites);
+    return sprites;
   }
 
   function drawSpringFlower(
@@ -98,7 +115,7 @@
       context.moveTo(0, -4);
       context.bezierCurveTo(
         -petalWidth,
-        -petalLength * 0.35,
+        -petalLength * 0.32,
         -petalWidth * 0.72,
         -petalLength,
         0,
@@ -108,127 +125,140 @@
         petalWidth * 0.72,
         -petalLength,
         petalWidth,
-        -petalLength * 0.35,
+        -petalLength * 0.32,
         0,
         -4,
       );
       context.fill();
-
-      context.strokeStyle = `hsla(${hue}, 48%, 95%, 0.45)`;
-      context.lineWidth = 1.5;
-      context.beginPath();
-      context.moveTo(0, -8);
-      context.quadraticCurveTo(-2, -petalLength * 0.55, 0, -petalLength * 0.91);
-      context.stroke();
       context.restore();
     }
 
-    const center = context.createRadialGradient(-4, -5, 2, 0, 0, 19);
-    center.addColorStop(0, '#fff4a8');
-    center.addColorStop(0.48, '#f5c84e');
-    center.addColorStop(1, '#a76a24');
+    const center = context.createRadialGradient(-5, -6, 2, 0, 0, 22);
+    center.addColorStop(0, '#fff3b6');
+    center.addColorStop(0.55, '#efb74b');
+    center.addColorStop(1, '#9d5a2c');
     context.fillStyle = center;
     context.beginPath();
-    context.arc(0, 0, 16, 0, Math.PI * 2);
+    context.arc(0, 0, 20, 0, Math.PI * 2);
     context.fill();
-
-    context.fillStyle = 'rgba(113, 65, 22, 0.46)';
-    for (let index = 0; index < 18; index += 1) {
-      const angle = index * 2.39996;
-      const radius = Math.sqrt(index / 18) * 12;
-      context.beginPath();
-      context.arc(
-        Math.cos(angle) * radius,
-        Math.sin(angle) * radius,
-        1.15,
-        0,
-        Math.PI * 2,
-      );
-      context.fill();
-    }
-
     context.restore();
   }
 
-  function drawSunflower(context: CanvasRenderingContext2D, variant: number) {
-    const petals = 18 + (variant % 3) * 2;
-    const outerRadius = 61 + (variant % 2) * 3;
+  function drawBeachBall(
+    context: CanvasRenderingContext2D,
+    variant: number,
+  ) {
+    const radius = 58;
+    const palettes = [
+      ['#ef5b5b', '#f6c94c', '#50a9e8'],
+      ['#ff7b54', '#ffd56b', '#5db7de'],
+      ['#ee6c8a', '#f8d66d', '#5cb8a5'],
+      ['#e95d78', '#f7bc4b', '#5b91e5'],
+    ];
+    const palette = palettes[variant % palettes.length];
+    const rotation = (variant * Math.PI) / 10;
 
     context.save();
-    context.rotate((variant * Math.PI) / 21);
-    context.shadowColor = 'rgba(75, 43, 10, 0.32)';
-    context.shadowBlur = 8;
-    context.shadowOffsetY = 4;
+    context.rotate(rotation);
+    context.shadowColor = 'rgba(29, 70, 93, 0.25)';
+    context.shadowBlur = 9;
+    context.shadowOffsetY = 5;
 
-    for (let index = 0; index < petals; index += 1) {
-      context.save();
-      context.rotate((index / petals) * Math.PI * 2);
-      const petalGradient = context.createLinearGradient(
-        0,
-        -15,
-        0,
-        -outerRadius,
-      );
-      petalGradient.addColorStop(0, '#f4a70c');
-      petalGradient.addColorStop(0.55, '#ffd84e');
-      petalGradient.addColorStop(1, '#f6b516');
-      context.fillStyle = petalGradient;
+    context.beginPath();
+    context.arc(0, 0, radius, 0, Math.PI * 2);
+    context.clip();
+
+    const base = context.createRadialGradient(-20, -25, 2, 5, 8, 78);
+    base.addColorStop(0, '#ffffff');
+    base.addColorStop(0.72, '#fffdf3');
+    base.addColorStop(1, '#d9e3e9');
+    context.fillStyle = base;
+    context.fillRect(-radius, -radius, radius * 2, radius * 2);
+
+    const capX = 14;
+    const capY = -16;
+    const panelColors = [
+      palette[0],
+      '#fffdf4',
+      palette[1],
+      '#fffdf4',
+      palette[2],
+      '#fffdf4',
+    ];
+
+    for (let index = 0; index < 6; index += 1) {
+      const start = -Math.PI / 2 + (index / 6) * Math.PI * 2;
+      const end = -Math.PI / 2 + ((index + 1) / 6) * Math.PI * 2;
+
+      context.fillStyle = panelColors[index];
       context.beginPath();
-      context.moveTo(-7, -13);
-      context.bezierCurveTo(-15, -30, -12, -53, 0, -outerRadius);
-      context.bezierCurveTo(12, -53, 15, -30, 7, -13);
+      context.moveTo(capX, capY);
+      context.lineTo(Math.cos(start) * radius * 1.3, Math.sin(start) * radius * 1.3);
+      context.arc(0, 0, radius, start, end);
       context.closePath();
       context.fill();
-      context.restore();
     }
 
-    const center = context.createRadialGradient(-8, -9, 3, 0, 0, 34);
-    center.addColorStop(0, '#9c6b24');
-    center.addColorStop(0.36, '#714415');
-    center.addColorStop(0.78, '#432914');
-    center.addColorStop(1, '#26190f');
-    context.fillStyle = center;
-    context.beginPath();
-    context.arc(0, 0, 31, 0, Math.PI * 2);
-    context.fill();
-
-    const seedColors = ['#d79a3d', '#a96723', '#5b3516'];
-    for (let index = 0; index < 74; index += 1) {
-      const angle = index * 2.39996;
-      const radius = Math.sqrt(index / 74) * 27;
-      context.fillStyle = seedColors[index % seedColors.length];
+    context.strokeStyle = 'rgba(26, 74, 99, 0.35)';
+    context.lineWidth = 2.1;
+    for (let index = 0; index < 6; index += 1) {
+      const angle = -Math.PI / 2 + (index / 6) * Math.PI * 2;
       context.beginPath();
-      context.ellipse(
+      context.moveTo(capX, capY);
+      context.quadraticCurveTo(
+        Math.cos(angle + 0.18) * radius * 0.55,
+        Math.sin(angle + 0.18) * radius * 0.55,
         Math.cos(angle) * radius,
         Math.sin(angle) * radius,
-        1.35,
-        0.85,
-        angle,
-        0,
-        Math.PI * 2,
       );
-      context.fill();
+      context.stroke();
     }
 
+    context.fillStyle = palette[(variant + 1) % palette.length];
+    context.beginPath();
+    context.arc(capX, capY, 10.5, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = 'rgba(22, 65, 88, 0.5)';
+    context.lineWidth = 2;
+    context.stroke();
+
+    const highlight = context.createRadialGradient(-27, -31, 0, -27, -31, 22);
+    highlight.addColorStop(0, 'rgba(255,255,255,0.9)');
+    highlight.addColorStop(1, 'rgba(255,255,255,0)');
+    context.fillStyle = highlight;
+    context.beginPath();
+    context.ellipse(-23, -28, 21, 13, -0.55, 0, Math.PI * 2);
+    context.fill();
+
+    context.restore();
+
+    context.save();
+    context.rotate(rotation);
+    context.strokeStyle = 'rgba(21, 61, 82, 0.72)';
+    context.lineWidth = 3.2;
+    context.beginPath();
+    context.arc(0, 0, radius, 0, Math.PI * 2);
+    context.stroke();
     context.restore();
   }
 
-  function drawAutumnLeaf(context: CanvasRenderingContext2D, variant: number) {
+  function drawAutumnLeaf(
+    context: CanvasRenderingContext2D,
+    variant: number,
+  ) {
     const palettes = [
       ['#f6b53d', '#d95f2f', '#8d2f24'],
-      ['#ed8c32', '#c84727', '#7e291d'],
-      ['#f3c750', '#cf7228', '#8b3d20'],
-      ['#d95732', '#a92f25', '#6d261d'],
-      ['#e49b33', '#b94d25', '#70401f'],
-      ['#f0b843', '#d4682b', '#8c3422'],
+      ['#ffd166', '#e76f51', '#9b3f2f'],
+      ['#f4a261', '#d8572a', '#7f2f21'],
+      ['#e9c46a', '#c65d35', '#7d3628'],
     ];
     const [light, middle, dark] = palettes[variant % palettes.length];
 
     context.save();
-    context.rotate((variant - 2) * 0.035);
-    context.shadowColor = 'rgba(61, 25, 12, 0.34)';
+    context.rotate((variant * Math.PI) / 18);
+    context.shadowColor = 'rgba(91, 45, 21, 0.3)';
     context.shadowBlur = 8;
-    context.shadowOffsetY = 4;
+    context.shadowOffsetY = 5;
 
     const gradient = context.createLinearGradient(-42, -55, 38, 53);
     gradient.addColorStop(0, light);
@@ -279,6 +309,7 @@
       [-2, 20, -29, 33],
       [2, 20, 29, 33],
     ];
+
     for (const [x1, y1, x2, y2] of veins) {
       context.beginPath();
       context.moveTo(x1, y1);
@@ -286,32 +317,27 @@
       context.stroke();
     }
 
-    context.strokeStyle = 'rgba(255, 218, 115, 0.24)';
-    context.lineWidth = 1.2;
-    context.beginPath();
-    context.moveTo(-5, -56);
-    context.lineTo(-5, 48);
-    context.stroke();
     context.restore();
   }
-  function drawSnowflake(context: CanvasRenderingContext2D, variant: number) {
+
+  function drawSnowflake(
+    context: CanvasRenderingContext2D,
+    variant: number,
+  ) {
     const branches = 6;
     const length = 62;
     const branchCount = 2 + (variant % 3);
 
     context.save();
     context.rotate((variant * Math.PI) / 24);
-
     context.shadowColor = 'rgba(90, 165, 220, 0.6)';
     context.shadowBlur = 7;
-
     context.strokeStyle = 'rgba(165, 215, 245, 0.95)';
     context.lineWidth = 3.2;
 
     for (let index = 0; index < branches; index += 1) {
       context.save();
       context.rotate((index / branches) * Math.PI * 2);
-
       context.beginPath();
       context.moveTo(0, 0);
       context.lineTo(0, -length);
@@ -324,214 +350,251 @@
         context.beginPath();
         context.moveTo(0, y);
         context.lineTo(-branchLength, y - branchLength * 0.72);
-
         context.moveTo(0, y);
         context.lineTo(branchLength, y - branchLength * 0.72);
-
         context.stroke();
       }
 
       context.restore();
     }
 
-    context.fillStyle = 'rgba(190, 228, 250, 0.98)';
+    context.fillStyle = 'rgba(238, 250, 255, 0.98)';
     context.beginPath();
-    context.arc(0, 0, 4.4, 0, Math.PI * 2);
+    context.arc(0, 0, 5.5, 0, Math.PI * 2);
     context.fill();
-
     context.restore();
   }
-  function buildSpriteSet(season: Season) {
-    const cached = spriteCache.get(season);
-    if (cached) return cached;
 
-    const sprites = Array.from({ length: 6 }, (_, index) =>
-      createSprite(season, index),
-    );
-    spriteCache.set(season, sprites);
-    return sprites;
+  function particleCount(season: Season, width: number) {
+    const compact = width < 620;
+    if (season === 'summer') return compact ? 14 : 22;
+    if (season === 'winter') return compact ? 22 : 34;
+    return compact ? 18 : 28;
+  }
+
+  function makeParticles(
+    season: Season,
+    width: number,
+    height: number,
+  ): Particle[] {
+    const sprites = spritesFor(season);
+    const count = particleCount(season, width);
+
+    return Array.from({ length: count }, (_, index) => {
+      const summerScale = season === 'summer' ? 1.18 : 1;
+      const baseSize =
+        season === 'winter'
+          ? randomBetween(22, 43)
+          : randomBetween(29, 52) * summerScale;
+
+      return {
+        startX: randomBetween(-width * 0.05, width * 1.05),
+        y: -baseSize * randomBetween(1.2, 4.8),
+        size: baseSize,
+        speed:
+          season === 'summer'
+            ? randomBetween(58, 92)
+            : randomBetween(42, 82),
+        drift: randomBetween(-8, 8),
+        sway:
+          season === 'summer'
+            ? randomBetween(20, 48)
+            : randomBetween(15, 58),
+        swayRate: randomBetween(0.65, 1.35),
+        phase: randomBetween(0, Math.PI * 2),
+        rotation: randomBetween(0, Math.PI * 2),
+        spin:
+          season === 'summer'
+            ? randomBetween(-1.1, 1.1)
+            : randomBetween(-0.72, 0.72),
+        flutterRate: randomBetween(1.2, 2.5),
+        delay: index * randomBetween(0.045, 0.13) + randomBetween(0, 1.1),
+        age: 0,
+        opacity: randomBetween(0.82, 1),
+        sprite: sprites[index % sprites.length],
+      };
+    });
   }
 
   onMount(() => {
-    const context = canvas.getContext('2d');
-    if (!context) return;
+    const canvasContext = canvas.getContext('2d');
+    if (!canvasContext) return;
+    const context: CanvasRenderingContext2D = canvasContext;
 
-    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let pixelRatio = 1;
     let particles: Particle[] = [];
     let animationFrame = 0;
-    let showerTimer = 0;
-    let previousTime = performance.now();
-    let viewportWidth = 1;
-    let viewportHeight = 1;
-    let pixelRatio = 1;
+    let interval = 0;
+    let initialTimer = 0;
+    let lastTime = performance.now();
+    let showerSeason = currentSeason();
 
-    const resize = () => {
-      pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
-      viewportWidth = Math.max(1, window.innerWidth);
-      viewportHeight = Math.max(1, window.innerHeight);
-      canvas.width = Math.round(viewportWidth * pixelRatio);
-      canvas.height = Math.round(viewportHeight * pixelRatio);
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      pixelRatio = Math.min(
+        MAX_PIXEL_RATIO,
+        Math.max(1, window.devicePixelRatio || 1),
+      );
+
+      canvas.width = Math.max(1, Math.round(width * pixelRatio));
+      canvas.height = Math.max(1, Math.round(height * pixelRatio));
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    };
+    }
 
-    const stopShower = () => {
-      cancelAnimationFrame(animationFrame);
-      particles = [];
+    function stopAnimation() {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
       active = false;
-      context.clearRect(0, 0, viewportWidth, viewportHeight);
-      canvas.width = 1;
-      canvas.height = 1;
-    };
+      context.clearRect(0, 0, width, height);
+    }
 
-    const frame = (time: number) => {
-      const delta = Math.min((time - previousTime) / 1000, 0.05);
-      previousTime = time;
-      context.clearRect(0, 0, viewportWidth, viewportHeight);
+    function frame(now: number) {
+      const delta = Math.min(50, now - lastTime) / 1000;
+      lastTime = now;
+      context.clearRect(0, 0, width, height);
 
-      let visibleParticles = 0;
+      let hasVisibleParticle = false;
 
       for (const particle of particles) {
         particle.age += delta;
         if (particle.age < particle.delay) {
-          visibleParticles += 1;
+          hasVisibleParticle = true;
           continue;
         }
 
-        const liveTime = particle.age - particle.delay;
+        const travelAge = particle.age - particle.delay;
         particle.y += particle.speed * delta;
         particle.rotation += particle.spin * delta;
 
         const x =
           particle.startX +
-          particle.drift * liveTime +
-          Math.sin(liveTime * particle.swayRate + particle.phase) *
+          particle.drift * travelAge +
+          Math.sin(travelAge * particle.swayRate + particle.phase) *
             particle.sway;
-
         const flutter =
-          0.72 + Math.abs(Math.cos(liveTime * particle.flutterRate)) * 0.28;
-        const enteringOpacity = Math.min(1, liveTime / 0.32);
-        const leavingOpacity = Math.min(
-          1,
-          Math.max(0, (viewportHeight + particle.size - particle.y) / 90),
-        );
+          0.78 +
+          Math.abs(
+            Math.cos(
+              travelAge * particle.flutterRate + particle.phase,
+            ),
+          ) *
+            0.22;
 
-        if (particle.y - particle.size > viewportHeight + 40) continue;
+        if (particle.y < height + particle.size * 2.2) {
+          hasVisibleParticle = true;
+        }
 
-        visibleParticles += 1;
         context.save();
-        context.globalAlpha =
-          particle.opacity * enteringOpacity * leavingOpacity;
+        context.globalAlpha = particle.opacity;
         context.translate(x, particle.y);
         context.rotate(particle.rotation);
         context.scale(flutter, 1);
         context.drawImage(
           particle.sprite,
-          -particle.size / 2,
-          -particle.size / 2,
-          particle.size,
-          particle.size,
+          -particle.size,
+          -particle.size,
+          particle.size * 2,
+          particle.size * 2,
         );
         context.restore();
       }
 
-      particles = particles.filter(
-        (particle) =>
-          particle.age < particle.delay ||
-          particle.y - particle.size <= viewportHeight + 40,
-      );
-
-      if (visibleParticles === 0 || particles.length === 0) {
-        stopShower();
-        return;
+      if (hasVisibleParticle && document.visibilityState === 'visible') {
+        animationFrame = window.requestAnimationFrame(frame);
+      } else {
+        stopAnimation();
       }
+    }
 
-      animationFrame = requestAnimationFrame(frame);
-    };
-
-    const startShower = () => {
+    function startShower(season = currentSeason()) {
       if (
-        active ||
-        motionQuery.matches ||
+        reducedMotion.matches ||
         document.visibilityState !== 'visible'
       ) {
+        stopAnimation();
         return;
       }
 
-      resize();
-      const season = currentSeason();
-      const sprites = buildSpriteSet(season);
-      const count = Math.round(Math.min(155, Math.max(72, viewportWidth / 11)));
-
-      const seasonScale =
-        season === 'winter' ? 0.86 : season === 'summer' ? 1.08 : 1;
-      const baseSize =
-        season === 'winter'
-          ? [24, 52]
-          : season === 'summer'
-            ? [34, 66]
-            : [28, 58];
-
-      particles = Array.from({ length: count }, (_, index) => {
-        const depth = randomBetween(0.72, 1.24);
-        const size = randomBetween(baseSize[0], baseSize[1]) * depth;
-        const speed = randomBetween(86, 175) * depth * seasonScale;
-
-        return {
-          startX: randomBetween(-size * 0.2, viewportWidth + size * 0.2),
-          y: randomBetween(-viewportHeight * 0.28, -size),
-          size,
-          speed,
-          drift: randomBetween(-22, 22) * depth,
-          sway: randomBetween(10, 45) * depth,
-          swayRate: randomBetween(0.75, 1.75),
-          phase: randomBetween(0, Math.PI * 2),
-          rotation: randomBetween(0, Math.PI * 2),
-          spin: randomBetween(-1.65, 1.65),
-          flutterRate: randomBetween(2.1, 5.4),
-          delay: randomBetween(0, 2.35) + (index % 7) * 0.035,
-          age: 0,
-          opacity: randomBetween(0.76, 1),
-          sprite: sprites[index % sprites.length],
-        };
-      });
-
+      showerSeason = season;
+      particles = makeParticles(showerSeason, width, height);
       active = true;
-      previousTime = performance.now();
-      animationFrame = requestAnimationFrame(frame);
-    };
+      lastTime = performance.now();
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(frame);
+    }
 
-    const scheduleNextShower = () => {
-      window.clearTimeout(showerTimer);
-      showerTimer = window.setTimeout(() => {
-        startShower();
-        scheduleNextShower();
-      }, SHOWER_INTERVAL_MS);
-    };
+    function restartInterval() {
+      window.clearInterval(interval);
+      interval = window.setInterval(
+        () => startShower(currentSeason()),
+        SHOWER_INTERVAL_MS,
+      );
+    }
 
-    const handleMotionChange = () => {
-      if (motionQuery.matches) stopShower();
-    };
+    function handleVisibility() {
+      if (document.visibilityState !== 'visible') {
+        stopAnimation();
+        return;
+      }
 
-    const handleManualTrigger = () => startShower();
+      restartInterval();
+    }
 
-    const handleResize = () => {
-      if (active) resize();
-    };
+    function handleReducedMotion() {
+      if (reducedMotion.matches) {
+        stopAnimation();
+      } else {
+        startShower(currentSeason());
+      }
+    }
 
-    scheduleNextShower();
-    window.addEventListener('resize', handleResize, { passive: true });
-    window.addEventListener('seasonal-shower:trigger', handleManualTrigger);
-    motionQuery.addEventListener('change', handleMotionChange);
+    const seasonObserver = new MutationObserver((records) => {
+      const changed = records.some(
+        (record) =>
+          record.type === 'attributes' &&
+          record.attributeName === 'data-season',
+      );
+
+      if (!changed) return;
+      const nextSeason = currentSeason();
+      if (nextSeason !== showerSeason || !active) {
+        startShower(nextSeason);
+      }
+      restartInterval();
+    });
+
+    resize();
+    restartInterval();
+    initialTimer = window.setTimeout(
+      () => startShower(currentSeason()),
+      650,
+    );
+
+    seasonObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-season'],
+    });
+    window.addEventListener('resize', resize, { passive: true });
+    document.addEventListener('visibilitychange', handleVisibility);
+    reducedMotion.addEventListener('change', handleReducedMotion);
 
     return () => {
-      window.clearTimeout(showerTimer);
-      stopShower();
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener(
-        'seasonal-shower:trigger',
-        handleManualTrigger,
+      stopAnimation();
+      window.clearInterval(interval);
+      window.clearTimeout(initialTimer);
+      seasonObserver.disconnect();
+      window.removeEventListener('resize', resize);
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibility,
       );
-      motionQuery.removeEventListener('change', handleMotionChange);
+      reducedMotion.removeEventListener('change', handleReducedMotion);
     };
   });
 </script>
@@ -546,16 +609,22 @@
 <style>
   .seasonal-shower {
     position: fixed;
+    z-index: 45;
     inset: 0;
-    z-index: 80;
-    width: 100%;
-    height: 100%;
-    visibility: hidden;
+    width: 100vw;
+    height: 100vh;
+    opacity: 0;
     pointer-events: none;
-    contain: strict;
+    transition: opacity 220ms ease;
   }
 
   .seasonal-shower.active {
-    visibility: visible;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .seasonal-shower {
+      display: none;
+    }
   }
 </style>

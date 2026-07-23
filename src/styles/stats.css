@@ -202,9 +202,17 @@
 
 .visitor-map .map-land {
   fill: color-mix(in srgb, var(--text) 12%, transparent);
-  stroke: color-mix(in srgb, var(--text) 37%, transparent);
-  stroke-width: 0.7;
+  stroke: color-mix(in srgb, var(--text) 42%, transparent);
+  stroke-width: 0.75;
   vector-effect: non-scaling-stroke;
+}
+
+.visitor-map .map-country-outline {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 52%, transparent);
+  stroke-width: 0.52;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 .visitor-map .map-dot {

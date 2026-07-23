@@ -5,6 +5,7 @@ type AnalyticsProperties = Record<
 
 type AnalyticsWindow = Window & {
   __hecateAnalyticsInitialized?: boolean;
+  __hecateAnalyticsCleanup?: () => void;
 };
 
 const API_BASE = String(import.meta.env.PUBLIC_STATS_API_URL ?? '').replace(
@@ -82,6 +83,7 @@ export function initAnalytics() {
   analyticsWindow.__hecateAnalyticsInitialized = true;
 
   let lastTrackedPath = '';
+  let heartbeatTimer = 0;
 
   const trackPage = () => {
     const path = window.location.pathname;
@@ -90,10 +92,35 @@ export function initAnalytics() {
     trackEvent('page_view');
   };
 
-  document.addEventListener('astro:page-load', trackPage);
-  trackPage();
+  const stopHeartbeat = () => {
+    window.clearInterval(heartbeatTimer);
+    heartbeatTimer = 0;
+  };
 
-  document.addEventListener('click', (event) => {
+  const sendHeartbeat = () => {
+    if (document.visibilityState === 'visible') {
+      trackEvent('heartbeat');
+    }
+  };
+
+  const startHeartbeat = (sendImmediately = false) => {
+    stopHeartbeat();
+
+    if (document.visibilityState !== 'visible') return;
+    if (sendImmediately) sendHeartbeat();
+
+    heartbeatTimer = window.setInterval(sendHeartbeat, 45_000);
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      startHeartbeat(true);
+    } else {
+      stopHeartbeat();
+    }
+  };
+
+  const handleClick = (event: MouseEvent) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
 
@@ -123,5 +150,20 @@ export function initAnalytics() {
         host: destination.hostname,
       });
     }
-  });
+  };
+
+  document.addEventListener('astro:page-load', trackPage);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  document.addEventListener('click', handleClick);
+
+  trackPage();
+  startHeartbeat();
+
+  analyticsWindow.__hecateAnalyticsCleanup = () => {
+    stopHeartbeat();
+    document.removeEventListener('astro:page-load', trackPage);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.removeEventListener('click', handleClick);
+    analyticsWindow.__hecateAnalyticsInitialized = false;
+  };
 }

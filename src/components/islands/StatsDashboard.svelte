@@ -201,7 +201,7 @@
 
   onMount(() => {
     void refresh();
-    const interval = window.setInterval(() => void loadLiveStats(), 60_000);
+    const interval = window.setInterval(() => void loadLiveStats(), 15_000);
     return () => window.clearInterval(interval);
   });
 </script>
@@ -265,7 +265,7 @@
           <div class="stats-error">{liveError}</div>
         {:else}
           <div class="stats-empty">
-            No location has crossed the public privacy threshold yet.
+            No visitor location data has been recorded yet.
           </div>
         {/if}
       </article>

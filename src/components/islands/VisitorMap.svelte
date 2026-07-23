@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { WORLD_MAP_PATH } from '@/data/world-map';
+  import { WORLD_COUNTRY_OUTLINES_PATH } from '@/data/world-country-outlines';
 
   interface VisitorLocation {
     city: string | null;
@@ -425,6 +426,10 @@
       {#each WORLD_COPIES as copy}
         <g transform={`translate(${copy * WIDTH} 0)`}>
           <path class="map-land" d={WORLD_MAP_PATH} />
+          <path
+            class="map-country-outline"
+            d={WORLD_COUNTRY_OUTLINES_PATH}
+          />
 
           {#each projectedLocations as location}
             <circle
@@ -434,7 +439,7 @@
               r={dotRadius()}
             >
               <title>
-                {locationName(location) || 'Approximate location'} — one anonymous visitor
+                {locationName(location) || 'Approximate location'} — {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)} — one anonymous visitor
               </title>
             </circle>
           {/each}

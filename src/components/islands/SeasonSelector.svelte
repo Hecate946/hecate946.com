@@ -10,7 +10,7 @@
     { id: 'winter', label: 'Winter' },
   ] as const satisfies readonly { id: Season; label: string }[];
 
-  let picker: HTMLDivElement;
+  let picker!: HTMLDivElement;
 
   function updateThemeColor() {
     requestAnimationFrame(() => {
@@ -94,18 +94,15 @@
         </svg>
       {:else if season.id === 'summer'}
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <g>
-            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z"></path>
-            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(45 16 16)"></path>
-            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(90 16 16)"></path>
-            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(135 16 16)"></path>
-            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(180 16 16)"></path>
-            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(225 16 16)"></path>
-            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(270 16 16)"></path>
-            <path d="M16 10.7c-2.1-2.1-2.1-5.1 0-7 2.1 1.9 2.1 4.9 0 7Z" transform="rotate(315 16 16)"></path>
-          </g>
-          <circle cx="16" cy="16" r="4.7"></circle>
-          <path d="M14.2 14.3h.1M17.7 14.3h.1M14.2 17.7h.1M17.7 17.7h.1M16 16h.1"></path>
+          <circle cx="16" cy="16" r="11.5"></circle>
+          <circle cx="18.1" cy="12.7" r="2.15"></circle>
+          <path d="M18.1 10.55C15.2 7.7 13.25 6.45 10.1 5.7"></path>
+          <path d="M20.25 12.7c3.15.15 5.2 1.05 7.1 2.65"></path>
+          <path d="M18.35 14.8c1.05 3.2.95 6.25-.25 10.7"></path>
+          <path d="M16.15 14.05c-3.25 1.05-6 3.2-8.55 6.55"></path>
+          <path d="M16.55 10.95c-2.25-.15-4.85.15-7.65 1.25"></path>
+          <path d="M6.3 17.9c4.2.8 7.75 3.05 10.4 7.45"></path>
+          <path d="M22.3 6.55c-.45 3.2.15 6.2 2.95 8.85"></path>
         </svg>
       {:else if season.id === 'autumn'}
         <svg viewBox="0 0 32 32" aria-hidden="true">
