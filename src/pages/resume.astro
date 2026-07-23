@@ -3,52 +3,43 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import { withBase } from '@/lib/paths';
 import '@/styles/resume.css';
 
+const resumeHref = withBase('/resumes/resume-placeholder.pdf');
+
 const resumes = [
   {
-    eyebrow: '01',
-    title: 'Software Engineering Résumé',
-    description:
-      'Software development, interactive systems, web applications, and technical projects.',
-    href: withBase('/resumes/software-engineering-resume-placeholder.pdf'),
+    title: 'Software Engineering Resume',
+    description: 'Education, work experience, and technical skills.',
   },
   {
-    eyebrow: '02',
-    title: 'Clarinet Performance CV',
-    description:
-      'Education, performance experience, ensembles, teachers, awards, and selected repertoire.',
-    href: withBase('/resumes/clarinet-performance-cv-placeholder.pdf'),
+    title: 'Clarinet Performance Resume',
+    description: 'Education, performance experience, and awards.',
   },
 ] as const;
 ---
 
 <BaseLayout
   title="Resume"
-  description="Software engineering résumé and clarinet performance CV for Cyrus Asasi."
+  description="Software engineering and music resumes for Cyrus Asasi."
 >
   <section class="resume-page" aria-labelledby="resume-title">
     <header class="resume-heading">
       <h1 id="resume-title">Resume</h1>
-      <p>Two disciplines. Pick the document that makes sense.</p>
     </header>
 
     <div class="resume-list">
       {
         resumes.map((resume) => (
           <article class="resume-entry">
-            <span class="resume-number" aria-hidden="true">
-              {resume.eyebrow}
-            </span>
-
             <div class="resume-copy">
               <h2>{resume.title}</h2>
               <p>{resume.description}</p>
             </div>
 
             <div class="resume-actions" aria-label={`${resume.title} actions`}>
-              <a href={resume.href} target="_blank" rel="noopener noreferrer">
+              <a href={resumeHref} target="_blank" rel="noopener noreferrer">
                 View PDF
               </a>
-              <a href={resume.href} download>
+              <a href={resumeHref} download>
                 Download
               </a>
             </div>
@@ -56,11 +47,5 @@ const resumes = [
         ))
       }
     </div>
-
-    <p class="resume-note">
-      These are temporary placeholder files. Replace the PDFs in
-      <code>public/resumes/</code> while keeping the same filenames, or update the
-      paths at the top of this page.
-    </p>
   </section>
 </BaseLayout>

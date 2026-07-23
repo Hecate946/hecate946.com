@@ -9,15 +9,14 @@ const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&m
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead
-      title="404"
-      description="this page is not here, but this video is."
-    />
+    <BaseHead title="404" description="this page is not here." />
   </head>
   <body class="error-page">
     <div class="error-noise" aria-hidden="true"></div>
-  
+
     <main class="error-stage">
+      <h1 class="error-code" aria-label="error 404">404</h1>
+
       <div class="error-video-shell">
         <iframe
           id="error-video"

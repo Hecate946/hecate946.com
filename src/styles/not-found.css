@@ -42,14 +42,38 @@ body {
   z-index: 1;
   display: grid;
   min-height: 100svh;
-  place-items: center;
-  padding: clamp(1rem, 4vw, 3.5rem);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(0.75rem, 2.5vh, 1.5rem);
+  align-items: center;
+  justify-items: center;
+  padding: clamp(1.25rem, 3vh, 2.5rem) clamp(1rem, 4vw, 3.5rem)
+    clamp(1.5rem, 4vh, 3rem);
+}
+
+.error-code {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  color: rgb(255 247 250 / 96%);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(7rem, 18vw, 17rem);
+  font-weight: 400;
+  letter-spacing: -0.085em;
+  line-height: 0.72;
+  text-align: center;
+  text-shadow: 0 0.08em 0 rgb(94 0 34 / 18%);
 }
 
 .error-video-shell {
   position: relative;
-  width: min(92vw, 76rem);
+  width: min(
+    92vw,
+    64rem,
+    calc((100svh - clamp(12rem, 22vw, 19rem) - 4rem) * 16 / 9)
+  );
+  min-width: min(92vw, 22rem);
   aspect-ratio: 16 / 9;
+  align-self: start;
   overflow: hidden;
   background: #120006;
   border: clamp(0.22rem, 0.45vw, 0.42rem) solid rgb(255 243 247 / 92%);
@@ -84,7 +108,8 @@ body {
   border: 1px solid rgb(88 0 30 / 40%);
   border-radius: 999px;
   color: #6b0b2d;
-  font: 600 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: 600 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    monospace;
   letter-spacing: 0.04em;
   text-transform: lowercase;
   cursor: pointer;
@@ -107,11 +132,18 @@ body {
 
 @media (max-width: 42rem) {
   .error-stage {
+    gap: 1rem;
     padding-inline: 0.75rem;
+  }
+
+  .error-code {
+    font-size: clamp(6rem, 34vw, 9rem);
   }
 
   .error-video-shell {
     width: 100%;
+    min-width: 0;
+    align-self: center;
   }
 }
 
