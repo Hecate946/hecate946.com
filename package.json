@@ -11,8 +11,7 @@
     "check": "astro check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "content:new": "node scripts/new-content.mjs",
-    "stats:generate": "node scripts/generate-stats.mjs"
+    "content:new": "node scripts/new-content.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
