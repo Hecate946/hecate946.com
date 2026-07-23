@@ -56,7 +56,6 @@
 
   onMount(() => {
     syncPressedState();
-
     const resync = () => syncPressedState();
     document.addEventListener('astro:after-swap', resync);
 
@@ -82,14 +81,13 @@
     >
       {#if season.id === 'spring'}
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 15.4c-2.2-.9-4.4-2.6-5.8-5-1-1.9-.5-3.8 1-4.8 1.8-1.2 3.8-.2 4.8 2 1.1-2.2 3.1-3.2 4.9-2 1.5 1 2 2.9 1 4.8-1.4 2.4-3.6 4.1-5.9 5Z"></path>
-            <path d="M16 15.4c2.1.9 4.2 2.6 5.5 4.9 1 1.8.7 3.7-.8 4.8-1.7 1.3-3.8.5-4.9-1.7-1.1 2.2-3.2 3-4.9 1.7-1.5-1.1-1.8-3-.8-4.8 1.3-2.3 3.4-4 5.5-4.9Z" transform="rotate(72 16 16)"></path>
-            <path d="M16 15.4c2.1.9 4.2 2.6 5.5 4.9 1 1.8.7 3.7-.8 4.8-1.7 1.3-3.8.5-4.9-1.7-1.1 2.2-3.2 3-4.9 1.7-1.5-1.1-1.8-3-.8-4.8 1.3-2.3 3.4-4 5.5-4.9Z" transform="rotate(144 16 16)"></path>
-            <path d="M16 15.4c2.1.9 4.2 2.6 5.5 4.9 1 1.8.7 3.7-.8 4.8-1.7 1.3-3.8.5-4.9-1.7-1.1 2.2-3.2 3-4.9 1.7-1.5-1.1-1.8-3-.8-4.8 1.3-2.3 3.4-4 5.5-4.9Z" transform="rotate(216 16 16)"></path>
-            <path d="M16 15.4c2.1.9 4.2 2.6 5.5 4.9 1 1.8.7 3.7-.8 4.8-1.7 1.3-3.8.5-4.9-1.7-1.1 2.2-3.2 3-4.9 1.7-1.5-1.1-1.8-3-.8-4.8 1.3-2.3 3.4-4 5.5-4.9Z" transform="rotate(288 16 16)"></path>
-            <path d="M16 15.7v5.2M16 15.7l4 3.9M16 15.7l-4 3.9M16 15.7l4.9-.7M16 15.7l-4.9-.7"></path>
-            <path d="M13.7 18c.8-.9 1.7-1.2 2.5-.7.8-.5 1.7-.2 2.5.7.3.9-.3 1.8-1.3 1.9-.5.8-2.1.9-2.5-.2-.5 1.1-2 1-2.5.2-1-.1-1.6-1-1.2-1.9Z"></path>
+          <g stroke="currentColor" stroke-width="1.25">
+            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2"></ellipse>
+            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2" transform="rotate(72 16 16)"></ellipse>
+            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2" transform="rotate(144 16 16)"></ellipse>
+            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2" transform="rotate(216 16 16)"></ellipse>
+            <ellipse cx="16" cy="8.75" rx="4.25" ry="6.25" fill="#f39ac2" transform="rotate(288 16 16)"></ellipse>
+            <circle cx="16" cy="16" r="4" fill="#fff"></circle>
           </g>
         </svg>
       {:else if season.id === 'summer'}
