@@ -28,6 +28,7 @@
   font-weight: 520;
   letter-spacing: -0.058em;
   line-height: 0.96;
+  color: var(--accent-strong);
 }
 
 .minimal-intro p {
