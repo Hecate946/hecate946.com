@@ -17,15 +17,17 @@ const BOT_PATTERN =
 
 export default {
   async scheduled(_controller, env, context) {
+    env = withDatabaseBinding(env);
+
     context.waitUntil(
-      env.DB.batch([
-        env.DB.prepare(
+      env.hecate_stats.batch([
+        env.hecate_stats.prepare(
           `DELETE FROM daily_visitors WHERE day < date('now', '-2 day')`,
         ),
-        env.DB.prepare(
+        env.hecate_stats.prepare(
           `DELETE FROM daily_sessions WHERE day < date('now', '-2 day')`,
         ),
-        env.DB.prepare(
+        env.hecate_stats.prepare(
           `DELETE FROM sessions WHERE last_seen < datetime('now', '-30 day')`,
         ),
       ]),
@@ -33,6 +35,8 @@ export default {
   },
 
   async fetch(request, env) {
+    env = withDatabaseBinding(env);
+
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
@@ -67,6 +71,22 @@ export default {
     return json({ error: 'Not found' }, 404, request, env);
   },
 };
+
+function withDatabaseBinding(env) {
+  const database = env.hecate_stats ?? env.DB;
+
+  if (!database) {
+    throw new Error(
+      'D1 binding is missing. Set wrangler.jsonc d1_databases[0].binding to "hecate_stats" or "DB".',
+    );
+  }
+
+  // Keep the Worker compatible with either the renamed binding used by the
+  // current project or the original DB binding from the first configuration.
+  const runtimeEnv = Object.create(env);
+  runtimeEnv.hecate_stats = database;
+  return runtimeEnv;
+}
 
 async function ingestEvent(request, env) {
   const origin = request.headers.get('Origin');
@@ -110,18 +130,18 @@ async function ingestEvent(request, env) {
     return json({ error: 'Page view requires a valid path' }, 400, request, env);
   }
 
-  await upsertEventCount(env.DB, eventName, timestamp);
+  await upsertEventCount(env.hecate_stats, eventName, timestamp);
 
   if (eventName !== 'page_view') {
-    await env.DB.batch([
-      env.DB.prepare(
+    await env.hecate_stats.batch([
+      env.hecate_stats.prepare(
         `UPDATE totals
          SET events = events + 1,
              first_event_at = COALESCE(first_event_at, ?),
              updated_at = ?
          WHERE id = 1`,
       ).bind(timestamp, timestamp),
-      env.DB.prepare(
+      env.hecate_stats.prepare(
         `INSERT INTO daily_stats (day, events)
          VALUES (?, 1)
          ON CONFLICT(day) DO UPDATE SET events = events + 1`,
@@ -131,7 +151,7 @@ async function ingestEvent(request, env) {
     return json({ accepted: true }, 202, request, env);
   }
 
-  const newVisitorResult = await env.DB.prepare(
+  const newVisitorResult = await env.hecate_stats.prepare(
     `INSERT OR IGNORE INTO visitors (visitor_hash, first_seen, last_seen)
      VALUES (?, ?, ?)`,
   )
@@ -140,14 +160,14 @@ async function ingestEvent(request, env) {
   const isNewVisitor = changedRows(newVisitorResult) > 0;
 
   if (!isNewVisitor) {
-    await env.DB.prepare(
+    await env.hecate_stats.prepare(
       `UPDATE visitors SET last_seen = ? WHERE visitor_hash = ?`,
     )
       .bind(timestamp, visitorHash)
       .run();
   }
 
-  const newSessionResult = await env.DB.prepare(
+  const newSessionResult = await env.hecate_stats.prepare(
     `INSERT OR IGNORE INTO sessions
       (session_hash, visitor_hash, first_seen, last_seen, page_views)
      VALUES (?, ?, ?, ?, 1)`,
@@ -157,7 +177,7 @@ async function ingestEvent(request, env) {
   const isNewSession = changedRows(newSessionResult) > 0;
 
   if (!isNewSession) {
-    await env.DB.prepare(
+    await env.hecate_stats.prepare(
       `UPDATE sessions
        SET last_seen = ?, page_views = page_views + 1
        WHERE session_hash = ?`,
@@ -166,22 +186,22 @@ async function ingestEvent(request, env) {
       .run();
   }
 
-  const dailyVisitorResult = await env.DB.prepare(
+  const dailyVisitorResult = await env.hecate_stats.prepare(
     `INSERT OR IGNORE INTO daily_visitors (day, visitor_hash) VALUES (?, ?)`,
   )
     .bind(day, visitorHash)
     .run();
   const isNewDailyVisitor = changedRows(dailyVisitorResult) > 0;
 
-  const dailySessionResult = await env.DB.prepare(
+  const dailySessionResult = await env.hecate_stats.prepare(
     `INSERT OR IGNORE INTO daily_sessions (day, session_hash) VALUES (?, ?)`,
   )
     .bind(day, sessionHash)
     .run();
   const isNewDailySession = changedRows(dailySessionResult) > 0;
 
-  await env.DB.batch([
-    env.DB.prepare(
+  await env.hecate_stats.batch([
+    env.hecate_stats.prepare(
       `UPDATE totals
        SET page_views = page_views + 1,
            events = events + 1,
@@ -196,7 +216,7 @@ async function ingestEvent(request, env) {
       timestamp,
       timestamp,
     ),
-    env.DB.prepare(
+    env.hecate_stats.prepare(
       `INSERT INTO daily_stats
         (day, page_views, events, estimated_visitors, sessions)
        VALUES (?, 1, 1, ?, ?)
@@ -206,7 +226,7 @@ async function ingestEvent(request, env) {
          estimated_visitors = estimated_visitors + excluded.estimated_visitors,
          sessions = sessions + excluded.sessions`,
     ).bind(day, isNewDailyVisitor ? 1 : 0, isNewDailySession ? 1 : 0),
-    env.DB.prepare(
+    env.hecate_stats.prepare(
       `INSERT INTO page_stats (path, page_views, updated_at)
        VALUES (?, 1, ?)
        ON CONFLICT(path) DO UPDATE SET
@@ -217,14 +237,14 @@ async function ingestEvent(request, env) {
 
   const location = readApproximateLocation(request);
   if (location) {
-    const newVisitorLocationResult = await env.DB.prepare(
+    const newVisitorLocationResult = await env.hecate_stats.prepare(
       `INSERT OR IGNORE INTO visitor_locations (visitor_hash, location_key)
        VALUES (?, ?)`,
     )
       .bind(visitorHash, location.key)
       .run();
 
-    await env.DB.prepare(
+    await env.hecate_stats.prepare(
       `INSERT INTO location_stats (
         location_key, city, region, country, country_code,
         latitude, longitude, page_views, estimated_visitors, updated_at
@@ -253,12 +273,8 @@ async function ingestEvent(request, env) {
 
 async function readStats(request, env, url) {
   const days = clampInteger(url.searchParams.get('days'), 7, 365, 30);
-  const privacyThreshold = clampInteger(
-    env.LOCATION_PRIVACY_THRESHOLD,
-    1,
-    100,
-    2,
-  );
+  // Each anonymous visitor-location row is public as its own rounded dot.
+  // No raw IP address or exact coordinate is stored or returned.
   const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
   const [
@@ -270,14 +286,14 @@ async function readStats(request, env, url) {
     locationResult,
     countryResult,
   ] = await Promise.all([
-    env.DB.prepare('SELECT * FROM totals WHERE id = 1').first(),
-    env.DB.prepare(
+    env.hecate_stats.prepare('SELECT * FROM totals WHERE id = 1').first(),
+    env.hecate_stats.prepare(
       `SELECT COUNT(DISTINCT visitor_hash) AS count
        FROM sessions WHERE last_seen >= ?`,
     )
       .bind(cutoff)
       .first(),
-    env.DB.prepare(
+    env.hecate_stats.prepare(
       `SELECT day, page_views, events, estimated_visitors
        FROM daily_stats
        WHERE day >= date('now', ?)
@@ -285,30 +301,56 @@ async function readStats(request, env, url) {
     )
       .bind(`-${days - 1} day`)
       .all(),
-    env.DB.prepare(
+    env.hecate_stats.prepare(
       `SELECT path AS label, page_views AS value
        FROM page_stats
        ORDER BY page_views DESC, path ASC
        LIMIT 10`,
     ).all(),
-    env.DB.prepare(
+    env.hecate_stats.prepare(
       `SELECT event_name AS label, total AS value
        FROM event_stats
        WHERE event_name <> 'page_view'
        ORDER BY total DESC, event_name ASC
        LIMIT 10`,
     ).all(),
-    env.DB.prepare(
-      `SELECT city, region, country, country_code, latitude, longitude,
-              page_views, estimated_visitors
-       FROM location_stats
-       WHERE estimated_visitors >= ?
-       ORDER BY page_views DESC
-       LIMIT 500`,
-    )
-      .bind(privacyThreshold)
-      .all(),
-    env.DB.prepare(
+    env.hecate_stats.prepare(
+      `WITH point_rows AS (
+         SELECT
+           locations.location_key,
+           locations.city,
+           locations.region,
+           locations.country,
+           locations.country_code,
+           locations.latitude,
+           locations.longitude,
+           locations.updated_at,
+           ROW_NUMBER() OVER (
+             PARTITION BY locations.location_key
+             ORDER BY visitor_locations.visitor_hash
+           ) - 1 AS point_index,
+           COUNT(*) OVER (
+             PARTITION BY locations.location_key
+           ) AS point_count
+         FROM visitor_locations
+         INNER JOIN location_stats AS locations
+           ON locations.location_key = visitor_locations.location_key
+       )
+       SELECT
+         city,
+         region,
+         country,
+         country_code,
+         latitude,
+         longitude,
+         point_index,
+         point_count
+       FROM point_rows
+       WHERE point_count >= 1
+       ORDER BY updated_at DESC, location_key ASC, point_index ASC
+       LIMIT 2000`,
+    ).all(),
+    env.hecate_stats.prepare(
       `SELECT COUNT(DISTINCT country_code) AS count
        FROM location_stats
        WHERE country_code IS NOT NULL`,
@@ -322,8 +364,10 @@ async function readStats(request, env, url) {
     countryCode: row.country_code ?? null,
     latitude: Number(row.latitude),
     longitude: Number(row.longitude),
-    pageViews: Number(row.page_views ?? 0),
-    estimatedVisitors: Number(row.estimated_visitors ?? 0),
+    pageViews: 1,
+    estimatedVisitors: 1,
+    pointIndex: Number(row.point_index ?? 0),
+    pointCount: Number(row.point_count ?? 1),
   }));
 
   const response = {
@@ -351,7 +395,7 @@ async function readStats(request, env, url) {
   };
 
   return json(response, 200, request, env, {
-    'Cache-Control': 'public, max-age=30, s-maxage=60',
+    'Cache-Control': 'no-store',
   });
 }
 

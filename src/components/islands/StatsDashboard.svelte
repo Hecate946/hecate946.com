@@ -14,6 +14,8 @@
     longitude: number;
     pageViews: number;
     estimatedVisitors: number;
+    pointIndex?: number;
+    pointCount?: number;
   }
 
   interface DailyStat {
@@ -251,7 +253,7 @@
       <article class="stats-panel stats-panel-map">
         <div class="stats-panel-heading">
           <h3>Where people visit from</h3>
-          <p>Aggregated locations; the view widens as the audience grows.</p>
+          <p>One anonymous dot per visitor; nearby dots remain separate.</p>
         </div>
 
         {#if liveStats?.locations?.length}

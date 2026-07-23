@@ -11,11 +11,15 @@
     longitude: number;
     pageViews: number;
     estimatedVisitors: number;
+    pointIndex?: number;
+    pointCount?: number;
   }
 
   interface ProjectedVisitorLocation extends VisitorLocation {
     x: number;
     y: number;
+    offsetX: number;
+    offsetY: number;
   }
 
   interface Point {
@@ -63,18 +67,30 @@
         Number.isFinite(location.latitude) &&
         Number.isFinite(location.longitude),
     )
-    .map((location) => ({
-      ...location,
-      x: wrapX(((location.longitude + 180) / 360) * WIDTH),
-      y: ((90 - location.latitude) / 180) * HEIGHT,
-    }));
+    .map((location) => {
+      const offset = separatePoint(
+        location.pointIndex ?? 0,
+        location.pointCount ?? 1,
+      );
+
+      return {
+        ...location,
+        x: wrapX(((location.longitude + 180) / 360) * WIDTH),
+        y: ((90 - location.latitude) / 180) * HEIGHT,
+        offsetX: offset.x,
+        offsetY: offset.y,
+      };
+    });
 
   $: visitorScaleBucket = Math.floor(
     Math.log2(Math.max(1, totalVisitors)),
   );
 
   $: locationSignature = `${projectedLocations
-    .map((location) => `${location.latitude}:${location.longitude}`)
+    .map(
+      (location) =>
+        `${location.latitude}:${location.longitude}:${location.pointIndex ?? 0}:${location.pointCount ?? 1}`,
+    )
     .sort()
     .join('|')}|visitors:${visitorScaleBucket}`;
 
@@ -104,6 +120,21 @@
 
   function wrapX(value: number) {
     return ((value % WIDTH) + WIDTH) % WIDTH;
+  }
+
+  function separatePoint(index: number, count: number): Point {
+    if (count <= 1 || index <= 0) return { x: 0, y: 0 };
+
+    // A deterministic sunflower pattern keeps individual visitors distinct
+    // without exposing any more precise geographic information.
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const radius = 11.5 * Math.sqrt(index);
+    const angle = index * goldenAngle;
+
+    return {
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+    };
   }
 
   function updateVisibleDimensions() {
@@ -363,9 +394,8 @@
     previousPointer = null;
   }
 
-  function dotRadius(pageViews: number) {
-    const visualRadius = 4.5 + Math.min(6, Math.log2(pageViews + 1) * 1.15);
-    return visualRadius / zoom;
+  function dotRadius() {
+    return 4.75 / zoom;
   }
 
   function locationName(location: VisitorLocation) {
@@ -383,7 +413,7 @@
     viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
     preserveAspectRatio="xMidYMid slice"
     role="img"
-    aria-label="Zoomable, horizontally wrapping map of aggregated website visitor locations"
+    aria-label="Zoomable, horizontally wrapping map of individual anonymous visitor locations"
     tabindex="0"
     on:wheel|preventDefault={handleWheel}
     on:pointerdown={handlePointerDown}
@@ -399,12 +429,12 @@
           {#each projectedLocations as location}
             <circle
               class="map-dot"
-              cx={location.x}
-              cy={location.y}
-              r={dotRadius(location.pageViews)}
+              cx={location.x + location.offsetX / zoom}
+              cy={location.y + location.offsetY / zoom}
+              r={dotRadius()}
             >
               <title>
-                {locationName(location) || 'Approximate location'} — {location.estimatedVisitors.toLocaleString()} estimated visitor{location.estimatedVisitors === 1 ? '' : 's'}, {location.pageViews.toLocaleString()} page view{location.pageViews === 1 ? '' : 's'}
+                {locationName(location) || 'Approximate location'} — one anonymous visitor
               </title>
             </circle>
           {/each}
