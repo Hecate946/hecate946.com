@@ -21,7 +21,7 @@ export const siteConfig = {
 export const headerNavigation = [
   { label: 'About', href: '/about/' },
   { label: 'Resume', href: '/resume/' },
-  { label: 'Stats', href: '/stats/' },
+  { label: 'Work', href: '/work/' },
 ] as const;
 
 /**
@@ -30,13 +30,13 @@ export const headerNavigation = [
 export const navigation = [
   { label: 'Home', href: '/' },
   { label: 'Interests', href: '/interests/' },
-  { label: 'Code', href: '/code/' },
-  { label: 'Clarinet', href: '/clarinet/' },
-  { label: 'Piano', href: '/piano/' },
-  { label: 'Chess', href: '/chess/' },
-  { label: 'Pickleball', href: '/pickleball/' },
-  { label: 'Lab', href: '/lab/' },
-  { label: 'Stats', href: '/stats/' },
+  // { label: 'Code', href: '/code/' },
+  // { label: 'Clarinet', href: '/clarinet/' },
+  // { label: 'Piano', href: '/piano/' },
+  // { label: 'Chess', href: '/chess/' },
+  // { label: 'Pickleball', href: '/pickleball/' },
+  // { label: 'Lab', href: '/lab/' },
+  { label: 'Work', href: '/work/' },
   { label: 'About', href: '/about/' },
 ] as const;
 

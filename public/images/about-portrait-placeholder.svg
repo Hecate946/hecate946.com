@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 960" role="img" aria-labelledby="title desc">
+  <title id="title">portrait placeholder</title>
+  <desc id="desc">an abstract portrait placeholder that can be replaced with any photograph</desc>
+  <rect width="800" height="960" fill="#d9d2c3"/>
+  <path d="M0 720 270 430l145 175 120-122L800 760v200H0Z" fill="#b5aa97"/>
+  <circle cx="405" cy="310" r="152" fill="#817665"/>
+  <path d="M190 960c14-219 91-342 217-342 128 0 207 123 223 342Z" fill="#62594d"/>
+  <g fill="none" stroke="#f3eee4" stroke-width="8" opacity=".78">
+    <rect x="28" y="28" width="744" height="904"/>
+    <path d="M68 82h250M482 878h250"/>
+  </g>
+  <text x="400" y="870" fill="#f3eee4" font-family="Georgia, serif" font-size="32" text-anchor="middle">replace with your portrait</text>
+</svg>

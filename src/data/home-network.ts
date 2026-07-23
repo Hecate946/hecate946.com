@@ -58,7 +58,7 @@ export const homeNetworkNodes: NetworkNode[] = [
   {
     id: 'contact',
     label: 'Contact',
-    description: 'Let’s connect',
+    description: 'Let\'s connect',
     href: 'mailto:cyrusasasi@gmail.com',
     icon: icons.contact,
     accent: '#d66b8b',

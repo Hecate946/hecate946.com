@@ -1,0 +1,78 @@
+/* Keep the normal site footer pinned to the bottom without forcing extra space. */
+body {
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+main {
+  min-height: 0;
+}
+
+.site-footer {
+  display: flex;
+  width: 100%;
+  height: var(--header-height);
+  min-height: var(--header-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-inline: clamp(0.85rem, 1.6vw, 1.5rem);
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+.footer-copyright {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.footer-links {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(1.2rem, 3.2vw, 3.75rem);
+  margin-left: auto;
+}
+
+.footer-links a {
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.32em;
+  white-space: nowrap;
+}
+
+.footer-links a:hover,
+.footer-links a:focus-visible {
+  color: var(--text);
+  text-decoration-color: var(--accent-strong);
+}
+
+@media (max-width: 36rem) {
+  .site-footer {
+    gap: 0.75rem;
+    padding-inline: 0.75rem;
+  }
+
+  .footer-copyright {
+    font-size: 0.68rem;
+  }
+
+  .footer-links {
+    gap: clamp(0.65rem, 4vw, 1.15rem);
+  }
+
+  .footer-links a {
+    font-size: 0.72rem;
+  }
+}

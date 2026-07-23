@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { withBase } from '@/lib/paths';
 import '@/styles/about.css';
 ---
 
@@ -14,10 +15,18 @@ import '@/styles/about.css';
 
     <div class="about-prose">
       <p class="about-opening">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae
-        lectus non erat aliquet porttitor. Maecenas luctus, sem sed feugiat
-        consequat, justo tortor tincidunt neque, vitae fermentum augue risus
-        vitae neque. Curabitur vel dignissim metus, sit amet faucibus velit.
+        <span class="about-portrait-frame">
+          <img
+            src={withBase('/images/about-portrait-placeholder.svg')}
+            alt=""
+            width="800"
+            height="960"
+          />
+        </span><span class="drop-cap">L</span>orem ipsum dolor sit amet, consectetur adipiscing elit. Integer
+        vitae lectus non erat aliquet porttitor. Maecenas luctus, sem sed
+        feugiat consequat, justo tortor tincidunt neque, vitae fermentum augue
+        risus vitae neque. Curabitur vel dignissim metus, sit amet faucibus
+        velit.
       </p>
 
       <p>
@@ -29,22 +38,13 @@ import '@/styles/about.css';
       </p>
 
       <p>
-        At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis
-        praesentium voluptatum deleniti atque corrupti quos dolores et quas
-        molestias excepturi sint occaecati cupiditate non provident, similique
-        sunt in culpa qui officia deserunt mollitia animi.
+        At vero eos et accusamus et iusto odio dignissimos ducimus qui
+        blanditiis praesentium voluptatum deleniti atque corrupti quos dolores
+        et quas molestias excepturi sint occaecati cupiditate non provident,
+        similique sunt in culpa qui officia deserunt mollitia animi.
       </p>
 
-      <p>
-        Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis
-        suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis
-        autem vel eum iure reprehenderit qui in ea voluptate velit esse quam
-        nihil molestiae consequatur.
-      </p>
-
-      <div class="about-divider" aria-hidden="true">
-        <span></span><span></span><span></span>
-      </div>
+      <hr class="about-divider" />
 
       <p>
         Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet,

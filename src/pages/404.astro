@@ -1,28 +1,60 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import { withBase } from '@/lib/paths';
+import BaseHead from '@/components/core/BaseHead.astro';
+import '@/styles/not-found.css';
+
+const videoId = '9390xDUuPuU';
+const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&playsinline=1&rel=0&enablejsapi=1`;
 ---
 
-<BaseLayout title="Page not found — Cyrus Asasi">
-  <section class="container not-found">
-    <p class="eyebrow">404 · wrong turn</p>
-    <h1 class="display">This path does not resolve.</h1>
-    <p class="lede">
-      The experiment may have moved, changed names, or not exist yet.
-    </p>
-    <a class="button-link" href={withBase('/')}>Return home</a>
-  </section>
-</BaseLayout>
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title="404"
+      description="this page is not here, but this video is."
+    />
+  </head>
+  <body class="error-page">
+    <div class="error-noise" aria-hidden="true"></div>
+  
+    <main class="error-stage">
+      <div class="error-video-shell">
+        <iframe
+          id="error-video"
+          src={embedUrl}
+          title="404 page video"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
+      </div>
+    </main>
 
-<style>
-  .not-found {
-    padding-block: var(--space-9);
-  }
-  h1 {
-    max-width: 50rem;
-    margin: 0.5rem 0 1.2rem;
-  }
-  .lede {
-    margin-bottom: 2rem;
-  }
-</style>
+    <button class="error-sound" type="button" aria-pressed="false">
+      sound off
+    </button>
+
+    <script is:inline>
+      const frame = document.querySelector('#error-video');
+      const soundButton = document.querySelector('.error-sound');
+      let soundEnabled = false;
+
+      function sendPlayerCommand(command) {
+        frame?.contentWindow?.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: command,
+            args: [],
+          }),
+          '*',
+        );
+      }
+
+      soundButton?.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        sendPlayerCommand(soundEnabled ? 'unMute' : 'mute');
+        soundButton.textContent = soundEnabled ? 'sound on' : 'sound off';
+        soundButton.setAttribute('aria-pressed', String(soundEnabled));
+      });
+    </script>
+  </body>
+</html>
