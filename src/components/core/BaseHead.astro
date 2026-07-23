@@ -15,20 +15,71 @@ const {
   image,
   canonicalURL = new URL(Astro.url.pathname, Astro.site),
 } = Astro.props;
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const siteNamePattern = escapeRegExp(siteConfig.name);
+
+function getPageName(input: string) {
+  const cleanTitle = input.trim();
+
+  if (
+    !cleanTitle ||
+    cleanTitle === siteConfig.name ||
+    cleanTitle === siteConfig.title ||
+    cleanTitle.startsWith(`${siteConfig.name} —`) ||
+    cleanTitle.startsWith(`${siteConfig.name} –`) ||
+    cleanTitle.startsWith(`${siteConfig.name} -`) ||
+    cleanTitle.startsWith(`${siteConfig.name} |`)
+  ) {
+    return 'Home';
+  }
+
+  return (
+    cleanTitle
+      .replace(
+        new RegExp(`\\s*(?:\\||—|–|-)\\s*${siteNamePattern}\\s*$`, 'i'),
+        '',
+      )
+      .trim() || 'Home'
+  );
+}
+
+const pageName = getPageName(title);
+const resolvedTitle = `${pageName} | ${siteConfig.name}`;
 ---
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="generator" content={Astro.generator} />
 <meta name="description" content={description} />
-<meta name="theme-color" content="#17211b" />
+<meta
+  name="theme-color"
+  media="(prefers-color-scheme: light)"
+  content="#fff8e8"
+/>
+<meta
+  name="theme-color"
+  media="(prefers-color-scheme: dark)"
+  content="#07191d"
+/>
 <link rel="canonical" href={canonicalURL} />
+
 <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
-<title>{title}</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap"
+  rel="stylesheet"
+/>
+
+<title>{resolvedTitle}</title>
 
 <meta property="og:type" content="website" />
-<meta property="og:title" content={title} />
+<meta property="og:title" content={resolvedTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonicalURL} />
 {image && <meta property="og:image" content={new URL(image, Astro.site)} />}
+
 <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />

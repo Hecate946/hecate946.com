@@ -1,0 +1,55 @@
+.minimal-home {
+  position: relative;
+  overflow: clip;
+}
+
+.minimal-hero {
+  position: relative;
+  display: grid;
+  width: min(calc(100% - 2rem), 74rem);
+  min-height: calc(100svh - var(--header-height));
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(1.15rem, 2.4vh, 2rem);
+  align-items: center;
+  margin-inline: auto;
+  padding: clamp(1.8rem, 4vw, 3.1rem) 0 clamp(1rem, 2vw, 1.8rem);
+}
+
+.minimal-intro {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.minimal-intro h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.7rem, 5vw, 4.7rem);
+  font-weight: 520;
+  letter-spacing: -0.058em;
+  line-height: 0.96;
+}
+
+.minimal-intro p {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  font-size: clamp(0.94rem, 1.4vw, 1.08rem);
+  letter-spacing: 0.012em;
+}
+
+.home-network-stage {
+  width: 100%;
+  min-height: 0;
+}
+
+@media (max-width: 640px) {
+  .minimal-hero {
+    width: min(calc(100% - 1rem), 74rem);
+    gap: 1rem;
+    padding-top: 1.4rem;
+  }
+
+  .minimal-intro h1 {
+    font-size: clamp(2.45rem, 12vw, 3.4rem);
+  }
+}

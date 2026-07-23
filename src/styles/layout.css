@@ -1,0 +1,47 @@
+:root {
+  /* Desktop site grid: 12 columns. Header uses 2 / 6 / 1 / 1 / 2. */
+  --site-grid-columns: 12;
+  --site-gutter: clamp(0.75rem, 1.4vw, 1.5rem);
+  --site-edge: clamp(1rem, 3.5vw, 4rem);
+
+  /* Keep this breakpoint identical across the entire site. */
+  --site-breakpoint: 68rem;
+}
+
+.site-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--site-grid-columns), minmax(0, 1fr));
+  column-gap: var(--site-gutter);
+  width: 100%;
+}
+
+.grid-full {
+  grid-column: 1 / -1;
+}
+
+.grid-content {
+  grid-column: 2 / 12;
+}
+
+.grid-reading {
+  grid-column: 4 / 10;
+}
+
+.container {
+  width: min(calc(100% - (2 * var(--site-edge))), var(--content-width));
+}
+
+@media (max-width: 68rem) {
+  :root {
+    /* Mobile header and page grid use the same eight-column division. */
+    --site-grid-columns: 8;
+    --site-edge: 1rem;
+    --site-gutter: 0.75rem;
+    --header-height: 4.9rem;
+  }
+
+  .grid-content,
+  .grid-reading {
+    grid-column: 1 / -1;
+  }
+}

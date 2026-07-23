@@ -20,7 +20,7 @@ export const siteConfig = {
  */
 export const headerNavigation = [
   { label: 'About', href: '/about/' },
-  { label: 'Interests', href: '/interests/' },
+  { label: 'Resume', href: '/resume/' },
   { label: 'Stats', href: '/stats/' },
 ] as const;
 

@@ -1,0 +1,407 @@
+.site-header {
+  --nav-font-size: 1rem;
+  --nav-font-weight: 400;
+  --control-size: 2.2rem;
+  --season-gap: 0.45rem;
+  --nav-underline-color: color-mix(
+    in srgb,
+    var(--header-accent) 72%,
+    transparent
+  );
+
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  border-bottom: 1px solid var(--header-line);
+  background: var(--bg);
+  color: var(--header-text);
+  font-family: var(--font-sans);
+  view-transition-name: site-header;
+}
+
+/* The shadow begins below the real bottom border, never on top of it. */
+.site-header::after {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  height: 0.7rem;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 13%), transparent);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.site-header[data-scrolled='true']::after {
+  opacity: 1;
+}
+
+html[data-theme='dark'] .site-header::after {
+  background: linear-gradient(to bottom, rgb(0 0 0 / 38%), transparent);
+}
+
+::view-transition-group(site-header),
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+::view-transition-old(site-header) {
+  opacity: 0;
+}
+
+::view-transition-new(site-header) {
+  opacity: 1;
+}
+
+html:not([data-theme-ready='true']) .site-header,
+html:not([data-theme-ready='true']) .site-header * {
+  transition: none !important;
+}
+
+/* Desktop: name 2 | nav 6 | command 1 | mode 1 | seasons 2. */
+.header-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  width: 100%;
+  height: var(--header-height);
+  padding: 0;
+}
+
+.header-grid,
+.header-grid * {
+  box-sizing: border-box;
+}
+
+.brand,
+.primary-nav,
+.command-slot,
+.mode-slot,
+.seasons-slot {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand {
+  grid-column: 1 / 3;
+}
+
+.primary-nav {
+  grid-column: 3 / 9;
+}
+
+.command-slot {
+  grid-column: 9 / 10;
+}
+
+.mode-slot {
+  grid-column: 10 / 11;
+}
+
+.seasons-slot {
+  grid-column: 11 / 13;
+  border-right: 1px solid var(--header-line);
+}
+
+.header-region,
+.primary-nav {
+  border-left: 1px solid var(--header-line);
+}
+
+.brand,
+.primary-nav a {
+  color: var(--header-text);
+  font-family: inherit;
+  font-size: var(--nav-font-size);
+  font-weight: var(--nav-font-weight);
+  line-height: 1;
+  text-align: center;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.34em;
+  transition:
+    color 140ms ease,
+    text-decoration-color 140ms ease;
+}
+
+.brand {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  text-decoration-skip-ink: auto;
+  white-space: nowrap;
+}
+
+.brand:hover,
+.brand:focus-visible,
+.primary-nav a:hover,
+.primary-nav a:focus-visible,
+.primary-nav a[aria-current='page'] {
+  background: transparent !important;
+  color: var(--header-text);
+  text-decoration-color: var(--nav-underline-color);
+}
+
+.brand-short {
+  display: none;
+}
+
+.primary-nav ul {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.primary-nav li {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-nav a {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding-inline: clamp(0.45rem, 1.2vw, 1.25rem);
+  background: transparent !important;
+  white-space: nowrap;
+}
+
+.command-slot > astro-island,
+.mode-slot > astro-island,
+.seasons-slot > astro-island {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Search and mode controls remain fixed-size on desktop. */
+.header-action {
+  display: inline-flex;
+  height: var(--control-size);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.36rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--header-text) 34%, transparent);
+  border-radius: 0.56rem;
+  background: color-mix(in srgb, var(--header-text) 8%, var(--bg));
+  color: var(--header-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    transform 140ms ease;
+}
+
+.command-control,
+.mode-control {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  white-space: nowrap;
+}
+
+.command-action,
+.mode-action {
+  width: var(--control-size);
+}
+
+.command-label,
+.mode-label {
+  color: var(--header-text);
+  font-size: 0.82rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.header-action:hover,
+.header-action:focus-visible {
+  border-color: color-mix(in srgb, var(--header-text) 66%, transparent);
+  background: color-mix(in srgb, var(--header-text) 13%, var(--bg));
+  transform: translateY(-1px);
+}
+
+/* Children never transform separately, so icons stay centered while hovering. */
+.header-action-icon {
+  display: grid;
+  width: 1.28rem;
+  height: 1.28rem;
+  flex: 0 0 1.28rem;
+  place-items: center;
+  color: inherit;
+  transform: none;
+}
+
+
+.search-icon svg,
+.mode-icon svg {
+  width: 1.24rem;
+  height: 1.24rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.mode-icon svg {
+  display: none;
+}
+
+/* The icon advertises the mode the button will switch to. */
+html[data-theme='light'] .mode-moon,
+html[data-theme='dark'] .mode-sun {
+  display: block;
+}
+
+/* Fixed-size season buttons with a fixed visual gap. */
+.season-picker {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: var(--season-gap);
+  padding: 0;
+}
+
+.season-button {
+  display: grid;
+  width: var(--control-size);
+  height: var(--control-size);
+  flex: 0 0 var(--control-size);
+  place-items: center;
+  padding: 0.08rem;
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
+  border-radius: 0.56rem;
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  background: var(--season-preview-bg);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+  color: var(--season-preview-ink);
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    outline-color 140ms ease,
+    transform 140ms ease;
+}
+
+.season-button svg {
+  width: 1.55rem;
+  height: 1.55rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
+}
+
+.season-button:hover,
+.season-button:focus-visible {
+  border-color: color-mix(in srgb, var(--header-accent) 80%, currentColor);
+  outline-color: color-mix(in srgb, var(--header-accent) 55%, transparent);
+  transform: translateY(-1px);
+}
+
+html[data-season='spring'] .season-button.spring,
+html[data-season='summer'] .season-button.summer,
+html[data-season='autumn'] .season-button.autumn,
+html[data-season='winter'] .season-button.winter {
+  border-color: color-mix(in srgb, var(--header-accent) 82%, currentColor);
+  outline-color: color-mix(in srgb, var(--header-accent) 82%, white 18%);
+}
+
+/*
+ * Mobile uses eight columns:
+ * row 1: name 3 | mode 3 | seasons 2
+ * row 2: navigation 6 | seasons 2
+ */
+@media (max-width: 68rem) {
+  .site-header {
+    --nav-font-size: 0.92rem;
+    --control-size: 1.95rem;
+    --season-gap: 0.2rem;
+    --mobile-header-row: 2.45rem;
+  }
+
+  .header-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-rows: repeat(2, var(--mobile-header-row));
+    height: calc(2 * var(--mobile-header-row));
+  }
+
+  .brand {
+    grid-column: 1 / 4;
+    grid-row: 1;
+  }
+
+  .command-slot {
+    display: none;
+  }
+
+  .mode-slot {
+    grid-column: 4 / 7;
+    grid-row: 1;
+  }
+
+  .primary-nav {
+    grid-column: 1 / 7;
+    grid-row: 2;
+    border-top: 1px solid var(--header-line);
+  }
+
+  .seasons-slot {
+    grid-column: 7 / 9;
+    grid-row: 1 / 3;
+  }
+
+  .primary-nav a {
+    padding-inline: 0.22rem;
+  }
+
+  .mode-control {
+    gap: 0.34rem;
+  }
+
+  .mode-label {
+    font-size: 0.78rem;
+  }
+
+  .season-picker {
+    display: grid;
+    grid-template-columns: repeat(2, var(--control-size));
+    grid-template-rows: repeat(2, var(--control-size));
+    place-content: center;
+    gap: var(--season-gap);
+  }
+
+  .season-button svg {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+}

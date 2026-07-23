@@ -2,11 +2,11 @@
 import BaseHead from '@/components/core/BaseHead.astro';
 import Footer from '@/components/core/Footer.astro';
 import Header from '@/components/core/Header.astro';
-import SeasonalBackdrop from '@/components/core/SeasonalBackdrop.astro';
 import SkipLink from '@/components/core/SkipLink.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import SeasonalShower from '@/components/islands/SeasonalShower.svelte';
 import CommandPalette from '@/components/islands/CommandPalette.svelte';
+import { headerNavigation } from '@/config/navigation';
 import { navigation } from '@/config/site';
 import { withBase } from '@/lib/paths';
 import '@/styles/global.css';
@@ -18,10 +18,18 @@ interface Props {
 }
 
 const { title, description, image } = Astro.props;
-const commandItems = navigation.map((item) => ({
-  ...item,
-  href: withBase(item.href),
-}));
+
+const commandItems = Array.from(
+  new Map(
+    [...headerNavigation, ...navigation].map((item) => [
+      item.href,
+      {
+        label: item.label,
+        href: withBase(item.href),
+      },
+    ]),
+  ).values(),
+);
 ---
 
 <!doctype html>
@@ -37,12 +45,13 @@ const commandItems = navigation.map((item) => ({
   </head>
   <body>
     <SkipLink />
-    <SeasonalBackdrop />
     <SeasonalShower client:load transition:persist="seasonal-shower" />
     <Header />
+
     <main id="main-content">
       <slot />
     </main>
+
     <Footer />
     <CommandPalette client:load items={commandItems} />
   </body>

@@ -17,28 +17,56 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(
-      circle at 15% 0%,
-      color-mix(in srgb, var(--season-1) 16%, transparent),
-      transparent 34rem
-    ),
-    radial-gradient(
-      circle at 95% 12%,
-      color-mix(in srgb, var(--season-2) 12%, transparent),
-      transparent 30rem
-    ),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
+  font-optical-sizing: auto;
+  font-weight: 400;
   line-height: 1.6;
   text-rendering: optimizeLegibility;
 }
 
+/*
+ * Fixed fractal-noise overlay. It is intentionally pointer-transparent and
+ * applies to the whole viewport, including the matching navbar background.
+ */
+body::after {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.72'/%3E%3C/svg%3E");
+  background-size: var(--page-noise-size) var(--page-noise-size);
+  content: '';
+  filter: contrast(var(--page-noise-contrast));
+  opacity: var(--page-noise-opacity);
+  pointer-events: none;
+}
+
+/* The navbar inherits the page palette instead of using a separate panel. */
+.site-header {
+  --header-bg: var(--bg) !important;
+  --header-text: var(--text) !important;
+  --header-muted: var(--muted) !important;
+  --header-line: var(--line) !important;
+  --header-active-text: var(--accent-strong) !important;
+  --header-accent: var(--accent) !important;
+  --nav-font-weight: 400 !important;
+  background: var(--bg) !important;
+  border-bottom-color: var(--line) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.site-header .brand,
+.site-header .primary-nav a {
+  font-weight: 400 !important;
+  letter-spacing: 0.01em;
+}
+
 a {
   color: inherit;
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.18em;
+  text-decoration-thickness: 0.07em;
+  text-underline-offset: 0.2em;
 }
 
 a:hover {
@@ -54,9 +82,19 @@ a {
     transform var(--duration-fast) ease;
 }
 
+strong,
+b {
+  font-weight: 500;
+}
+
 :focus-visible {
-  outline: 0.2rem solid var(--accent);
-  outline-offset: 0.2rem;
+  outline: 0.16rem solid var(--accent);
+  outline-offset: 0.22rem;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
 }
 
 main {
@@ -75,8 +113,8 @@ main {
 .eyebrow {
   color: var(--accent-strong);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -84,44 +122,44 @@ main {
 .display {
   font-family: var(--font-display);
   font-size: clamp(3rem, 9vw, 7.5rem);
-  font-weight: 500;
-  letter-spacing: -0.055em;
+  font-weight: 400;
+  letter-spacing: -0.045em;
   line-height: 0.92;
 }
 
 .section-title {
   font-family: var(--font-display);
   font-size: clamp(2rem, 5vw, 4rem);
-  font-weight: 500;
-  letter-spacing: -0.035em;
+  font-weight: 400;
+  letter-spacing: -0.03em;
   line-height: 1;
 }
 
 .lede {
   color: var(--muted);
   font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 400;
   line-height: 1.65;
 }
 
 .surface {
-  background: var(--surface);
+  background: var(--surface-strong);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(1rem);
+  box-shadow: 0 0.8rem 2rem color-mix(in srgb, var(--text) 7%, transparent);
 }
 
 .button-link {
   display: inline-flex;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: center;
-  min-height: 2.75rem;
   padding: 0.65rem 1rem;
   background: var(--accent-strong);
   border: 1px solid var(--accent-strong);
   border-radius: var(--radius-pill);
   color: var(--bg);
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
 }
 
@@ -148,6 +186,7 @@ main {
 .prose h3 {
   margin-top: 2.5em;
   font-family: var(--font-display);
+  font-weight: 400;
   line-height: 1.15;
 }
 

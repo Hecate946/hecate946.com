@@ -1,57 +1,84 @@
 ---
-import { siteConfig } from '@/config/site';
-import { withBase } from '@/lib/paths';
+const year = new Date().getFullYear();
+
+const footerLinks = [
+  {
+    label: 'Email',
+    href: 'mailto:cyrusasasi@gmail.com',
+    external: false,
+  },
+  {
+    label: 'GitHub',
+    href: 'https://github.com/Hecate946/',
+    external: true,
+  },
+  {
+    label: 'LinkedIn',
+    href: 'https://www.linkedin.com/in/cyrus-asasi/',
+    external: true,
+  },
+] as const;
 ---
 
-<footer>
-  <div class="container footer-grid">
-    <div>
-      <strong>{siteConfig.name}</strong>
-      <p>Software, music, strategy, and motion.</p>
-    </div>
-    <div class="links">
-      <a href={withBase('/notes/')}>Writing</a>
-      <a href={siteConfig.social.github}>GitHub</a>
-      <a href={siteConfig.social.linkedin}>LinkedIn</a>
-      <a href={siteConfig.social.youtube}>YouTube</a>
-    </div>
-    <p class="copyright">© {new Date().getFullYear()} {siteConfig.name}</p>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p class="copyright">© {year} Cyrus Asasi</p>
+
+    <nav class="footer-links" aria-label="Contact links">
+      {
+        footerLinks.map((link) => (
+          <a
+            href={link.href}
+            target={link.external ? '_blank' : undefined}
+            rel={link.external ? 'me noopener noreferrer' : undefined}
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
   </div>
 </footer>
 
 <style>
-  footer {
-    padding-block: var(--space-7);
+  .site-footer {
+    width: 100%;
     border-top: 1px solid var(--line);
   }
 
-  .footer-grid {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 1.5rem;
-    align-items: end;
-  }
-
-  p {
-    margin: 0.3rem 0 0;
-    color: var(--muted);
-  }
-
-  .links {
+  .footer-inner {
     display: flex;
+    width: 100%;
+    min-height: 5rem;
     flex-wrap: wrap;
-    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    padding: 1.25rem clamp(1rem, 2vw, 2rem);
   }
 
   .copyright {
-    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--muted);
     font-size: 0.85rem;
+    white-space: nowrap;
   }
 
-  @media (max-width: 38rem) {
-    .footer-grid {
-      grid-template-columns: 1fr;
-      align-items: start;
-    }
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.75rem 1.25rem;
+    margin-left: auto;
+  }
+
+  .footer-links a {
+    text-decoration: none;
+  }
+
+  .footer-links a:hover,
+  .footer-links a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 </style>

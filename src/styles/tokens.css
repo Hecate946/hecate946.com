@@ -2,15 +2,15 @@
   color-scheme: light;
 
   /*
-   * One typography family across the complete interface. Existing components
-   * can keep using the semantic sans/display/mono tokens without visually
-   * switching typefaces.
+   * Newsreader gives the site a literary, editorial character without relying
+   * on heavy weights. BaseHead.astro loads the font; the fallbacks keep the
+   * site readable if the request is blocked or still loading.
    */
-  --font-sans:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', sans-serif;
+  --font-sans: 'Newsreader', Georgia, 'Times New Roman', serif;
   --font-display: var(--font-sans);
-  --font-mono: var(--font-sans);
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    monospace;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -36,6 +36,11 @@
   --duration-slow: 700ms;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
 
+  /* Felt/noise controls. Set opacity to 0 to disable the texture. */
+  --page-noise-opacity: 0.045;
+  --page-noise-size: 170px;
+  --page-noise-contrast: 118%;
+
   /* Summer-light fallbacks. themes.css replaces these from data attributes. */
   --bg: #fff8e8;
   --surface: rgba(255, 253, 245, 0.76);
@@ -50,7 +55,6 @@
   --season-2: #f2b84a;
   --season-3: #ef7766;
   --shadow: 0 1.25rem 3rem rgba(44, 73, 64, 0.12);
-
   --header-bg: #dff1e9;
   --header-text: #174b45;
   --header-muted: #2f6861;
@@ -62,4 +66,6 @@
 
 html[data-theme='dark'] {
   color-scheme: dark;
+  --page-noise-opacity: 0.075;
+  --page-noise-contrast: 128%;
 }
