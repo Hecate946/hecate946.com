@@ -17,7 +17,6 @@
   background: var(--bg);
   color: var(--header-text);
   font-family: var(--font-sans);
-  view-transition-name: site-header;
 }
 
 /* The shadow begins below the real bottom border, never on top of it. */
@@ -42,19 +41,6 @@ html[data-theme='dark'] .site-header::after {
   background: linear-gradient(to bottom, rgb(0 0 0 / 38%), transparent);
 }
 
-::view-transition-group(site-header),
-::view-transition-old(site-header),
-::view-transition-new(site-header) {
-  animation: none;
-}
-
-::view-transition-old(site-header) {
-  opacity: 0;
-}
-
-::view-transition-new(site-header) {
-  opacity: 1;
-}
 
 html:not([data-theme-ready='true']) .site-header,
 html:not([data-theme-ready='true']) .site-header * {

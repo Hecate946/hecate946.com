@@ -82,15 +82,15 @@
     >
       {#if season.id === 'spring'}
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <g>
+          <g transform="translate(16 16) scale(1.5) translate(-16 -16)">
             <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z"></path>
             <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z" transform="rotate(72 16 16)"></path>
             <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z" transform="rotate(144 16 16)"></path>
             <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z" transform="rotate(216 16 16)"></path>
             <path d="M16 15c-3.4-1.5-4.5-4.5-2.5-6.3 1.8-1.6 4.5-.2 4.5 3.1 0 1.4-.7 2.5-2 3.2Z" transform="rotate(288 16 16)"></path>
+            <circle cx="16" cy="16" r="2.1"></circle>
+            <path d="m14.8 15.2-1.2-1.1M17.2 15.2l1.2-1.1M16 17.2v1.7"></path>
           </g>
-          <circle cx="16" cy="16" r="2.1"></circle>
-          <path d="m14.8 15.2-1.2-1.1M17.2 15.2l1.2-1.1M16 17.2v1.7"></path>
         </svg>
       {:else if season.id === 'summer'}
         <svg viewBox="0 0 32 32" aria-hidden="true">
