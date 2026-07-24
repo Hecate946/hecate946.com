@@ -71,6 +71,8 @@
       <path d="M218 258h804l-18 20H236Z" fill="url(#roof-shadow)"></path>
       <rect x="258" y="278" width="724" height="18" fill="rgb(32 18 12 / 0.68)"></rect>
       <path d="M258 296h724" stroke="rgb(255 228 190 / 0.12)" stroke-width="2"></path>
+      <path d="M250 301h740" stroke="rgb(0 0 0 / 0.28)" stroke-width="10"></path>
+      <path d="M248 286h744" stroke="rgb(255 255 255 / 0.05)" stroke-width="2"></path>
 
       <g>
         <rect x="360" y="80" width="30" height="76" fill="#9f7753" stroke="#4b3021" stroke-width="3"></rect>
@@ -134,6 +136,7 @@
       <text x="621" y="210" text-anchor="middle" fill="#f8ead1" font-family="Georgia, serif" font-size="18" font-weight="700" letter-spacing="1.02">{stationTitle.toUpperCase()}</text>
 
       <path d="M255 416h734" stroke="#000" stroke-opacity=".24" stroke-width="12"></path>
+      <path d="M250 412h744" stroke="rgb(255 255 255 / 0.06)" stroke-width="2"></path>
       <rect x="212" y="416" width="816" height="20" rx="3" fill="#7d7a72" stroke="#43403b" stroke-width="3"></rect>
       <path d="M212 424h816" stroke="#d1bd66" stroke-width="3"></path>
       <path d="M244 436h752" stroke="#302d2a" stroke-width="5"></path>
@@ -164,6 +167,7 @@
 
       <path d="M244 250h752" stroke="rgb(255 233 202 / 0.11)" stroke-width="4"></path>
       <path d="M250 406h740" stroke="rgb(0 0 0 / 0.34)" stroke-width="8"></path>
+      <path d="M280 320h50M892 320h50" stroke="rgb(0 0 0 / 0.22)" stroke-width="8" stroke-linecap="round"></path>
     </g>
   </svg>
 </div>

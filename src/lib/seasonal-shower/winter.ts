@@ -10,9 +10,9 @@ export function drawSnowflake(
 
   context.save();
   context.rotate((variant * Math.PI) / 24);
-  context.shadowColor = 'rgba(90, 165, 220, 0.6)';
+  context.shadowColor = 'rgba(137, 147, 156, 0.55)';
   context.shadowBlur = 7;
-  context.strokeStyle = 'rgba(165, 215, 245, 0.95)';
+  context.strokeStyle = 'rgba(170, 212, 236, 0.96)';
   context.lineWidth = 3.2;
 
   for (let index = 0; index < branches; index += 1) {
@@ -38,7 +38,7 @@ export function drawSnowflake(
     context.restore();
   }
 
-  context.fillStyle = 'rgba(238, 250, 255, 0.98)';
+  context.fillStyle = 'rgba(180, 206, 231, 0.98)';
   context.beginPath();
   context.arc(0, 0, 5.5, 0, Math.PI * 2);
   context.fill();

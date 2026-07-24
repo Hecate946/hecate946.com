@@ -143,47 +143,47 @@ html[data-season='autumn'][data-theme='dark'] {
 }
 
 html[data-season='winter'][data-theme='light'] {
-  --bg: #eef5f7;
-  --surface: rgba(250, 253, 254, 0.8);
-  --surface-strong: #fbfeff;
-  --text: #263e4d;
-  --muted: #687f8c;
-  --line: rgba(57, 91, 111, 0.2);
-  --accent: #557f9a;
-  --accent-strong: #315a73;
-  --accent-soft: rgba(85, 127, 154, 0.14);
-  --season-1: #79a7bc;
-  --season-2: #b9d6e2;
-  --season-3: #8d8eb0;
-  --shadow: 0 1.25rem 3rem rgba(48, 78, 96, 0.12);
-  --header-bg: #dceaf0;
-  --header-text: #34566b;
-  --header-muted: #597486;
-  --header-line: rgba(52, 86, 107, 0.23);
-  --header-hover: rgba(255, 255, 255, 0.44);
-  --header-active-text: #274b63;
-  --header-accent: #7ea9bf;
+  --bg: #f1f2f3;
+  --surface: rgba(251, 251, 252, 0.82);
+  --surface-strong: #fdfdfd;
+  --text: #30353a;
+  --muted: #71777d;
+  --line: rgba(67, 73, 79, 0.2);
+  --accent: #6f7d86;
+  --accent-strong: #4f5b63;
+  --accent-soft: rgba(111, 125, 134, 0.14);
+  --season-1: #9ca5ab;
+  --season-2: #d2d6d9;
+  --season-3: #aaa9b8;
+  --shadow: 0 1.25rem 3rem rgba(49, 54, 59, 0.11);
+  --header-bg: #e2e4e6;
+  --header-text: #454c52;
+  --header-muted: #6d747a;
+  --header-line: rgba(69, 76, 82, 0.23);
+  --header-hover: rgba(255, 255, 255, 0.46);
+  --header-active-text: #363d42;
+  --header-accent: #9aa7af;
 }
 
 html[data-season='winter'][data-theme='dark'] {
-  --bg: #0a131d;
-  --surface: rgba(18, 33, 47, 0.82);
-  --surface-strong: #17293a;
-  --text: #edf5fa;
-  --muted: #a7bbc8;
-  --line: rgba(224, 239, 249, 0.15);
-  --accent: #8fc0d8;
-  --accent-strong: #c5e7f5;
-  --accent-soft: rgba(143, 192, 216, 0.16);
-  --season-1: #6fa3bd;
-  --season-2: #bddbe8;
-  --season-3: #9093bd;
-  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.36);
-  --header-bg: #102536;
-  --header-text: #eef7fb;
-  --header-muted: #b1c7d3;
-  --header-line: rgba(224, 241, 250, 0.16);
-  --header-hover: rgba(143, 192, 216, 0.11);
-  --header-active-text: #d4effb;
-  --header-accent: #79abc4;
+  --bg: #111315;
+  --surface: rgba(29, 32, 35, 0.84);
+  --surface-strong: #24282c;
+  --text: #f0f1f2;
+  --muted: #b0b4b8;
+  --line: rgba(232, 235, 238, 0.15);
+  --accent: #aab4ba;
+  --accent-strong: #d7dde1;
+  --accent-soft: rgba(170, 180, 186, 0.16);
+  --season-1: #8e9aa1;
+  --season-2: #d4dadd;
+  --season-3: #a5a6b6;
+  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.38);
+  --header-bg: #1d2125;
+  --header-text: #f0f2f3;
+  --header-muted: #bcc1c5;
+  --header-line: rgba(236, 239, 241, 0.16);
+  --header-hover: rgba(170, 180, 186, 0.11);
+  --header-active-text: #e2e7ea;
+  --header-accent: #a7b3ba;
 }

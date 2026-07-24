@@ -439,31 +439,33 @@
   }
 
   .railway-scene {
+    --railway-station-width: clamp(31rem, 46vw, 54rem);
+    --railway-train-width: clamp(62rem, 88vw, 92rem);
     position: relative;
-    min-height: clamp(25.5rem, 35vw, 30rem);
+    min-height: clamp(27rem, 39vw, 33rem);
     overflow: hidden;
     background: transparent;
   }
 
   .railway-station-position {
     position: absolute;
-    right: clamp(-2.8rem, -1.1vw, -0.4rem);
-    bottom: 3.98rem;
-    width: clamp(28rem, 42vw, 48rem);
+    right: clamp(-1.35rem, -0.35vw, -0.1rem);
+    bottom: 2.78rem;
+    width: var(--railway-station-width);
   }
 
   .railway-train-runner {
     position: absolute;
     z-index: 14;
-    bottom: 2.95rem;
+    bottom: 0.88rem;
     left: 0;
     width: max-content;
-    transform: translateX(calc(-100% - 18rem));
+    transform: translateX(calc(-100% - 14rem));
     will-change: transform;
   }
 
   .railway-is-static .railway-train-runner {
-    transform: translateX(calc(85vw - 102rem));
+    transform: translateX(calc(84vw - 93rem));
   }
 
   .railway-status {
@@ -480,17 +482,18 @@
 
   @media (max-width: 72rem) {
     .railway-scene {
-      min-height: 23.6rem;
+      --railway-station-width: clamp(27rem, 47vw, 41rem);
+      --railway-train-width: clamp(54rem, 96vw, 76rem);
+      min-height: 24.8rem;
     }
 
     .railway-station-position {
-      right: -2.1rem;
-      bottom: 3.88rem;
-      width: clamp(24rem, 43vw, 36rem);
+      right: -1rem;
+      bottom: 2.32rem;
     }
 
     .railway-is-static .railway-train-runner {
-      transform: translateX(calc(86vw - 92rem));
+      transform: translateX(calc(85vw - 80rem));
     }
   }
 
@@ -500,7 +503,9 @@
     }
 
     .railway-scene {
-      min-height: 20.4rem;
+      --railway-station-width: clamp(19rem, 58vw, 28rem);
+      --railway-train-width: clamp(46rem, 138vw, 62rem);
+      min-height: 21.8rem;
     }
 
     .railway-replay span {
@@ -513,17 +518,16 @@
     }
 
     .railway-station-position {
-      right: -2.7rem;
-      bottom: 3.22rem;
-      width: clamp(19rem, 60vw, 27rem);
+      right: -1.2rem;
+      bottom: 2.32rem;
     }
 
     .railway-train-runner {
-      bottom: 2.7rem;
+      bottom: 0.82rem;
     }
 
     .railway-is-static .railway-train-runner {
-      transform: translateX(calc(90vw - 80rem));
+      transform: translateX(calc(88vw - 67rem));
     }
   }
 
