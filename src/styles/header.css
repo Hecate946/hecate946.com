@@ -22,23 +22,23 @@
 
 
 /*
- * Cover the viewport above the sticky navbar during iOS/iPadOS rubber-band
- * scrolling. This must sit above page content, not behind the header's
- * stacking context, or large headings can bleed through the overscroll gap.
+ * Mobile Safari can render the page underneath its translucent browser chrome.
+ * A fixed foreground backdrop, owned by the header stacking context, prevents
+ * page headings from showing through above or behind the two-row navbar.
  */
 .site-header::before {
-  position: absolute;
-  right: 0;
-  bottom: 100%;
-  left: 0;
+  position: fixed;
   z-index: 0;
-  height: calc(100vh + env(safe-area-inset-top));
+  top: 0;
+  right: 0;
+  left: 0;
+  height: calc(var(--header-height) + env(safe-area-inset-top));
   background: var(--bg);
   content: '';
   pointer-events: none;
 }
 
-/* Keep the real navbar above the overscroll mask. */
+/* Keep the real navbar above the fixed backdrop. */
 .header-grid {
   position: relative;
   z-index: 1;
@@ -364,6 +364,10 @@ html[data-season='winter'] .season-button.winter {
     --nav-font-size: 0.92rem;
   }
 
+  .site-header::before {
+    height: calc(2 * var(--header-height) + env(safe-area-inset-top));
+  }
+
   .header-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     grid-template-rows: repeat(2, var(--header-height));
@@ -414,6 +418,10 @@ html[data-season='winter'] .season-button.winter {
     --nav-font-size: 0.92rem;
     --control-size: 2.2rem;
     --season-gap: 0.38rem;
+  }
+
+  .site-header::before {
+    height: calc(2 * var(--header-height) + env(safe-area-inset-top));
   }
 
   .header-grid {

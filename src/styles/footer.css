@@ -56,26 +56,25 @@ body:has(> .site-footer) > main {
   flex: 0 0 2.2rem;
   place-items: center;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--footer-icon-bg) 72%, black);
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
   border-radius: 0.56rem;
-  background: var(--footer-icon-bg);
-  color: #fff;
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+  color: var(--header-text);
   text-decoration: none;
   transition:
     border-color 140ms ease,
-    background-color 140ms ease,
+    outline-color 140ms ease,
     transform 140ms ease;
 }
 
 .footer-icon-link svg {
-  width: 1.72rem;
-  height: 1.72rem;
+  width: 1.7rem;
+  height: 1.7rem;
   overflow: visible;
 }
-
-
-
-
 
 .footer-icon-link::after {
   position: absolute;
@@ -101,8 +100,9 @@ body:has(> .site-footer) > main {
 
 .footer-icon-link:hover,
 .footer-icon-link:focus-visible {
-  border-color: color-mix(in srgb, var(--footer-icon-bg) 56%, black);
-  background: color-mix(in srgb, var(--footer-icon-bg) 88%, black);
+  border-color: color-mix(in srgb, var(--header-accent) 80%, currentColor);
+  outline-color: color-mix(in srgb, var(--header-accent) 55%, transparent);
+  background: transparent;
   transform: translateY(-1px);
 }
 
@@ -112,18 +112,18 @@ body:has(> .site-footer) > main {
   transform: translate(-50%, 0);
 }
 
-.footer-icon-link:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 3px;
+.footer-service-logo--gmail {
+  display: block;
+  width: 1.78rem;
+  height: 1.78rem;
 }
 
-.footer-icon-link--email { --footer-icon-bg: #b53a50; }
-
-.footer-icon-link--github { --footer-icon-bg: #5b3ab5; }
-
-.footer-icon-link--linkedin { --footer-icon-bg: #075f9f; }
-
-.footer-icon-link--coffee { --footer-icon-bg: #b87400; }
+.footer-icon-link--coffee img {
+  display: block;
+  width: 1.58rem;
+  height: 1.58rem;
+  object-fit: contain;
+}
 
 @media (max-width: 68rem) {
   .site-footer {
@@ -166,9 +166,50 @@ body:has(> .site-footer) > main {
   }
 }
 
-.footer-icon-link--coffee img {
-  display: block;
-  width: 1.55rem;
-  height: 1.55rem;
-  object-fit: contain;
+
+/* Service marks remain unchanged on hover; only the border/outline reacts. */
+.footer-service-logo--github,
+.footer-service-logo--linkedin {
+  fill: currentColor;
+}
+
+.footer-icon-link--github {
+  color: #111111;
+}
+
+html[data-theme='dark'] .footer-icon-link--github {
+  color: #ffffff;
+}
+
+.footer-icon-link--linkedin {
+  color: #0a66c2;
+}
+
+.footer-service-logo--coffee {
+  width: 1.62rem;
+  height: 1.62rem;
+}
+
+.coffee-cup-fill {
+  fill: #ffdd00;
+}
+
+.coffee-cup-outline {
+  fill: none;
+  stroke: #16120b;
+  stroke-width: 1.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+html[data-theme='dark'] .coffee-cup-outline {
+  stroke: #ffffff;
+}
+
+/* Exact match for the seasonal selector's hover/focus treatment. */
+.footer-icon-link:hover,
+.footer-icon-link:focus-visible {
+  border-color: color-mix(in srgb, var(--header-accent) 80%, currentColor);
+  outline-color: color-mix(in srgb, var(--header-accent) 55%, transparent);
+  background: transparent;
 }
