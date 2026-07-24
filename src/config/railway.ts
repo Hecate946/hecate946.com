@@ -6,6 +6,7 @@ export interface RailwayStop {
 }
 
 export interface RailwayConfig {
+  enabled: boolean;
   lineName: string;
   serviceLabel: string;
   navigationEnabled: boolean;
@@ -19,11 +20,13 @@ export interface RailwayConfig {
  * Set navigationEnabled to true when the train cars should become links.
  */
 export const railwayConfig = {
+  // Change this one flag to hide or restore the railway everywhere.
+  enabled: false,
   lineName: 'Line 946',
   serviceLabel: 'Steam service',
   navigationEnabled: false,
   autoPlay: true,
-  durationSeconds: 19,
+  durationSeconds: 17,
   stops: [
     {
       id: 'home',

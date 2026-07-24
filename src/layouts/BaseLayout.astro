@@ -77,16 +77,20 @@ const commandItems = Array.from(
       <slot />
     </main>
 
-    <RailwayPassage
-      client:visible
-      lineName={railwayConfig.lineName}
-      serviceLabel={railwayConfig.serviceLabel}
-      stops={railwayStops}
-      navigationEnabled={railwayConfig.navigationEnabled}
-      autoPlay={railwayConfig.autoPlay}
-      durationSeconds={railwayConfig.durationSeconds}
-      currentStopLabel={currentRailwayStop.label}
-    />
+    {
+      railwayConfig.enabled && (
+        <RailwayPassage
+          client:visible
+          lineName={railwayConfig.lineName}
+          serviceLabel={railwayConfig.serviceLabel}
+          stops={railwayStops}
+          navigationEnabled={railwayConfig.navigationEnabled}
+          autoPlay={railwayConfig.autoPlay}
+          durationSeconds={railwayConfig.durationSeconds}
+          currentStopLabel={currentRailwayStop.label}
+        />
+      )
+    }
 
     <Footer />
     <CommandPalette client:load items={commandItems} />

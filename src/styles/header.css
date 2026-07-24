@@ -116,7 +116,6 @@ html:not([data-theme-ready='true']) .site-header * {
 
 .seasons-slot {
   grid-column: 11 / 13;
-  border-right: 1px solid var(--header-line);
 }
 
 .header-region,
@@ -299,12 +298,13 @@ html[data-theme='dark'] .mode-sun {
 
 /* Fixed-size season buttons with a fixed visual gap. */
 .season-picker {
-  display: flex;
+  display: grid;
   width: 100%;
   height: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
-  justify-content: center;
-  gap: var(--season-gap);
+  justify-items: center;
+  gap: 0;
   padding: 0;
 }
 
@@ -398,7 +398,8 @@ html[data-season='winter'] .season-button.winter {
     grid-column: 1 / 7;
     grid-row: 2;
     border-top: 1px solid var(--header-line);
-    border-right: 1px solid var(--header-line);
+    border-right: 0;
+    border-left: 0;
   }
 
   .primary-nav a {
@@ -448,6 +449,7 @@ html[data-season='winter'] .season-button.winter {
     grid-column: 1 / 7;
     grid-row: 2;
     border-top: 1px solid var(--header-line);
+    border-left: 0;
   }
 
   .seasons-slot {
@@ -468,11 +470,10 @@ html[data-season='winter'] .season-button.winter {
   }
 
   .season-picker {
-    display: grid;
-    grid-template-columns: repeat(2, var(--control-size));
-    grid-template-rows: repeat(2, var(--control-size));
-    place-content: center;
-    gap: var(--season-gap);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    place-items: center;
+    gap: 0;
   }
 
 }
