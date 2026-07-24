@@ -21,22 +21,33 @@
 }
 
 
-/* Mask the browser overscroll area above the sticky navbar on touch devices. */
+/*
+ * Cover the viewport above the sticky navbar during iOS/iPadOS rubber-band
+ * scrolling. This must sit above page content, not behind the header's
+ * stacking context, or large headings can bleed through the overscroll gap.
+ */
 .site-header::before {
   position: absolute;
   right: 0;
   bottom: 100%;
   left: 0;
-  z-index: -1;
+  z-index: 0;
   height: calc(100vh + env(safe-area-inset-top));
   background: var(--bg);
   content: '';
   pointer-events: none;
 }
 
+/* Keep the real navbar above the overscroll mask. */
+.header-grid {
+  position: relative;
+  z-index: 1;
+}
+
 /* The shadow begins below the real bottom border, never on top of it. */
 .site-header::after {
   position: absolute;
+  z-index: 2;
   top: 100%;
   right: 0;
   left: 0;

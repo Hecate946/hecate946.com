@@ -73,29 +73,9 @@ body:has(> .site-footer) > main {
   overflow: visible;
 }
 
-.footer-icon-logo,
-.footer-icon-mark {
-  fill: #fff;
-  stroke: none;
-}
 
-.footer-icon-mark {
-  fill: rgb(255 255 255 / 0.96);
-}
 
-.footer-icon-detail {
-  fill: none;
-  stroke: var(--footer-icon-bg);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.25;
-}
 
-.footer-icon-spark {
-  fill: var(--footer-icon-spark);
-  stroke: rgb(255 255 255 / 0.88);
-  stroke-width: 0.55;
-}
 
 .footer-icon-link::after {
   position: absolute;
@@ -137,25 +117,13 @@ body:has(> .site-footer) > main {
   outline-offset: 3px;
 }
 
-.footer-icon-link--email {
-  --footer-icon-bg: #d94868;
-  --footer-icon-spark: #ffd84d;
-}
+.footer-icon-link--email { --footer-icon-bg: #b53a50; }
 
-.footer-icon-link--github {
-  --footer-icon-bg: #7044d4;
-  --footer-icon-spark: #62e6ff;
-}
+.footer-icon-link--github { --footer-icon-bg: #5b3ab5; }
 
-.footer-icon-link--linkedin {
-  --footer-icon-bg: #0875c9;
-  --footer-icon-spark: #ff70c8;
-}
+.footer-icon-link--linkedin { --footer-icon-bg: #075f9f; }
 
-.footer-icon-link--coffee {
-  --footer-icon-bg: #d88900;
-  --footer-icon-spark: #ff5d8f;
-}
+.footer-icon-link--coffee { --footer-icon-bg: #b87400; }
 
 @media (max-width: 68rem) {
   .site-footer {

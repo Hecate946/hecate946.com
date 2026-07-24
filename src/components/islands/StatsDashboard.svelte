@@ -82,6 +82,24 @@
   let codeStats: CodeStats | null = null;
   let liveError = '';
   let codeError = '';
+  type StatsTab = 'website' | 'code' | 'you';
+
+  interface YourStats {
+    firstVisitAt: string;
+    lastVisitAt: string;
+    visits: number;
+    pageViews: number;
+    activeSeconds: number;
+    interactions: number;
+    pages: Record<string, number>;
+    events: Record<string, number>;
+    colorTheme: string;
+    season: string;
+  }
+
+  const LOCAL_STATS_KEY = 'hecate946:your-stats';
+  let activeTab: StatsTab = 'website';
+  let yourStats: YourStats | null = null;
   let refreshing = false;
 
   const numberFormatter = new Intl.NumberFormat('en-US');
@@ -117,6 +135,42 @@
     return Number.isNaN(date.valueOf())
       ? 'at an unknown time'
       : dateTimeFormatter.format(date);
+  }
+
+  function formatDuration(totalSeconds: number) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const hours = Math.floor(minutes / 60);
+    if (hours) return `${hours}h ${minutes % 60}m`;
+    if (minutes) return `${minutes}m`;
+    return `${Math.max(0, totalSeconds)}s`;
+  }
+
+  function rankedEntries(values: Record<string, number> = {}) {
+    return Object.entries(values)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+  }
+
+  function loadYourStats() {
+    try {
+      const saved = window.localStorage.getItem(LOCAL_STATS_KEY);
+      yourStats = saved ? JSON.parse(saved) as YourStats : null;
+    } catch {
+      yourStats = null;
+    }
+  }
+
+  function selectTab(tab: StatsTab, updateUrl = true) {
+    activeTab = tab;
+    if (!updateUrl) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    window.history.replaceState({}, '', url);
+  }
+
+  function clearYourStats() {
+    window.localStorage.removeItem(LOCAL_STATS_KEY);
+    yourStats = null;
   }
 
   function humanizeEvent(value: string) {
@@ -200,13 +254,27 @@
   }
 
   onMount(() => {
+    const requestedTab = new URL(window.location.href).searchParams.get('tab');
+    if (requestedTab === 'code' || requestedTab === 'you') activeTab = requestedTab;
+    loadYourStats();
+    window.addEventListener('hecate:local-stats-updated', loadYourStats);
     void refresh();
     const interval = window.setInterval(() => void loadLiveStats(), 15_000);
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('hecate:local-stats-updated', loadYourStats);
+    };
   });
 </script>
 
 <div class="stats-dashboard" aria-busy={refreshing}>
+  <nav class="stats-tabs" aria-label="Stats sections">
+    <button class:active={activeTab === 'website'} aria-selected={activeTab === 'website'} on:click={() => selectTab('website')}>Website stats</button>
+    <button class:active={activeTab === 'code'} aria-selected={activeTab === 'code'} on:click={() => selectTab('code')}>Code stats</button>
+    <button class:active={activeTab === 'you'} aria-selected={activeTab === 'you'} on:click={() => selectTab('you')}>Your stats</button>
+  </nav>
+
+  {#if activeTab === 'website'}
   <section class="stats-section" aria-labelledby="website-stats-title">
     <div class="stats-section-heading">
       <h2 id="website-stats-title">Website</h2>
@@ -347,7 +415,7 @@
       multiple devices.
     </p>
   </section>
-
+  {:else if activeTab === 'code'}
   <section class="stats-section" aria-labelledby="code-stats-title">
     <div class="stats-section-heading">
       <h2 id="code-stats-title">Code</h2>
@@ -446,4 +514,56 @@
       </div>
     {/if}
   </section>
+  {:else}
+  <section class="stats-section" aria-labelledby="your-stats-title">
+    <div class="stats-section-heading">
+      <div>
+        <h2 id="your-stats-title">Your stats</h2>
+        <p>Stored only in this browser. Nothing here identifies you personally.</p>
+      </div>
+      {#if yourStats}
+        <button class="stats-reset" type="button" on:click={clearYourStats}>Clear my stats</button>
+      {/if}
+    </div>
+
+    {#if yourStats}
+      <div class="stats-metrics">
+        <div class="stats-metric"><strong>{formatNumber(yourStats.visits)}</strong><span>Visits</span></div>
+        <div class="stats-metric"><strong>{formatNumber(yourStats.pageViews)}</strong><span>Page views</span></div>
+        <div class="stats-metric"><strong>{formatDuration(yourStats.activeSeconds)}</strong><span>Active time</span></div>
+        <div class="stats-metric"><strong>{formatNumber(yourStats.interactions)}</strong><span>Interactions</span></div>
+        <div class="stats-metric"><strong>{humanizeEvent(yourStats.season)}</strong><span>Favorite season setting</span></div>
+        <div class="stats-metric"><strong>{humanizeEvent(yourStats.colorTheme)}</strong><span>Color mode</span></div>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stats-panel stats-panel-half">
+          <div class="stats-panel-heading"><h3>Your most visited pages</h3><p>On this browser</p></div>
+          {#if rankedEntries(yourStats.pages).length}
+            <ol class="stats-list">
+              {#each rankedEntries(yourStats.pages) as [label, value]}
+                <li><span class="stats-list-label">{label}</span><span class="stats-list-value">{formatNumber(value)}</span></li>
+              {/each}
+            </ol>
+          {:else}<div class="stats-empty">Explore a few pages to build your history.</div>{/if}
+        </article>
+
+        <article class="stats-panel stats-panel-half">
+          <div class="stats-panel-heading"><h3>Your interactions</h3><p>Buttons, themes, searches, and links</p></div>
+          {#if rankedEntries(yourStats.events).length}
+            <ol class="stats-list">
+              {#each rankedEntries(yourStats.events) as [label, value]}
+                <li><span class="stats-list-label">{humanizeEvent(label)}</span><span class="stats-list-value">{formatNumber(value)}</span></li>
+              {/each}
+            </ol>
+          {:else}<div class="stats-empty">Your interactions will appear here.</div>{/if}
+        </article>
+      </div>
+
+      <p class="stats-footnote">First seen {formatDate(yourStats.firstVisitAt)} · Most recently active {formatDateTime(yourStats.lastVisitAt)}. Clearing browser storage or using another device starts a separate history.</p>
+    {:else}
+      <div class="stats-empty stats-empty-personal">Your personal history starts as you browse this site. Reload once after this update is deployed to begin tracking it.</div>
+    {/if}
+  </section>
+  {/if}
 </div>
