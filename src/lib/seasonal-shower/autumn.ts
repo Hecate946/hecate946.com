@@ -69,21 +69,25 @@ function strokeStem(context: CanvasRenderingContext2D, palette: AutumnPalette, f
 function drawRoundedLobed(context: CanvasRenderingContext2D, palette: AutumnPalette, variant: number) {
   const trace = () => {
     context.beginPath();
-    context.moveTo(-8, 47);
-    context.bezierCurveTo(-35, 50, -51, 36, -45, 17);
-    context.bezierCurveTo(-63, 7, -59, -14, -41, -18);
-    context.bezierCurveTo(-52, -39, -33, -55, -16, -42);
-    context.bezierCurveTo(-8, -67, 15, -65, 18, -39);
-    context.bezierCurveTo(39, -53, 57, -35, 45, -16);
-    context.bezierCurveTo(66, -8, 62, 14, 43, 20);
-    context.bezierCurveTo(53, 39, 26, 54, -8, 47);
+    context.moveTo(-6, 50);
+    context.bezierCurveTo(-24, 47, -37, 39, -35, 24);
+    context.bezierCurveTo(-49, 18, -52, 3, -39, -5);
+    context.bezierCurveTo(-50, -18, -42, -35, -24, -34);
+    context.bezierCurveTo(-25, -58, -7, -66, 2, -45);
+    context.bezierCurveTo(17, -60, 34, -48, 31, -29);
+    context.bezierCurveTo(48, -28, 54, -12, 41, -2);
+    context.bezierCurveTo(51, 10, 45, 28, 28, 29);
+    context.bezierCurveTo(28, 44, 12, 54, -6, 50);
     context.closePath();
   };
   fillShape(context, trace, palette, variant);
-  strokeStem(context, palette, -18, 69, 30, -38, 3.8);
-  context.lineWidth = 1.7;
-  for (const [x, y, ex, ey] of [[-2,31,-35,14],[6,17,-35,-10],[15,1,-20,-30],[3,28,32,27],[12,12,43,4],[22,-5,42,-21]] as const) {
-    context.beginPath(); context.moveTo(x,y); context.quadraticCurveTo((x+ex)/2,y-2,ex,ey); context.stroke();
+  strokeStem(context, palette, -12, 71, 12, -41, 3.8);
+  context.lineWidth = 1.65;
+  for (const [x, y, ex, ey] of [[-1,31,-28,18],[5,17,-30,2],[10,3,-20,-20],[2,29,25,30],[9,14,31,10],[16,-1,29,-13]] as const) {
+    context.beginPath();
+    context.moveTo(x, y);
+    context.quadraticCurveTo((x + ex) / 2, y - 2, ex, ey);
+    context.stroke();
   }
 }
 
@@ -113,11 +117,24 @@ function drawBerrySprig(context: CanvasRenderingContext2D, palette: AutumnPalett
 }
 
 function drawOvalLeaf(context: CanvasRenderingContext2D, palette: AutumnPalette, variant: number) {
-  const trace = () => { context.beginPath(); context.moveTo(-8,48); context.bezierCurveTo(-43,37,-51,1,-38,-29); context.bezierCurveTo(-24,-61,12,-65,40,-43); context.bezierCurveTo(60,-26,58,10,39,33); context.bezierCurveTo(22,53,5,57,-8,48); context.closePath(); };
+  const trace = () => {
+    context.beginPath();
+    context.moveTo(-5, 50);
+    context.bezierCurveTo(-28, 42, -36, 7, -28, -25);
+    context.bezierCurveTo(-19, -60, 7, -71, 26, -51);
+    context.bezierCurveTo(42, -35, 44, -2, 31, 26);
+    context.bezierCurveTo(20, 47, 7, 57, -5, 50);
+    context.closePath();
+  };
   fillShape(context, trace, palette, variant);
-  strokeStem(context,palette,-17,67,35,-40,3.7);
-  context.lineWidth=1.65;
-  for (const [sx,sy,ex,ey] of [[-4,27,-30,12],[3,15,-28,-2],[11,3,-22,-18],[20,-11,-10,-34],[2,24,30,25],[10,11,39,8],[18,-3,43,-13],[26,-17,43,-29]] as const) { context.beginPath(); context.moveTo(sx,sy); context.quadraticCurveTo((sx+ex)/2,sy-2,ex,ey); context.stroke(); }
+  strokeStem(context, palette, -12, 69, 23, -49, 3.55);
+  context.lineWidth = 1.6;
+  for (const [sx, sy, ex, ey] of [[-2, 28, -21, 13],[4, 16, -19, 0],[10, 3, -15, -16],[16, -10, -4, -33],[2, 24, 23, 25],[9, 11, 29, 9],[15, -2, 31, -10],[20, -15, 31, -26]] as const) {
+    context.beginPath();
+    context.moveTo(sx, sy);
+    context.quadraticCurveTo((sx + ex) / 2, sy - 2, ex, ey);
+    context.stroke();
+  }
 }
 
 function drawOakLeaf(context: CanvasRenderingContext2D, palette: AutumnPalette, variant: number) {
