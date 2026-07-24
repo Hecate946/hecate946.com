@@ -51,34 +51,50 @@ body:has(> .site-footer) > main {
 .footer-icon-link {
   position: relative;
   display: grid;
-  width: 1.8rem;
-  height: 1.8rem;
-  flex: 0 0 auto;
+  width: 2.2rem;
+  height: 2.2rem;
+  flex: 0 0 2.2rem;
   place-items: center;
-  border-radius: 0.35rem;
-  color: var(--text);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--footer-icon-bg) 72%, black);
+  border-radius: 0.56rem;
+  background: var(--footer-icon-bg);
+  color: #fff;
   text-decoration: none;
   transition:
-    color var(--duration-fast) ease,
-    opacity var(--duration-fast) ease,
-    transform var(--duration-fast) ease;
+    border-color 140ms ease,
+    background-color 140ms ease,
+    transform 140ms ease;
 }
 
 .footer-icon-link svg {
-  width: 1.22rem;
-  height: 1.22rem;
+  width: 1.72rem;
+  height: 1.72rem;
   overflow: visible;
-  fill: currentColor;
+}
+
+.footer-icon-logo,
+.footer-icon-mark {
+  fill: #fff;
   stroke: none;
 }
 
-.footer-icon-link--email svg,
-.footer-icon-link--coffee svg {
+.footer-icon-mark {
+  fill: rgb(255 255 255 / 0.96);
+}
+
+.footer-icon-detail {
   fill: none;
-  stroke: currentColor;
+  stroke: var(--footer-icon-bg);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.65;
+  stroke-width: 1.25;
+}
+
+.footer-icon-spark {
+  fill: var(--footer-icon-spark);
+  stroke: rgb(255 255 255 / 0.88);
+  stroke-width: 0.55;
 }
 
 .footer-icon-link::after {
@@ -105,7 +121,8 @@ body:has(> .site-footer) > main {
 
 .footer-icon-link:hover,
 .footer-icon-link:focus-visible {
-  opacity: 0.78;
+  border-color: color-mix(in srgb, var(--footer-icon-bg) 56%, black);
+  background: color-mix(in srgb, var(--footer-icon-bg) 88%, black);
   transform: translateY(-1px);
 }
 
@@ -121,19 +138,23 @@ body:has(> .site-footer) > main {
 }
 
 .footer-icon-link--email {
-  color: #d45a4c;
+  --footer-icon-bg: #d94868;
+  --footer-icon-spark: #ffd84d;
 }
 
 .footer-icon-link--github {
-  color: #7656a8;
+  --footer-icon-bg: #7044d4;
+  --footer-icon-spark: #62e6ff;
 }
 
 .footer-icon-link--linkedin {
-  color: #0a66c2;
+  --footer-icon-bg: #0875c9;
+  --footer-icon-spark: #ff70c8;
 }
 
 .footer-icon-link--coffee {
-  color: #c89200;
+  --footer-icon-bg: #d88900;
+  --footer-icon-spark: #ff5d8f;
 }
 
 @media (max-width: 68rem) {
@@ -161,18 +182,8 @@ body:has(> .site-footer) > main {
   }
 
   .footer-links {
-    grid-column: 8 / span 5;
+    grid-column: 6 / span 7;
     gap: 0.38rem;
-  }
-
-  .footer-icon-link {
-    width: 1.65rem;
-    height: 1.65rem;
-  }
-
-  .footer-icon-link svg {
-    width: 1.05rem;
-    height: 1.05rem;
   }
 
   .footer-icon-link::after {
@@ -187,40 +198,9 @@ body:has(> .site-footer) > main {
   }
 }
 
-/* Friendlier, tactile square social buttons */
-.footer-icon-link {
-  width: 2.05rem;
-  height: 2.05rem;
-  border: 1px solid color-mix(in srgb, currentColor 32%, var(--line));
-  border-radius: 0.58rem;
-  background: color-mix(in srgb, currentColor 8%, var(--surface));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 28%, transparent);
-  transition:
-    border-color var(--duration-fast) ease,
-    background var(--duration-fast) ease,
-    box-shadow var(--duration-fast) ease,
-    color var(--duration-fast) ease,
-    transform var(--duration-fast) ease;
-}
-
-.footer-icon-link:hover,
-.footer-icon-link:focus-visible {
-  opacity: 1;
-  border-color: color-mix(in srgb, currentColor 58%, var(--line));
-  background: color-mix(in srgb, currentColor 14%, var(--surface));
-  box-shadow: 0 0.35rem 0.9rem color-mix(in srgb, currentColor 16%, transparent);
-  transform: translateY(-2px) rotate(-2deg);
-}
-
-.footer-icon-link:nth-child(even):hover,
-.footer-icon-link:nth-child(even):focus-visible {
-  transform: translateY(-2px) rotate(2deg);
-}
-
-@media (max-width: 40rem) {
-  .footer-icon-link {
-    width: 1.8rem;
-    height: 1.8rem;
-    border-radius: 0.5rem;
-  }
+.footer-icon-link--coffee img {
+  display: block;
+  width: 1.55rem;
+  height: 1.55rem;
+  object-fit: contain;
 }

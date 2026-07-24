@@ -11,12 +11,27 @@
 
   position: sticky;
   top: 0;
+  isolation: isolate;
   z-index: 50;
   width: 100%;
   border-bottom: 1px solid var(--header-line);
   background: var(--bg);
   color: var(--header-text);
   font-family: var(--font-sans);
+}
+
+
+/* Mask the browser overscroll area above the sticky navbar on touch devices. */
+.site-header::before {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  z-index: -1;
+  height: calc(100vh + env(safe-area-inset-top));
+  background: var(--bg);
+  content: '';
+  pointer-events: none;
 }
 
 /* The shadow begins below the real bottom border, never on top of it. */
