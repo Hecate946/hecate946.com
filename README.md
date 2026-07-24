@@ -1,5 +1,6 @@
-https://www.svgrepo.com/svg/500124/duck
+faviscon: https://www.svgrepo.com/svg/500124/duck
 
+local stats server: cd cloudflare/stats-worker && npx wrangler dev
 
 zipper:
 
