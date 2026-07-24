@@ -118,7 +118,7 @@
         velocityY: season === 'summer' ? speed : 0,
         gravity: definition.gravity ? randomFrom(definition.gravity) : 0,
         bounceCount: 0,
-        maxBounces: season === 'summer' ? Math.floor(randomBetween(1, 4)) : 0,
+        maxBounces: season === 'summer' ? Math.floor(randomBetween(1, 3)) : 0,
         fadeStartedAt: null,
         fadeDuration: OLD_SEASON_FADE_MS / 1000,
         expired: false,
@@ -184,7 +184,12 @@
 
       if (particle.y + radius >= height && particle.velocityY > 0) {
         particle.y = height - radius;
-        const rebound = Math.max(72, Math.abs(particle.velocityY) * randomBetween(0.54, 0.68));
+        const isSecondBounce = particle.bounceCount === 1;
+        const rebound = Math.max(
+          isSecondBounce ? 36 : 68,
+          Math.abs(particle.velocityY) *
+            (isSecondBounce ? randomBetween(0.28, 0.38) : randomBetween(0.51, 0.65)),
+        );
         particle.velocityY = -rebound;
         particle.velocityX = particle.velocityX * randomBetween(0.86, 0.95) + randomBetween(-24, 24);
         hitSurface = true;
