@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount, tick } from 'svelte';
   import type { RailwayStop } from '@/config/railway';
+  import RailwayArrivalBoard from './RailwayArrivalBoard.svelte';
   import RailwayStation from './RailwayStation.svelte';
   import RailwayTrack from './RailwayTrack.svelte';
   import RailwayTrain from './RailwayTrain.svelte';
@@ -10,7 +11,7 @@
   export let stops: readonly RailwayStop[] = [];
   export let navigationEnabled = false;
   export let autoPlay = true;
-  export let durationSeconds = 17;
+  export let durationSeconds = 19;
   export let currentStopLabel = 'Home';
 
   type JourneyState =
@@ -146,10 +147,10 @@
   function getJourneyGeometry() {
     const trainWidth = runnerElement.getBoundingClientRect().width;
     const viewportWidth = window.innerWidth;
-    const stationAnchor = viewportWidth < 720 ? 0.94 : 0.88;
-    const startX = -trainWidth - Math.min(240, viewportWidth * 0.16);
+    const stationAnchor = viewportWidth < 720 ? 0.91 : 0.835;
+    const startX = -trainWidth - Math.min(220, viewportWidth * 0.14);
     const stopX = viewportWidth * stationAnchor - trainWidth;
-    const endX = viewportWidth + Math.min(260, viewportWidth * 0.18);
+    const endX = viewportWidth + Math.min(220, viewportWidth * 0.16);
     const approachDistance = Math.max(1, stopX - startX);
     const departDistance = Math.max(1, endX - stopX);
     const totalDistance = approachDistance + departDistance;
@@ -296,12 +297,13 @@
 >
   <div class="railway-boundary">
     <header class="railway-toolbar">
-      <div class="railway-line-lockup">
-        <span class="railway-roundel" aria-hidden="true"><span></span></span>
-        <div>
-          <h2 id="railway-passage-title">{lineName}</h2>
-          <p>{serviceLabel}</p>
-        </div>
+      <div class="railway-toolbar__left">
+        <h2 id="railway-passage-title" class="railway-toolbar__sr-title">{lineName}</h2>
+        <RailwayArrivalBoard
+          {boardLabel}
+          {boardPrimary}
+          {boardSecondary}
+        />
       </div>
 
       <button
@@ -319,12 +321,7 @@
 
     <div class="railway-scene" aria-hidden={!navigationEnabled}>
       <div class="railway-station-position">
-        <RailwayStation
-          {stationTitle}
-          {boardLabel}
-          {boardPrimary}
-          {boardSecondary}
-        />
+        <RailwayStation {stationTitle} />
       </div>
 
       {#key runNonce}
@@ -382,57 +379,26 @@
     right: var(--site-edge, clamp(1rem, 3.5vw, 4rem));
     left: var(--site-edge, clamp(1rem, 3.5vw, 4rem));
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
     pointer-events: none;
   }
 
-  .railway-line-lockup {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+  .railway-toolbar__left {
+    min-width: 0;
   }
 
-  .railway-line-lockup h2,
-  .railway-line-lockup p {
-    margin: 0;
-  }
-
-  .railway-line-lockup h2 {
-    font-family: var(--font-display);
-    font-size: clamp(1rem, 1.8vw, 1.25rem);
-    font-weight: 500;
-    letter-spacing: -0.015em;
-    line-height: 1;
-  }
-
-  .railway-line-lockup p {
-    margin-top: 0.25rem;
-    color: var(--railway-muted);
-    font-family: var(--font-mono);
-    font-size: 0.63rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .railway-roundel {
-    display: grid;
-    width: 2.4rem;
-    height: 2.4rem;
-    flex: 0 0 auto;
-    place-items: center;
-    border: 0.22rem solid var(--accent-strong);
-    border-radius: 50%;
-    background: transparent;
-  }
-
-  .railway-roundel span {
-    width: 2.7rem;
-    height: 0.56rem;
-    border: 0.12rem solid color-mix(in srgb, var(--accent-strong) 75%, var(--text));
-    background: var(--accent-strong);
-    box-shadow: inset 0 0 0 0.08rem color-mix(in srgb, white 26%, transparent);
+  .railway-toolbar__sr-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .railway-replay {
@@ -474,16 +440,16 @@
 
   .railway-scene {
     position: relative;
-    min-height: clamp(27rem, 37vw, 32rem);
+    min-height: clamp(25.5rem, 35vw, 30rem);
     overflow: hidden;
     background: transparent;
   }
 
   .railway-station-position {
     position: absolute;
-    right: clamp(-2.5rem, -1vw, -0.5rem);
-    bottom: 4.3rem;
-    width: clamp(31rem, 49vw, 48rem);
+    right: clamp(-2.8rem, -1.1vw, -0.4rem);
+    bottom: 3.98rem;
+    width: clamp(28rem, 42vw, 48rem);
   }
 
   .railway-train-runner {
@@ -497,7 +463,7 @@
   }
 
   .railway-is-static .railway-train-runner {
-    transform: translateX(calc(88vw - 138rem));
+    transform: translateX(calc(85vw - 102rem));
   }
 
   .railway-status {
@@ -514,17 +480,17 @@
 
   @media (max-width: 72rem) {
     .railway-scene {
-      min-height: 25rem;
+      min-height: 23.6rem;
     }
 
     .railway-station-position {
-      right: -2rem;
-      bottom: 4.1rem;
-      width: clamp(27rem, 58vw, 39rem);
+      right: -2.1rem;
+      bottom: 3.88rem;
+      width: clamp(24rem, 43vw, 36rem);
     }
 
     .railway-is-static .railway-train-runner {
-      transform: translateX(calc(90vw - 121rem));
+      transform: translateX(calc(86vw - 92rem));
     }
   }
 
@@ -534,10 +500,9 @@
     }
 
     .railway-scene {
-      min-height: 21.5rem;
+      min-height: 20.4rem;
     }
 
-    .railway-line-lockup p,
     .railway-replay span {
       display: none;
     }
@@ -547,20 +512,10 @@
       padding: 0;
     }
 
-    .railway-roundel {
-      width: 2rem;
-      height: 2rem;
-    }
-
-    .railway-roundel span {
-      width: 2.25rem;
-      height: 0.46rem;
-    }
-
     .railway-station-position {
-      right: -4.5rem;
-      bottom: 3.65rem;
-      width: clamp(24rem, 104vw, 31rem);
+      right: -2.7rem;
+      bottom: 3.22rem;
+      width: clamp(19rem, 60vw, 27rem);
     }
 
     .railway-train-runner {
@@ -568,7 +523,7 @@
     }
 
     .railway-is-static .railway-train-runner {
-      transform: translateX(calc(94vw - 102rem));
+      transform: translateX(calc(90vw - 80rem));
     }
   }
 

@@ -23,7 +23,7 @@ export const railwayConfig = {
   serviceLabel: 'Steam service',
   navigationEnabled: false,
   autoPlay: true,
-  durationSeconds: 17,
+  durationSeconds: 19,
   stops: [
     {
       id: 'home',

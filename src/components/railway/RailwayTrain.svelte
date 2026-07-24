@@ -241,7 +241,7 @@
     position: relative;
     z-index: 1;
     display: block;
-    width: clamp(95rem, 138vw, 146rem);
+    width: clamp(72rem, 102vw, 100rem);
     height: auto;
     overflow: visible;
   }
@@ -555,13 +555,13 @@
 
   @media (max-width: 72rem) {
     .railway-train {
-      width: clamp(88rem, 152vw, 128rem);
+      width: clamp(67rem, 114vw, 88rem);
     }
   }
 
   @media (max-width: 48rem) {
     .railway-train {
-      width: clamp(74rem, 210vw, 106rem);
+      width: clamp(58rem, 172vw, 76rem);
     }
 
     .railway-smoke {
