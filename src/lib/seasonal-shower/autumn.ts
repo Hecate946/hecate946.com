@@ -9,10 +9,15 @@ type AutumnPalette = {
 };
 
 const palettes: readonly AutumnPalette[] = [
-  { light: '#d9782f', middle: '#ad4828', dark: '#6f2724', vein: 'rgba(88, 31, 25, 0.76)', outline: 'rgba(70, 23, 24, 0.56)' },
-  { light: '#c95d2b', middle: '#96372a', dark: '#5f232b', vein: 'rgba(77, 27, 29, 0.78)', outline: 'rgba(63, 21, 27, 0.58)' },
-  { light: '#e18432', middle: '#b34c25', dark: '#772827', vein: 'rgba(98, 35, 24, 0.74)', outline: 'rgba(74, 24, 25, 0.56)' },
-  { light: '#bd512d', middle: '#873029', dark: '#54202a', vein: 'rgba(69, 24, 28, 0.8)', outline: 'rgba(55, 18, 25, 0.6)' },
+  // Golden yellow
+  { light: '#f4c84a', middle: '#d99a25', dark: '#9a591d', vein: 'rgba(105, 62, 20, 0.76)', outline: 'rgba(91, 52, 18, 0.56)' },
+  { light: '#edb936', middle: '#ca7f20', dark: '#86451d', vein: 'rgba(92, 50, 18, 0.78)', outline: 'rgba(76, 40, 17, 0.58)' },
+  // Warm orange
+  { light: '#e99135', middle: '#c55b26', dark: '#7c2d22', vein: 'rgba(98, 35, 24, 0.74)', outline: 'rgba(74, 24, 25, 0.56)' },
+  { light: '#de742d', middle: '#ad4828', dark: '#6f2724', vein: 'rgba(88, 31, 25, 0.76)', outline: 'rgba(70, 23, 24, 0.56)' },
+  // Scarlet and deep red
+  { light: '#df5840', middle: '#b52f2f', dark: '#6d1f2b', vein: 'rgba(82, 24, 31, 0.8)', outline: 'rgba(66, 18, 27, 0.6)' },
+  { light: '#c93d36', middle: '#98262f', dark: '#571d2a', vein: 'rgba(70, 22, 30, 0.82)', outline: 'rgba(54, 17, 25, 0.62)' },
 ] as const;
 
 function fillShape(context: CanvasRenderingContext2D, trace: () => void, palette: AutumnPalette, variant: number) {
