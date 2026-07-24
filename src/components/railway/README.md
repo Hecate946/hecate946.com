@@ -1,26 +1,20 @@
-# Railway passage
+# Line 946 railway
 
-`RailwayPassage.svelte` is a self-contained, reusable scene mounted once in
-`BaseLayout.astro`, so every page automatically receives the railway without
-page-specific markup or styles.
+The railway is intentionally isolated from the rest of the site and split into small components.
 
-## Configuration
+## Components
 
-Edit `src/config/railway.ts` to change:
+- `RailwayPassage.svelte` — journey timing, arrival/dwell/departure state, countdown data, replay, and responsive positioning.
+- `RailwayTrain.svelte` — the steam locomotive, tender, one passenger car per configured page, smoke, wheels, and train-only styles.
+- `RailwayStation.svelte` — the rustic wooden depot, page-aware station sign, supported wooden signposts, lamps, platform, and digital arrival board.
+- `RailwayTrack.svelte` — black gravel ballast, wooden sleepers, and aligned rails.
+- `src/config/railway.ts` — line name, timing, page cars, links, and the future navigation switch.
+- `src/layouts/BaseLayout.astro` — mounts the railway once and passes the current page name to the station.
 
-- the line and service names
-- animation duration
-- autoplay behavior
-- the three destination labels shown on the passenger cars
-- destination URLs
-- `navigationEnabled`
+## Current behavior
 
-When `navigationEnabled` is `false`, the passenger cars are decorative. Set it
-to `true` to turn each labeled car into a keyboard-accessible link using the
-configured destination URLs.
+Line 946 approaches from the left at a constant speed, stops by the station, waits for four seconds, and continues to the right at the same speed. The total journey is controlled by `durationSeconds` in `src/config/railway.ts`.
 
-## Isolation
+The station sign contains only `[Current Page] Station` and the `946` badge. The train section is framed by two thin horizontal rules with equal exterior spacing above and below.
 
-The component owns its markup, CSS, intersection observer, reduced-motion
-behavior, replay control, and animation state. The only project-level change is
-the single component mount in `BaseLayout.astro`.
+Set `navigationEnabled: true` in `src/config/railway.ts` when the passenger cars should become page links.

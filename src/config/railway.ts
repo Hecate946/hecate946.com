@@ -19,17 +19,29 @@ export interface RailwayConfig {
  * Set navigationEnabled to true when the train cars should become links.
  */
 export const railwayConfig = {
-  lineName: 'Cyrus Line',
-  serviceLabel: 'Through service',
+  lineName: 'Line 946',
+  serviceLabel: 'Steam service',
   navigationEnabled: false,
   autoPlay: true,
   durationSeconds: 17,
   stops: [
     {
+      id: 'home',
+      label: 'Home',
+      shortLabel: 'HOME',
+      href: '/',
+    },
+    {
       id: 'about',
       label: 'About',
       shortLabel: 'ABOUT',
       href: '/about/',
+    },
+    {
+      id: 'resume',
+      label: 'Resume',
+      shortLabel: 'RESUME',
+      href: '/resume/',
     },
     {
       id: 'work',
@@ -42,6 +54,12 @@ export const railwayConfig = {
       label: 'Contact',
       shortLabel: 'CONTACT',
       href: '/contact/',
+    },
+    {
+      id: 'stats',
+      label: 'Stats',
+      shortLabel: 'STATS',
+      href: '/stats/',
     },
   ],
 } as const satisfies RailwayConfig;

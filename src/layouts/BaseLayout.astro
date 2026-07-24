@@ -2,11 +2,13 @@
 import BaseHead from '@/components/core/BaseHead.astro';
 import Footer from '@/components/core/Footer.astro';
 import Header from '@/components/core/Header.astro';
+import RailwayPassage from '@/components/railway/RailwayPassage.svelte';
 import SkipLink from '@/components/core/SkipLink.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import SeasonalShower from '@/components/islands/SeasonalShower.svelte';
 import CommandPalette from '@/components/islands/CommandPalette.svelte';
 import { headerNavigation } from '@/config/navigation';
+import { railwayConfig } from '@/config/railway';
 import { navigation } from '@/config/site';
 import { withBase } from '@/lib/paths';
 import '@/styles/global.css';
@@ -18,6 +20,29 @@ interface Props {
 }
 
 const { title, description, image } = Astro.props;
+
+const railwayStops = railwayConfig.stops.map((stop) => ({
+  ...stop,
+  href: withBase(stop.href),
+}));
+
+const normalizePath = (value: string) => {
+  const normalized = value.replace(/\/+$/, '');
+  return normalized === '' ? '/' : normalized;
+};
+
+const currentPath = normalizePath(Astro.url.pathname);
+const currentRailwayStop =
+  railwayStops.find((stop) => normalizePath(stop.href) === currentPath) ??
+  (currentPath === '/'
+    ? { label: 'Home' }
+    : {
+        label:
+          title
+            ?.split(/[—|-]/)[0]
+            .trim()
+            .replace(/\s+$/, '') || 'Current Page',
+      });
 
 const commandItems = Array.from(
   new Map(
@@ -51,6 +76,17 @@ const commandItems = Array.from(
     <main id="main-content">
       <slot />
     </main>
+
+    <RailwayPassage
+      client:visible
+      lineName={railwayConfig.lineName}
+      serviceLabel={railwayConfig.serviceLabel}
+      stops={railwayStops}
+      navigationEnabled={railwayConfig.navigationEnabled}
+      autoPlay={railwayConfig.autoPlay}
+      durationSeconds={railwayConfig.durationSeconds}
+      currentStopLabel={currentRailwayStop.label}
+    />
 
     <Footer />
     <CommandPalette client:load items={commandItems} />
