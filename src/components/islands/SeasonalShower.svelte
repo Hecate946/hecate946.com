@@ -36,6 +36,32 @@
     return VALID_SEASONS.includes(season as Season) ? (season as Season) : 'summer';
   }
 
+
+  interface ShowerClock {
+    listeners: Set<() => void>;
+    intervalId: number;
+  }
+
+  function getShowerClock(): ShowerClock {
+    const showerWindow = window as typeof window & {
+      __hecateSeasonalShowerClock?: ShowerClock;
+    };
+
+    if (!showerWindow.__hecateSeasonalShowerClock) {
+      const listeners = new Set<() => void>();
+      const intervalId = window.setInterval(() => {
+        for (const listener of listeners) listener();
+      }, SHOWER_INTERVAL_MS);
+
+      showerWindow.__hecateSeasonalShowerClock = {
+        listeners,
+        intervalId,
+      };
+    }
+
+    return showerWindow.__hecateSeasonalShowerClock;
+  }
+
   function randomBetween(minimum: number, maximum: number) {
     return minimum + Math.random() * (maximum - minimum);
   }
@@ -70,60 +96,81 @@
     return sprites;
   }
 
-  function drawSpringFlower(context: CanvasRenderingContext2D, variant: number) {
-    const palettes = [
-      ['#fff6fb', '#f4a8cb'],
-      ['#fffaf0', '#f2b99f'],
-      ['#f9f5ff', '#c8afea'],
-      ['#fff8fc', '#e3a7c6'],
-    ] as const;
-    const [petalLight, petalDark] = palettes[variant % palettes.length]!;
+  function drawSpringFlower(
+    context: CanvasRenderingContext2D,
+    variant: number,
+  ) {
     const petalCount = 5;
+    const rotation = (variant * Math.PI) / 20;
+    const petalFill = ['#ec9eb1', '#ed9fb3', '#eba0b4', '#eea4b8'][variant % 4]!;
+    const petalHighlight = ['#f3bccb', '#f2b7c8', '#f4bfcd', '#f1b8c8'][variant % 4]!;
+    const stamenPink = '#f989a7';
+    const innerFill = '#f2d8e1';
 
     context.save();
-    context.rotate((variant * Math.PI) / 18);
-    context.shadowColor = 'rgba(71, 44, 65, 0.18)';
-    context.shadowBlur = 7;
-    context.shadowOffsetY = 4;
+    context.rotate(rotation);
+    context.shadowColor = 'rgba(124, 67, 90, 0.12)';
+    context.shadowBlur = 6;
+    context.shadowOffsetY = 3;
 
     for (let index = 0; index < petalCount; index += 1) {
-      const angle = (index / petalCount) * Math.PI * 2 - Math.PI / 2;
       context.save();
-      context.rotate(angle);
-      const gradient = context.createLinearGradient(0, -9, 0, -58);
-      gradient.addColorStop(0, petalDark);
-      gradient.addColorStop(0.68, petalLight);
-      gradient.addColorStop(1, '#ffffff');
-      context.fillStyle = gradient;
+      context.rotate((index / petalCount) * Math.PI * 2);
+      context.fillStyle = petalFill;
       context.beginPath();
-      context.moveTo(-7, -7);
-      context.bezierCurveTo(-25, -22, -22, -53, 0, -62);
-      context.bezierCurveTo(22, -53, 25, -22, 7, -7);
-      context.bezierCurveTo(3, -2, -3, -2, -7, -7);
+      context.moveTo(0, -10);
+      context.bezierCurveTo(-13, -15, -35, -31, -36, -45);
+      context.bezierCurveTo(-37, -57, -23, -64, -9, -57);
+      context.bezierCurveTo(-2, -53, -0.5, -44, 0, -39);
+      context.bezierCurveTo(0.5, -44, 2, -53, 9, -57);
+      context.bezierCurveTo(23, -64, 37, -57, 36, -45);
+      context.bezierCurveTo(35, -31, 13, -15, 0, -10);
+      context.closePath();
+      context.fill();
+
+      context.fillStyle = petalHighlight;
+      context.beginPath();
+      context.moveTo(-2, -18);
+      context.bezierCurveTo(-14, -23, -24, -31, -24, -42);
+      context.bezierCurveTo(-24, -49, -15, -52, -9, -47);
+      context.bezierCurveTo(-4, -43, -2, -30, -2, -18);
       context.closePath();
       context.fill();
       context.restore();
     }
 
-    context.shadowBlur = 3;
-    const center = context.createRadialGradient(-3, -4, 1, 0, 0, 16);
-    center.addColorStop(0, '#ffffff');
-    center.addColorStop(0.55, '#fff6ce');
-    center.addColorStop(1, '#e9bd62');
-    context.fillStyle = center;
-    context.beginPath();
-    context.arc(0, 0, 14, 0, Math.PI * 2);
-    context.fill();
+    context.strokeStyle = stamenPink;
+    context.lineWidth = 5;
+
+    for (let index = 0; index < petalCount; index += 1) {
+      const angle = -Math.PI / 2 + (index / petalCount) * Math.PI * 2;
+      context.beginPath();
+      context.moveTo(0, 2);
+      context.lineTo(Math.cos(angle) * 24, Math.sin(angle) * 24 + 2);
+      context.stroke();
+    }
+
+    for (let index = 0; index < petalCount; index += 1) {
+      context.save();
+      context.rotate((index / petalCount) * Math.PI * 2 + Math.PI / 10);
+      context.fillStyle = innerFill;
+      context.beginPath();
+      context.moveTo(0, -1);
+      context.bezierCurveTo(-6, -5, -13, -13, -10, -21);
+      context.bezierCurveTo(-8, -26, -1.5, -24, 1, -18);
+      context.bezierCurveTo(3.5, -24, 10, -26, 12, -21);
+      context.bezierCurveTo(15, -13, 8, -5, 2, -1);
+      context.bezierCurveTo(3, 7, -3, 7, 0, -1);
+      context.closePath();
+      context.fill();
+      context.restore();
+    }
+
     context.restore();
   }
 
   function drawBeachBall(context: CanvasRenderingContext2D, variant: number) {
-    const panelPalettes = [
-      ['#ef476f', '#ffd166', '#06d6a0', '#118ab2', '#ffffff'],
-      ['#ff6b6b', '#feca57', '#48dbfb', '#5f27cd', '#ffffff'],
-      ['#ff7f50', '#ffd93d', '#6bcb77', '#4d96ff', '#ffffff'],
-    ] as const;
-    const panels = panelPalettes[variant % panelPalettes.length]!;
+    const panels = ['#ef476f', '#ffd166', '#06d6a0', '#118ab2', '#ffffff'] as const;
     const radius = 61;
     const hubX = -7;
     const hubY = -8;
@@ -355,16 +402,19 @@
     context.restore();
   }
 
-  function drawSnowflake(context: CanvasRenderingContext2D, variant: number) {
+  function drawSnowflake(
+    context: CanvasRenderingContext2D,
+    variant: number,
+  ) {
     const branches = 6;
-    const length = 61;
+    const length = 62;
     const branchCount = 2 + (variant % 3);
 
     context.save();
     context.rotate((variant * Math.PI) / 24);
-    context.shadowColor = 'rgba(145, 210, 255, 0.72)';
-    context.shadowBlur = 8;
-    context.strokeStyle = 'rgba(239, 250, 255, 0.96)';
+    context.shadowColor = 'rgba(90, 165, 220, 0.6)';
+    context.shadowBlur = 7;
+    context.strokeStyle = 'rgba(165, 215, 245, 0.95)';
     context.lineWidth = 3.2;
 
     for (let index = 0; index < branches; index += 1) {
@@ -376,15 +426,17 @@
       context.stroke();
 
       for (let branch = 1; branch <= branchCount; branch += 1) {
-        const y = -length * (0.3 + branch * 0.19);
-        const arm = 10 + branch * 3;
+        const y = -length * (0.28 + branch * 0.19);
+        const branchLength = 12 + branch * 3 + (variant % 2) * 2;
+
         context.beginPath();
         context.moveTo(0, y);
-        context.lineTo(-arm, y + arm * 0.72);
+        context.lineTo(-branchLength, y - branchLength * 0.72);
         context.moveTo(0, y);
-        context.lineTo(arm, y + arm * 0.72);
+        context.lineTo(branchLength, y - branchLength * 0.72);
         context.stroke();
       }
+
       context.restore();
     }
 
@@ -457,8 +509,6 @@
     let pixelRatio = 1;
     let particles: Particle[] = [];
     let animationFrame = 0;
-    let interval = 0;
-    let initialTimer = 0;
     let lastTime = performance.now();
     let showerSeason = currentSeason();
 
@@ -541,52 +591,26 @@
       animationFrame = window.requestAnimationFrame(frame);
     }
 
-    function restartInterval() {
-      window.clearInterval(interval);
-      interval = window.setInterval(() => startShower(currentSeason()), SHOWER_INTERVAL_MS);
-    }
-
     function handleVisibility() {
-      if (document.visibilityState !== 'visible') {
-        stopAnimation();
-        return;
-      }
-      restartInterval();
+      if (document.visibilityState !== 'visible') stopAnimation();
     }
 
     function handleReducedMotion() {
       if (reducedMotion.matches) stopAnimation();
-      else startShower(currentSeason());
     }
 
-    const seasonObserver = new MutationObserver((records) => {
-      const changed = records.some(
-        (record) => record.type === 'attributes' && record.attributeName === 'data-season',
-      );
-      if (!changed) return;
-
-      const nextSeason = currentSeason();
-      if (nextSeason !== showerSeason || !active) startShower(nextSeason);
-      restartInterval();
-    });
+    const showerClock = getShowerClock();
+    const runScheduledShower = () => startShower(currentSeason());
 
     resize();
-    restartInterval();
-    initialTimer = window.setTimeout(() => startShower(currentSeason()), 650);
-    seasonObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-season'],
-    });
-
+    showerClock.listeners.add(runScheduledShower);
     window.addEventListener('resize', resize, { passive: true });
     document.addEventListener('visibilitychange', handleVisibility);
     reducedMotion.addEventListener('change', handleReducedMotion);
 
     return () => {
       stopAnimation();
-      window.clearInterval(interval);
-      window.clearTimeout(initialTimer);
-      seasonObserver.disconnect();
+      showerClock.listeners.delete(runScheduledShower);
       window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', handleVisibility);
       reducedMotion.removeEventListener('change', handleReducedMotion);

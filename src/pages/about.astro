@@ -10,7 +10,6 @@ const pickleballArticleUrl =
   'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
 const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
 const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.jpg');
-const portraitImage = withBase('/images/pig.png');
 ---
 
 <BaseLayout
@@ -23,21 +22,20 @@ const portraitImage = withBase('/images/pig.png');
         <h1 id="about-title">About</h1>
       </header>
 
-      <figure class="about-portrait">
-        <img
-          src={portraitImage}
-          alt="Portrait of Cyrus Asasi"
-          width="800"
-          height="800"
-        />
-      </figure>
-
       <div class="about-intro about-prose">
+        <div class="about-portrait-frame">
+          <img
+            src={withBase('/images/pig.png')}
+            alt="Portrait of Cyrus Asasi"
+            width="800"
+            height="800"
+          />
+        </div>
+
         <p class="about-opening">
-          <span class="drop-cap" aria-hidden="true">H</span><span class="visually-hidden">H</span>i, I'm Cyrus. I'm a
-          software engineer and classical musician who enjoys mastering difficult skills. Whether it's reverse
-          engineering complex systems, performing concertos, or building interactive web experiences, I'm happiest
-          when I'm learning something challenging.
+          Hi, I'm Cyrus. I'm a software engineer and classical musician who enjoys mastering difficult skills.
+          Whether it's reverse engineering complex systems, performing concertos, or building interactive web
+          experiences, I'm happiest when I'm learning something challenging.
         </p>
 
         <p>
@@ -53,7 +51,6 @@ const portraitImage = withBase('/images/pig.png');
 
       <section class="passion-section" aria-labelledby="software-heading">
         <div class="passion-heading">
-          <span class="passion-number" aria-hidden="true">01</span>
           <h2 id="software-heading">Software</h2>
         </div>
 
@@ -165,7 +162,6 @@ const portraitImage = withBase('/images/pig.png');
 
       <section class="passion-section" aria-labelledby="music-heading">
         <div class="passion-heading">
-          <span class="passion-number" aria-hidden="true">02</span>
           <h2 id="music-heading">Music</h2>
         </div>
 
@@ -210,7 +206,6 @@ const portraitImage = withBase('/images/pig.png');
 
       <section class="passion-section" aria-labelledby="pickleball-heading">
         <div class="passion-heading">
-          <span class="passion-number" aria-hidden="true">03</span>
           <h2 id="pickleball-heading">Pickleball</h2>
         </div>
 
@@ -251,7 +246,6 @@ const portraitImage = withBase('/images/pig.png');
 
       <section class="passion-section" aria-labelledby="chess-heading">
         <div class="passion-heading">
-          <span class="passion-number" aria-hidden="true">04</span>
           <h2 id="chess-heading">Chess</h2>
         </div>
 
