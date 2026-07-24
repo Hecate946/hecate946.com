@@ -2,63 +2,343 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { withBase } from '@/lib/paths';
 import '@/styles/about.css';
+
+const loomiRepoUrl = 'https://github.com/Hecate946/Loomi';
+const sunsetRepoUrl = '';
+const musicVideoUrl = 'https://youtu.be/EkgH4zzXoNg?si=_W_qwbR1Io_LTUdw';
+const pickleballArticleUrl =
+  'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
+const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
+const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.jpg');
+const portraitImage = withBase('/images/pig.png');
 ---
 
 <BaseLayout
-  title="About"
-  description="About Cyrus Asasi, software engineer and classical musician."
+  title="About — Cyrus Asasi"
+  description="Software engineer, classical musician, competitive pickleball player, and chess enthusiast."
 >
-  <article class="about-book" aria-labelledby="about-title">
-    <header class="about-masthead">
-      <h1 id="about-title">About</h1>
-    </header>
+  <div class="container">
+    <article class="about-book" aria-labelledby="about-title">
+      <header class="about-masthead">
+        <h1 id="about-title">About</h1>
+      </header>
 
-    <div class="about-prose">
-      <p class="about-opening">
-        <span class="about-portrait-frame">
-          <img
-            src={withBase('/images/pig.png')}
-            alt="Portrait of Cyrus Asasi"
-            width="800"
-            height="960"
-          />
-        </span><span class="drop-cap">L</span>orem ipsum dolor sit amet,
-        consectetur adipiscing elit. Integer vitae lectus non erat aliquet
-        porttitor. Maecenas luctus, sem sed feugiat consequat, justo tortor
-        tincidunt neque, vitae fermentum augue risus vitae neque. Curabitur vel
-        dignissim metus, sit amet faucibus velit.
-      </p>
+      <figure class="about-portrait">
+        <img
+          src={portraitImage}
+          alt="Portrait of Cyrus Asasi"
+          width="800"
+          height="800"
+        />
+      </figure>
 
-      <p>
-        Sed ut perspiciatis unde omnis iste natus error sit voluptatem
-        accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab
-        illo inventore veritatis et quasi architecto beatae vitae dicta sunt
-        explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut
-        odit aut fugit.
-      </p>
+      <div class="about-intro about-prose">
+        <p class="about-opening">
+          <span class="drop-cap" aria-hidden="true">H</span><span class="visually-hidden">H</span>i, I'm Cyrus. I'm a
+          software engineer and classical musician who enjoys mastering difficult skills. Whether it's reverse
+          engineering complex systems, performing concertos, or building interactive web experiences, I'm happiest
+          when I'm learning something challenging.
+        </p>
 
-      <p>
-        At vero eos et accusamus et iusto odio dignissimos ducimus qui
-        blanditiis praesentium voluptatum deleniti atque corrupti quos dolores
-        et quas molestias excepturi sint occaecati cupiditate non provident,
-        similique sunt in culpa qui officia deserunt mollitia animi.
-      </p>
+        <p>
+          Outside of work, you'll usually find me practicing the clarinet or piano, competing in pickleball
+          tournaments, or playing chess.
+        </p>
 
-      <hr class="about-divider" />
+        <p>
+          I recently completed dual bachelor's degrees in Computer Science and Music Performance at UCLA and am
+          now pursuing a Master's in Music Performance while continuing to build software projects.
+        </p>
+      </div>
 
-      <p>
-        Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet,
-        consectetur, adipisci velit, sed quia non numquam eius modi tempora
-        incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Quis
-        autem vel eum iure reprehenderit qui in ea voluptate velit esse quam
-        nihil molestiae consequatur.
-      </p>
+      <section class="passion-section" aria-labelledby="software-heading">
+        <div class="passion-heading">
+          <span class="passion-number" aria-hidden="true">01</span>
+          <h2 id="software-heading">Software</h2>
+        </div>
 
-      <p>
-        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
-        dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-        proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-      </p>
-    </div>
-  </article>
+        <div class="passion-content">
+          <div class="about-prose">
+            <p>I love building software that's functional, efficient, and enjoyable to use.</p>
+
+            <p>
+              Professionally, much of my experience has been in reverse engineering, where I enjoy understanding
+              complex systems and rebuilding them in cleaner, more useful ways. Outside of work, I build web
+              applications, developer tools, and whatever projects solve problems I encounter.
+            </p>
+
+            <p>
+              Right now I'm building
+              <a class="inline-project-link" href={loomiRepoUrl} target="_blank" rel="noopener noreferrer">Loomi</a>,
+              a graph-based platform for exploring classical music, while continuing to improve
+              {
+                sunsetRepoUrl ? (
+                  <a
+                    class="inline-project-link"
+                    href={sunsetRepoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Sunset
+                  </a>
+                ) : (
+                  <span class="inline-project-link inline-project-link--static">Sunset</span>
+                )
+              }, a project that reverse engineered UCLA reservation systems to make booking campus resources
+              dramatically easier for students.
+            </p>
+          </div>
+
+          <div class="project-grid" aria-label="Featured software projects">
+            <a class="project-card" href={loomiRepoUrl} target="_blank" rel="noopener noreferrer">
+              <div class="project-card__topline">
+                <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
+                  />
+                </svg>
+                <span class="project-card__status">Public repository</span>
+              </div>
+
+              <div>
+                <h3>Loomi</h3>
+                <p>A graph-based space for exploring classical music through connected works, people, and ideas.</p>
+              </div>
+
+              <div class="project-card__meta">
+                <span><i class="language-dot" aria-hidden="true"></i>TypeScript</span>
+                <span class="project-card__action">View on GitHub <span aria-hidden="true">↗</span></span>
+              </div>
+            </a>
+
+            {
+              sunsetRepoUrl ? (
+                <a class="project-card" href={sunsetRepoUrl} target="_blank" rel="noopener noreferrer">
+                  <div class="project-card__topline">
+                    <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        fill="currentColor"
+                        d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
+                      />
+                    </svg>
+                    <span class="project-card__status">Repository</span>
+                  </div>
+
+                  <div>
+                    <h3>Sunset</h3>
+                    <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
+                  </div>
+
+                  <div class="project-card__meta">
+                    <span>Reverse engineering</span>
+                    <span class="project-card__action">View on GitHub <span aria-hidden="true">↗</span></span>
+                  </div>
+                </a>
+              ) : (
+                <article class="project-card project-card--private" id="sunset-project">
+                  <div class="project-card__topline">
+                    <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        fill="currentColor"
+                        d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
+                      />
+                    </svg>
+                    <span class="project-card__status">Private repository</span>
+                  </div>
+
+                  <div>
+                    <h3>Sunset</h3>
+                    <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
+                  </div>
+
+                  <div class="project-card__meta">
+                    <span>Reverse engineering</span>
+                    <span class="project-card__action project-card__action--muted">Source unavailable</span>
+                  </div>
+                </article>
+              )
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="passion-section" aria-labelledby="music-heading">
+        <div class="passion-heading">
+          <span class="passion-number" aria-hidden="true">02</span>
+          <h2 id="music-heading">Music</h2>
+        </div>
+
+        <div class="passion-content">
+          <div class="about-prose">
+            <p>Music has been a lifelong passion.</p>
+
+            <p>
+              I'm a clarinetist and pianist currently pursuing a Master's in Music Performance at UCLA. In 2026,
+              I won UCLA's All-Stars Competition, giving me the opportunity to perform as a concerto soloist with
+              the UCLA Philharmonia.
+            </p>
+
+            <p>
+              Beyond performing, I love listening. I almost exclusively listen to classical music, with my current
+              favorites being Brahms, Ravel, and Kapustin.
+            </p>
+          </div>
+
+          <figure class="media-card video-card">
+            <div class="video-frame">
+              <iframe
+                src="https://www.youtube-nocookie.com/embed/EkgH4zzXoNg"
+                title="Cyrus Asasi performing with the UCLA Philharmonia"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+            </div>
+            <figcaption class="media-card__caption">
+              <div>
+                <span class="media-card__kicker">Featured performance</span>
+                <strong>Mendelssohn Konzertstück No. 2 with the UCLA Philharmonia</strong>
+              </div>
+              <a href={musicVideoUrl} target="_blank" rel="noopener noreferrer" aria-label="Watch the performance on YouTube">
+                Watch on YouTube <span aria-hidden="true">↗</span>
+              </a>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="passion-section" aria-labelledby="pickleball-heading">
+        <div class="passion-heading">
+          <span class="passion-number" aria-hidden="true">03</span>
+          <h2 id="pickleball-heading">Pickleball</h2>
+        </div>
+
+        <div class="passion-content">
+          <div class="about-prose">
+            <p>
+              I grew up playing tennis, but eventually found myself drawn to pickleball because of its strategic
+              depth.
+            </p>
+
+            <p>
+              I've competed for around four years at the 5.0 level and currently serve as captain of the UCLA
+              Pickleball Team. One highlight was winning the California Collegiate Super Regional Championship,
+              where our team took home the title and a $2,500 prize.
+            </p>
+          </div>
+
+          <a class="media-card article-card" href={pickleballArticleUrl} target="_blank" rel="noopener noreferrer">
+            <div class="article-card__image-wrap">
+              <img
+                src={pickleballImage}
+                alt="The UCLA Pickleball Team celebrating its California Super Regional championship"
+                loading="lazy"
+                width="1800"
+                height="1200"
+              />
+            </div>
+            <div class="media-card__caption">
+              <div>
+                <span class="media-card__kicker">DUPR tournament recap</span>
+                <strong>UCLA captures its first California Super Regional championship</strong>
+              </div>
+              <span class="media-card__link">Read the article <span aria-hidden="true">↗</span></span>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <section class="passion-section" aria-labelledby="chess-heading">
+        <div class="passion-heading">
+          <span class="passion-number" aria-hidden="true">04</span>
+          <h2 id="chess-heading">Chess</h2>
+        </div>
+
+        <div class="passion-content">
+          <div class="about-prose">
+            <p>Chess has been an obsession ever since middle school.</p>
+
+            <p>
+              After discovering Chess.com in seventh grade, I spent far too many hours studying openings, tactics,
+              and endgames, eventually reaching a peak online rating of 2450.
+            </p>
+
+            <p>
+              I still enjoy the game because it rewards the same type of analytical thinking and pattern
+              recognition that drew me toward computer science.
+            </p>
+          </div>
+
+          <a
+            class="chess-card"
+            href={chessProfileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-chess-card
+            aria-label="Open Cyrus2020SD's Chess.com statistics"
+          >
+            <div class="chess-card__identity">
+              <div class="chess-card__mark" aria-hidden="true">♞</div>
+              <div>
+                <span class="chess-card__platform">Chess.com profile</span>
+                <h3>Cyrus2020SD</h3>
+                <span class="chess-card__live" data-chess-status>Loading live ratings…</span>
+              </div>
+              <span class="chess-card__arrow" aria-hidden="true">↗</span>
+            </div>
+
+            <div class="chess-card__stats" aria-label="Current Chess.com ratings">
+              <div class="chess-stat">
+                <span class="chess-stat__label">Rapid</span>
+                <strong data-rating="rapid">—</strong>
+              </div>
+              <div class="chess-stat">
+                <span class="chess-stat__label">Blitz</span>
+                <strong data-rating="blitz">—</strong>
+              </div>
+              <div class="chess-stat">
+                <span class="chess-stat__label">Bullet</span>
+                <strong data-rating="bullet">—</strong>
+              </div>
+            </div>
+          </a>
+        </div>
+      </section>
+    </article>
+  </div>
 </BaseLayout>
+
+<script>
+  const chessCard = document.querySelector('[data-chess-card]');
+
+  if (chessCard) {
+    const ratingKeys = {
+      rapid: 'chess_rapid',
+      blitz: 'chess_blitz',
+      bullet: 'chess_bullet',
+    };
+
+    fetch('https://api.chess.com/pub/player/Cyrus2020SD/stats')
+      .then((response) => {
+        if (!response.ok) throw new Error(`Chess.com returned ${response.status}`);
+        return response.json();
+      })
+      .then((stats) => {
+        Object.entries(ratingKeys).forEach(([label, key]) => {
+          const value = stats[key]?.last?.rating ?? stats[key]?.best?.rating;
+          const target = chessCard.querySelector(`[data-rating="${label}"]`);
+          if (target && typeof value === 'number') target.textContent = value.toLocaleString();
+        });
+
+        const status = chessCard.querySelector('[data-chess-status]');
+        if (status) status.textContent = 'Live ratings';
+        chessCard.setAttribute('data-loaded', 'true');
+      })
+      .catch(() => {
+        const status = chessCard.querySelector('[data-chess-status]');
+        if (status) status.textContent = 'View full stats';
+        chessCard.setAttribute('data-loaded', 'error');
+      });
+  }
+</script>
