@@ -166,50 +166,45 @@ body:has(> .site-footer) > main {
   }
 }
 
-
 /* Service marks remain unchanged on hover; only the border/outline reacts. */
-.footer-service-logo--github,
+.footer-service-logo {
+  transition: none;
+}
+
+.footer-service-logo--github {
+  fill: #111111;
+}
+
+html[data-theme='dark'] .footer-service-logo--github {
+  fill: #ffffff;
+}
+
 .footer-service-logo--linkedin {
-  fill: currentColor;
-}
-
-.footer-icon-link--github {
-  color: #111111;
-}
-
-html[data-theme='dark'] .footer-icon-link--github {
-  color: #ffffff;
-}
-
-.footer-icon-link--linkedin {
-  color: #0a66c2;
+  fill: #2298dc;
 }
 
 .footer-service-logo--coffee {
-  width: 1.62rem;
-  height: 1.62rem;
+  width: 1.58rem;
+  height: 1.72rem;
+  --coffee-outline: #0d0c22;
 }
 
-.coffee-cup-fill {
-  fill: #ffdd00;
+html[data-theme='dark'] .footer-service-logo--coffee {
+  --coffee-outline: #ffffff;
 }
 
-.coffee-cup-outline {
-  fill: none;
-  stroke: #16120b;
-  stroke-width: 1.55;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-html[data-theme='dark'] .coffee-cup-outline {
-  stroke: #ffffff;
-}
-
-/* Exact match for the seasonal selector's hover/focus treatment. */
+/* Match the seasonal selector glow, using the same page accent that the
+   header maps to --header-accent. The logo colors never participate. */
 .footer-icon-link:hover,
 .footer-icon-link:focus-visible {
-  border-color: color-mix(in srgb, var(--header-accent) 80%, currentColor);
-  outline-color: color-mix(in srgb, var(--header-accent) 55%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 80%, var(--text));
+  outline-color: color-mix(in srgb, var(--accent) 55%, transparent);
   background: transparent;
+  color: inherit;
+}
+
+.footer-icon-link:hover .footer-service-logo,
+.footer-icon-link:focus-visible .footer-service-logo {
+  filter: none;
+  opacity: 1;
 }
