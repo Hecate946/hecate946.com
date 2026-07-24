@@ -116,7 +116,7 @@
         sprite: sprites[index % sprites.length]!,
         velocityX: season === 'summer' ? randomFrom(definition.drift) : 0,
         velocityY: season === 'summer' ? speed : 0,
-        gravity: season === 'summer' ? randomBetween(150, 235) : 0,
+        gravity: definition.gravity ? randomFrom(definition.gravity) : 0,
         bounceCount: 0,
         maxBounces: season === 'summer' ? 3 : 0,
         fadeStartedAt: null,
@@ -173,25 +173,25 @@
 
       if (particle.x - radius <= 0 && particle.velocityX < 0) {
         particle.x = radius;
-        particle.velocityX = Math.abs(particle.velocityX) * randomBetween(0.76, 0.9);
+        particle.velocityX = Math.abs(particle.velocityX) * randomBetween(0.58, 0.72);
         bounced = true;
       } else if (particle.x + radius >= width && particle.velocityX > 0) {
         particle.x = width - radius;
-        particle.velocityX = -Math.abs(particle.velocityX) * randomBetween(0.76, 0.9);
+        particle.velocityX = -Math.abs(particle.velocityX) * randomBetween(0.58, 0.72);
         bounced = true;
       }
 
       if (particle.y + radius >= height && particle.velocityY > 0) {
         particle.y = height - radius;
-        particle.velocityY = -Math.abs(particle.velocityY) * randomBetween(0.58, 0.74);
-        particle.velocityX += randomBetween(-90, 90);
+        particle.velocityY = -Math.abs(particle.velocityY) * randomBetween(0.34, 0.48);
+        particle.velocityX += randomBetween(-34, 34);
         bounced = true;
       }
 
       if (bounced) {
         particle.bounceCount += 1;
-        particle.spin += particle.velocityX * 0.008 + randomBetween(-0.7, 0.7);
-        particle.spin = Math.max(-5.2, Math.min(5.2, particle.spin));
+        particle.spin += particle.velocityX * 0.005 + randomBetween(-0.35, 0.35);
+        particle.spin = Math.max(-3.6, Math.min(3.6, particle.spin));
         if (particle.bounceCount >= particle.maxBounces) beginFade(particle, nowSeconds);
       }
 

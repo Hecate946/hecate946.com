@@ -42,6 +42,7 @@ export interface SeasonDefinition {
   size: Range;
   scale: number;
   speed: Range;
+  gravity?: Range;
   drift: Range;
   sway: Range;
   swayRate: Range;
