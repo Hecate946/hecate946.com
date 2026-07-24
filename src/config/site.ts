@@ -15,13 +15,14 @@ export const siteConfig = {
 
 /**
  * The deliberately small navigation shown in the site header.
- * Contact information belongs on the About page and in the footer, keeping the
- * persistent navigation focused on the three things most visitors need.
+ * Legacy header navigation mirror retained for components that import this file directly.
  */
 export const headerNavigation = [
   { label: 'About', href: '/about/' },
   { label: 'Resume', href: '/resume/' },
   { label: 'Work', href: '/work/' },
+  { label: 'Contact', href: '/contact/' },
+  { label: 'Stats', href: '/stats/' },
 ] as const;
 
 /**
@@ -29,7 +30,6 @@ export const headerNavigation = [
  */
 export const navigation = [
   { label: 'Home', href: '/' },
-  { label: 'Interests', href: '/interests/' },
   // { label: 'Code', href: '/code/' },
   // { label: 'Clarinet', href: '/clarinet/' },
   // { label: 'Piano', href: '/piano/' },
@@ -37,6 +37,8 @@ export const navigation = [
   // { label: 'Pickleball', href: '/pickleball/' },
   // { label: 'Lab', href: '/lab/' },
   { label: 'Work', href: '/work/' },
+  { label: 'Contact', href: '/contact/' },
+  { label: 'Stats', href: '/stats/' },
   { label: 'About', href: '/about/' },
 ] as const;
 

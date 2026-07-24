@@ -151,7 +151,7 @@
             tabindex="-1"
             on:mouseenter={() => (selectedIndex = index)}
           >
-            {item.label}<span aria-hidden="true">↗</span>
+            {item.label}<span aria-hidden="true">↗︎</span>
           </a>
         </li>
       {:else}

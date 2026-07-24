@@ -33,7 +33,7 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
         </div>
 
         <p class="about-opening">
-          Hi, I'm Cyrus. I'm a software engineer and classical musician who enjoys mastering difficult skills.
+          <span class="about-drop-cap" aria-hidden="true">H</span><span class="about-opening-rest">i, I'm Cyrus. I'm a software engineer and classical musician who enjoys mastering difficult skills.</span>
           Whether it's reverse engineering complex systems, performing concertos, or building interactive web
           experiences, I'm happiest when I'm learning something challenging.
         </p>
@@ -49,10 +49,11 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
         </p>
       </div>
 
-      <section class="passion-section" aria-labelledby="software-heading">
-        <div class="passion-heading">
+      <details class="passion-section" aria-labelledby="software-heading" data-collapsible>
+        <summary class="passion-heading">
           <h2 id="software-heading">Software</h2>
-        </div>
+          <span class="passion-toggle" aria-hidden="true"></span>
+        </summary>
 
         <div class="passion-content">
           <div class="about-prose">
@@ -65,9 +66,9 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
             </p>
 
             <p>
-              Right now I'm building
+              Right now I'm building{' '}
               <a class="inline-project-link" href={loomiRepoUrl} target="_blank" rel="noopener noreferrer">Loomi</a>,
-              a graph-based platform for exploring classical music, while continuing to improve
+              a graph-based platform for exploring classical music, while continuing to improve{' '}
               {
                 sunsetRepoUrl ? (
                   <a
@@ -105,7 +106,7 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
 
               <div class="project-card__meta">
                 <span><i class="language-dot" aria-hidden="true"></i>TypeScript</span>
-                <span class="project-card__action">View on GitHub <span aria-hidden="true">↗</span></span>
+                <span class="project-card__action">View on GitHub <span aria-hidden="true">↗︎</span></span>
               </div>
             </a>
 
@@ -129,7 +130,7 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
 
                   <div class="project-card__meta">
                     <span>Reverse engineering</span>
-                    <span class="project-card__action">View on GitHub <span aria-hidden="true">↗</span></span>
+                    <span class="project-card__action">View on GitHub <span aria-hidden="true">↗︎</span></span>
                   </div>
                 </a>
               ) : (
@@ -158,12 +159,13 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
             }
           </div>
         </div>
-      </section>
+      </details>
 
-      <section class="passion-section" aria-labelledby="music-heading">
-        <div class="passion-heading">
+      <details class="passion-section" aria-labelledby="music-heading" data-collapsible>
+        <summary class="passion-heading">
           <h2 id="music-heading">Music</h2>
-        </div>
+          <span class="passion-toggle" aria-hidden="true"></span>
+        </summary>
 
         <div class="passion-content">
           <div class="about-prose">
@@ -197,17 +199,18 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
                 <strong>Mendelssohn Konzertstück No. 2 with the UCLA Philharmonia</strong>
               </div>
               <a href={musicVideoUrl} target="_blank" rel="noopener noreferrer" aria-label="Watch the performance on YouTube">
-                Watch on YouTube <span aria-hidden="true">↗</span>
+                Watch on YouTube <span aria-hidden="true">↗︎</span>
               </a>
             </figcaption>
           </figure>
         </div>
-      </section>
+      </details>
 
-      <section class="passion-section" aria-labelledby="pickleball-heading">
-        <div class="passion-heading">
+      <details class="passion-section" aria-labelledby="pickleball-heading" data-collapsible>
+        <summary class="passion-heading">
           <h2 id="pickleball-heading">Pickleball</h2>
-        </div>
+          <span class="passion-toggle" aria-hidden="true"></span>
+        </summary>
 
         <div class="passion-content">
           <div class="about-prose">
@@ -238,16 +241,17 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
                 <span class="media-card__kicker">DUPR tournament recap</span>
                 <strong>UCLA captures its first California Super Regional championship</strong>
               </div>
-              <span class="media-card__link">Read the article <span aria-hidden="true">↗</span></span>
+              <span class="media-card__link">Read the article <span aria-hidden="true">↗︎</span></span>
             </div>
           </a>
         </div>
-      </section>
+      </details>
 
-      <section class="passion-section" aria-labelledby="chess-heading">
-        <div class="passion-heading">
+      <details class="passion-section" aria-labelledby="chess-heading" data-collapsible>
+        <summary class="passion-heading">
           <h2 id="chess-heading">Chess</h2>
-        </div>
+          <span class="passion-toggle" aria-hidden="true"></span>
+        </summary>
 
         <div class="passion-content">
           <div class="about-prose">
@@ -279,7 +283,7 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
                 <h3>Cyrus2020SD</h3>
                 <span class="chess-card__live" data-chess-status>Loading live ratings…</span>
               </div>
-              <span class="chess-card__arrow" aria-hidden="true">↗</span>
+              <span class="chess-card__arrow" aria-hidden="true">↗︎</span>
             </div>
 
             <div class="chess-card__stats" aria-label="Current Chess.com ratings">
@@ -298,12 +302,106 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
             </div>
           </a>
         </div>
-      </section>
+      </details>
     </article>
   </div>
 </BaseLayout>
 
 <script>
+  const collapsibleSections = document.querySelectorAll<HTMLDetailsElement>('[data-collapsible]');
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const DROPDOWN_DURATION_MS = 960;
+  const DROPDOWN_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+  collapsibleSections.forEach((section) => {
+    const summary = section.querySelector<HTMLElement>('summary');
+    const content = section.querySelector<HTMLElement>('.passion-content');
+    if (!summary || !content) return;
+
+    let animation: Animation | null = null;
+    let closing = false;
+
+    const finishClosed = () => {
+      section.open = false;
+      section.removeAttribute('data-closing');
+      closing = false;
+      section.style.height = '';
+      section.style.overflow = '';
+      content.style.opacity = '';
+      content.style.transform = '';
+      animation = null;
+    };
+
+    const finishOpen = () => {
+      section.removeAttribute('data-closing');
+      closing = false;
+      section.style.height = '';
+      section.style.overflow = '';
+      content.style.opacity = '';
+      content.style.transform = '';
+      animation = null;
+    };
+
+    summary.addEventListener('click', (event) => {
+      event.preventDefault();
+      animation?.cancel();
+
+      if (prefersReducedMotion.matches) {
+        section.open = !section.open;
+        return;
+      }
+
+      const startHeight = section.offsetHeight;
+
+      if (section.open && !closing) {
+        closing = true;
+        section.setAttribute('data-closing', 'true');
+        const endHeight = summary.offsetHeight +
+          Number.parseFloat(getComputedStyle(section).paddingTop) +
+          Number.parseFloat(getComputedStyle(section).paddingBottom);
+
+        section.style.overflow = 'hidden';
+        animation = section.animate(
+          [{ height: `${startHeight}px` }, { height: `${endHeight}px` }],
+          { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING },
+        );
+        content.animate(
+          [
+            { opacity: 1, transform: 'translateY(0)' },
+            { opacity: 0, transform: 'translateY(-0.45rem)' },
+          ],
+          { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING, fill: 'forwards' },
+        );
+        animation.onfinish = finishClosed;
+        animation.oncancel = () => {
+          section.removeAttribute('data-closing');
+          closing = false;
+        };
+      } else {
+        section.removeAttribute('data-closing');
+        section.open = true;
+        closing = false;
+        section.style.height = `${startHeight}px`;
+        section.style.overflow = 'hidden';
+
+        const endHeight = section.scrollHeight;
+        animation = section.animate(
+          [{ height: `${startHeight}px` }, { height: `${endHeight}px` }],
+          { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING },
+        );
+        content.animate(
+          [
+            { opacity: 0, transform: 'translateY(-0.55rem)' },
+            { opacity: 1, transform: 'translateY(0)' },
+          ],
+          { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING, fill: 'both' },
+        );
+        animation.onfinish = finishOpen;
+        animation.oncancel = () => {};
+      }
+    });
+  });
+
   const chessCard = document.querySelector('[data-chess-card]');
 
   if (chessCard) {

@@ -16,15 +16,18 @@ const icons = {
     'M8 17h8',
   ),
   contact: icon('M4 5h16v14H4Z', 'm4 7 8 6 8-6'),
-  interests: icon(
-    'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z',
+  work: icon(
+    'M4 7h16v12H4Z',
+    'M9 7V4h6v3',
+    'M4 12h16',
+    'M10 12v2h4v-2',
   ),
   stats: icon('M4 20V11', 'M10 20V4', 'M16 20v-7', 'M22 20H2'),
 };
 
 /**
  * In radial layout mode, the outer-node array order is the clockwise order.
- * Starting at the top: About → Résumé → Contact → Interests → Stats.
+ * Starting at the top: About → Résumé → Work → Contact → Stats.
  */
 export const homeNetworkNodes: NetworkNode[] = [
   {
@@ -56,21 +59,21 @@ export const homeNetworkNodes: NetworkNode[] = [
     radius: 36,
   },
   {
-    id: 'contact',
-    label: 'Contact',
-    description: 'Let\'s connect',
-    href: 'mailto:cyrusasasi@gmail.com',
-    icon: icons.contact,
-    accent: '#d66b8b',
+    id: 'work',
+    label: 'Work',
+    description: 'Projects & practice',
+    href: withBase('/work/'),
+    icon: icons.work,
+    accent: '#c88d31',
     radius: 36,
   },
   {
-    id: 'interests',
-    label: 'Interests',
-    description: 'Beyond the work',
-    href: withBase('/interests/'),
-    icon: icons.interests,
-    accent: '#c88d31',
+    id: 'contact',
+    label: 'Contact',
+    description: 'Let\'s connect',
+    href: withBase('/contact/'),
+    icon: icons.contact,
+    accent: '#d66b8b',
     radius: 36,
   },
   {
@@ -96,7 +99,7 @@ const primary = (target: string): NetworkLink => ({
 export const homeNetworkLinks: NetworkLink[] = [
   primary('about'),
   primary('resume'),
+  primary('work'),
   primary('contact'),
-  primary('interests'),
   primary('stats'),
 ];
