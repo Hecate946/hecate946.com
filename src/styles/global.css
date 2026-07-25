@@ -106,7 +106,9 @@ main {
   margin-inline: auto;
 }
 
-/* Shared inner-page structure for About, Work, Resume, and Contact. */
+/* Shared inner-page structure.
+   The shell controls the grid and title rhythm only. Each page owns the
+   spacing inside its content so spacing is never applied twice. */
 .interior-page {
   --interior-heading-space: clamp(2.5rem, 5vw, 3.75rem);
   --interior-content-space: clamp(2.25rem, 4.5vw, 3.5rem);
@@ -145,7 +147,16 @@ main {
 }
 
 .interior-page-content {
-  padding-top: var(--interior-content-space);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Optional balanced outer rhythm for pages whose complete content lives in a
+   single wrapper. The distance from the title divider to the content matches
+   the distance from the content to the footer. */
+.interior-page-content--balanced {
+  padding-block: var(--interior-content-space);
 }
 
 /* Wider centered content for dashboards and multi-column layouts. */

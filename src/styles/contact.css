@@ -17,9 +17,9 @@
 .contact-terminal,
 .contact-link-card {
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, var(--bg));
   box-shadow: 0 1.2rem 3.5rem color-mix(in srgb, var(--shadow) 34%, transparent);
-  backdrop-filter: blur(16px);
+  isolation: isolate;
 }
 
 .contact-terminal {
@@ -569,11 +569,6 @@
   grid-column: 3 / 11;
   width: 100%;
   justify-self: stretch;
-}
-
-/* Match the space below the switchboard to its shared top spacing. */
-.contact-switchboard.interior-page-content {
-  padding-bottom: var(--interior-content-space);
 }
 
 @media (max-width: 39.999rem) {
