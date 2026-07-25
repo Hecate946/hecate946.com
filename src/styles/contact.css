@@ -285,6 +285,7 @@
 }
 
 .contact-link-card {
+  position: relative;
   display: grid;
   min-height: 7.2rem;
   grid-template-columns: auto 1fr auto;

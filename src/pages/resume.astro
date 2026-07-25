@@ -3,16 +3,18 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import { withBase } from '@/lib/paths';
 import '@/styles/resume.css';
 
-const resumeHref = withBase('/resumes/resume-placeholder.pdf');
-
 const resumes = [
   {
     title: 'Software Engineering Resume',
     description: 'Education, work experience, and technical skills.',
+    href: withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf'),
+    downloadName: 'Cyrus-Asasi-Software-Engineering-Resume.pdf',
   },
   {
     title: 'Clarinet Performance Resume',
     description: 'Education, performance experience, and awards.',
+    href: withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf'),
+    downloadName: 'Cyrus-Asasi-Clarinet-Performance-Resume.pdf',
   },
 ] as const;
 ---
@@ -36,10 +38,10 @@ const resumes = [
             </div>
 
             <div class="resume-actions" aria-label={`${resume.title} actions`}>
-              <a href={resumeHref} target="_blank" rel="noopener noreferrer">
+              <a href={resume.href} target="_blank" rel="noopener noreferrer">
                 View PDF
               </a>
-              <a href={resumeHref} download>
+              <a href={resume.href} download={resume.downloadName}>
                 Download
               </a>
             </div>

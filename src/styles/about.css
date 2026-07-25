@@ -47,14 +47,15 @@
 }
 
 .about-intro {
-  padding: var(--about-outer-space) 0 0;
+  display: grid;
+  padding: 0;
 }
 
 .about-portrait-frame {
   width: clamp(8.5rem, 28vw, 11rem);
   aspect-ratio: 1;
   overflow: hidden;
-  margin: 0 auto var(--about-section-gap);
+  margin: var(--about-section-gap) auto;
   border: 1px solid var(--accent-strong);
   background: var(--surface-strong);
 }
