@@ -154,8 +154,8 @@ main {
 }
 
 @media (max-width: 39.999rem) {
-  /* Apply one small, uniform gutter to the entire mobile page. */
-  body {
+  /* Keep the fixed header and footer full-bleed; pad only page content. */
+  main {
     box-sizing: border-box;
     padding-inline: clamp(0.75rem, 3.5vw, 1rem);
   }

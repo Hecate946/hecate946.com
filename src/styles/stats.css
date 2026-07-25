@@ -569,8 +569,8 @@
 }
 
 .stats-tabs button {
-  min-height: 3.6rem;
-  padding: 0.85rem 1rem;
+  min-height: 3.85rem;
+  padding: 1rem 1.35rem;
   font-family: var(--font-sans);
   font-size: clamp(0.82rem, 1.15vw, 0.96rem);
   font-weight: 700;
@@ -585,8 +585,8 @@
   }
 
   .stats-tabs button {
-    min-height: 3.15rem;
-    padding-inline: 0.35rem;
+    min-height: 3.4rem;
+    padding: 0.85rem 0.65rem;
     font-size: clamp(0.67rem, 3.2vw, 0.78rem);
     letter-spacing: 0.065em;
   }
