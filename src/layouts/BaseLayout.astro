@@ -78,7 +78,7 @@ const commandItems = Array.from(
     {
       showSeasonalShower && (
         <SeasonalShower
-          client:load
+          client:idle
           transition:persist="seasonal-shower"
         />
       )
@@ -106,12 +106,20 @@ const commandItems = Array.from(
     }
 
     <Footer />
-    <CommandPalette client:load items={commandItems} />
+    <CommandPalette client:idle items={commandItems} />
 
     <script>
-      import { initAnalytics } from '@/lib/analytics';
+      const startAnalytics = () => {
+        void import('@/lib/analytics').then(({ initAnalytics }) => {
+          initAnalytics();
+        });
+      };
 
-      initAnalytics();
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(startAnalytics, { timeout: 2_000 });
+      } else {
+        globalThis.setTimeout(startAnalytics, 500);
+      }
     </script>
   </body>
 </html>

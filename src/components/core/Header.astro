@@ -50,15 +50,15 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
     </nav>
 
     <div class="command-slot header-region">
-      <CommandMenuButton client:load />
+      <CommandMenuButton client:idle />
     </div>
 
     <div class="mode-slot header-region">
-      <ColorModeToggle client:load />
+      <ColorModeToggle client:idle />
     </div>
 
     <div class="seasons-slot header-region">
-      <SeasonSelector client:load />
+      <SeasonSelector client:idle />
     </div>
   </div>
 </header>
@@ -75,15 +75,24 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
     const header = document.querySelector<HTMLElement>('[data-site-header]');
     if (!header) return;
 
+    let animationFrame = 0;
+
     const update = () => {
+      animationFrame = 0;
       header.dataset.scrolled = window.scrollY > 1 ? 'true' : 'false';
     };
 
-    window.addEventListener('scroll', update, { passive: true });
+    const scheduleUpdate = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
     update();
 
     headerWindow.__siteHeaderScrollCleanup = () => {
-      window.removeEventListener('scroll', update);
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.cancelAnimationFrame(animationFrame);
     };
   }
 

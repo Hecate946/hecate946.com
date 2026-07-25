@@ -9,7 +9,10 @@ const musicVideoUrl = 'https://youtu.be/EkgH4zzXoNg?si=_W_qwbR1Io_LTUdw';
 const pickleballArticleUrl =
   'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
 const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
-const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.jpg');
+const pigImage256 = withBase('/images/pig-256.webp');
+const pigImage512 = withBase('/images/pig-512.webp');
+const pickleballImage720 = withBase('/images/about/ucla-pickleball-super-regional-720.webp');
+const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-regional-1200.webp');
 ---
 
 <BaseLayout
@@ -24,10 +27,14 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
     <div class="about-intro about-prose interior-page-content">
         <div class="about-portrait-frame">
           <img
-            src={withBase('/images/pig.png')}
+            src={pigImage256}
+            srcset={`${pigImage256} 256w, ${pigImage512} 512w`}
+            sizes="(max-width: 680px) 34vw, 11rem"
             alt="Portrait of Cyrus Asasi"
-            width="800"
-            height="800"
+            width="512"
+            height="512"
+            decoding="async"
+            fetchpriority="high"
           />
         </div>
 
@@ -228,11 +235,14 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
           <a class="media-card article-card" href={pickleballArticleUrl} target="_blank" rel="noopener noreferrer">
             <div class="article-card__image-wrap">
               <img
-                src={pickleballImage}
+                src={pickleballImage720}
+                srcset={`${pickleballImage720} 720w, ${pickleballImage1200} 1200w`}
+                sizes="(max-width: 900px) 100vw, 50vw"
                 alt="The UCLA Pickleball Team celebrating its California Super Regional championship"
                 loading="lazy"
-                width="1800"
-                height="1200"
+                decoding="async"
+                width="1200"
+                height="800"
               />
             </div>
             <div class="media-card__caption">
