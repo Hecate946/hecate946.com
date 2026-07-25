@@ -143,47 +143,47 @@ html[data-season='autumn'][data-theme='dark'] {
 }
 
 html[data-season='winter'][data-theme='light'] {
-  --bg: #f1f2f3;
-  --surface: rgba(251, 251, 252, 0.82);
-  --surface-strong: #fdfdfd;
-  --text: #30353a;
-  --muted: #71777d;
-  --line: rgba(67, 73, 79, 0.2);
-  --accent: #6f7d86;
-  --accent-strong: #4f5b63;
-  --accent-soft: rgba(111, 125, 134, 0.14);
-  --season-1: #9ca5ab;
-  --season-2: #d2d6d9;
-  --season-3: #aaa9b8;
-  --shadow: 0 1.25rem 3rem rgba(49, 54, 59, 0.11);
-  --header-bg: #e2e4e6;
-  --header-text: #454c52;
-  --header-muted: #6d747a;
-  --header-line: rgba(69, 76, 82, 0.23);
+  --bg: #edf2f6;
+  --surface: rgba(248, 251, 253, 0.82);
+  --surface-strong: #fbfdff;
+  --text: #293642;
+  --muted: #667685;
+  --line: rgba(58, 81, 101, 0.2);
+  --accent: #64839a;
+  --accent-strong: #46657c;
+  --accent-soft: rgba(100, 131, 154, 0.14);
+  --season-1: #8fa8ba;
+  --season-2: #cedbe4;
+  --season-3: #a7afc2;
+  --shadow: 0 1.25rem 3rem rgba(42, 63, 80, 0.11);
+  --header-bg: #dce7ee;
+  --header-text: #3b566a;
+  --header-muted: #607687;
+  --header-line: rgba(59, 86, 106, 0.23);
   --header-hover: rgba(255, 255, 255, 0.46);
-  --header-active-text: #363d42;
-  --header-accent: #9aa7af;
+  --header-active-text: #304b60;
+  --header-accent: #84a9c3;
 }
 
 html[data-season='winter'][data-theme='dark'] {
-  --bg: #111315;
-  --surface: rgba(29, 32, 35, 0.84);
-  --surface-strong: #24282c;
-  --text: #f0f1f2;
-  --muted: #b0b4b8;
-  --line: rgba(232, 235, 238, 0.15);
-  --accent: #aab4ba;
-  --accent-strong: #d7dde1;
-  --accent-soft: rgba(170, 180, 186, 0.16);
-  --season-1: #8e9aa1;
-  --season-2: #d4dadd;
-  --season-3: #a5a6b6;
+  --bg: #0d151c;
+  --surface: rgba(22, 34, 44, 0.84);
+  --surface-strong: #1b2a35;
+  --text: #edf5fa;
+  --muted: #a9bac7;
+  --line: rgba(220, 234, 243, 0.15);
+  --accent: #8fb4cf;
+  --accent-strong: #c3dceb;
+  --accent-soft: rgba(143, 180, 207, 0.16);
+  --season-1: #789bb2;
+  --season-2: #c8d9e4;
+  --season-3: #9fa9be;
   --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.38);
-  --header-bg: #1d2125;
-  --header-text: #f0f2f3;
-  --header-muted: #bcc1c5;
-  --header-line: rgba(236, 239, 241, 0.16);
-  --header-hover: rgba(170, 180, 186, 0.11);
-  --header-active-text: #e2e7ea;
-  --header-accent: #a7b3ba;
+  --header-bg: #172630;
+  --header-text: #edf5fa;
+  --header-muted: #b4c6d2;
+  --header-line: rgba(225, 238, 246, 0.16);
+  --header-hover: rgba(143, 180, 207, 0.11);
+  --header-active-text: #d7e9f4;
+  --header-accent: #8eb8d2;
 }

@@ -112,15 +112,15 @@ main {
   --interior-content-space: clamp(2.25rem, 4.5vw, 3.5rem);
 
   display: grid;
-  width: min(calc(100% - 2rem), var(--content-width));
+  width: 100%;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  margin-inline: auto;
-  padding-bottom: clamp(6rem, 12vw, 9rem);
+  margin: 0;
+  padding: 0;
 }
 
 .interior-page-heading,
 .interior-page-content {
-  grid-column: 4 / 10;
+  grid-column: 3 / 11;
   width: 100%;
   justify-self: center;
 }
@@ -148,10 +148,20 @@ main {
   padding-top: var(--interior-content-space);
 }
 
+/* Wider centered content for dashboards and multi-column layouts. */
+.interior-page-content--wide {
+  grid-column: 3 / 11;
+}
+
 @media (max-width: 39.999rem) {
-  .interior-page-heading,
-  .interior-page-content {
-    grid-column: 1 / -1;
+  /* Let mobile content use the full grid, with a small consistent screen-edge gutter. */
+  .interior-page > .interior-page-heading,
+  .interior-page > .interior-page-content,
+  .interior-page > .interior-page-content--wide {
+    grid-column: 1 / -1 !important;
+    min-width: 0;
+    box-sizing: border-box;
+    padding-inline: clamp(0.75rem, 3.5vw, 1rem);
   }
 }
 

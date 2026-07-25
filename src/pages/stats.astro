@@ -15,15 +15,17 @@ const codeStatsUrl = withBase('/generated/code-stats.json');
   title="Stats"
   description="Live website activity and automatically generated code statistics for hecate946.com."
 >
-  <section class="stats-page" aria-labelledby="stats-title">
-    <header class="stats-heading">
+  <section class="stats-page interior-page" aria-labelledby="stats-title">
+    <header class="stats-heading interior-page-heading">
       <h1 id="stats-title">Stats</h1>
     </header>
 
-    <StatsDashboard
-      client:load
-      apiBase={statsApiBase}
-      {codeStatsUrl}
-    />
+    <div class="stats-content interior-page-content interior-page-content--wide">
+      <StatsDashboard
+        client:load
+        apiBase={statsApiBase}
+        {codeStatsUrl}
+      />
+    </div>
   </section>
 </BaseLayout>

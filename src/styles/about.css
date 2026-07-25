@@ -594,3 +594,29 @@
     transition: none;
   }
 }
+
+/* Keep the complete About page aligned to the shared middle eight columns. */
+.about-masthead,
+.about-intro,
+.passion-section {
+  grid-column: 3 / 11;
+  width: 100%;
+  justify-self: stretch;
+}
+
+/* Give the collapsible chapter list matching breathing room above and below. */
+.about-intro {
+  padding-bottom: var(--interior-content-space);
+}
+
+.passion-section:last-of-type {
+  margin-bottom: var(--interior-content-space);
+}
+
+@media (max-width: 39.999rem) {
+  .about-masthead,
+  .about-intro,
+  .passion-section {
+    grid-column: 1 / -1;
+  }
+}

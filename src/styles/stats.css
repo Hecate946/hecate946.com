@@ -542,3 +542,68 @@
   .stats-section-heading { align-items: flex-start; }
   .stats-reset { flex: 0 0 auto; }
 }
+
+/* Shared interior-page shell owns the grid, title rhythm, and divider. */
+.stats-page {
+  padding-top: 0;
+}
+
+.stats-heading {
+  width: 100%;
+  margin: 0;
+}
+
+.stats-content {
+  min-width: 0;
+}
+
+.stats-content .stats-dashboard {
+  width: 100%;
+  max-width: none;
+  grid-column: auto;
+  justify-self: stretch;
+}
+
+.stats-tabs {
+  margin-bottom: clamp(0.9rem, 2vw, 1.35rem);
+}
+
+.stats-tabs button {
+  min-height: 3.6rem;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.82rem, 1.15vw, 0.96rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+@media (max-width: 39.999rem) {
+  .stats-tabs {
+    margin-bottom: 0.85rem;
+  }
+
+  .stats-tabs button {
+    min-height: 3.15rem;
+    padding-inline: 0.35rem;
+    font-size: clamp(0.67rem, 3.2vw, 0.78rem);
+    letter-spacing: 0.065em;
+  }
+}
+
+/* Align the Stats title and dashboard to the same middle eight columns. */
+.stats-heading,
+.stats-content.interior-page-content {
+  grid-column: 3 / 11;
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+}
+
+@media (max-width: 39.999rem) {
+  .stats-heading,
+  .stats-content.interior-page-content {
+    grid-column: 1 / -1;
+  }
+}
