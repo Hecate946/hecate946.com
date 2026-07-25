@@ -190,6 +190,8 @@ html:not([data-theme-ready='true']) .site-header * {
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--header-text) 34%, transparent);
   border-radius: 0.56rem;
+  outline: 2px solid transparent;
+  outline-offset: 1px;
   background: color-mix(in srgb, var(--header-text) 8%, var(--bg));
   color: var(--header-text);
   cursor: pointer;
@@ -200,7 +202,7 @@ html:not([data-theme-ready='true']) .site-header * {
   white-space: nowrap;
   transition:
     border-color 140ms ease,
-    background-color 140ms ease,
+    outline-color 140ms ease,
     transform 140ms ease;
 }
 
@@ -235,8 +237,8 @@ html:not([data-theme-ready='true']) .site-header * {
 
 .header-action:hover,
 .header-action:focus-visible {
-  border-color: color-mix(in srgb, var(--header-text) 66%, transparent);
-  background: color-mix(in srgb, var(--header-text) 13%, var(--bg));
+  border-color: color-mix(in srgb, var(--header-accent) 80%, currentColor);
+  outline-color: color-mix(in srgb, var(--header-accent) 55%, transparent);
   transform: translateY(-1px);
 }
 
