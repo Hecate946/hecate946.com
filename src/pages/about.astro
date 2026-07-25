@@ -16,13 +16,12 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
   title="About — Cyrus Asasi"
   description="Software engineer, classical musician, competitive pickleball player, and chess enthusiast."
 >
-  <div class="container">
-    <article class="about-book" aria-labelledby="about-title">
-      <header class="about-masthead">
+  <article class="about-book interior-page" aria-labelledby="about-title">
+    <header class="about-masthead interior-page-heading">
         <h1 id="about-title">About</h1>
       </header>
 
-      <div class="about-intro about-prose">
+    <div class="about-intro about-prose interior-page-content">
         <div class="about-portrait-frame">
           <img
             src={withBase('/images/pig.png')}
@@ -33,7 +32,7 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
         </div>
 
         <p class="about-opening">
-          <span class="about-drop-cap" aria-hidden="true">H</span><span class="about-opening-rest">i, I'm Cyrus. I'm a software engineer and classical musician who enjoys mastering difficult skills. </span>
+          <span class="about-drop-cap" aria-hidden="true">H</span><span class="about-opening-rest">i, I'm Cyrus. I'm a software engineer and classical musician who enjoys mastering difficult skills.</span>
           Whether it's reverse engineering complex systems, performing concertos, or building interactive web
           experiences, I'm happiest when I'm learning something challenging.
         </p>
@@ -303,8 +302,7 @@ const pickleballImage = withBase('/images/about/ucla-pickleball-super-regional.j
           </a>
         </div>
       </details>
-    </article>
-  </div>
+  </article>
 </BaseLayout>
 
 <script>

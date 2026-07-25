@@ -1,36 +1,19 @@
 .resume-page {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  padding: clamp(2.2rem, 4vw, 3.2rem) 0 clamp(6rem, 12vw, 9rem);
+  /* Shared grid, heading rhythm, and page width come from .interior-page. */
 }
 
 .resume-heading,
 .resume-list {
-  grid-column: 4 / 10;
-  justify-self: center;
+  width: 100%;
 }
 
 .resume-heading {
-  width: min(100%, 31.5rem);
-  margin-bottom: clamp(2.15rem, 4vw, 2.85rem);
-  text-align: center;
+  margin: 0;
 }
 
-.resume-heading h1 {
-  margin: 0;
-  color: var(--accent-strong);
-  font-family: var(--font-display);
-  font-size: clamp(2.45rem, 5vw, 3.6rem);
-  font-weight: 400;
-  letter-spacing: -0.04em;
-  line-height: 0.95;
-  text-wrap: balance;
-}
 
 .resume-list {
   width: 100%;
-  border-top: 1px solid var(--line);
 }
 
 .resume-entry {
@@ -90,18 +73,6 @@
 .resume-actions a:hover,
 .resume-actions a:focus-visible {
   transform: translateY(-1px);
-}
-
-@media (max-width: 48rem) {
-  .resume-page {
-    padding-top: 2.35rem;
-  }
-
-  .resume-heading,
-  .resume-list {
-    grid-column: 1 / -1;
-    width: min(calc(100% - 2rem), 31.5rem);
-  }
 }
 
 @media (max-width: 28rem) {

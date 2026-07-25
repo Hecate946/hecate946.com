@@ -1,36 +1,16 @@
 .contact-page {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  padding: clamp(2.2rem, 4vw, 3.2rem) 0 clamp(5rem, 10vw, 8rem);
+  /* Shared grid, heading rhythm, and page width come from .interior-page. */
 }
 
 .contact-heading {
-  grid-column: 4 / 10;
-  width: min(100%, 31.5rem);
-  justify-self: center;
-  margin-bottom: clamp(2.15rem, 4vw, 2.85rem);
-  text-align: center;
+  margin: 0;
 }
 
-.contact-heading h1 {
-  margin: 0;
-  color: var(--accent-strong);
-  font-family: var(--font-display);
-  font-size: clamp(2.45rem, 5vw, 3.6rem);
-  font-weight: 400;
-  letter-spacing: -0.04em;
-  line-height: 0.95;
-  text-wrap: balance;
-}
 
 .contact-switchboard {
   position: relative;
   display: grid;
-  grid-column: 2 / 12;
-  width: min(100%, 72rem);
-  grid-template-columns: minmax(0, 1.45fr) minmax(16rem, 0.75fr);
-  justify-self: center;
+  grid-template-columns: 1fr;
   gap: clamp(1rem, 2.5vw, 1.6rem);
 }
 
@@ -48,14 +28,6 @@
   overflow: hidden;
   padding: clamp(1.35rem, 3vw, 2.2rem);
   border-radius: 1.5rem;
-}
-
-.contact-terminal::before {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 0.18rem;
-  background: linear-gradient(90deg, transparent, var(--accent-strong), transparent);
-  content: '';
 }
 
 .terminal-topline,
@@ -83,7 +55,15 @@
   border-bottom: 1px solid var(--line);
 }
 
+.email-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.9rem;
+}
+
 .email-address {
+  min-width: 0;
   overflow: hidden;
   color: var(--accent-strong);
   font-family: var(--font-display);
@@ -330,39 +310,48 @@
   display: grid;
   width: 3rem;
   height: 3rem;
+  flex: 0 0 3rem;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  justify-self: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
   border-radius: 0.85rem;
-  background: color-mix(in srgb, var(--accent) 9%, var(--surface-strong));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-strong));
+  color: var(--accent-strong);
 }
 
 .contact-service-logo {
   display: block;
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 2rem;
+  height: 2rem;
   overflow: visible;
+  padding: 0;
+  color: inherit;
+  transform: none;
+  transform-origin: center;
 }
 
-.contact-service-logo--github {
-  fill: #111111;
+.contact-service-logo path,
+.contact-service-logo rect,
+.contact-service-logo circle,
+.contact-service-logo polygon {
+  fill: currentColor !important;
+  stroke: currentColor !important;
 }
 
-html[data-theme='dark'] .contact-service-logo--github {
-  fill: #ffffff;
-}
-
-.contact-service-logo--linkedin {
-  fill: #2298dc;
-}
-
+.contact-service-logo--gmail,
+.contact-service-logo--github,
+.contact-service-logo--linkedin,
 .contact-service-logo--coffee {
-  width: 1.33rem;
-  height: 1.85rem;
-  --coffee-outline: #0d0c22;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  transform: none;
 }
 
-html[data-theme='dark'] .contact-service-logo--coffee {
-  --coffee-outline: #ffffff;
+/* The official coffee artwork is tall; a slightly narrower width keeps its
+   visible cup centered with the same optical padding as the other marks. */
+.contact-service-logo--coffee {
+  width: 1.72rem;
 }
 
 .contact-link-copy {
@@ -406,36 +395,24 @@ html[data-theme='dark'] .contact-service-logo--coffee {
 }
 
 @media (max-width: 52rem) {
-  .contact-switchboard {
+  .contact-switchboard,
+  .contact-links {
     grid-template-columns: 1fr;
   }
 
-  .contact-links {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .contact-link-card {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: auto 1fr auto;
   }
 
-  .contact-link-icon {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 48rem) {
-  .contact-page {
-    padding-top: 2.35rem;
+  .email-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .contact-heading,
-  .contact-switchboard {
-    grid-column: 1 / -1;
-    width: min(calc(100% - 2rem), 72rem);
-  }
-
-  .contact-heading {
-    width: min(calc(100% - 2rem), 31.5rem);
+  .email-identity,
+  .email-address,
+  .copy-email {
+    width: 100%;
   }
 }
 
@@ -449,8 +426,12 @@ html[data-theme='dark'] .contact-service-logo--coffee {
     flex-direction: column;
   }
 
+  .email-identity,
   .email-address {
     width: 100%;
+  }
+
+  .email-address {
     font-size: clamp(1.25rem, 6.5vw, 1.75rem);
   }
 
@@ -481,5 +462,103 @@ html[data-theme='dark'] .contact-service-logo--coffee {
   .subject-dropdown,
   .subject-dropdown-options button {
     transition: none;
+  }
+}
+
+/* Contact-specific responsive composition.
+   The shared title stays on the middle six columns, while the switchboard
+   uses a wider centered span so its desktop and tablet layouts remain useful. */
+@media (min-width: 40rem) {
+  .contact-switchboard.interior-page-content {
+    grid-column: 2 / 12;
+  }
+}
+
+@media (min-width: 68rem) {
+  .contact-switchboard {
+    grid-template-columns: minmax(0, 1.9fr) minmax(15rem, 1fr);
+    align-items: stretch;
+  }
+
+  .contact-links {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 40rem) and (max-width: 67.999rem) {
+  .contact-switchboard {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-links {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .contact-link-card {
+    min-height: 8rem;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0.65rem;
+    padding: 1rem 0.75rem;
+    text-align: center;
+  }
+
+  .contact-link-copy {
+    justify-items: center;
+  }
+
+  .contact-link-arrow {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}
+
+/* Never visually truncate the address. It may wrap at a safe point on very
+   narrow screens, but every character remains visible. */
+.email-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.email-identity {
+  width: 100%;
+  min-width: 0;
+}
+
+.email-address {
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.08;
+}
+
+.contact-service-logo--linkedin {
+  width: 1.72rem;
+  height: 1.72rem;
+}
+
+@media (max-width: 39.999rem) {
+  .email-row {
+    grid-template-columns: 1fr;
+  }
+
+  .email-identity {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .email-address {
+    width: auto;
+    font-size: clamp(1.08rem, 5.2vw, 1.5rem);
+    letter-spacing: -0.025em;
+  }
+
+  .contact-links {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,7 +1,16 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import '@/styles/work.css';
 ---
 
 <BaseLayout title="Work" description="work, allegedly.">
-  <p>bitch u think i work?</p>
+  <section class="work-page interior-page" aria-labelledby="work-title">
+    <header class="work-heading interior-page-heading">
+      <h1 id="work-title">Work</h1>
+    </header>
+
+    <div class="work-content interior-page-content">
+      <p>bitch u think i work?</p>
+    </div>
+  </section>
 </BaseLayout>

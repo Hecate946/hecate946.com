@@ -106,6 +106,55 @@ main {
   margin-inline: auto;
 }
 
+/* Shared inner-page structure for About, Work, Resume, and Contact. */
+.interior-page {
+  --interior-heading-space: clamp(2.5rem, 5vw, 3.75rem);
+  --interior-content-space: clamp(2.25rem, 4.5vw, 3.5rem);
+
+  display: grid;
+  width: min(calc(100% - 2rem), var(--content-width));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  margin-inline: auto;
+  padding-bottom: clamp(6rem, 12vw, 9rem);
+}
+
+.interior-page-heading,
+.interior-page-content {
+  grid-column: 4 / 10;
+  width: 100%;
+  justify-self: center;
+}
+
+.interior-page-heading {
+  display: grid;
+  place-items: center;
+  padding-block: var(--interior-heading-space);
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+
+.interior-page-heading h1 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-family: var(--font-display);
+  font-size: clamp(2.45rem, 5vw, 3.6rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.interior-page-content {
+  padding-top: var(--interior-content-space);
+}
+
+@media (max-width: 39.999rem) {
+  .interior-page-heading,
+  .interior-page-content {
+    grid-column: 1 / -1;
+  }
+}
+
 .reading-width {
   width: min(100%, var(--reading-width));
 }

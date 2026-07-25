@@ -298,13 +298,12 @@ html[data-theme='dark'] .mode-sun {
 
 /* Fixed-size season buttons with a fixed visual gap. */
 .season-picker {
-  display: grid;
+  display: flex;
   width: 100%;
   height: 100%;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
-  justify-items: center;
-  gap: 0;
+  justify-content: center;
+  gap: var(--season-gap);
   padding: 0;
 }
 
@@ -470,10 +469,11 @@ html[data-season='winter'] .season-button.winter {
   }
 
   .season-picker {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-    place-items: center;
-    gap: 0;
+    display: grid;
+    grid-template-columns: repeat(2, var(--control-size));
+    grid-template-rows: repeat(2, var(--control-size));
+    place-content: center;
+    gap: var(--season-gap);
   }
 
 }

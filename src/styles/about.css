@@ -1,23 +1,17 @@
 .about-book {
   --about-section-gap: clamp(2.5rem, 5vw, 3.75rem);
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  padding: 0 0 clamp(6rem, 12vw, 9rem);
 }
 
 .about-masthead,
 .about-intro,
 .passion-section {
   grid-column: 4 / 10;
-  width: min(100%, 31.5rem);
+  width: 100%;
   justify-self: center;
 }
 
 .about-masthead {
   margin: 0;
-  padding-block: var(--about-section-gap);
-  text-align: center;
 }
 
 .media-card__kicker,
@@ -31,16 +25,6 @@
 }
 
 
-.about-masthead h1 {
-  margin: 0;
-  color: var(--accent-strong);
-  font-family: var(--font-display);
-  font-size: clamp(2.45rem, 5vw, 3.6rem);
-  font-weight: 400;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  text-wrap: balance;
-}
 
 .about-prose {
   color: color-mix(in srgb, var(--text) 94%, var(--muted));
@@ -61,7 +45,7 @@
 }
 
 .about-intro {
-  padding: 0 0 var(--about-section-gap);
+  padding: var(--interior-content-space) 0 var(--about-section-gap);
 }
 
 .about-portrait-frame {
@@ -440,16 +424,12 @@
   font-weight: 500;
 }
 
-@media (max-width: 48rem) {
-  .about-book {
-    padding-top: 0;
-  }
-
+@media (max-width: 39.999rem) {
   .about-masthead,
   .about-intro,
   .passion-section {
     grid-column: 1 / -1;
-    width: min(calc(100% - 2rem), 31.5rem);
+    width: 100%;
   }
 }
 

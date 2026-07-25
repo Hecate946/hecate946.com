@@ -35,19 +35,30 @@ const links = [
   title="Contact — Cyrus Asasi"
   description="Get in touch with Cyrus Asasi about software, music, collaborations, and creative projects."
 >
-  <div class="contact-page" data-contact-page>
-    <header class="contact-heading">
+  <div class="contact-page interior-page" data-contact-page>
+    <header class="contact-heading interior-page-heading">
       <h1 id="contact-title">Contact</h1>
     </header>
 
-    <section class="contact-switchboard" aria-labelledby="contact-title">
+    <section class="contact-switchboard interior-page-content" aria-labelledby="contact-title">
       <article class="contact-terminal">
         <div class="terminal-topline">
           <span class="terminal-label">EMAIL</span>
         </div>
 
         <div class="email-row">
-          <a href={`mailto:${email}`} class="email-address">{email}</a>
+          <div class="email-identity">
+            <span class="contact-link-icon email-contact-icon" aria-hidden="true">
+              <svg class="contact-service-logo contact-service-logo--gmail" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#4285F4" d="M6 14.6V38a4 4 0 0 0 4 4h5V21.35L6 14.6Z" />
+                <path fill="#34A853" d="M33 21.35V42h5a4 4 0 0 0 4-4V14.6l-9 6.75Z" />
+                <path fill="#EA4335" d="M33 12.1 24 18.85 15 12.1v9.25L24 28l9-6.65V12.1Z" />
+                <path fill="#C5221F" d="M6 11.25v3.35l9 6.75V12.1l-4.8-3.6A2.63 2.63 0 0 0 6 11.25Z" />
+                <path fill="#FBBC04" d="M42 11.25v3.35l-9 6.75V12.1l4.8-3.6a2.63 2.63 0 0 1 4.2 2.75Z" />
+              </svg>
+            </span>
+            <a href={`mailto:${email}`} class="email-address">{email}</a>
+          </div>
           <button class="copy-email" type="button" data-copy-email={email} aria-label="Copy email address">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <rect x="8" y="8" width="11" height="11" rx="2"></rect>
@@ -113,7 +124,7 @@ const links = [
                 </svg>
               )}
               {link.icon === 'linkedin' && (
-                <svg class="contact-service-logo contact-service-logo--linkedin" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="contact-service-logo contact-service-logo--linkedin" viewBox="3.6 3.6 16.8 16.8" aria-hidden="true">
                   <path d="M6.3 8.1A1.8 1.8 0 1 1 6.3 4.5a1.8 1.8 0 0 1 0 3.6ZM4.75 9.55h3.1V19.5h-3.1V9.55Zm4.95 0h2.97v1.36h.04c.41-.78 1.43-1.61 2.94-1.61 3.14 0 3.72 2.07 3.72 4.76v5.44h-3.1v-4.82c0-1.15-.02-2.63-1.61-2.63-1.61 0-1.86 1.26-1.86 2.55v4.9H9.7V9.55Z" />
                 </svg>
               )}
