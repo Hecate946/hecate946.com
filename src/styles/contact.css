@@ -597,3 +597,48 @@
     letter-spacing: -0.035em;
   }
 }
+
+/* Give the email card priority on desktop instead of shrinking its address.
+   The service links remain fully readable but use a tighter sidebar. */
+@media (min-width: 68rem) {
+  .contact-switchboard {
+    grid-template-columns: minmax(0, 2.55fr) minmax(12.25rem, 0.72fr);
+    gap: clamp(0.85rem, 1.5vw, 1.15rem);
+  }
+
+  .contact-link-card {
+    min-height: 6.5rem;
+    grid-template-columns: 2.65rem minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    padding: 0.9rem;
+  }
+
+  .contact-link-icon {
+    width: 2.65rem;
+    height: 2.65rem;
+    flex-basis: 2.65rem;
+  }
+
+  .contact-service-logo {
+    width: 1.78rem;
+    height: 1.78rem;
+  }
+
+  .contact-service-logo--linkedin,
+  .contact-service-logo--coffee {
+    width: 1.55rem;
+    height: 1.55rem;
+  }
+
+  .contact-link-copy strong {
+    font-size: 1rem;
+  }
+
+  .contact-link-copy small {
+    font-size: 0.7rem;
+  }
+
+  .email-address {
+    font-size: clamp(1.35rem, 2.65vw, 2.4rem);
+  }
+}

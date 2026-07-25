@@ -21,29 +21,6 @@
 }
 
 
-/*
- * Mobile Safari can render the page underneath its translucent browser chrome.
- * A fixed foreground backdrop, owned by the header stacking context, prevents
- * page headings from showing through above or behind the two-row navbar.
- */
-.site-header::before {
-  position: fixed;
-  z-index: 0;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: calc(var(--header-height) + env(safe-area-inset-top));
-  background: var(--bg);
-  content: '';
-  pointer-events: none;
-}
-
-/* Keep the real navbar above the fixed backdrop. */
-.header-grid {
-  position: relative;
-  z-index: 1;
-}
-
 /* The shadow begins below the real bottom border, never on top of it. */
 .site-header::after {
   position: absolute;
@@ -363,9 +340,6 @@ html[data-season='winter'] .season-button.winter {
     --nav-font-size: 0.92rem;
   }
 
-  .site-header::before {
-    height: calc(2 * var(--header-height) + env(safe-area-inset-top));
-  }
 
   .header-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -420,9 +394,6 @@ html[data-season='winter'] .season-button.winter {
     --season-gap: 0.38rem;
   }
 
-  .site-header::before {
-    height: calc(2 * var(--header-height) + env(safe-area-inset-top));
-  }
 
   .header-grid {
     grid-template-columns: repeat(8, minmax(0, 1fr));
