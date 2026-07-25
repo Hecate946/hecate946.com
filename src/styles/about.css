@@ -1,5 +1,7 @@
 .about-book {
   --about-section-gap: clamp(2.5rem, 5vw, 3.75rem);
+  --about-outer-space: var(--interior-content-space);
+  --about-dropdown-space: clamp(3.25rem, 6vw, 4.75rem);
 }
 
 .about-masthead,
@@ -45,7 +47,7 @@
 }
 
 .about-intro {
-  padding: var(--interior-content-space) 0 var(--about-section-gap);
+  padding: var(--about-outer-space) 0 0;
 }
 
 .about-portrait-frame {
@@ -604,13 +606,15 @@
   justify-self: stretch;
 }
 
-/* Give the collapsible chapter list matching breathing room above and below. */
-.about-intro {
-  padding-bottom: var(--interior-content-space);
+/* Match the outer page rhythm used by the other interior pages. The top
+   divider-to-portrait space equals the final divider-to-footer space, while
+   the chapter dropdowns get a little more separation from the intro copy. */
+.about-intro + .passion-section {
+  margin-top: var(--about-dropdown-space);
 }
 
 .passion-section:last-of-type {
-  margin-bottom: var(--interior-content-space);
+  margin-bottom: var(--about-outer-space);
 }
 
 @media (max-width: 39.999rem) {

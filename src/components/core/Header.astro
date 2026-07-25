@@ -75,24 +75,15 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
     const header = document.querySelector<HTMLElement>('[data-site-header]');
     if (!header) return;
 
-    let animationFrame = 0;
-
     const update = () => {
-      animationFrame = 0;
       header.dataset.scrolled = window.scrollY > 1 ? 'true' : 'false';
     };
 
-    const scheduleUpdate = () => {
-      if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(update);
-    };
-
-    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('scroll', update, { passive: true });
     update();
 
     headerWindow.__siteHeaderScrollCleanup = () => {
-      window.removeEventListener('scroll', scheduleUpdate);
-      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener('scroll', update);
     };
   }
 

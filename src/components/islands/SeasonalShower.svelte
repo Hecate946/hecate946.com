@@ -300,6 +300,7 @@
         for (const particle of particles) beginFade(particle, nowSeconds);
       } else {
         particles = [];
+        context.clearRect(0, 0, width, height);
       }
 
       particles.push(...makeParticles(season, width));
@@ -329,7 +330,7 @@
 
       observedSeason = nextSeason;
       showerClock.reset();
-      startShower(nextSeason, true);
+      startShower(nextSeason);
     });
 
     resize();
