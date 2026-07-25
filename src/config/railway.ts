@@ -21,7 +21,7 @@ export interface RailwayConfig {
  */
 export const railwayConfig = {
   // Change this one flag to hide or restore the railway everywhere.
-  enabled: true,
+  enabled: false,
   lineName: 'Line 946',
   serviceLabel: 'Steam service',
   navigationEnabled: false,
