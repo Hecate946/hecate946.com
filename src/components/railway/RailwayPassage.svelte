@@ -298,7 +298,9 @@
   <div class="railway-boundary">
     <header class="railway-toolbar">
       <div class="railway-toolbar__left">
-        <h2 id="railway-passage-title" class="railway-toolbar__sr-title">{lineName}</h2>
+        <h2 id="railway-passage-title" class="railway-toolbar__sr-title">
+          {lineName}: {serviceLabel}
+        </h2>
         <RailwayArrivalBoard
           {boardLabel}
           {boardPrimary}
