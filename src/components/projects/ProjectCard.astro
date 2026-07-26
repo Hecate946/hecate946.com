@@ -1,0 +1,37 @@
+---
+import type { Project } from '@/data/projects';
+import { withBase } from '@/lib/paths';
+
+interface Props {
+  project: Project;
+  priority?: boolean;
+}
+
+const { project, priority = false } = Astro.props;
+const href = withBase(`/projects/${project.slug}/`);
+const image = withBase(project.image);
+const displayUrl = `hecate946.com/projects/${project.slug}`;
+---
+
+<a class="project-window" href={href} aria-label={`View the ${project.title} case study`}>
+  <span class="project-window__image" aria-hidden="true">
+    <img
+      src={image}
+      alt=""
+      width="1600"
+      height="1000"
+      loading={priority ? 'eager' : 'lazy'}
+      fetchpriority={priority ? 'high' : 'auto'}
+      decoding="async"
+    />
+    <span class="project-window__open">View project <span aria-hidden="true">↗</span></span>
+  </span>
+
+  <span class="project-window__caption">
+    <span>
+      <strong>{project.title}</strong>
+      <small>{project.category} · {project.period}</small>
+    </span>
+    <span class="project-window__url">{displayUrl}</span>
+  </span>
+</a>

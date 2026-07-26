@@ -604,7 +604,7 @@
   }
 }
 
-/* Align the Stats title and dashboard to the same middle eight columns. */
+/* Align the Stats title and dashboard to the central eight columns. */
 .stats-heading,
 .stats-content.interior-page-content {
   grid-column: 3 / 11;

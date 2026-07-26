@@ -13,9 +13,9 @@ export const headerNavigation = [
   { label: 'About', href: '/about/' },
   { label: 'Resume', href: '/resume/' },
   {
-    label: 'Work',
-    href: '/work/',
-    match: ['/code/', '/clarinet/', '/piano/', '/lab/', '/projects/'],
+    label: 'Projects',
+    href: '/projects/',
+    match: ['/code/', '/clarinet/', '/piano/', '/lab/', '/work/'],
   },
   { label: 'Contact', href: '/contact/' },
   { label: 'Stats', href: '/stats/' },

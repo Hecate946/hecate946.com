@@ -27,7 +27,7 @@ const icons = {
 
 /**
  * In radial layout mode, the outer-node array order is the clockwise order.
- * Starting at the top: About → Résumé → Work → Contact → Stats.
+ * Starting at the top: About → Résumé → Projects → Contact → Stats.
  */
 export const homeNetworkNodes: NetworkNode[] = [
   {
@@ -60,9 +60,9 @@ export const homeNetworkNodes: NetworkNode[] = [
   },
   {
     id: 'work',
-    label: 'Work',
+    label: 'Projects',
     description: 'Projects & practice',
-    href: withBase('/work/'),
+    href: withBase('/projects/'),
     icon: icons.work,
     accent: '#c88d31',
     radius: 36,

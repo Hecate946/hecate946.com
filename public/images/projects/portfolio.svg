@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Portfolio abstract project artwork</title>
+  <desc id="desc">A whimsical digital world with a cute house, railway, seasonal symbols, and floating interface pieces.</desc>
+  <defs>
+    <linearGradient id="bg" x1="90" y1="80" x2="1510" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#bfe8ff"/>
+      <stop offset="0.46" stop-color="#d7ccff"/>
+      <stop offset="1" stop-color="#ffd2b7"/>
+    </linearGradient>
+    <linearGradient id="house" x1="578" y1="300" x2="1040" y2="750" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff7c7"/>
+      <stop offset="1" stop-color="#f4b388"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="575" y1="250" x2="1050" y2="470" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b58df5"/>
+      <stop offset="1" stop-color="#785ec9"/>
+    </linearGradient>
+    <pattern id="stars" width="70" height="70" patternUnits="userSpaceOnUse">
+      <circle cx="9" cy="12" r="3" fill="#fff" opacity="0.22"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect width="1600" height="1000" fill="url(#stars)"/>
+  <circle cx="132" cy="165" r="155" fill="#fff4b8" opacity="0.45"/>
+  <circle cx="1456" cy="854" r="240" fill="#ff9fba" opacity="0.22"/>
+
+  <g fill="#fff" opacity="0.72">
+    <path d="M90 317c43-54 126-45 155 12 54-30 125 7 125 70H58c0-36 14-64 32-82z"/>
+    <path d="M1230 201c31-39 90-32 111 9 39-21 92 6 92 52h-227c0-26 10-46 24-61z"/>
+  </g>
+
+  <g transform="translate(800 560)">
+    <ellipse cx="0" cy="248" rx="432" ry="92" fill="#6aa796" opacity="0.36"/>
+    <path d="M-322 100h644v266h-644z" fill="url(#house)"/>
+    <path d="M-389 116-206-105H211L389 116z" fill="url(#roof)"/>
+    <path d="M-250 100-98-73h191l153 173z" fill="#8b70d1" opacity="0.55"/>
+    <rect x="-272" y="139" width="156" height="124" rx="30" fill="#b9e8f2" stroke="#fff" stroke-width="12"/>
+    <rect x="116" y="139" width="156" height="124" rx="30" fill="#ffd2d9" stroke="#fff" stroke-width="12"/>
+    <rect x="-64" y="173" width="128" height="193" rx="58" fill="#705a86"/>
+    <circle cx="38" cy="270" r="11" fill="#ffd775"/>
+    <circle cy="15" r="61" fill="#fff7d4" stroke="#fff" stroke-width="12"/>
+    <path d="M-31 19c18-31 45-36 64-6-17 26-43 33-64 6z" fill="#ff9eb9"/>
+    <path d="M-7 10c0-16 16-30 33-30" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <g transform="translate(248 625) rotate(-8)">
+      <rect x="-132" y="-105" width="264" height="210" rx="48" fill="#fffaf6"/>
+      <rect x="-93" y="-60" width="186" height="112" rx="25" fill="#272b4b"/>
+      <circle cx="-52" cy="-18" r="21" fill="#ffd16e"/>
+      <path d="M-17-26h72M-17 2h51M-17 30h62" stroke="#8fcfca" stroke-width="12" stroke-linecap="round"/>
+      <path d="M-46 74h92" stroke="#9b87eb" stroke-width="13" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(1375 565) rotate(8)">
+      <rect x="-132" y="-105" width="264" height="210" rx="48" fill="#fffaf6"/>
+      <circle cx="-60" cy="-27" r="32" fill="#ffb56f"/>
+      <path d="M-17-42h88M-17-10h62M-92 45h163" stroke="#5e5777" stroke-width="13" stroke-linecap="round" opacity="0.45"/>
+      <path d="M-92 75h118" stroke="#8bcfc3" stroke-width="13" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <g transform="translate(0 100)">
+    <path d="M0 785c205-72 365-87 545-36 179 50 337 53 519 8 203-50 362-42 536 8" fill="none" stroke="#5c536f" stroke-width="22" stroke-linecap="round"/>
+    <path d="M0 829c205-72 365-87 545-36 179 50 337 53 519 8 203-50 362-42 536 8" fill="none" stroke="#5c536f" stroke-width="22" stroke-linecap="round"/>
+    <g stroke="#fff3d3" stroke-width="12" stroke-linecap="round">
+      <path d="M63 791v44M154 769v44M249 754v44M347 752v44M449 766v44M552 790v44M656 810v44M761 815v44M866 811v44M972 795v44M1078 779v44M1184 772v44M1290 779v44M1396 796v44M1502 817v44"/>
+    </g>
+    <g transform="translate(408 770) rotate(4)">
+      <rect x="-112" y="-70" width="224" height="140" rx="42" fill="#ff7f9f"/>
+      <rect x="-74" y="-101" width="112" height="58" rx="25" fill="#fff4c7"/>
+      <circle cx="-63" cy="72" r="31" fill="#4e4969"/>
+      <circle cx="64" cy="72" r="31" fill="#4e4969"/>
+      <circle cx="-63" cy="72" r="13" fill="#fff"/>
+      <circle cx="64" cy="72" r="13" fill="#fff"/>
+      <circle cx="66" cy="-15" r="18" fill="#fff4c7"/>
+    </g>
+  </g>
+
+  <g>
+    <g transform="translate(290 210)">
+      <circle r="76" fill="#fffaf4"/>
+      <circle r="42" fill="#ffd15f"/>
+      <g stroke="#ffd15f" stroke-width="11" stroke-linecap="round">
+        <path d="M0-65v-22M0 65v22M-65 0h-22M65 0h22M-46-46l-16-16M46 46l16 16M46-46l16-16M-46 46l-16 16"/>
+      </g>
+    </g>
+    <g transform="translate(526 150)">
+      <circle r="76" fill="#fffaf4"/>
+      <path d="M-8-48c54 27 62 89 7 116-52-12-70-68-38-107 10 32 20 41 31-9z" fill="#75c98d"/>
+      <path d="M-26 33C-6 6 12-8 35-21" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(1075 155)">
+      <circle r="76" fill="#fffaf4"/>
+      <circle cy="8" r="31" fill="#ff9fbd"/>
+      <g fill="#ff9fbd">
+        <ellipse cy="-35" rx="19" ry="29"/>
+        <ellipse cy="51" rx="19" ry="29"/>
+        <ellipse cx="-42" cy="8" rx="29" ry="19"/>
+        <ellipse cx="42" cy="8" rx="29" ry="19"/>
+      </g>
+      <circle cy="8" r="16" fill="#ffd15f"/>
+    </g>
+    <g transform="translate(1307 225)">
+      <circle r="76" fill="#fffaf4"/>
+      <g stroke="#84c6dc" stroke-width="10" stroke-linecap="round">
+        <path d="M0-51v102M-44-26l88 52M-44 26l88-52"/>
+        <path d="m0-51-12 15M0-51l12 15M0 51l-12-15M0 51l12-15M-44-26l20 2M-44-26l8 19M44 26l-20-2M44 26l-8-19M-44 26l20-2M-44 26l8-19M44-26l-20 2M44-26l-8 19"/>
+      </g>
+    </g>
+  </g>
+
+  <g fill="#fff" opacity="0.88">
+    <path d="m1400 385 13 28 31 4-23 22 6 31-27-15-28 15 7-31-23-22 31-4z"/>
+    <circle cx="151" cy="478" r="16"/>
+    <circle cx="1466" cy="712" r="13"/>
+  </g>
+</svg>

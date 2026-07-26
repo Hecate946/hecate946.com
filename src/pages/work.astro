@@ -1,16 +1,5 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import '@/styles/work.css';
+import { withBase } from '@/lib/paths';
+
+return Astro.redirect(withBase('/projects/'));
 ---
-
-<BaseLayout title="Work" description="work, allegedly.">
-  <section class="work-page interior-page" aria-labelledby="work-title">
-    <header class="work-heading interior-page-heading">
-      <h1 id="work-title">Work</h1>
-    </header>
-
-    <div class="work-content interior-page-content">
-      <p>bitch u think i work?</p>
-    </div>
-  </section>
-</BaseLayout>

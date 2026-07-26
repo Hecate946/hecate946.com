@@ -1,0 +1,27 @@
+---
+import ProjectCard from '@/components/projects/ProjectCard.astro';
+import { projects } from '@/data/projects';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import '@/styles/projects-index.css';
+---
+
+<BaseLayout
+  title="Projects"
+  description="Selected software projects by Cyrus Asasi."
+>
+  <section class="projects-page interior-page" aria-labelledby="projects-title">
+    <header class="projects-heading interior-page-heading">
+      <h1 id="projects-title">Projects</h1>
+    </header>
+
+    <div class="projects-content interior-page-content">
+      <div class="project-window-list" aria-label="Selected projects">
+        {
+          projects.map((project, index) => (
+            <ProjectCard project={project} priority={index === 0} />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</BaseLayout>

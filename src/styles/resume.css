@@ -4,7 +4,9 @@
 
 .resume-heading,
 .resume-list {
+  grid-column: 4 / 10;
   width: 100%;
+  justify-self: stretch;
 }
 
 .resume-heading {
@@ -92,5 +94,13 @@
 
   .resume-actions a {
     width: 100%;
+  }
+}
+
+
+@media (max-width: 39.999rem) {
+  .resume-heading,
+  .resume-list {
+    grid-column: 1 / -1;
   }
 }

@@ -564,7 +564,7 @@
   }
 }
 
-/* Keep both the Contact title and complete switchboard within columns 3–10. */
+/* Keep the Contact title and switchboard within the central eight columns. */
 .contact-heading,
 .contact-switchboard.interior-page-content {
   grid-column: 3 / 11;

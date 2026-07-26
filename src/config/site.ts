@@ -20,7 +20,7 @@ export const siteConfig = {
 export const headerNavigation = [
   { label: 'About', href: '/about/' },
   { label: 'Resume', href: '/resume/' },
-  { label: 'Work', href: '/work/' },
+  { label: 'Projects', href: '/projects/' },
   { label: 'Contact', href: '/contact/' },
   { label: 'Stats', href: '/stats/' },
 ] as const;
@@ -36,7 +36,7 @@ export const navigation = [
   // { label: 'Chess', href: '/chess/' },
   // { label: 'Pickleball', href: '/pickleball/' },
   // { label: 'Lab', href: '/lab/' },
-  { label: 'Work', href: '/work/' },
+  { label: 'Projects', href: '/projects/' },
   { label: 'Contact', href: '/contact/' },
   { label: 'Stats', href: '/stats/' },
   { label: 'About', href: '/about/' },
