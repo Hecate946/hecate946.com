@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1672 941" role="img" aria-labelledby="title desc">
+<title id="title">Frozen house elevation</title>
+<desc id="desc">Front-facing two-story house rendered as precise dark vector geometry with pale architectural outlines.</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#e3e4e3"/><stop offset=".5" stop-color="#f2f2f1"/><stop offset="1" stop-color="#e8e7e6"/></linearGradient>
+<radialGradient id="bg2"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="ink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102d35"/><stop offset=".52" stop-color="#0b252c"/><stop offset="1" stop-color="#071c23"/></linearGradient>
+<filter id="sh"><feDropShadow dx="0" dy="1.4" stdDeviation="1.25" flood-color="#000" flood-opacity=".46"/></filter>
+</defs>
+
+<style>
+.ink{fill:url(#ink)} .out,.line,.wb,.wl,.ws,.wg{stroke:#e8e9e7;stroke-width:4.5;stroke-linecap:square;stroke-linejoin:miter;filter:url(#sh)} .out,.wb,.wl,.ws{fill:url(#ink)} .line,.wg{fill:none}
+</style>
+
+<path class="ink" d="M177 231 482 177H720L650 231Z"/>
+<path class="ink" d="M964 177H1200L1505 231H1055Z"/>
+<path class="ink out" d="M633 230 850 92 1042 230Z"/>
+<path class="line" d="M653 229 850 104 1024 229"/>
+<path class="line" d="M674 229 850 117 1004 229"/>
+<circle class="line" cx="850" cy="182" r="32"/><circle class="line" cx="850" cy="182" r="21"/>
+<path class="ink out" d="M141 238H1558L1512 271H186Z"/>
+<path class="line" d="M147 243H1552"/><path class="line" d="M179 271H1513"/><path class="line" d="M187 280H1511"/>
+<rect class="ink" x="192" y="281" width="1314" height="215"/>
+<rect class="ink" x="192" y="515" width="1314" height="293"/>
+<rect class="ink" x="689" y="279" width="318" height="500"/>
+<path class="ink out" d="M632 227H1049V241H632Z"/>
+<path class="ink out" d="M644 240H1054V254H644Z"/>
+<path class="ink out" d="M653 250H1044V265H653Z"/>
+<path class="ink out" d="M661 259H1038V272H661Z"/>
+<path class="ink out" d="M674 269H1023V282H674Z"/>
+<path class="line" d="M684 280V491M689 280V491"/><path class="line" d="M1007 280V491M1012 280V491"/>
+<path class="line" d="M684 511V778M689 511V778"/><path class="line" d="M1007 511V778M1012 511V778"/>
+<path class="ink out" d="M186 496H1512V515H186Z"/>
+<path class="ink out" d="M658 488H1037V511H658Z"/>
+<rect class="wb" x="297" y="307" width="86" height="132"/>
+<path class="wg" d="M325.6666666666667 307V439"/>
+<path class="wg" d="M354.3333333333333 307V439"/>
+<path class="wg" d="M297 340.0H383"/>
+<path class="wg" d="M297 373.0H383"/>
+<path class="wg" d="M297 406.0H383"/>
+<rect class="ws" x="285" y="439" width="110" height="10"/>
+<rect class="wb" x="515" y="307" width="85" height="132"/>
+<path class="wg" d="M543.3333333333334 307V439"/>
+<path class="wg" d="M571.6666666666666 307V439"/>
+<path class="wg" d="M515 340.0H600"/>
+<path class="wg" d="M515 373.0H600"/>
+<path class="wg" d="M515 406.0H600"/>
+<rect class="ws" x="503" y="439" width="109" height="10"/>
+<rect class="wb" x="805" y="307" width="86" height="147"/>
+<path class="wg" d="M833.6666666666666 307V454"/>
+<path class="wg" d="M862.3333333333334 307V454"/>
+<path class="wg" d="M805 343.75H891"/>
+<path class="wg" d="M805 380.5H891"/>
+<path class="wg" d="M805 417.25H891"/>
+<rect class="ws" x="793" y="454" width="110" height="10"/>
+<rect class="wb" x="1098" y="307" width="86" height="132"/>
+<path class="wg" d="M1126.6666666666667 307V439"/>
+<path class="wg" d="M1155.3333333333333 307V439"/>
+<path class="wg" d="M1098 340.0H1184"/>
+<path class="wg" d="M1098 373.0H1184"/>
+<path class="wg" d="M1098 406.0H1184"/>
+<rect class="ws" x="1086" y="439" width="110" height="10"/>
+<rect class="wb" x="1315" y="307" width="86" height="132"/>
+<path class="wg" d="M1343.6666666666667 307V439"/>
+<path class="wg" d="M1372.3333333333333 307V439"/>
+<path class="wg" d="M1315 340.0H1401"/>
+<path class="wg" d="M1315 373.0H1401"/>
+<path class="wg" d="M1315 406.0H1401"/>
+<rect class="ws" x="1303" y="439" width="110" height="10"/>
+<rect class="wl" x="283" y="546" width="323" height="16"/>
+<rect class="wb" x="295" y="562" width="299" height="181"/>
+<path class="wg" d="M337.7142857142857 562V743"/>
+<path class="wg" d="M380.42857142857144 562V743"/>
+<path class="wg" d="M423.1428571428571 562V743"/>
+<path class="wg" d="M465.8571428571429 562V743"/>
+<path class="wg" d="M508.57142857142856 562V743"/>
+<path class="wg" d="M551.2857142857142 562V743"/>
+<path class="wg" d="M295 598.2H594"/>
+<path class="wg" d="M295 634.4H594"/>
+<path class="wg" d="M295 670.6H594"/>
+<path class="wg" d="M295 706.8H594"/>
+<rect class="ws" x="283" y="743" width="323" height="16"/>
+<rect class="wl" x="1088" y="546" width="329" height="16"/>
+<rect class="wb" x="1100" y="562" width="305" height="181"/>
+<path class="wg" d="M1143.5714285714287 562V743"/>
+<path class="wg" d="M1187.142857142857 562V743"/>
+<path class="wg" d="M1230.7142857142858 562V743"/>
+<path class="wg" d="M1274.2857142857142 562V743"/>
+<path class="wg" d="M1317.857142857143 562V743"/>
+<path class="wg" d="M1361.4285714285713 562V743"/>
+<path class="wg" d="M1100 598.2H1405"/>
+<path class="wg" d="M1100 634.4H1405"/>
+<path class="wg" d="M1100 670.6H1405"/>
+<path class="wg" d="M1100 706.8H1405"/>
+<rect class="ws" x="1088" y="743" width="329" height="16"/>
+<path class="line" style="stroke-linecap:round;stroke-linejoin:round" d="M770 778V648Q770 589 850 562Q929 589 929 648V778"/>
+<path class="line" style="stroke-linecap:round;stroke-linejoin:round" d="M783 778V651Q783 602 850 576Q916 602 916 651V778"/>
+<path class="line" d="M850 576V778"/>
+<path class="ink out" d="M482 770H1220V784H482Z"/>
+<path class="ink out" d="M448 797H1254V815H448Z"/>
+<path class="ink out" d="M433 819H1269V833H433Z"/>
+</svg>

@@ -1,57 +1,149 @@
+<script lang="ts">
+  const upperWindows = [
+    { x: 297, y: 307, width: 86, height: 132 },
+    { x: 515, y: 307, width: 85, height: 132 },
+    { x: 805, y: 307, width: 86, height: 147 },
+    { x: 1098, y: 307, width: 86, height: 132 },
+    { x: 1315, y: 307, width: 86, height: 132 },
+  ] as const;
+
+  const lowerWindows = [
+    { x: 295, y: 562, width: 299, height: 181 },
+    { x: 1100, y: 562, width: 305, height: 181 },
+  ] as const;
+
+  const upperColumns = [1 / 3, 2 / 3] as const;
+  const upperRows = [1 / 4, 2 / 4, 3 / 4] as const;
+  const lowerColumns = [1 / 7, 2 / 7, 3 / 7, 4 / 7, 5 / 7, 6 / 7] as const;
+  const lowerRows = [1 / 5, 2 / 5, 3 / 5, 4 / 5] as const;
+</script>
+
 <g class="house-shell" aria-hidden="true">
-  <!-- Ground shadow -->
-  <ellipse class="house-shell__ground-shadow" cx="706" cy="779" rx="560" ry="22" />
+  <!-- The SVG uses the frozen PNG's native 1672 × 941 coordinate system. -->
 
-  <!-- Main front walls -->
-  <rect class="house-shell__front-wall" x="140" y="290" width="1120" height="430" rx="2" />
-  <rect class="house-shell__front-wall" x="170" y="286" width="255" height="434" rx="2" />
+  <!-- Main roof masses. -->
+  <path class="house-shell__ink" d="M177 231 482 177H720L650 231Z" />
+  <path class="house-shell__ink" d="M964 177H1200L1505 231H1055Z" />
+  <path class="house-shell__ink house-shell__outlined" d="M633 230 850 92 1042 230Z" />
 
-  <!-- Roof: fully front-facing and symmetrical -->
-  <path class="house-shell__roof" d="M108 292 275 108H1138L1305 292Z" />
-  <path class="house-shell__roof-lip" d="M123 286H1290L1270 308H143Z" />
-  <path class="house-shell__roof-highlight" d="M285 113H1130" />
-  <path class="house-shell__ridge" d="M275 108H1138" />
+  <!-- Pediment inset lines and circular oculus. -->
+  <path class="house-shell__line" d="M653 229 850 104 1024 229" />
+  <path class="house-shell__line" d="M674 229 850 117 1004 229" />
+  <circle class="house-shell__line" cx="850" cy="182" r="32" />
+  <circle class="house-shell__line" cx="850" cy="182" r="21" />
 
-  <!-- Entry gable -->
-  <path class="house-shell__entry-face" d="M180 320 352 152 524 320V720H180Z" />
-  <path class="house-shell__entry-roof-left" d="M163 323 351 136 371 156 183 342Z" />
-  <path class="house-shell__entry-roof-right" d="M351 136 541 325 521 343 331 156Z" />
-  <path class="house-shell__entry-timber" d="M351 154V320M204 320 351 154 500 320" />
+  <!-- Full-width eave and cornice. -->
+  <path class="house-shell__ink house-shell__outlined" d="M141 238H1558L1512 271H186Z" />
+  <path class="house-shell__line" d="M147 243H1552" />
+  <path class="house-shell__line" d="M179 271H1513" />
+  <path class="house-shell__line" d="M187 280H1511" />
 
-  <!-- Taller brick chimney -->
-  <g class="house-shell__chimney">
-    <rect x="1108" y="95" width="72" height="165" />
-    <path d="M1092 86H1196V108H1092Z" />
-    <path d="M1119 120H1169M1119 145H1169M1119 170H1169M1119 195H1169M1119 220H1169M1119 245H1169" />
-    <path d="M1144 108V260M1129 132V158M1159 132V158M1129 182V208M1159 182V208M1129 232V258M1159 232V258" />
-  </g>
+  <!-- Upper and lower wall fields. -->
+  <rect class="house-shell__ink" x="192" y="281" width="1314" height="215" />
+  <rect class="house-shell__ink" x="192" y="515" width="1314" height="293" />
+  <rect class="house-shell__ink" x="689" y="279" width="318" height="500" />
 
-  <!-- Trim bands to help house proportions read cleanly -->
-  <path class="house-shell__timber" d="M140 308H1260M140 718H1260M170 286V720M1240 286V720" />
-  <path class="house-shell__upper-trim" d="M495 307H1230V319H495Z" />
+  <!-- Central portico cornice, copied from the frozen silhouette. -->
+  <path class="house-shell__ink house-shell__outlined" d="M632 227H1049V241H632Z" />
+  <path class="house-shell__ink house-shell__outlined" d="M644 240H1054V254H644Z" />
+  <path class="house-shell__ink house-shell__outlined" d="M653 250H1044V265H653Z" />
+  <path class="house-shell__ink house-shell__outlined" d="M661 259H1038V272H661Z" />
+  <path class="house-shell__ink house-shell__outlined" d="M674 269H1023V282H674Z" />
 
-  <!-- Foundation -->
-  <rect class="house-shell__foundation" x="128" y="708" width="1144" height="62" />
-  <path class="house-shell__foundation-cap" d="M116 699H1284V716H116Z" />
-  <path class="house-shell__foundation-highlight" d="M150 728H1246" />
+  <!-- Paired portico boundary lines create the narrow dark reveals in the PNG. -->
+  <path class="house-shell__line" d="M684 280V491M689 280V491" />
+  <path class="house-shell__line" d="M1007 280V491M1012 280V491" />
+  <path class="house-shell__line" d="M684 511V778M689 511V778" />
+  <path class="house-shell__line" d="M1007 511V778M1012 511V778" />
 
-  <!-- Arched double door aligned under the circular window -->
-  <path class="house-shell__door-frame" d="M214 714V505A87 87 0 0 1 388 505V714Z" />
-  <path class="house-shell__door" d="M234 714V526A67 67 0 0 1 368 526V714Z" />
-  <path class="house-shell__door-panels" d="M301 526V714M250 610H352M250 675H352" />
-  <path class="house-shell__door-fhole" d="M278 608c7-8 9-20 2-33c8 4 12 13 12 22c0 10-4 19-12 24c7 2 10 8 10 15c0 8-4 15-10 20c7 3 10 9 10 16c0 7-4 13-10 18" />
-  <path class="house-shell__door-fhole" d="M324 608c-7-8-9-20-2-33c-8 4-12 13-12 22c0 10 4 19 12 24c-7 2-10 8-10 15c0 8 4 15 10 20c-7 3-10 9-10 16c0 7 4 13 10 18" />
-  <circle class="house-shell__door-fhole-dot" cx="272" cy="593" r="3.5" />
-  <circle class="house-shell__door-fhole-dot" cx="330" cy="593" r="3.5" />
-  <circle class="house-shell__door-fhole-dot" cx="272" cy="662" r="3.5" />
-  <circle class="house-shell__door-fhole-dot" cx="330" cy="662" r="3.5" />
-  <path class="house-shell__door-threshold" d="M210 714H392V728H210Z" />
+  <!-- Floor division and the center projection. -->
+  <path class="house-shell__ink house-shell__outlined" d="M186 496H1512V515H186Z" />
+  <path class="house-shell__ink house-shell__outlined" d="M658 488H1037V511H658Z" />
 
-  <!-- More realistic entry steps -->
-  <path class="house-shell__step-top" d="M196 728H406L397 736H205Z" />
-  <path class="house-shell__step-face" d="M205 736H397V748H205Z" />
-  <path class="house-shell__step-top" d="M179 748H423L414 757H188Z" />
-  <path class="house-shell__step-face" d="M188 757H414V770H188Z" />
-  <path class="house-shell__step-top" d="M160 770H442L431 780H171Z" />
-  <path class="house-shell__step-face" d="M171 780H431V793H171Z" />
+  <!-- Five vertically aligned upper windows, each with a 3 × 4 pane grid. -->
+  {#each upperWindows as window}
+    <g class="house-shell__window">
+      <rect
+        class="house-shell__window-body"
+        x={window.x}
+        y={window.y}
+        width={window.width}
+        height={window.height}
+      />
+      {#each upperColumns as ratio}
+        <path
+          class="house-shell__window-grid"
+          d={`M${window.x + window.width * ratio} ${window.y}V${window.y + window.height}`}
+        />
+      {/each}
+      {#each upperRows as ratio}
+        <path
+          class="house-shell__window-grid"
+          d={`M${window.x} ${window.y + window.height * ratio}H${window.x + window.width}`}
+        />
+      {/each}
+      <rect
+        class="house-shell__window-sill"
+        x={window.x - 12}
+        y={window.y + window.height}
+        width={window.width + 24}
+        height="10"
+      />
+    </g>
+  {/each}
+
+  <!-- Two broad first-story windows. The frozen PNG resolved to a 7 × 5 grid. -->
+  {#each lowerWindows as window}
+    <g class="house-shell__window house-shell__window--large">
+      <rect
+        class="house-shell__window-lintel"
+        x={window.x - 12}
+        y={window.y - 16}
+        width={window.width + 24}
+        height="16"
+      />
+      <rect
+        class="house-shell__window-body"
+        x={window.x}
+        y={window.y}
+        width={window.width}
+        height={window.height}
+      />
+      {#each lowerColumns as ratio}
+        <path
+          class="house-shell__window-grid"
+          d={`M${window.x + window.width * ratio} ${window.y}V${window.y + window.height}`}
+        />
+      {/each}
+      {#each lowerRows as ratio}
+        <path
+          class="house-shell__window-grid"
+          d={`M${window.x} ${window.y + window.height * ratio}H${window.x + window.width}`}
+        />
+      {/each}
+      <rect
+        class="house-shell__window-sill"
+        x={window.x - 12}
+        y={window.y + window.height}
+        width={window.width + 24}
+        height="16"
+      />
+    </g>
+  {/each}
+
+  <!-- Double-line pointed arch entrance. -->
+  <path
+    class="house-shell__line house-shell__door-line"
+    d="M770 778V648Q770 589 850 562Q929 589 929 648V778"
+  />
+  <path
+    class="house-shell__line house-shell__door-line"
+    d="M783 778V651Q783 602 850 576Q916 602 916 651V778"
+  />
+  <path class="house-shell__line house-shell__door-center" d="M850 576V778" />
+
+  <!-- Three centered entry steps. -->
+  <path class="house-shell__ink house-shell__outlined" d="M482 770H1220V784H482Z" />
+  <path class="house-shell__ink house-shell__outlined" d="M448 797H1254V815H448Z" />
+  <path class="house-shell__ink house-shell__outlined" d="M433 819H1269V833H433Z" />
 </g>

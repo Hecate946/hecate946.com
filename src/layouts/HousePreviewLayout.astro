@@ -1,0 +1,67 @@
+---
+import BaseHead from '@/components/core/BaseHead.astro';
+import { withBase } from '@/lib/paths';
+import '@/styles/house-preview.css';
+
+interface Props {
+  active: 'png' | 'svg';
+  title: string;
+  description: string;
+}
+
+const { active, title, description } = Astro.props;
+const pngHref = withBase('/house-png/');
+const svgHref = withBase('/house-svg/');
+const homeHref = withBase('/');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead {title} {description} />
+    <meta name="robots" content="noindex" />
+  </head>
+  <body class:list={['house-preview-page', `house-preview-page--${active}`]}>
+    <nav class="house-preview-nav" aria-label="House preview formats">
+      <div class="house-preview-nav__formats">
+        <a
+          class:list={['house-preview-nav__link', active === 'png' && 'is-active']}
+          href={pngHref}
+          aria-current={active === 'png' ? 'page' : undefined}
+          data-house-format="png"
+        >
+          PNG
+        </a>
+        <a
+          class:list={['house-preview-nav__link', active === 'svg' && 'is-active']}
+          href={svgHref}
+          aria-current={active === 'svg' ? 'page' : undefined}
+          data-house-format="svg"
+        >
+          SVG
+        </a>
+      </div>
+
+      <span class="house-preview-nav__keys" aria-hidden="true">P / V</span>
+      <a class="house-preview-nav__home" href={homeHref}>Home</a>
+    </nav>
+
+    <main class="house-preview-stage">
+      <slot />
+    </main>
+
+    <script is:inline>
+      document.addEventListener('keydown', (event) => {
+        if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+
+        const key = event.key.toLowerCase();
+        if (key !== 'p' && key !== 'v') return;
+
+        const format = key === 'p' ? 'png' : 'svg';
+        const link = document.querySelector(`[data-house-format="${format}"]`);
+        if (link instanceof HTMLAnchorElement) link.click();
+      });
+    </script>
+  </body>
+</html>

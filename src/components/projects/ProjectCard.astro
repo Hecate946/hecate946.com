@@ -14,7 +14,7 @@ const displayUrl = `hecate946.com/projects/${project.slug}`;
 ---
 
 <a class="project-window" href={href} aria-label={`View the ${project.title} case study`}>
-  <span class="project-window__image" aria-hidden="true">
+  <span class="project-window__image">
     <img
       src={image}
       alt=""
@@ -24,14 +24,14 @@ const displayUrl = `hecate946.com/projects/${project.slug}`;
       fetchpriority={priority ? 'high' : 'auto'}
       decoding="async"
     />
-    <span class="project-window__open">View project <span aria-hidden="true">↗</span></span>
+    <strong class="project-window__title" aria-hidden="true">{project.title}</strong>
+    <span class="project-window__open" aria-hidden="true">
+      View project <span>↗</span>
+    </span>
   </span>
 
   <span class="project-window__caption">
-    <span>
-      <strong>{project.title}</strong>
-      <small>{project.category} · {project.period}</small>
-    </span>
+    <small>{project.category} · {project.period}</small>
     <span class="project-window__url">{displayUrl}</span>
   </span>
 </a>

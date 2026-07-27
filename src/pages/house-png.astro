@@ -1,0 +1,20 @@
+---
+import HousePreviewLayout from '@/layouts/HousePreviewLayout.astro';
+import { withBase } from '@/lib/paths';
+
+const imageSrc = withBase('/images/house/house-outline-current.png');
+---
+
+<HousePreviewLayout
+  active="png"
+  title="House PNG Preview — Cyrus Asasi"
+  description="Full-screen preview of the current house PNG reference."
+>
+  <figure class="house-preview-art house-preview-art--png">
+    <img
+      src={imageSrc}
+      alt="Frozen front-facing house outline with five upper windows, two broad first-story windows, and a centered arched entrance."
+      draggable="false"
+    />
+  </figure>
+</HousePreviewLayout>

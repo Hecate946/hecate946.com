@@ -1,0 +1,22 @@
+---
+import HouseIllustration from '@/components/house/HouseIllustration.svelte';
+import { houseScene } from '@/config/house-scene';
+import HousePreviewLayout from '@/layouts/HousePreviewLayout.astro';
+import { withBase } from '@/lib/paths';
+import '@/styles/house-scene.css';
+
+const destinations = houseScene.destinations.map((destination) => ({
+  ...destination,
+  href: withBase(destination.href),
+}));
+---
+
+<HousePreviewLayout
+  active="svg"
+  title="House SVG Preview — Cyrus Asasi"
+  description="Full-screen preview of the current modular SVG house."
+>
+  <div class="house-preview-art house-preview-art--svg">
+    <HouseIllustration {destinations} navigationEnabled={false} />
+  </div>
+</HousePreviewLayout>

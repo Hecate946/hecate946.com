@@ -1,0 +1,153 @@
+:root {
+  color-scheme: light;
+  --surface: #fffaf0;
+  --line: rgb(20 36 39 / 0.24);
+  --text: #10282c;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body.house-preview-page {
+  min-height: 100svh;
+  overflow: hidden;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% 38%, rgb(255 255 255 / 0.95), transparent 58%),
+    #e8e7e5;
+}
+
+.house-preview-nav {
+  position: fixed;
+  z-index: 10;
+  top: max(0.75rem, env(safe-area-inset-top));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem;
+  border: 1px solid rgb(16 40 44 / 0.2);
+  border-radius: 999px;
+  background: rgb(255 252 244 / 0.9);
+  box-shadow: 0 0.65rem 2rem rgb(16 31 34 / 0.16);
+  backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+}
+
+.house-preview-nav__formats {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.house-preview-nav__link,
+.house-preview-nav__home {
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.house-preview-nav__link {
+  padding: 0.68rem 0.88rem;
+  border-radius: 999px;
+}
+
+.house-preview-nav__link:hover,
+.house-preview-nav__link:focus-visible,
+.house-preview-nav__link.is-active {
+  color: #fffaf0;
+  background: #10282c;
+  outline: none;
+}
+
+.house-preview-nav__link:focus-visible,
+.house-preview-nav__home:focus-visible {
+  box-shadow: 0 0 0 3px rgb(16 40 44 / 0.22);
+}
+
+.house-preview-nav__keys {
+  padding-inline: 0.3rem;
+  color: rgb(16 40 44 / 0.58);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+
+.house-preview-nav__home {
+  padding: 0.68rem 0.78rem;
+  border-left: 1px solid rgb(16 40 44 / 0.16);
+}
+
+.house-preview-nav__home:hover,
+.house-preview-nav__home:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  outline: none;
+}
+
+.house-preview-stage {
+  display: grid;
+  width: 100vw;
+  height: 100svh;
+  place-items: center;
+  padding: 4.8rem clamp(0.5rem, 2vw, 1.5rem) clamp(0.5rem, 2vw, 1.5rem);
+}
+
+.house-preview-art {
+  display: grid;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+  place-items: center;
+}
+
+.house-preview-art--png,
+.house-preview-art--png img {
+  width: 100%;
+  height: 100%;
+}
+
+.house-preview-art--png img {
+  display: block;
+  object-fit: contain;
+  user-select: none;
+}
+
+.house-preview-art--svg {
+  width: min(96vw, calc((100svh - 5.8rem) * 1.776833));
+  aspect-ratio: 1672 / 941;
+}
+
+.house-preview-art--svg .house-illustration {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The comparison route is visual-only; homepage windows remain interactive. */
+.house-preview-art--svg .house-window {
+  pointer-events: none;
+}
+
+@media (max-width: 560px) {
+  .house-preview-nav__keys {
+    display: none;
+  }
+
+  .house-preview-stage {
+    padding-top: 4.55rem;
+  }
+}
