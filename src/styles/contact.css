@@ -466,15 +466,7 @@
   }
 }
 
-/* Contact-specific responsive composition.
-   The shared title stays on the middle six columns, while the switchboard
-   uses a wider centered span so its desktop and tablet layouts remain useful. */
-@media (min-width: 40rem) {
-  .contact-switchboard.interior-page-content {
-    grid-column: 2 / 12;
-  }
-}
-
+/* Contact-specific responsive composition. */
 @media (min-width: 68rem) {
   .contact-switchboard {
     grid-template-columns: minmax(0, 1.9fr) minmax(15rem, 1fr);
@@ -561,21 +553,6 @@
 
   .contact-links {
     grid-template-columns: 1fr;
-  }
-}
-
-/* Keep the Contact title and switchboard within the central eight columns. */
-.contact-heading,
-.contact-switchboard.interior-page-content {
-  grid-column: 3 / 11;
-  width: 100%;
-  justify-self: stretch;
-}
-
-@media (max-width: 39.999rem) {
-  .contact-heading,
-  .contact-switchboard.interior-page-content {
-    grid-column: 1 / -1;
   }
 }
 

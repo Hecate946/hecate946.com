@@ -1,14 +1,3 @@
-.resume-page {
-  /* Shared grid, heading rhythm, and page width come from .interior-page. */
-}
-
-.resume-heading,
-.resume-list {
-  grid-column: 4 / 10;
-  width: 100%;
-  justify-self: stretch;
-}
-
 .resume-heading {
   margin: 0;
 }
@@ -98,9 +87,3 @@
 }
 
 
-@media (max-width: 39.999rem) {
-  .resume-heading,
-  .resume-list {
-    grid-column: 1 / -1;
-  }
-}

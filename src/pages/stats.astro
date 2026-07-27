@@ -15,12 +15,12 @@ const codeStatsUrl = withBase('/generated/code-stats.json');
   title="Stats"
   description="Live website activity and automatically generated code statistics for hecate946.com."
 >
-  <section class="stats-page interior-page" aria-labelledby="stats-title">
+  <section class="stats-page interior-page interior-page--eight" aria-labelledby="stats-title">
     <header class="stats-heading interior-page-heading">
       <h1 id="stats-title">Stats</h1>
     </header>
 
-    <div class="stats-content interior-page-content interior-page-content--wide interior-page-content--balanced">
+    <div class="stats-content interior-page-content interior-page-content--balanced">
       <StatsDashboard
         client:idle
         apiBase={statsApiBase}

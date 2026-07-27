@@ -20,8 +20,8 @@ const resolveLink = (href: string) => href.startsWith('/') ? withBase(href) : hr
   description={project.description}
   image={project.image}
 >
-  <article class="project-showcase">
-    <header class="project-header">
+  <article class="project-showcase interior-page interior-page--six">
+    <header class="project-header interior-page-column">
       <a class="project-back-link" href={projectsHref}>
         <span aria-hidden="true">←</span> Projects
       </a>
@@ -47,7 +47,7 @@ const resolveLink = (href: string) => href.startsWith('/') ? withBase(href) : hr
       }
     </header>
 
-    <figure class="project-image">
+    <figure class="project-image interior-page-column">
       <img
         src={image}
         alt={project.imageAlt}
@@ -58,7 +58,7 @@ const resolveLink = (href: string) => href.startsWith('/') ? withBase(href) : hr
       />
     </figure>
 
-    <div class="project-content">
+    <div class="project-content interior-page-column">
       <section class="project-overview" aria-labelledby="overview-heading">
         <h2 id="overview-heading">Overview</h2>
         <p>{project.description}</p>

@@ -1,15 +1,7 @@
 .project-showcase {
-  --project-column-width: min(calc(100% - 2rem), 36rem);
-  width: 100%;
   padding-bottom: clamp(4rem, 7vw, 6rem);
 }
 
-.project-header,
-.project-image,
-.project-content {
-  width: var(--project-column-width);
-  margin-inline: auto;
-}
 
 .project-header {
   padding-block: clamp(2.5rem, 4.5vw, 3.75rem)
@@ -184,10 +176,6 @@
 }
 
 @media (max-width: 39.999rem) {
-  .project-showcase {
-    --project-column-width: 100%;
-  }
-
   .project-header {
     padding-block: 2rem 1.4rem;
   }

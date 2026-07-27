@@ -2,13 +2,6 @@
   --projects-gap: clamp(2.75rem, 6vw, 5.25rem);
 }
 
-.projects-heading,
-.projects-content {
-  grid-column: 4 / 10;
-  width: 100%;
-  justify-self: stretch;
-}
-
 .projects-content {
   padding-block: clamp(2.75rem, 5vw, 4.5rem) clamp(4rem, 8vw, 7rem);
 }
@@ -167,11 +160,6 @@
 }
 
 @media (max-width: 39.999rem) {
-  .projects-heading,
-  .projects-content {
-    grid-column: 1 / -1;
-  }
-
   .projects-content {
     padding-block: 2.4rem 4rem;
   }

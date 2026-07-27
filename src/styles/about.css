@@ -4,14 +4,6 @@
   --about-dropdown-space: clamp(3.25rem, 6vw, 4.75rem);
 }
 
-.about-masthead,
-.about-intro,
-.passion-section {
-  grid-column: 4 / 10;
-  width: 100%;
-  justify-self: center;
-}
-
 .about-masthead {
   margin: 0;
 }
@@ -427,15 +419,6 @@
   font-weight: 500;
 }
 
-@media (max-width: 39.999rem) {
-  .about-masthead,
-  .about-intro,
-  .passion-section {
-    grid-column: 1 / -1;
-    width: 100%;
-  }
-}
-
 @media (max-width: 680px) {
   .about-portrait-frame {
     width: clamp(6.75rem, 34vw, 8rem);
@@ -598,15 +581,6 @@
   }
 }
 
-/* Keep the complete About page aligned to the central six columns. */
-.about-masthead,
-.about-intro,
-.passion-section {
-  grid-column: 4 / 10;
-  width: 100%;
-  justify-self: stretch;
-}
-
 /* Match the outer page rhythm used by the other interior pages. The top
    divider-to-portrait space equals the final divider-to-footer space, while
    the chapter dropdowns get a little more separation from the intro copy. */
@@ -618,10 +592,3 @@
   margin-bottom: var(--about-outer-space);
 }
 
-@media (max-width: 39.999rem) {
-  .about-masthead,
-  .about-intro,
-  .passion-section {
-    grid-column: 1 / -1;
-  }
-}
