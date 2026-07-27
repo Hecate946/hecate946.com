@@ -268,14 +268,43 @@
 </script>
 
 <div class="stats-dashboard" aria-busy={refreshing}>
-  <nav class="stats-tabs" aria-label="Stats sections">
-    <button class:active={activeTab === 'website'} aria-selected={activeTab === 'website'} on:click={() => selectTab('website')}>Website stats</button>
-    <button class:active={activeTab === 'code'} aria-selected={activeTab === 'code'} on:click={() => selectTab('code')}>Code stats</button>
-    <button class:active={activeTab === 'you'} aria-selected={activeTab === 'you'} on:click={() => selectTab('you')}>Your stats</button>
-  </nav>
+  <div class="stats-tabs" role="tablist" aria-label="Stats sections">
+    <button
+      id="website-stats-tab"
+      type="button"
+      role="tab"
+      class:active={activeTab === 'website'}
+      aria-selected={activeTab === 'website'}
+      aria-controls="website-stats-panel"
+      on:click={() => selectTab('website')}
+    >Website stats</button>
+    <button
+      id="code-stats-tab"
+      type="button"
+      role="tab"
+      class:active={activeTab === 'code'}
+      aria-selected={activeTab === 'code'}
+      aria-controls="code-stats-panel"
+      on:click={() => selectTab('code')}
+    >Code stats</button>
+    <button
+      id="your-stats-tab"
+      type="button"
+      role="tab"
+      class:active={activeTab === 'you'}
+      aria-selected={activeTab === 'you'}
+      aria-controls="your-stats-panel"
+      on:click={() => selectTab('you')}
+    >Your stats</button>
+  </div>
 
   {#if activeTab === 'website'}
-  <section class="stats-section" aria-labelledby="website-stats-title">
+  <div
+    id="website-stats-panel"
+    class="stats-section"
+    role="tabpanel"
+    aria-labelledby="website-stats-tab"
+  >
     <div class="stats-section-heading">
       <h2 id="website-stats-title">Website</h2>
       <p
@@ -414,9 +443,14 @@
       totals are estimates because browsers can clear storage or visit from
       multiple devices.
     </p>
-  </section>
+  </div>
   {:else if activeTab === 'code'}
-  <section class="stats-section" aria-labelledby="code-stats-title">
+  <div
+    id="code-stats-panel"
+    class="stats-section"
+    role="tabpanel"
+    aria-labelledby="code-stats-tab"
+  >
     <div class="stats-section-heading">
       <h2 id="code-stats-title">Code</h2>
       <p>
@@ -513,9 +547,14 @@
         {codeError || 'Generating code statistics…'}
       </div>
     {/if}
-  </section>
+  </div>
   {:else}
-  <section class="stats-section" aria-labelledby="your-stats-title">
+  <div
+    id="your-stats-panel"
+    class="stats-section"
+    role="tabpanel"
+    aria-labelledby="your-stats-tab"
+  >
     <div class="stats-section-heading">
       <div>
         <h2 id="your-stats-title">Your stats</h2>
@@ -564,6 +603,6 @@
     {:else}
       <div class="stats-empty stats-empty-personal">Your personal history starts as you browse this site. Reload once after this update is deployed to begin tracking it.</div>
     {/if}
-  </section>
+  </div>
   {/if}
 </div>

@@ -47,7 +47,7 @@ export const railwayConfig = {
       href: '/resume/',
     },
     {
-      id: 'work',
+      id: 'projects',
       label: 'Projects',
       shortLabel: 'PROJECTS',
       href: '/projects/',

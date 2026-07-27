@@ -16,7 +16,7 @@ const icons = {
     'M8 17h8',
   ),
   contact: icon('M4 5h16v14H4Z', 'm4 7 8 6 8-6'),
-  work: icon(
+  projects: icon(
     'M4 7h16v12H4Z',
     'M9 7V4h6v3',
     'M4 12h16',
@@ -59,11 +59,11 @@ export const homeNetworkNodes: NetworkNode[] = [
     radius: 36,
   },
   {
-    id: 'work',
+    id: 'projects',
     label: 'Projects',
     description: 'Projects & practice',
     href: withBase('/projects/'),
-    icon: icons.work,
+    icon: icons.projects,
     accent: '#c88d31',
     radius: 36,
   },
@@ -99,7 +99,7 @@ const primary = (target: string): NetworkLink => ({
 export const homeNetworkLinks: NetworkLink[] = [
   primary('about'),
   primary('resume'),
-  primary('work'),
+  primary('projects'),
   primary('contact'),
   primary('stats'),
 ];

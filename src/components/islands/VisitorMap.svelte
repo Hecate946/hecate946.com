@@ -415,7 +415,6 @@
     preserveAspectRatio="xMidYMid slice"
     role="img"
     aria-label="Zoomable, horizontally wrapping map of individual anonymous visitor locations"
-    tabindex="0"
     on:wheel|preventDefault={handleWheel}
     on:pointerdown={handlePointerDown}
     on:pointermove={handlePointerMove}
