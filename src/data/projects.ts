@@ -37,9 +37,9 @@ export const projects = [
     category: 'Community platform',
     role: 'Creator and engineer',
     status: 'Complete',
-    image: '/images/projects/neutra.png',
+    image: '/images/projects/neutra.webp',
     imageAlt:
-      'Placeholder for the Neutra project image, sized 1600 by 1000 pixels.',
+      'Pastel pencil artwork showing a Discord logo, line graph, bar chart, and pie chart for Neutra.',
     technologies: ['Python', 'PostgreSQL', 'FFmpeg', 'Git'],
     highlights: [
       'Built a 320-command moderation and analytics platform.',
@@ -63,9 +63,9 @@ export const projects = [
     category: 'Automation system',
     role: 'Creator and engineer',
     status: 'Active',
-    image: '/images/projects/sunset.png',
+    image: '/images/projects/sunset.webp',
     imageAlt:
-      'Placeholder for the Sunset project image, sized 1600 by 1000 pixels.',
+      'Pastel pencil artwork showing reverse-engineered code, a reservation countdown, and a pickleball court at sunset.',
     technologies: ['Python', 'Playwright', 'HTTP', 'systemd', 'Vultr'],
     highlights: [
       'Reverse engineered authenticated availability and reservation workflows.',
@@ -89,9 +89,9 @@ export const projects = [
     category: 'Computer vision and CAD',
     role: 'Creator and engineer',
     status: 'Complete',
-    image: '/images/projects/keycad.png',
+    image: '/images/projects/keycad.webp',
     imageAlt:
-      'Placeholder for the KeyCAD project image, sized 1600 by 1000 pixels.',
+      'Pastel pencil artwork showing a horizontal brass key with CAD measurements, model data, and a bitting profile.',
     technologies: ['Python', 'OpenCV', 'OpenSCAD', 'Git'],
     highlights: [
       'Created 19 parameterized key-blank models from manufacturer specifications.',
@@ -115,9 +115,9 @@ export const projects = [
     category: 'Interactive web experience',
     role: 'Designer and engineer',
     status: 'Active',
-    image: '/images/projects/portfolio.png',
+    image: '/images/projects/portfolio.webp',
     imageAlt:
-      'Placeholder for the Hecate946.com project image, sized 1600 by 1000 pixels.',
+      'Pastel pencil artwork showing the Hecate946.com seasonal interface across spring, summer, autumn, and winter.',
     technologies: ['Astro', 'Svelte', 'TypeScript', 'Canvas', 'CSS'],
     highlights: [
       'Built a statically generated Astro site with selectively hydrated Svelte components.',

@@ -1,0 +1,42 @@
+---
+import HouseExperience from './HouseExperience.svelte';
+import { houseScene } from '@/config/house-scene';
+import { withBase } from '@/lib/paths';
+import '@/styles/house-scene.css';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+const destinations = houseScene.destinations.map((destination) => ({
+  ...destination,
+  href: withBase(destination.href),
+}));
+---
+
+{
+  houseScene.enabled && (
+    <section
+      class:list={['house-scene-section', className]}
+      aria-labelledby="house-scene-title"
+    >
+      <header class="house-scene-section__header">
+        <h2 id="house-scene-title" class="visually-hidden">
+          Explore the house
+        </h2>
+        {
+          houseScene.showHint && (
+            <p class="house-scene-section__hint">Choose a window</p>
+          )
+        }
+      </header>
+
+      <HouseExperience
+        client:visible
+        {destinations}
+        navigationEnabled={houseScene.navigationEnabled}
+      />
+    </section>
+  )
+}

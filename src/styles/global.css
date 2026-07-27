@@ -27,17 +27,18 @@ body {
 }
 
 /*
- * Fixed fractal-noise overlay. It is inline so it is ready with the stylesheet
- * before first paint and cannot flash in after a separate image request.
+ * Fixed fractal-noise overlay. Keep it below sticky navigation and other
+ * top-level controls. A filtered full-viewport layer above the header causes
+ * Chromium to re-composite the page whenever a hovered element is transformed,
+ * which can briefly expose stale pixels from the content beneath the navbar.
  */
 body::after {
   position: fixed;
-  z-index: 10000;
+  z-index: 40;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.72'/%3E%3C/svg%3E");
   background-size: var(--page-noise-size) var(--page-noise-size);
   content: '';
-  filter: contrast(var(--page-noise-contrast));
   opacity: var(--page-noise-opacity);
   pointer-events: none;
 }
@@ -53,7 +54,7 @@ body::after {
   --nav-font-weight: 400 !important;
   background: var(--bg) !important;
   border-bottom-color: var(--line) !important;
-  box-shadow: none !important;
+  box-shadow: var(--header-shadow, none) !important;
   backdrop-filter: none !important;
 }
 

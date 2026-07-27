@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ForceNetwork from '@/components/graphs/ForceNetwork.svelte';
+import HouseScene from '@/components/house/HouseScene.astro';
 import { homeNetworkLinks, homeNetworkNodes } from '@/data/home-network';
 import '@/styles/home.css';
 ---
@@ -9,7 +10,7 @@ import '@/styles/home.css';
   title="Cyrus Asasi — Software Engineer & Classical Musician"
   description="The portfolio of Cyrus Asasi, software engineer and classical musician."
 >
-  <main class="minimal-home">
+  <div class="minimal-home">
     <section class="minimal-hero" aria-labelledby="home-title">
       <header class="minimal-intro">
         <h1 id="home-title">Cyrus Asasi</h1>
@@ -39,5 +40,7 @@ import '@/styles/home.css';
         />
       </div>
     </section>
-  </main>
+
+    <HouseScene />
+  </div>
 </BaseLayout>

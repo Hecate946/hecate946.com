@@ -1,0 +1,335 @@
+.house-scene-section {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  overflow: clip;
+  padding: clamp(1.15rem, 2.4vw, 2rem) clamp(0.5rem, 2vw, 1.5rem)
+    clamp(2rem, 4.5vw, 4rem);
+  border-top: 1px solid var(--line);
+}
+
+.house-scene-section__header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: min(100%, 88rem);
+  justify-content: center;
+  margin-inline: auto;
+  pointer-events: none;
+}
+
+.house-scene-section__hint {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: clamp(0.65rem, 1vw, 0.76rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.house-experience {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 88rem);
+  margin: clamp(0.15rem, 1vw, 0.65rem) auto 0;
+}
+
+.house-experience__viewport {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  aspect-ratio: 1400 / 820;
+  contain: layout paint;
+}
+
+.house-illustration {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  user-select: none;
+}
+
+/* Flat front elevation --------------------------------------------------- */
+
+.house-shell__ground-shadow {
+  fill: rgb(0 0 0 / 0.17);
+  filter: blur(8px);
+}
+
+.house-shell__front-wall,
+.house-shell__entry-face {
+  fill: url(#house-siding);
+  stroke: #4f2f1c;
+  stroke-width: 4;
+}
+
+.house-shell__wall-highlight {
+  fill: rgb(255 240 216 / 0.13);
+}
+
+.house-shell__wall-shadow {
+  fill: rgb(31 18 11 / 0.12);
+}
+
+.house-shell__roof,
+.house-shell__entry-roof-left,
+.house-shell__entry-roof-right {
+  fill: url(#house-shingles);
+  stroke: #2d2119;
+  stroke-linejoin: round;
+  stroke-width: 5;
+}
+
+.house-shell__roof-lip {
+  fill: url(#house-roof-shadow);
+  stroke: #26160f;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.house-shell__roof-highlight {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.09);
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.house-shell__ridge {
+  fill: none;
+  stroke: #817a72;
+  stroke-linecap: round;
+  stroke-width: 10;
+}
+
+.house-shell__timber,
+.house-shell__entry-timber {
+  fill: none;
+  stroke: url(#house-wood-mid);
+  stroke-linecap: square;
+  stroke-linejoin: round;
+  stroke-width: 11;
+}
+
+.house-shell__upper-trim {
+  fill: url(#house-wood-mid);
+  stroke: #4a2b1b;
+  stroke-width: 2;
+}
+
+.house-shell__chimney rect,
+.house-shell__chimney path:first-of-type {
+  fill: #a66b45;
+  stroke: #4b3021;
+  stroke-width: 3;
+}
+
+.house-shell__chimney path:not(:first-of-type) {
+  fill: none;
+  stroke: #7a4f34;
+  stroke-width: 1.5;
+}
+
+.house-shell__door-frame {
+  fill: #a98560;
+  stroke: #4c3020;
+  stroke-width: 4;
+}
+
+.house-shell__door {
+  fill: url(#house-door);
+  stroke: #1f100a;
+  stroke-width: 4;
+}
+
+.house-shell__door-panels {
+  fill: none;
+  stroke: rgb(20 9 6 / 0.66);
+  stroke-width: 3;
+}
+
+.house-shell__door-fhole {
+  fill: none;
+  stroke: #c49749;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.7;
+}
+
+.house-shell__door-fhole-dot {
+  fill: #c49749;
+  stroke: #4a351b;
+  stroke-width: 1;
+}
+
+.house-shell__door-threshold,
+.house-shell__foundation-cap {
+  fill: #8b857c;
+  stroke: #48433e;
+  stroke-width: 3;
+}
+
+.house-shell__foundation {
+  fill: url(#house-foundation-blocks);
+  stroke: #48433e;
+  stroke-width: 3;
+}
+
+.house-shell__foundation-highlight {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.13);
+  stroke-width: 2;
+}
+
+.house-shell__step-top {
+  fill: #c6c0b7;
+  stroke: #605a54;
+  stroke-width: 2.5;
+}
+
+.house-shell__step-face {
+  fill: url(#house-stone);
+  stroke: #48433e;
+  stroke-width: 2.5;
+}
+
+/* Reusable windows ------------------------------------------------------- */
+
+.house-window {
+  cursor: pointer;
+  outline: none;
+}
+
+.house-window[aria-disabled='true'] {
+  cursor: default;
+}
+
+.house-window__shadow {
+  fill: rgb(0 0 0 / 0.28);
+}
+
+.house-window__frame {
+  fill: #4c2a1a;
+  stroke: #20110b;
+  stroke-linejoin: round;
+  stroke-width: 4;
+  filter: url(#house-window-shadow);
+  transition:
+    fill 160ms ease,
+    stroke 160ms ease;
+}
+
+.house-window__inner-frame {
+  fill: #6b432a;
+  stroke: #2b190f;
+  stroke-width: 3;
+  transition: fill 160ms ease;
+}
+
+.house-window__glass {
+  fill: url(#house-glass);
+  stroke: #141917;
+  stroke-width: 2.5;
+  transition:
+    fill 180ms ease,
+    filter 180ms ease;
+}
+
+.house-window__mullion {
+  fill: none;
+  stroke: #171b19;
+  stroke-linecap: square;
+  stroke-width: 4;
+  pointer-events: none;
+}
+
+.house-window--halfdome .house-window__mullion {
+  stroke-width: 4.5;
+}
+
+.house-window__shine {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.42);
+  stroke-linecap: round;
+  stroke-width: 5;
+  pointer-events: none;
+}
+
+.house-window__sill {
+  fill: #8b857c;
+  stroke: #48433e;
+  stroke-width: 3;
+  pointer-events: none;
+}
+
+.house-window__hit {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.house-window__label {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.house-window__label rect {
+  fill: var(--surface);
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+
+.house-window__label text {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.house-window:hover .house-window__glass,
+.house-window:focus-visible .house-window__glass {
+  fill: url(#house-glass-hover);
+  filter: brightness(1.08);
+}
+
+.house-window:hover .house-window__frame,
+.house-window:focus-visible .house-window__frame {
+  fill: #65402a;
+  stroke: #d0a248;
+}
+
+.house-window:hover .house-window__inner-frame,
+.house-window:focus-visible .house-window__inner-frame {
+  fill: #805738;
+}
+
+.house-window:hover .house-window__label,
+.house-window:focus-visible .house-window__label {
+  opacity: 1;
+}
+
+@media (max-width: 760px) {
+  .house-scene-section {
+    padding-inline: 0.1rem;
+  }
+
+  .house-experience {
+    width: 112%;
+    margin-left: -6%;
+  }
+
+  .house-window__label text {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .house-window__frame,
+  .house-window__inner-frame,
+  .house-window__glass,
+  .house-window__label {
+    transition: none;
+  }
+}

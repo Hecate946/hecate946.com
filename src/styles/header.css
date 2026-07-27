@@ -9,39 +9,49 @@
     transparent
   );
 
+  --header-shadow: none;
+
   position: sticky;
   top: 0;
   isolation: isolate;
   z-index: 50;
   width: 100%;
+  overflow: clip;
   border-bottom: 1px solid var(--header-line);
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--header-text);
   font-family: var(--font-sans);
+  backface-visibility: hidden;
+  contain: paint;
+  transform: translateZ(0);
 }
 
-
-/* The shadow begins below the real bottom border, never on top of it. */
-.site-header::after {
+/*
+ * Reapply the page's fractal-noise texture inside the isolated navbar.
+ * This is a small, clipped, unfiltered layer—not the full-screen filtered
+ * overlay that caused Chromium's hover/repaint flicker. The same image, size,
+ * and opacity variables keep it visually consistent with the page.
+ */
+.site-header::before {
   position: absolute;
-  z-index: 2;
-  top: 100%;
-  right: 0;
-  left: 0;
-  height: 0.7rem;
-  background: linear-gradient(to bottom, rgb(0 0 0 / 13%), transparent);
+  z-index: 0;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.72'/%3E%3C/svg%3E");
+  background-position: 0 0;
+  background-size: var(--page-noise-size) var(--page-noise-size);
   content: '';
-  opacity: 0;
+  opacity: var(--page-noise-opacity);
   pointer-events: none;
-  transition: opacity 180ms ease;
 }
 
-.site-header[data-scrolled='true']::after {
-  opacity: 1;
+/* A regular shadow avoids the transparent, out-of-bounds overlay that was
+   being re-rasterized above the page during hover animations. */
+.site-header[data-scrolled='true'] {
+  --header-shadow: 0 0.55rem 0.8rem -0.72rem rgb(0 0 0 / 34%);
 }
 
-html[data-theme='dark'] .site-header::after {
-  background: linear-gradient(to bottom, rgb(0 0 0 / 38%), transparent);
+html[data-theme='dark'] .site-header[data-scrolled='true'] {
+  --header-shadow: 0 0.6rem 0.9rem -0.72rem rgb(0 0 0 / 68%);
 }
 
 
@@ -54,9 +64,12 @@ html:not([data-theme-ready='true']) .site-header * {
 .header-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: var(--header-height);
   padding: 0;
+  background-color: transparent;
 }
 
 .header-grid,
@@ -232,14 +245,14 @@ html:not([data-theme-ready='true']) .site-header * {
   font-size: 0.82rem;
   font-weight: 400;
   line-height: 1;
-  transform: translateY(0.055em);
+  position: relative;
+  top: 0.055em;
 }
 
 .header-action:hover,
 .header-action:focus-visible {
   border-color: color-mix(in srgb, var(--header-accent) 80%, currentColor);
   outline-color: color-mix(in srgb, var(--header-accent) 55%, transparent);
-  transform: translateY(-1px);
 }
 
 /* Children never transform separately, so icons stay centered while hovering. */
@@ -321,7 +334,6 @@ html[data-theme='dark'] .mode-sun {
 .season-button:focus-visible {
   border-color: color-mix(in srgb, var(--header-accent) 80%, currentColor);
   outline-color: color-mix(in srgb, var(--header-accent) 55%, transparent);
-  transform: translateY(-1px);
 }
 
 html[data-season='spring'] .season-button.spring,
