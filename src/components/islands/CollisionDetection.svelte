@@ -20,14 +20,14 @@
   const GROUP_COUNT = 4;
   const TAU = Math.PI * 2;
   const BUBBLE_COLORS = [
-    '#f7cbd5', // blush
-    '#f8e3ad', // butter
-    '#d8efc7', // pistachio
-    '#cfe7f5', // powder blue
-    '#ded2f2', // lavender
-    '#f7d7bd', // peach
-    '#cfeae2', // mint
-    '#f1d5df', // rosewater
+    '#ecb4c3', // blush
+    '#efd594', // butter
+    '#c6dfaf', // pistachio
+    '#bfd8ea', // powder blue
+    '#d0c1e9', // lavender
+    '#edc4a7', // peach
+    '#bfded6', // mint
+    '#e4bfd0', // rosewater
   ] as const;
 
   let stage: HTMLDivElement;
@@ -41,34 +41,79 @@
     let nodes: CollisionNode[] = [];
     let simulation: Simulation<CollisionNode, undefined> | null = null;
 
+    const hexToRgb = (hex: string) => {
+      const normalized = hex.replace('#', '');
+      const value = normalized.length === 3
+        ? normalized.split('').map((part) => part + part).join('')
+        : normalized;
+      const int = Number.parseInt(value, 16);
+      return {
+        r: (int >> 16) & 255,
+        g: (int >> 8) & 255,
+        b: int & 255,
+      };
+    };
+
+    const mixColor = (hex: string, target: { r: number; g: number; b: number }, amount: number) => {
+      const base = hexToRgb(hex);
+      const mix = (start: number, end: number) => Math.round(start + (end - start) * amount);
+      return `rgb(${mix(base.r, target.r)}, ${mix(base.g, target.g)}, ${mix(base.b, target.b)})`;
+    };
+
     const drawBubble = (node: CollisionNode) => {
       const x = node.x ?? 0;
       const y = node.y ?? 0;
       const radius = node.r;
+      const outerRadius = radius + Math.max(0.8, radius * 0.12);
+      const gradient = context.createRadialGradient(
+        x - radius * 0.35,
+        y - radius * 0.38,
+        Math.max(1, radius * 0.14),
+        x,
+        y,
+        radius * 1.03,
+      );
+      const innerColor = mixColor(node.color, { r: 255, g: 255, b: 255 }, 0.24);
+      const midColor = mixColor(node.color, { r: 255, g: 255, b: 255 }, 0.08);
+      const edgeColor = mixColor(node.color, { r: 68, g: 63, b: 88 }, 0.12);
 
-      // Soft halo gives the circles a polished, airy edge without changing
-      // the collision geometry.
-      context.fillStyle = 'rgba(255, 255, 255, 0.18)';
+      context.save();
+      context.fillStyle = 'rgba(255, 255, 255, 0.12)';
       context.beginPath();
-      context.arc(x, y, radius + Math.max(0.7, radius * 0.09), 0, TAU);
+      context.arc(x, y, outerRadius, 0, TAU);
       context.fill();
 
-      context.fillStyle = node.color;
+      context.shadowColor = 'rgba(78, 67, 92, 0.12)';
+      context.shadowBlur = Math.max(2, radius * 0.9);
+      context.shadowOffsetY = Math.max(0.5, radius * 0.12);
+
+      gradient.addColorStop(0, innerColor);
+      gradient.addColorStop(0.55, midColor);
+      gradient.addColorStop(1, edgeColor);
+      context.fillStyle = gradient;
       context.beginPath();
       context.arc(x, y, radius, 0, TAU);
       context.fill();
+      context.restore();
 
-      context.strokeStyle = 'rgba(99, 84, 105, 0.16)';
-      context.lineWidth = Math.max(0.7, radius * 0.055);
+      context.strokeStyle = 'rgba(92, 78, 108, 0.22)';
+      context.lineWidth = Math.max(0.9, radius * 0.06);
+      context.beginPath();
+      context.arc(x, y, radius - Math.max(0.35, radius * 0.03), 0, TAU);
       context.stroke();
 
-      // A restrained highlight keeps them decorative rather than glossy.
-      context.fillStyle = 'rgba(255, 255, 255, 0.42)';
+      context.strokeStyle = 'rgba(255, 255, 255, 0.34)';
+      context.lineWidth = Math.max(0.8, radius * 0.045);
+      context.beginPath();
+      context.arc(x - radius * 0.08, y - radius * 0.08, radius * 0.76, Math.PI * 1.1, Math.PI * 1.72);
+      context.stroke();
+
+      context.fillStyle = 'rgba(255, 255, 255, 0.38)';
       context.beginPath();
       context.arc(
-        x - radius * 0.3,
-        y - radius * 0.3,
-        Math.max(0.9, radius * 0.22),
+        x - radius * 0.32,
+        y - radius * 0.34,
+        Math.max(1, radius * 0.2),
         0,
         TAU,
       );
