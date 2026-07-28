@@ -9,142 +9,84 @@
     type SimulationNodeDatum,
   } from 'd3-force';
   import { onMount } from 'svelte';
+  import SeasonSelector from '@/components/islands/SeasonSelector.svelte';
+  import { VALID_SEASONS } from '@/lib/seasonal-shower/seasons';
+  import { seasonSprites } from '@/lib/seasonal-shower/sprites';
+  import type { Season } from '@/lib/seasonal-shower/types';
 
   type CollisionNode = SimulationNodeDatum & {
     r: number;
     group: number;
-    color: string;
-  };
-
-  type SeasonPalette = {
-    id: string;
-    label: string;
-    descriptor: string;
-    surface: string;
-    line: string;
-    accent: string;
-    colors: readonly string[];
+    sprite: HTMLCanvasElement;
   };
 
   const NODE_COUNT = 400;
   const GROUP_COUNT = 4;
-  const TAU = Math.PI * 2;
 
-  const SEASON_PALETTES: readonly SeasonPalette[] = [
-    {
-      id: 'spring',
-      label: 'Spring',
-      descriptor: 'Macaron Pastels',
-      surface: '#fbf5f4',
-      line: '#ead8d5',
-      accent: '#cb7686',
-      colors: ['#ffd1dc', '#ffe7a3', '#cfefcb', '#bfd8ff', '#e5d2fa', '#ffd9b8', '#cff5e6'],
-    },
-    {
-      id: 'summer',
-      label: 'Summer',
-      descriptor: 'Sea Glass & Citrus',
-      surface: '#f2f8f5',
-      line: '#d5e6df',
-      accent: '#248a82',
-      colors: ['#6fd3c7', '#7ecbf9', '#ff7f8a', '#ffd65c', '#a7e3a1', '#ffc9a6', '#e6f7f2'],
-    },
-    {
-      id: 'autumn',
-      label: 'Autumn',
-      descriptor: 'Harvest Glow',
-      surface: '#faf4ee',
-      line: '#e7d7ca',
-      accent: '#c96849',
-      colors: ['#d97a64', '#e1a94b', '#b86a7a', '#95a88b', '#f3e7d6', '#7b4b6b', '#c59c78'],
-    },
-    {
-      id: 'winter',
-      label: 'Winter',
-      descriptor: 'Frost & Twilight',
-      surface: '#f5f7fb',
-      line: '#d8deeb',
-      accent: '#5576a8',
-      colors: ['#c7e4ff', '#a8b6ff', '#d6d0f2', '#dce2ea', '#3e6b5c', '#b56a83', '#fafaf4'],
-    },
-  ] as const;
+  // The seasonal drawings occupy slightly different amounts of their shared
+  // 180 x 180 sprite canvas. These display scales make the visible artwork
+  // approximately match each node's circular collision radius.
+  const SPRITE_DISPLAY_SCALE: Record<Season, number> = {
+    spring: 1.38,
+    summer: 1.46,
+    autumn: 1.2,
+    winter: 1.42,
+  };
 
-  let activeSeasonId = 'spring';
-  let stage: HTMLDivElement;
-  let canvas: HTMLCanvasElement;
+  let activeSeason: Season = 'summer';
+  let stage!: HTMLDivElement;
+  let canvas!: HTMLCanvasElement;
 
   let width = 0;
   let context: CanvasRenderingContext2D | null = null;
   let nodes: CollisionNode[] = [];
   let simulation: Simulation<CollisionNode, undefined> | null = null;
 
-  const currentSeason = () =>
-    SEASON_PALETTES.find((palette) => palette.id === activeSeasonId) ?? SEASON_PALETTES[0];
+  function readSeason(): Season {
+    const season = document.documentElement.dataset.season;
+    return VALID_SEASONS.includes(season as Season) ? (season as Season) : 'summer';
+  }
 
-  const applyPalette = () => {
-    const palette = currentSeason();
+  function applySeason(nextSeason: Season) {
+    activeSeason = nextSeason;
+    const sprites = seasonSprites(nextSeason);
 
     nodes.forEach((node, index) => {
-      node.color = index ? palette.colors[(index - 1) % palette.colors.length] : 'transparent';
+      node.sprite = sprites[index % sprites.length]!;
     });
 
     draw();
-  };
+  }
 
-  const hexToRgb = (hex: string) => {
-    const normalized = hex.replace('#', '');
-    const value = normalized.length === 3
-      ? normalized.split('').map((part) => part + part).join('')
-      : normalized;
-    const int = Number.parseInt(value, 16);
-
-    return {
-      r: (int >> 16) & 255,
-      g: (int >> 8) & 255,
-      b: int & 255,
-    };
-  };
-
-  const mixColor = (hex: string, target: { r: number; g: number; b: number }, amount: number) => {
-    const base = hexToRgb(hex);
-    const mix = (start: number, end: number) => Math.round(start + (end - start) * amount);
-    return `rgb(${mix(base.r, target.r)}, ${mix(base.g, target.g)}, ${mix(base.b, target.b)})`;
-  };
-
-  const drawFlatCircle = (node: CollisionNode) => {
-    if (!context) return;
-
-    const x = node.x ?? 0;
-    const y = node.y ?? 0;
-    const radius = node.r;
-
-    context.fillStyle = node.color;
-    context.beginPath();
-    context.arc(x, y, radius, 0, TAU);
-    context.fill();
-
-    context.strokeStyle = mixColor(node.color, { r: 74, g: 74, b: 84 }, 0.18);
-    context.lineWidth = Math.max(0.9, radius * 0.05);
-    context.beginPath();
-    context.arc(x, y, radius - Math.max(0.25, radius * 0.025), 0, TAU);
-    context.stroke();
-  };
-
-  const draw = () => {
+  function draw() {
     if (!context) return;
 
     context.clearRect(0, 0, width, width);
     context.save();
     context.translate(width / 2, width / 2);
 
+    const displayScale = SPRITE_DISPLAY_SCALE[activeSeason];
+
+    // Node zero stays invisible because it is the pointer-controlled repulsor.
     for (let index = 1; index < nodes.length; index += 1) {
-      drawFlatCircle(nodes[index]);
+      const node = nodes[index];
+      const x = node.x ?? 0;
+      const y = node.y ?? 0;
+      const halfSize = node.r * displayScale;
+
+      context.drawImage(
+        node.sprite,
+        x - halfSize,
+        y - halfSize,
+        halfSize * 2,
+        halfSize * 2,
+      );
     }
 
     context.restore();
-  };
+  }
 
-  const createSimulation = (nextWidth: number) => {
+  function createSimulation(nextWidth: number) {
     if (!context) return;
 
     simulation?.stop();
@@ -158,13 +100,14 @@
     context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
 
     const radiusScale = width / 200;
-    const randomRadius = () => radiusScale + Math.random() * (radiusScale * 4 - radiusScale);
-    const palette = currentSeason();
+    const randomRadius = () =>
+      radiusScale + Math.random() * (radiusScale * 4 - radiusScale);
+    const sprites = seasonSprites(activeSeason);
 
     nodes = Array.from({ length: NODE_COUNT }, (_, index) => ({
       r: randomRadius(),
       group: index ? (index % GROUP_COUNT) + 1 : 0,
-      color: index ? palette.colors[(index - 1) % palette.colors.length] : 'transparent',
+      sprite: sprites[index % sprites.length]!,
     }));
 
     simulation = forceSimulation(nodes)
@@ -185,16 +128,13 @@
         ),
       )
       .on('tick', draw);
-  };
-
-  const setSeason = (seasonId: string) => {
-    activeSeasonId = seasonId;
-    if (nodes.length) applyPalette();
-  };
+  }
 
   onMount(() => {
     context = canvas.getContext('2d');
     if (!context) return;
+
+    activeSeason = readSeason();
 
     const moveRepulsor = (event: PointerEvent) => {
       if (!nodes.length) return;
@@ -216,48 +156,38 @@
       if (nextWidth !== width) createSimulation(nextWidth);
     });
 
+    const seasonObserver = new MutationObserver(() => {
+      const nextSeason = readSeason();
+      if (nextSeason !== activeSeason) applySeason(nextSeason);
+    });
+
     canvas.addEventListener('pointermove', moveRepulsor);
     canvas.addEventListener('touchmove', preventTouchScroll, { passive: false });
     resizeObserver.observe(stage);
+    seasonObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-season'],
+    });
 
     return () => {
       canvas.removeEventListener('pointermove', moveRepulsor);
       canvas.removeEventListener('touchmove', preventTouchScroll);
       resizeObserver.disconnect();
+      seasonObserver.disconnect();
       simulation?.stop();
     };
   });
 </script>
 
-<div
-  class="collision-lab"
-  style={`--collision-stage-bg: ${currentSeason().surface}; --collision-stage-line: ${currentSeason().line}; --collision-accent: ${currentSeason().accent};`}
->
-  <div class="collision-toolbar" aria-label="Seasonal color palette selector">
-    <div class="collision-toolbar__copy">
-      <p class="collision-toolbar__eyebrow">Seasonal palettes</p>
-      <p class="collision-toolbar__title">{currentSeason().label} · {currentSeason().descriptor}</p>
-    </div>
-
-    <div class="collision-toolbar__buttons" role="tablist" aria-label="Season selectors">
-      {#each SEASON_PALETTES as season}
-        <button
-          class:active={season.id === activeSeasonId}
-          type="button"
-          role="tab"
-          aria-selected={season.id === activeSeasonId}
-          on:click={() => setSeason(season.id)}
-        >
-          {season.label}
-        </button>
-      {/each}
-    </div>
+<div class="collision-lab">
+  <div class="collision-season-selector">
+    <SeasonSelector />
   </div>
 
   <div class="collision-stage" bind:this={stage}>
     <canvas
       bind:this={canvas}
-      aria-label={`Four hundred flat circles continuously collide while an invisible repulsor follows the pointer. Active palette: ${currentSeason().label}.`}
+      aria-label="Four hundred seasonal objects continuously collide while an invisible repulsor follows the pointer. Use the seasonal selector to switch among spring flowers, summer beach balls, autumn leaves, and winter snowflakes."
       role="img"
     >
       An interactive D3 collision-detection simulation.

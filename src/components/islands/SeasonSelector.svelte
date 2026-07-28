@@ -56,10 +56,20 @@
 
   onMount(() => {
     syncPressedState();
+
     const resync = () => syncPressedState();
+    const seasonObserver = new MutationObserver(syncPressedState);
+
+    seasonObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-season'],
+    });
     document.addEventListener('astro:after-swap', resync);
 
-    return () => document.removeEventListener('astro:after-swap', resync);
+    return () => {
+      seasonObserver.disconnect();
+      document.removeEventListener('astro:after-swap', resync);
+    };
   });
 </script>
 

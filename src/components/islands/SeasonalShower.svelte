@@ -1,16 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { SEASONAL_SHOWERS, VALID_SEASONS } from '../../lib/seasonal-shower/seasons';
+  import { seasonSprites } from '../../lib/seasonal-shower/sprites';
   import type { Particle, Range, Season } from '../../lib/seasonal-shower/types';
 
   const SHOWER_INTERVAL_MS = 60_000;
   const MAX_PIXEL_RATIO = 2;
-  const SPRITE_SIZE = 180;
   const OLD_SEASON_FADE_MS = 900;
 
   let canvas!: HTMLCanvasElement;
   let active = false;
-  const spriteCache = new Map<Season, HTMLCanvasElement[]>();
 
   function currentSeason(): Season {
     const season = document.documentElement.dataset.season;
@@ -55,37 +54,9 @@
     return randomBetween(range.minimum, range.maximum);
   }
 
-  function createSprite(season: Season, variant: number) {
-    const sprite = document.createElement('canvas');
-    sprite.width = SPRITE_SIZE;
-    sprite.height = SPRITE_SIZE;
-
-    const context = sprite.getContext('2d');
-    if (!context) return sprite;
-
-    context.translate(SPRITE_SIZE / 2, SPRITE_SIZE / 2);
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    SEASONAL_SHOWERS[season].drawSprite(context, variant);
-
-    return sprite;
-  }
-
-  function spritesFor(season: Season) {
-    const cached = spriteCache.get(season);
-    if (cached) return cached;
-
-    const definition = SEASONAL_SHOWERS[season];
-    const sprites = Array.from({ length: definition.variantCount }, (_, index) =>
-      createSprite(season, index),
-    );
-    spriteCache.set(season, sprites);
-    return sprites;
-  }
-
   function makeParticles(season: Season, width: number): Particle[] {
     const definition = SEASONAL_SHOWERS[season];
-    const sprites = spritesFor(season);
+    const sprites = seasonSprites(season);
     const compact = width < 620;
     const count = compact
       ? definition.particleCount.compact
