@@ -16,164 +16,185 @@
     color: string;
   };
 
+  type SeasonPalette = {
+    id: string;
+    label: string;
+    descriptor: string;
+    surface: string;
+    line: string;
+    accent: string;
+    colors: readonly string[];
+  };
+
   const NODE_COUNT = 400;
   const GROUP_COUNT = 4;
   const TAU = Math.PI * 2;
-  const BUBBLE_COLORS = [
-    '#ecb4c3', // blush
-    '#efd594', // butter
-    '#c6dfaf', // pistachio
-    '#bfd8ea', // powder blue
-    '#d0c1e9', // lavender
-    '#edc4a7', // peach
-    '#bfded6', // mint
-    '#e4bfd0', // rosewater
+
+  const SEASON_PALETTES: readonly SeasonPalette[] = [
+    {
+      id: 'spring',
+      label: 'Spring',
+      descriptor: 'Macaron Pastels',
+      surface: '#fbf5f4',
+      line: '#ead8d5',
+      accent: '#cb7686',
+      colors: ['#ffd1dc', '#ffe7a3', '#cfefcb', '#bfd8ff', '#e5d2fa', '#ffd9b8', '#cff5e6'],
+    },
+    {
+      id: 'summer',
+      label: 'Summer',
+      descriptor: 'Sea Glass & Citrus',
+      surface: '#f2f8f5',
+      line: '#d5e6df',
+      accent: '#248a82',
+      colors: ['#6fd3c7', '#7ecbf9', '#ff7f8a', '#ffd65c', '#a7e3a1', '#ffc9a6', '#e6f7f2'],
+    },
+    {
+      id: 'autumn',
+      label: 'Autumn',
+      descriptor: 'Harvest Glow',
+      surface: '#faf4ee',
+      line: '#e7d7ca',
+      accent: '#c96849',
+      colors: ['#d97a64', '#e1a94b', '#b86a7a', '#95a88b', '#f3e7d6', '#7b4b6b', '#c59c78'],
+    },
+    {
+      id: 'winter',
+      label: 'Winter',
+      descriptor: 'Frost & Twilight',
+      surface: '#f5f7fb',
+      line: '#d8deeb',
+      accent: '#5576a8',
+      colors: ['#c7e4ff', '#a8b6ff', '#d6d0f2', '#dce2ea', '#3e6b5c', '#b56a83', '#fafaf4'],
+    },
   ] as const;
 
+  let activeSeasonId = 'spring';
   let stage: HTMLDivElement;
   let canvas: HTMLCanvasElement;
 
-  onMount(() => {
-    const context = canvas.getContext('2d');
+  let width = 0;
+  let context: CanvasRenderingContext2D | null = null;
+  let nodes: CollisionNode[] = [];
+  let simulation: Simulation<CollisionNode, undefined> | null = null;
+
+  const currentSeason = () =>
+    SEASON_PALETTES.find((palette) => palette.id === activeSeasonId) ?? SEASON_PALETTES[0];
+
+  const applyPalette = () => {
+    const palette = currentSeason();
+
+    nodes.forEach((node, index) => {
+      node.color = index ? palette.colors[(index - 1) % palette.colors.length] : 'transparent';
+    });
+
+    draw();
+  };
+
+  const hexToRgb = (hex: string) => {
+    const normalized = hex.replace('#', '');
+    const value = normalized.length === 3
+      ? normalized.split('').map((part) => part + part).join('')
+      : normalized;
+    const int = Number.parseInt(value, 16);
+
+    return {
+      r: (int >> 16) & 255,
+      g: (int >> 8) & 255,
+      b: int & 255,
+    };
+  };
+
+  const mixColor = (hex: string, target: { r: number; g: number; b: number }, amount: number) => {
+    const base = hexToRgb(hex);
+    const mix = (start: number, end: number) => Math.round(start + (end - start) * amount);
+    return `rgb(${mix(base.r, target.r)}, ${mix(base.g, target.g)}, ${mix(base.b, target.b)})`;
+  };
+
+  const drawFlatCircle = (node: CollisionNode) => {
     if (!context) return;
 
-    let width = 0;
-    let nodes: CollisionNode[] = [];
-    let simulation: Simulation<CollisionNode, undefined> | null = null;
+    const x = node.x ?? 0;
+    const y = node.y ?? 0;
+    const radius = node.r;
 
-    const hexToRgb = (hex: string) => {
-      const normalized = hex.replace('#', '');
-      const value = normalized.length === 3
-        ? normalized.split('').map((part) => part + part).join('')
-        : normalized;
-      const int = Number.parseInt(value, 16);
-      return {
-        r: (int >> 16) & 255,
-        g: (int >> 8) & 255,
-        b: int & 255,
-      };
-    };
+    context.fillStyle = node.color;
+    context.beginPath();
+    context.arc(x, y, radius, 0, TAU);
+    context.fill();
 
-    const mixColor = (hex: string, target: { r: number; g: number; b: number }, amount: number) => {
-      const base = hexToRgb(hex);
-      const mix = (start: number, end: number) => Math.round(start + (end - start) * amount);
-      return `rgb(${mix(base.r, target.r)}, ${mix(base.g, target.g)}, ${mix(base.b, target.b)})`;
-    };
+    context.strokeStyle = mixColor(node.color, { r: 74, g: 74, b: 84 }, 0.18);
+    context.lineWidth = Math.max(0.9, radius * 0.05);
+    context.beginPath();
+    context.arc(x, y, radius - Math.max(0.25, radius * 0.025), 0, TAU);
+    context.stroke();
+  };
 
-    const drawBubble = (node: CollisionNode) => {
-      const x = node.x ?? 0;
-      const y = node.y ?? 0;
-      const radius = node.r;
-      const outerRadius = radius + Math.max(0.8, radius * 0.12);
-      const gradient = context.createRadialGradient(
-        x - radius * 0.35,
-        y - radius * 0.38,
-        Math.max(1, radius * 0.14),
-        x,
-        y,
-        radius * 1.03,
-      );
-      const innerColor = mixColor(node.color, { r: 255, g: 255, b: 255 }, 0.24);
-      const midColor = mixColor(node.color, { r: 255, g: 255, b: 255 }, 0.08);
-      const edgeColor = mixColor(node.color, { r: 68, g: 63, b: 88 }, 0.12);
+  const draw = () => {
+    if (!context) return;
 
-      context.save();
-      context.fillStyle = 'rgba(255, 255, 255, 0.12)';
-      context.beginPath();
-      context.arc(x, y, outerRadius, 0, TAU);
-      context.fill();
+    context.clearRect(0, 0, width, width);
+    context.save();
+    context.translate(width / 2, width / 2);
 
-      context.shadowColor = 'rgba(78, 67, 92, 0.12)';
-      context.shadowBlur = Math.max(2, radius * 0.9);
-      context.shadowOffsetY = Math.max(0.5, radius * 0.12);
+    for (let index = 1; index < nodes.length; index += 1) {
+      drawFlatCircle(nodes[index]);
+    }
 
-      gradient.addColorStop(0, innerColor);
-      gradient.addColorStop(0.55, midColor);
-      gradient.addColorStop(1, edgeColor);
-      context.fillStyle = gradient;
-      context.beginPath();
-      context.arc(x, y, radius, 0, TAU);
-      context.fill();
-      context.restore();
+    context.restore();
+  };
 
-      context.strokeStyle = 'rgba(92, 78, 108, 0.22)';
-      context.lineWidth = Math.max(0.9, radius * 0.06);
-      context.beginPath();
-      context.arc(x, y, radius - Math.max(0.35, radius * 0.03), 0, TAU);
-      context.stroke();
+  const createSimulation = (nextWidth: number) => {
+    if (!context) return;
 
-      context.strokeStyle = 'rgba(255, 255, 255, 0.34)';
-      context.lineWidth = Math.max(0.8, radius * 0.045);
-      context.beginPath();
-      context.arc(x - radius * 0.08, y - radius * 0.08, radius * 0.76, Math.PI * 1.1, Math.PI * 1.72);
-      context.stroke();
+    simulation?.stop();
+    width = nextWidth;
 
-      context.fillStyle = 'rgba(255, 255, 255, 0.38)';
-      context.beginPath();
-      context.arc(
-        x - radius * 0.32,
-        y - radius * 0.34,
-        Math.max(1, radius * 0.2),
-        0,
-        TAU,
-      );
-      context.fill();
-    };
+    const devicePixelRatio = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.round(width * devicePixelRatio);
+    canvas.height = Math.round(width * devicePixelRatio);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${width}px`;
+    context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
 
-    const draw = () => {
-      context.clearRect(0, 0, width, width);
-      context.save();
-      context.translate(width / 2, width / 2);
+    const radiusScale = width / 200;
+    const randomRadius = () => radiusScale + Math.random() * (radiusScale * 4 - radiusScale);
+    const palette = currentSeason();
 
-      // Node zero is intentionally invisible. It is the pointer-controlled
-      // repulsor used by the original Observable example.
-      for (let index = 1; index < nodes.length; index += 1) {
-        drawBubble(nodes[index]);
-      }
+    nodes = Array.from({ length: NODE_COUNT }, (_, index) => ({
+      r: randomRadius(),
+      group: index ? (index % GROUP_COUNT) + 1 : 0,
+      color: index ? palette.colors[(index - 1) % palette.colors.length] : 'transparent',
+    }));
 
-      context.restore();
-    };
+    simulation = forceSimulation(nodes)
+      .alphaTarget(0.3)
+      .velocityDecay(0.1)
+      .force('x', forceX<CollisionNode>().strength(0.01))
+      .force('y', forceY<CollisionNode>().strength(0.01))
+      .force(
+        'collide',
+        forceCollide<CollisionNode>()
+          .radius((node) => node.r + 1)
+          .iterations(3),
+      )
+      .force(
+        'charge',
+        forceManyBody<CollisionNode>().strength((_, index) =>
+          index ? 0 : (-width * 2) / 3,
+        ),
+      )
+      .on('tick', draw);
+  };
 
-    const createSimulation = (nextWidth: number) => {
-      simulation?.stop();
-      width = nextWidth;
+  const setSeason = (seasonId: string) => {
+    activeSeasonId = seasonId;
+    if (nodes.length) applyPalette();
+  };
 
-      const devicePixelRatio = Math.max(1, window.devicePixelRatio || 1);
-      canvas.width = Math.round(width * devicePixelRatio);
-      canvas.height = Math.round(width * devicePixelRatio);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${width}px`;
-      context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-
-      const radiusScale = width / 200;
-      const randomRadius = () =>
-        radiusScale + Math.random() * (radiusScale * 4 - radiusScale);
-
-      nodes = Array.from({ length: NODE_COUNT }, (_, index) => ({
-        r: randomRadius(),
-        group: index ? (index % GROUP_COUNT) + 1 : 0,
-        color: index ? BUBBLE_COLORS[(index - 1) % BUBBLE_COLORS.length] : 'transparent',
-      }));
-
-      simulation = forceSimulation(nodes)
-        .alphaTarget(0.3)
-        .velocityDecay(0.1)
-        .force('x', forceX<CollisionNode>().strength(0.01))
-        .force('y', forceY<CollisionNode>().strength(0.01))
-        .force(
-          'collide',
-          forceCollide<CollisionNode>()
-            .radius((node) => node.r + 1)
-            .iterations(3),
-        )
-        .force(
-          'charge',
-          forceManyBody<CollisionNode>().strength((_, index) =>
-            index ? 0 : (-width * 2) / 3,
-          ),
-        )
-        .on('tick', draw);
-    };
+  onMount(() => {
+    context = canvas.getContext('2d');
+    if (!context) return;
 
     const moveRepulsor = (event: PointerEvent) => {
       if (!nodes.length) return;
@@ -208,12 +229,38 @@
   });
 </script>
 
-<div class="collision-stage" bind:this={stage}>
-  <canvas
-    bind:this={canvas}
-    aria-label="Four hundred softly colored pastel circles continuously collide while an invisible repulsor follows the pointer."
-    role="img"
-  >
-    An interactive D3 collision-detection simulation.
-  </canvas>
+<div
+  class="collision-lab"
+  style={`--collision-stage-bg: ${currentSeason().surface}; --collision-stage-line: ${currentSeason().line}; --collision-accent: ${currentSeason().accent};`}
+>
+  <div class="collision-toolbar" aria-label="Seasonal color palette selector">
+    <div class="collision-toolbar__copy">
+      <p class="collision-toolbar__eyebrow">Seasonal palettes</p>
+      <p class="collision-toolbar__title">{currentSeason().label} · {currentSeason().descriptor}</p>
+    </div>
+
+    <div class="collision-toolbar__buttons" role="tablist" aria-label="Season selectors">
+      {#each SEASON_PALETTES as season}
+        <button
+          class:active={season.id === activeSeasonId}
+          type="button"
+          role="tab"
+          aria-selected={season.id === activeSeasonId}
+          on:click={() => setSeason(season.id)}
+        >
+          {season.label}
+        </button>
+      {/each}
+    </div>
+  </div>
+
+  <div class="collision-stage" bind:this={stage}>
+    <canvas
+      bind:this={canvas}
+      aria-label={`Four hundred flat circles continuously collide while an invisible repulsor follows the pointer. Active palette: ${currentSeason().label}.`}
+      role="img"
+    >
+      An interactive D3 collision-detection simulation.
+    </canvas>
+  </div>
 </div>

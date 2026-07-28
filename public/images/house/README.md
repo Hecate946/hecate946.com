@@ -3,13 +3,9 @@
 ## Current aliases
 
 - `house-white-current.png` — current complete 1672 × 941 house PNG.
-- `house-white-current.svg` — self-contained full-house SVG mirror of the current PNG. The PNG is embedded inside the SVG so it works independently and cannot lose its image reference.
+- `house-white-current.svg` — self-contained SVG wrapper matching the current PNG and `HouseIllustration.svelte` exactly.
 
-The website's live house is rendered by:
-
-- `src/components/house/HouseIllustration.svelte`
-
-The side-by-side comparison page renders that live Svelte component directly. It does **not** use `house-white-current.svg` for the comparison.
+`HouseIllustration.svelte` is the website source of truth used by both the homepage and the comparison page. It displays the complete current PNG inside the shared 1672 × 941 SVG coordinate system and adds only the interactive window layer.
 
 ## Preserved versions
 
@@ -18,6 +14,8 @@ The side-by-side comparison page renders that live Svelte component directly. It
 - `versions/house-white-low-roof-v2.png`
 - `versions/house-white-low-roof-v2.svg`
 - `versions/house-white-raised-roof-v3.png`
-- `versions/house-white-raised-roof-v3.svg` — self-contained full-house mirror of the v3 PNG.
+- `versions/house-white-raised-roof-v3.svg`
+- `versions/house-white-narrow-steps-v4.png`
+- `versions/house-white-narrow-steps-v4.svg`
 
-New accepted versions should be added with a new version number instead of replacing older files. The `house-white-current.*` aliases may then be updated to duplicate the newest accepted version.
+New accepted versions should receive a new version number instead of replacing older versioned files. The `house-white-current.*` aliases can then be updated to duplicate the newest accepted version.

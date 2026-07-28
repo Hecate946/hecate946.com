@@ -19,7 +19,7 @@
   <title id="house-illustration-title">Cyrus's interactive house</title>
   <desc id="house-illustration-description">
     A white neoclassical two-story house with five upper windows, two broad first-story windows,
-    a centered arched entrance, a triangular pediment, and three wide entry steps.
+    a centered arched entrance, a triangular pediment, and three proportionally narrowed entry steps.
   </desc>
 
   <defs>
@@ -29,8 +29,9 @@
   </defs>
 
   <!--
-    The frozen PNG remains the visual source of truth. It is placed inside this
-    1672 × 941 SVG coordinate system so the window interactions cannot drift.
+    The full 1672 × 941 PNG is the frozen visual source of truth. The staircase
+    is already corrected inside this image, so there is no second staircase,
+    mask, patch, or SVG overlay that can drift or expose the previous steps.
   -->
   <image
     class="house-illustration__reference"

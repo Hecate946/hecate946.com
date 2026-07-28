@@ -6,7 +6,7 @@ import '@/styles/collision-detection.css';
 
 <BaseLayout
   title="Collision Detection"
-  description="An interactive D3 force-collision simulation with a pointer-controlled repulsor."
+  description="An interactive D3 force-collision simulation with four seasonal color palettes and a pointer-controlled repulsor."
 >
   <section
     class="collision-page interior-page interior-page--eight"
@@ -18,7 +18,10 @@ import '@/styles/collision-detection.css';
 
     <div class="collision-content interior-page-content interior-page-content--balanced">
       <div class="collision-copy">
-        <p>Move your pointer through the field to push the circles aside.</p>
+        <p>
+          Move your pointer through the field to push the circles aside, and switch between
+          four seasonal palettes.
+        </p>
       </div>
 
       <CollisionDetection client:load />

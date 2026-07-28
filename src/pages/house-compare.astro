@@ -15,23 +15,21 @@ const destinations = houseScene.destinations.map((destination) => ({
 <HousePreviewLayout
   active="compare"
   title="House PNG / SVG Comparison — Cyrus Asasi"
-  description="Side-by-side comparison of the frozen house PNG and the live HouseIllustration Svelte component."
+  description="Side-by-side comparison of the frozen house PNG and the live HouseIllustration.svelte SVG presentation."
 >
-  <section class="house-comparison" aria-label="PNG and live SVG house comparison">
+  <section class="house-comparison" aria-label="PNG and SVG house comparison">
     <figure class="house-comparison__panel">
       <figcaption>PNG reference</figcaption>
-      <div class="house-comparison__visual">
-        <img
-          src={pngSrc}
-          alt="Frozen PNG reference of the white neoclassical house."
-          draggable="false"
-        />
-      </div>
+      <img
+        src={pngSrc}
+        alt="Frozen PNG reference of the white neoclassical house."
+        draggable="false"
+      />
     </figure>
 
     <figure class="house-comparison__panel">
       <figcaption>Live Svelte SVG</figcaption>
-      <div class="house-comparison__visual house-comparison__visual--svg">
+      <div class="house-preview-art house-preview-art--svg house-comparison__svg-panel">
         <HouseIllustration {destinations} navigationEnabled={false} />
       </div>
     </figure>

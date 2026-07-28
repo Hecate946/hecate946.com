@@ -205,3 +205,22 @@ body.house-preview-page {
     padding-top: 5rem;
   }
 }
+
+
+.house-comparison__svg-panel {
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid rgb(16 40 44 / 0.16);
+  background: #e8e7e5;
+  box-shadow: 0 0.9rem 2.6rem rgb(16 31 34 / 0.13);
+}
+
+.house-comparison__svg-panel .house-illustration {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.house-comparison__svg-panel .house-window {
+  pointer-events: none;
+}
