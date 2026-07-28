@@ -1,0 +1,33 @@
+---
+import HousePreviewLayout from '@/layouts/HousePreviewLayout.astro';
+import { withBase } from '@/lib/paths';
+
+const pngSrc = withBase('/images/house/house-white-current.png');
+const svgSrc = withBase('/images/house/house-white-current.svg');
+---
+
+<HousePreviewLayout
+  active="compare"
+  title="House PNG / SVG Comparison — Cyrus Asasi"
+  description="Side-by-side comparison of the frozen house PNG and its pixel-identical SVG presentation."
+>
+  <section class="house-comparison" aria-label="PNG and SVG house comparison">
+    <figure class="house-comparison__panel">
+      <figcaption>PNG reference</figcaption>
+      <img
+        src={pngSrc}
+        alt="Frozen PNG reference of the white neoclassical house."
+        draggable="false"
+      />
+    </figure>
+
+    <figure class="house-comparison__panel">
+      <figcaption>SVG presentation</figcaption>
+      <img
+        src={svgSrc}
+        alt="SVG presentation of the same white neoclassical house."
+        draggable="false"
+      />
+    </figure>
+  </section>
+</HousePreviewLayout>

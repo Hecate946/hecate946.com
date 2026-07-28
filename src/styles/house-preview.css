@@ -151,3 +151,57 @@ body.house-preview-page {
     padding-top: 4.55rem;
   }
 }
+
+/* Side-by-side PNG / SVG comparison ------------------------------------ */
+.house-preview-page--compare {
+  overflow: auto;
+}
+
+.house-preview-page--compare .house-preview-stage {
+  min-height: 100svh;
+  height: auto;
+  align-items: center;
+}
+
+.house-comparison {
+  display: grid;
+  width: min(100%, 118rem);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.65rem, 1.5vw, 1.35rem);
+}
+
+.house-comparison__panel {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  gap: 0.5rem;
+}
+
+.house-comparison__panel figcaption {
+  color: rgb(16 40 44 / 0.72);
+  font-size: clamp(0.65rem, 0.9vw, 0.76rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.house-comparison__panel img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid rgb(16 40 44 / 0.16);
+  background: #e8e7e5;
+  box-shadow: 0 0.9rem 2.6rem rgb(16 31 34 / 0.13);
+  user-select: none;
+}
+
+@media (max-width: 900px) {
+  .house-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .house-preview-page--compare .house-preview-stage {
+    padding-top: 5rem;
+  }
+}

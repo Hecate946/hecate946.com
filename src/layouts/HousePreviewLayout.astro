@@ -4,7 +4,7 @@ import { withBase } from '@/lib/paths';
 import '@/styles/house-preview.css';
 
 interface Props {
-  active: 'png' | 'svg';
+  active: 'png' | 'svg' | 'compare';
   title: string;
   description: string;
 }
@@ -12,6 +12,7 @@ interface Props {
 const { active, title, description } = Astro.props;
 const pngHref = withBase('/house-png/');
 const svgHref = withBase('/house-svg/');
+const compareHref = withBase('/house-compare/');
 const homeHref = withBase('/');
 ---
 
@@ -40,9 +41,17 @@ const homeHref = withBase('/');
         >
           SVG
         </a>
+        <a
+          class:list={['house-preview-nav__link', active === 'compare' && 'is-active']}
+          href={compareHref}
+          aria-current={active === 'compare' ? 'page' : undefined}
+          data-house-format="compare"
+        >
+          Compare
+        </a>
       </div>
 
-      <span class="house-preview-nav__keys" aria-hidden="true">P / V</span>
+      <span class="house-preview-nav__keys" aria-hidden="true">P / V / C</span>
       <a class="house-preview-nav__home" href={homeHref}>Home</a>
     </nav>
 
@@ -56,9 +65,9 @@ const homeHref = withBase('/');
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
 
         const key = event.key.toLowerCase();
-        if (key !== 'p' && key !== 'v') return;
+        if (key !== 'p' && key !== 'v' && key !== 'c') return;
 
-        const format = key === 'p' ? 'png' : 'svg';
+        const format = key === 'p' ? 'png' : key === 'v' ? 'svg' : 'compare';
         const link = document.querySelector(`[data-house-format="${format}"]`);
         if (link instanceof HTMLAnchorElement) link.click();
       });

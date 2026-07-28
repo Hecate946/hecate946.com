@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { HouseDestination } from '@/config/house-scene';
-  import HouseShell from './HouseShell.svelte';
+  import { withBase } from '@/lib/paths';
   import HouseWindow from './HouseWindow.svelte';
 
   export let destinations: readonly HouseDestination[] = [];
   export let navigationEnabled = true;
+
+  const imageHref = withBase('/images/house/house-white-current.png');
 </script>
 
 <svg
@@ -16,24 +18,30 @@
 >
   <title id="house-illustration-title">Cyrus's interactive house</title>
   <desc id="house-illustration-description">
-    A precise front elevation of a symmetrical two-story house with a central triangular pediment, five upper windows, two broad first-story windows, an arched double entrance, and three centered steps.
+    A white neoclassical two-story house with five upper windows, two broad first-story windows,
+    a centered arched entrance, a triangular pediment, and three wide entry steps.
   </desc>
 
   <defs>
-    <linearGradient id="house-ink" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#102d35" />
-      <stop offset="0.52" stop-color="#0b252c" />
-      <stop offset="1" stop-color="#071c23" />
-    </linearGradient>
-    <filter id="house-line-shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="1.4" stdDeviation="1.25" flood-color="#000" flood-opacity=".46" />
-    </filter>
     <filter id="house-hover-glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="7" />
     </filter>
   </defs>
 
-  <HouseShell />
+  <!--
+    The frozen PNG remains the visual source of truth. It is placed inside this
+    1672 × 941 SVG coordinate system so the window interactions cannot drift.
+  -->
+  <image
+    class="house-illustration__reference"
+    href={imageHref}
+    x="0"
+    y="0"
+    width="1672"
+    height="941"
+    preserveAspectRatio="none"
+    pointer-events="none"
+  />
 
   {#each destinations as destination (destination.id)}
     <HouseWindow {destination} {navigationEnabled} />
