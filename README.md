@@ -1,17 +1,20 @@
-faviscon: https://www.svgrepo.com/svg/500124/duck
+# D3 Lab SSR fix
 
-local stats server: cd cloudflare/stats-worker && npx wrangler dev
+Copy these files into the matching locations in the `hecate946.com` repository.
 
-zipper:
+This revision fixes the Astro SSR crash caused by calling the browser-only
+`cancelAnimationFrame` global from Svelte's `onDestroy` hook during server rendering.
+All browser cleanup now lives inside the cleanup function returned by `onMount`.
 
-zip -r hecate946-site.zip . \
-  -x "node_modules/*" \
-     "dist/*" \
-     ".astro/*" \
-     ".git/*" \
-     ".env" \
-     "secrets.txt" \
-     "hecate946-site.zip" \
-     "cloudflare/stats-worker/node_modules/*" \
-     "cloudflare/stats-worker/.wrangler/*" \
-     "cloudflare/stats-worker/.dev.vars"
+From the repository root:
+
+```bash
+unzip -o ~/Downloads/hecate946-d3-lab-ssr-fix.zip
+npm run build
+```
+
+Files included:
+
+- `src/pages/d3.astro`
+- `src/components/islands/D3Playground.svelte`
+- `src/styles/d3.css`

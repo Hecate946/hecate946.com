@@ -1,0 +1,36 @@
+---
+import CollisionDetection from '@/components/islands/CollisionDetection.svelte';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import '@/styles/collision-detection.css';
+---
+
+<BaseLayout
+  title="Collision Detection"
+  description="An interactive D3 force-collision simulation with a pointer-controlled repulsor."
+>
+  <section
+    class="collision-page interior-page interior-page--eight"
+    aria-labelledby="collision-title"
+  >
+    <header class="collision-heading interior-page-heading">
+      <h1 id="collision-title">Collision Detection</h1>
+    </header>
+
+    <div class="collision-content interior-page-content interior-page-content--balanced">
+      <div class="collision-copy">
+        <p>Move your pointer through the field to push the circles aside.</p>
+      </div>
+
+      <CollisionDetection client:load />
+
+      <p class="collision-credit">
+        Physics reproduced from Mike Bostock’s
+        <a
+          href="https://observablehq.com/@d3/collision-detection/2?collection=@d3/d3-force"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Observable example</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

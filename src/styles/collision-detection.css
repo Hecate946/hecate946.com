@@ -1,0 +1,60 @@
+.collision-content {
+  display: grid;
+  gap: clamp(1.1rem, 2.5vw, 1.6rem);
+}
+
+.collision-copy,
+.collision-credit {
+  width: min(100%, 46rem);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.collision-copy p,
+.collision-credit {
+  margin: 0;
+  color: var(--muted);
+}
+
+.collision-copy p {
+  font-size: clamp(1rem, 1.8vw, 1.15rem);
+}
+
+.collision-stage {
+  width: min(100%, 52rem);
+  margin-inline: auto;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: clamp(0.85rem, 2vw, 1.5rem);
+  box-shadow: var(--shadow);
+}
+
+.collision-stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.collision-credit {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 1.6;
+}
+
+.collision-credit a {
+  color: var(--accent-strong);
+}
+
+@media (max-width: 39.999rem) {
+  .collision-content {
+    gap: 1rem;
+  }
+
+  .collision-stage {
+    border-radius: 0.85rem;
+  }
+}

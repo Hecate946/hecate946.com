@@ -1,33 +1,39 @@
 ---
+import HouseIllustration from '@/components/house/HouseIllustration.svelte';
+import { houseScene } from '@/config/house-scene';
 import HousePreviewLayout from '@/layouts/HousePreviewLayout.astro';
 import { withBase } from '@/lib/paths';
+import '@/styles/house-scene.css';
 
 const pngSrc = withBase('/images/house/house-white-current.png');
-const svgSrc = withBase('/images/house/house-white-current.svg');
+const destinations = houseScene.destinations.map((destination) => ({
+  ...destination,
+  href: withBase(destination.href),
+}));
 ---
 
 <HousePreviewLayout
   active="compare"
   title="House PNG / SVG Comparison — Cyrus Asasi"
-  description="Side-by-side comparison of the frozen house PNG and its pixel-identical SVG presentation."
+  description="Side-by-side comparison of the frozen house PNG and the live HouseIllustration Svelte component."
 >
-  <section class="house-comparison" aria-label="PNG and SVG house comparison">
+  <section class="house-comparison" aria-label="PNG and live SVG house comparison">
     <figure class="house-comparison__panel">
       <figcaption>PNG reference</figcaption>
-      <img
-        src={pngSrc}
-        alt="Frozen PNG reference of the white neoclassical house."
-        draggable="false"
-      />
+      <div class="house-comparison__visual">
+        <img
+          src={pngSrc}
+          alt="Frozen PNG reference of the white neoclassical house."
+          draggable="false"
+        />
+      </div>
     </figure>
 
     <figure class="house-comparison__panel">
-      <figcaption>SVG presentation</figcaption>
-      <img
-        src={svgSrc}
-        alt="SVG presentation of the same white neoclassical house."
-        draggable="false"
-      />
+      <figcaption>Live Svelte SVG</figcaption>
+      <div class="house-comparison__visual house-comparison__visual--svg">
+        <HouseIllustration {destinations} navigationEnabled={false} />
+      </div>
     </figure>
   </section>
 </HousePreviewLayout>
