@@ -13,11 +13,22 @@
   type CollisionNode = SimulationNodeDatum & {
     r: number;
     group: number;
+    color: string;
   };
 
-  const NODE_COUNT = 200;
+  const NODE_COUNT = 400;
   const GROUP_COUNT = 4;
   const TAU = Math.PI * 2;
+  const BUBBLE_COLORS = [
+    '#f7cbd5', // blush
+    '#f8e3ad', // butter
+    '#d8efc7', // pistachio
+    '#cfe7f5', // powder blue
+    '#ded2f2', // lavender
+    '#f7d7bd', // peach
+    '#cfeae2', // mint
+    '#f1d5df', // rosewater
+  ] as const;
 
   let stage: HTMLDivElement;
   let canvas: HTMLCanvasElement;
@@ -30,6 +41,40 @@
     let nodes: CollisionNode[] = [];
     let simulation: Simulation<CollisionNode, undefined> | null = null;
 
+    const drawBubble = (node: CollisionNode) => {
+      const x = node.x ?? 0;
+      const y = node.y ?? 0;
+      const radius = node.r;
+
+      // Soft halo gives the circles a polished, airy edge without changing
+      // the collision geometry.
+      context.fillStyle = 'rgba(255, 255, 255, 0.18)';
+      context.beginPath();
+      context.arc(x, y, radius + Math.max(0.7, radius * 0.09), 0, TAU);
+      context.fill();
+
+      context.fillStyle = node.color;
+      context.beginPath();
+      context.arc(x, y, radius, 0, TAU);
+      context.fill();
+
+      context.strokeStyle = 'rgba(99, 84, 105, 0.16)';
+      context.lineWidth = Math.max(0.7, radius * 0.055);
+      context.stroke();
+
+      // A restrained highlight keeps them decorative rather than glossy.
+      context.fillStyle = 'rgba(255, 255, 255, 0.42)';
+      context.beginPath();
+      context.arc(
+        x - radius * 0.3,
+        y - radius * 0.3,
+        Math.max(0.9, radius * 0.22),
+        0,
+        TAU,
+      );
+      context.fill();
+    };
+
     const draw = () => {
       context.clearRect(0, 0, width, width);
       context.save();
@@ -38,15 +83,7 @@
       // Node zero is intentionally invisible. It is the pointer-controlled
       // repulsor used by the original Observable example.
       for (let index = 1; index < nodes.length; index += 1) {
-        const node = nodes[index];
-        const x = node.x ?? 0;
-        const y = node.y ?? 0;
-
-        context.beginPath();
-        context.moveTo(x + node.r, y);
-        context.arc(x, y, node.r, 0, TAU);
-        context.fillStyle = '#ffffff';
-        context.fill();
+        drawBubble(nodes[index]);
       }
 
       context.restore();
@@ -70,6 +107,7 @@
       nodes = Array.from({ length: NODE_COUNT }, (_, index) => ({
         r: randomRadius(),
         group: index ? (index % GROUP_COUNT) + 1 : 0,
+        color: index ? BUBBLE_COLORS[(index - 1) % BUBBLE_COLORS.length] : 'transparent',
       }));
 
       simulation = forceSimulation(nodes)
@@ -128,7 +166,7 @@
 <div class="collision-stage" bind:this={stage}>
   <canvas
     bind:this={canvas}
-    aria-label="Two hundred differently sized circles continuously collide while an invisible repulsor follows the pointer."
+    aria-label="Four hundred softly colored pastel circles continuously collide while an invisible repulsor follows the pointer."
     role="img"
   >
     An interactive D3 collision-detection simulation.

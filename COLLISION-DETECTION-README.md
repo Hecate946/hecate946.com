@@ -12,7 +12,7 @@ Files added:
 
 The force configuration matches the linked Observable notebook:
 
-- 200 nodes
+- 400 nodes
 - `alphaTarget(0.3)`
 - `velocityDecay(0.1)`
 - x/y force strength `0.01`
@@ -21,3 +21,9 @@ The force configuration matches the linked Observable notebook:
 - one invisible pointer-controlled node with charge `-width * 2 / 3`
 
 No navigation files are changed.
+
+Visual treatment:
+
+- light pastel circular bubbles
+- subtle white highlights
+- delicate translucent outlines
