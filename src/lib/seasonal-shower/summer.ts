@@ -6,8 +6,9 @@ const BEACH_BALL_SURFACE_SIZE = 132;
 const BEACH_BALL_FRAME_COUNT = 64;
 const BEACH_BALL_PANELS = [
   '#ef476f',
+  '#ffffff',
   '#ffd166',
-  '#06d6a0',
+  '#ffffff',
   '#118ab2',
   '#ffffff',
 ] as const;

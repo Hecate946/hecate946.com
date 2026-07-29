@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { SEASONAL_SHOWERS, VALID_SEASONS } from '../../lib/seasonal-shower/seasons';
+import { preloadAutumnLeafAssets } from '../../lib/seasonal-shower/autumn';
   import {
     prewarmSeasonSpriteFrames,
     seasonSpriteAtPhase,
@@ -87,11 +88,11 @@
       const speed = randomFrom(definition.speed);
       const startY =
         season === 'autumn'
-          ? -baseSize * randomBetween(0.8, 2.8)
+          ? -baseSize * randomBetween(0.35, 1.6)
           : -baseSize * randomBetween(1.2, 4.8);
       const delay =
         season === 'autumn'
-          ? index * randomBetween(0.003, 0.012) + randomBetween(0, 0.16)
+          ? index * randomBetween(0.01, 0.026) + randomBetween(0, 0.34)
           : index * randomBetween(0.035, 0.095) + randomBetween(0, 0.55);
 
       return {
@@ -142,6 +143,7 @@
     let summerRenderer: SummerBallWebGlRenderer | null =
       createSummerBallWebGlRenderer(summerCanvas);
     const summerInstanceData = new Float32Array(MAX_SUMMER_PARTICLES * 8);
+    let showerRequestId = 0;
 
     function resize() {
       width = window.innerWidth;
@@ -367,10 +369,22 @@
       animationFrame = window.requestAnimationFrame(frame);
     }
 
-    function startShower(season = currentSeason(), fadeExisting = false) {
+    async function startShower(season = currentSeason(), fadeExisting = false) {
+      const requestId = ++showerRequestId;
+
       if (reducedMotion.matches || document.visibilityState !== 'visible') {
         stopAnimation();
         return;
+      }
+
+      if (season === 'autumn') {
+        await preloadAutumnLeafAssets();
+        if (requestId !== showerRequestId) return;
+      }
+
+      if ((SEASONAL_SHOWERS[season].animationFrames ?? 1) > 1) {
+        await prewarmSeasonSpriteFrames(season, 5);
+        if (requestId !== showerRequestId) return;
       }
 
       const nowSeconds = performance.now() / 1000;
@@ -380,10 +394,6 @@
         particles = [];
         context.clearRect(0, 0, width, height);
         summerRenderer?.clear();
-      }
-
-      if ((SEASONAL_SHOWERS[season].animationFrames ?? 1) > 1) {
-        void prewarmSeasonSpriteFrames(season, 5);
       }
 
       particles.push(...makeParticles(season, width));
@@ -406,14 +416,16 @@
     }
 
     const showerClock = getShowerClock();
-    const runScheduledShower = () => startShower(currentSeason());
+    const runScheduledShower = () => {
+      void startShower(currentSeason());
+    };
     const seasonObserver = new MutationObserver(() => {
       const nextSeason = currentSeason();
       if (nextSeason === observedSeason) return;
 
       observedSeason = nextSeason;
       showerClock.reset();
-      startShower(nextSeason);
+      void startShower(nextSeason);
     });
 
     resize();

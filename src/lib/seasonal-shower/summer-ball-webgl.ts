@@ -206,9 +206,10 @@ vec3 rotateByInverseQuaternion(vec3 vector, vec4 quaternion) {
 
 vec3 panelColor(float index) {
   if (index < 0.5) return vec3(0.9373, 0.2784, 0.4353);
-  if (index < 1.5) return vec3(1.0, 0.8196, 0.4);
-  if (index < 2.5) return vec3(0.0235, 0.8392, 0.6275);
-  if (index < 3.5) return vec3(0.0706, 0.5412, 0.6980);
+  if (index < 1.5) return vec3(1.0);
+  if (index < 2.5) return vec3(1.0, 0.8196, 0.4);
+  if (index < 3.5) return vec3(1.0);
+  if (index < 4.5) return vec3(0.0706, 0.5412, 0.6980);
   return vec3(1.0);
 }
 
@@ -230,8 +231,8 @@ void main() {
   vec3 objectNormal = rotateByInverseQuaternion(visibleNormal, normalize(vQuaternion));
 
   float longitude = atan(objectNormal.z, objectNormal.x);
-  float panelPosition = (longitude + PI) / TAU * 5.0;
-  float panelIndex = mod(floor(panelPosition), 5.0);
+  float panelPosition = (longitude + PI) / TAU * 6.0;
+  float panelIndex = mod(floor(panelPosition), 6.0);
   float panelFraction = fract(panelPosition);
   float seamDistance = min(panelFraction, 1.0 - panelFraction);
 

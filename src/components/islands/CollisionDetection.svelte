@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import SeasonSelector from '@/components/islands/SeasonSelector.svelte';
+  import { preloadAutumnLeafAssets } from '@/lib/seasonal-shower/autumn';
   import { SEASONAL_SHOWERS, VALID_SEASONS } from '@/lib/seasonal-shower/seasons';
   import {
     prewarmSeasonSpriteFrames,
@@ -45,7 +46,7 @@
     currentRotation: number;
   }
 
-  const NODE_COUNT = 200;
+  const NODE_COUNT = 220;
   const MAX_PIXEL_RATIO = 2;
   const WALL_THICKNESS = 42;
 
@@ -53,10 +54,10 @@
   // sprite canvas. These display scales make the visible artwork approximately
   // match each body's circular collider.
   const SPRITE_DISPLAY_SCALE: Record<Season, number> = {
-    spring: 1.38,
-    summer: 1.46,
-    autumn: 1.2,
-    winter: 1.42,
+    spring: 1.52,
+    summer: 1.62,
+    autumn: 2.42,
+    winter: 1.56,
   };
 
   let activeSeason: Season = 'summer';
@@ -93,11 +94,16 @@
     return Math.atan2(Math.sin(to - from), Math.cos(to - from));
   }
 
-  function applySeason(nextSeason: Season) {
-    activeSeason = nextSeason;
-    if ((SEASONAL_SHOWERS[nextSeason].animationFrames ?? 1) > 1) {
-      void prewarmSeasonSpriteFrames(nextSeason, 5);
+  async function prepareSeasonAssets(season: Season) {
+    if (season === 'autumn') await preloadAutumnLeafAssets();
+    if ((SEASONAL_SHOWERS[season].animationFrames ?? 1) > 1) {
+      await prewarmSeasonSpriteFrames(season, 5);
     }
+  }
+
+  async function applySeason(nextSeason: Season) {
+    await prepareSeasonAssets(nextSeason);
+    activeSeason = nextSeason;
     const sprites = seasonSprites(nextSeason);
 
     objects.forEach((object, index) => {
@@ -267,12 +273,12 @@
 
     addBoundaryColliders(width);
 
-    const radiusScale = width / 200;
+    const radiusScale = width / 175;
     const randomRadius = () =>
-      radiusScale + Math.random() * (radiusScale * 4 - radiusScale);
+      radiusScale * 1.08 + Math.random() * (radiusScale * 4.2 - radiusScale * 1.08);
     const sprites = seasonSprites(activeSeason);
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-    const d3Spacing = 10 * (width / 800);
+    const d3Spacing = (activeSeason === 'autumn' ? 8.7 : 11.4) * (width / 800);
 
     objects = Array.from({ length: NODE_COUNT }, (_, index) => {
       const radius = randomRadius();
@@ -473,6 +479,7 @@
 
       rapier = importedRapier;
       activeSeason = readSeason();
+      await prepareSeasonAssets(activeSeason);
 
       const initialWidth = Math.max(1, Math.floor(stage.getBoundingClientRect().width));
       createWorld(initialWidth);
@@ -487,7 +494,7 @@
 
       seasonObserver = new MutationObserver(() => {
         const nextSeason = readSeason();
-        if (nextSeason !== activeSeason) applySeason(nextSeason);
+        if (nextSeason !== activeSeason) void applySeason(nextSeason);
       });
 
       intersectionObserver = new IntersectionObserver(
