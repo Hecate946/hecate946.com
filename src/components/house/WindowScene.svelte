@@ -2,6 +2,7 @@
   import type { HouseWindowSceneId } from '@/config/house-scene';
   import AboutWindowScene from './scenes/AboutWindowScene.svelte';
   import ChessRookWindowScene from './scenes/ChessRookWindowScene.svelte';
+  import ClarinetWindowScene from './scenes/ClarinetWindowScene.svelte';
   import CollisionWindowScene from './scenes/CollisionWindowScene.svelte';
   import ConcertHallWindowScene from './scenes/ConcertHallWindowScene.svelte';
   import ContactWindowScene from './scenes/ContactWindowScene.svelte';
@@ -17,6 +18,8 @@
   <CollisionWindowScene />
 {:else if scene === 'chess-rook'}
   <ChessRookWindowScene />
+{:else if scene === 'clarinet'}
+  <ClarinetWindowScene />
 {:else if scene === 'concert-hall'}
   <ConcertHallWindowScene />
 {:else if scene === 'pickleball'}

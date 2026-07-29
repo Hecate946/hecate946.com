@@ -1,7 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { SEASONAL_SHOWERS, VALID_SEASONS } from '../../lib/seasonal-shower/seasons';
-  import { seasonSprites } from '../../lib/seasonal-shower/sprites';
+  import {
+    prewarmSeasonSpriteFrames,
+    seasonSpriteAtPhase,
+    seasonSprites,
+  } from '../../lib/seasonal-shower/sprites';
   import {
     createSummerBallWebGlRenderer,
     type SummerBallWebGlRenderer,
@@ -81,7 +85,14 @@
       const baseSize = randomFrom(definition.size) * definition.scale;
       const startX = randomBetween(baseSize, Math.max(baseSize, width - baseSize));
       const speed = randomFrom(definition.speed);
-      const startY = -baseSize * randomBetween(1.2, 4.8);
+      const startY =
+        season === 'autumn'
+          ? -baseSize * randomBetween(0.8, 2.8)
+          : -baseSize * randomBetween(1.2, 4.8);
+      const delay =
+        season === 'autumn'
+          ? index * randomBetween(0.003, 0.012) + randomBetween(0, 0.16)
+          : index * randomBetween(0.035, 0.095) + randomBetween(0, 0.55);
 
       return {
         season,
@@ -97,7 +108,7 @@
         rotation: randomBetween(0, Math.PI * 2),
         spin: randomFrom(definition.spin),
         flutterRate: randomFrom(definition.flutterRate),
-        delay: index * randomBetween(0.035, 0.095) + randomBetween(0, 0.55),
+        delay,
         age: 0,
         opacity: randomFrom(definition.opacity),
         sprite: sprites[index % sprites.length]!,
@@ -255,6 +266,7 @@
         const travelAge = particle.age - particle.delay;
         let x = particle.x;
         let flutter = 1;
+        let sprite = particle.sprite;
 
         if (particle.season === 'summer') {
           updateSummerParticle(particle, delta, nowSeconds);
@@ -269,6 +281,14 @@
           flutter =
             0.76 +
             Math.abs(Math.cos(travelAge * particle.flutterRate + particle.phase)) * 0.24;
+
+          if (SEASONAL_SHOWERS[particle.season].animationFrames) {
+            sprite = seasonSpriteAtPhase(
+              particle.season,
+              particle.spriteVariant,
+              travelAge * particle.flutterRate + particle.phase,
+            );
+          }
 
           if (particle.y >= height + particle.size * 2.2) {
             particle.expired = true;
@@ -308,7 +328,7 @@
         context.rotate(particle.rotation);
         if (SEASONAL_SHOWERS[particle.season].flutter) context.scale(flutter, 1);
         context.drawImage(
-          particle.sprite,
+          sprite,
           -particle.size,
           -particle.size,
           particle.size * 2,
@@ -360,6 +380,10 @@
         particles = [];
         context.clearRect(0, 0, width, height);
         summerRenderer?.clear();
+      }
+
+      if ((SEASONAL_SHOWERS[season].animationFrames ?? 1) > 1) {
+        void prewarmSeasonSpriteFrames(season, 5);
       }
 
       particles.push(...makeParticles(season, width));

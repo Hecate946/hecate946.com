@@ -8,6 +8,7 @@ export type HouseWindowSceneId =
   | 'contact'
   | 'collision'
   | 'chess-rook'
+  | 'clarinet'
   | 'concert-hall'
   | 'pickleball';
 
@@ -51,7 +52,7 @@ export interface HouseSceneConfig {
 }
 
 export const houseScene = {
-  enabled: false,
+  enabled: true,
   navigationEnabled: true,
   showHint: true,
   referenceWidth: 1672,
@@ -101,12 +102,17 @@ export const houseScene = {
       },
     },
     {
-      id: 'resume-window',
+      id: 'clarinet-window',
       label: 'Resume',
-      roomLabel: 'The Study',
-      description: 'Education, experience, technical skills, performances, and awards.',
+      roomLabel: 'The Clarinet Room',
+      description: 'A stylized clarinet display previewing the resume page.',
       href: '/resume/',
-      scene: 'resume',
+      scene: 'clarinet',
+      sceneViewBox: {
+        width: 73,
+        height: 131,
+        fit: 'meet',
+      },
       geometry: {
         x: 797,
         y: 315,
@@ -120,12 +126,17 @@ export const houseScene = {
       },
     },
     {
-      id: 'projects-window',
-      label: 'Projects',
-      roomLabel: 'The Workshop',
-      description: 'Software projects, experiments, and interactive systems.',
-      href: '/projects/',
-      scene: 'projects',
+      id: 'pickleball-window',
+      label: 'Pickleball',
+      roomLabel: 'The Pickleball Court',
+      description: 'A top-down pickleball court scene.',
+      href: '/pickleball/',
+      scene: 'pickleball',
+      sceneViewBox: {
+        width: 71,
+        height: 131,
+        fit: 'meet',
+      },
       geometry: {
         x: 1084,
         y: 315,
@@ -171,30 +182,6 @@ export const houseScene = {
       },
       geometry: {
         x: 302,
-        y: 581,
-        width: 279,
-        height: 172,
-        kind: 'square',
-        columns: 7,
-        rows: 5,
-        mullionX: 4,
-        mullionY: 4,
-      },
-    },
-    {
-      id: 'pickleball-window',
-      label: 'Picklabell',
-      roomLabel: 'The Picklabell Court',
-      description: 'A top-down pickleball court scene.',
-      href: '/picklabell/',
-      scene: 'pickleball',
-      sceneViewBox: {
-        width: 279,
-        height: 172,
-        fit: 'meet',
-      },
-      geometry: {
-        x: 1090,
         y: 581,
         width: 279,
         height: 172,

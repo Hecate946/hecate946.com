@@ -11,6 +11,9 @@ const BEACH_BALL_PANELS = [
   '#118ab2',
   '#ffffff',
 ] as const;
+const BEACH_BALL_CAP_RADIUS = 0.3;
+const BEACH_BALL_CAP_RING_INNER = 0.22;
+const BEACH_BALL_CAP_RING_OUTER = 0.3;
 
 interface Vector3 {
   x: number;
@@ -214,6 +217,8 @@ function renderBallSurface(variant: number, animationFrame: number) {
     // the sphere instead of the entire flat sprite simply spinning in place.
     const objectX =
       rotation[0] * screenX + rotation[3] * screenY + rotation[6] * screenZ;
+    const objectY =
+      rotation[1] * screenX + rotation[4] * screenY + rotation[7] * screenZ;
     const objectZ =
       rotation[2] * screenX + rotation[5] * screenY + rotation[8] * screenZ;
 
@@ -232,12 +237,40 @@ function renderBallSurface(variant: number, animationFrame: number) {
       shade *= 0.76 + (seamDistance / 0.022) * 0.24;
     }
 
+    const topCapDistance = objectY > 0 ? Math.hypot(objectX, objectZ) : 10;
+    const bottomCapDistance = objectY < 0 ? Math.hypot(objectX, objectZ) : 10;
+    const capDistance = Math.min(topCapDistance, bottomCapDistance);
+    const capMask = 1 - clamp((capDistance - (BEACH_BALL_CAP_RADIUS - 0.06)) / 0.06, 0, 1);
+    const capRing =
+      capDistance >= BEACH_BALL_CAP_RING_INNER && capDistance <= BEACH_BALL_CAP_RING_OUTER
+        ? 1 - Math.abs((capDistance - (BEACH_BALL_CAP_RING_INNER + BEACH_BALL_CAP_RING_OUTER) / 2) / ((BEACH_BALL_CAP_RING_OUTER - BEACH_BALL_CAP_RING_INNER) / 2))
+        : 0;
+
     const highlight = SURFACE_HIGHLIGHT[pixelIndex]!;
     const offset = pixelIndex * 4;
 
-    pixels[offset] = clamp(panelColor.red * shade + highlight, 0, 255);
-    pixels[offset + 1] = clamp(panelColor.green * shade + highlight, 0, 255);
-    pixels[offset + 2] = clamp(panelColor.blue * shade + highlight, 0, 255);
+    let red = panelColor.red * shade + highlight;
+    let green = panelColor.green * shade + highlight;
+    let blue = panelColor.blue * shade + highlight;
+
+    if (capMask > 0.001) {
+      const capShade = 0.86 + (shade - 0.56) * 0.55;
+      const capRed = 247 * capShade + highlight * 0.68;
+      const capGreen = 248 * capShade + highlight * 0.68;
+      const capBlue = 246 * capShade + highlight * 0.68;
+      red += (capRed - red) * capMask;
+      green += (capGreen - green) * capMask;
+      blue += (capBlue - blue) * capMask;
+      if (capRing > 0.001) {
+        red *= 1 - capRing * 0.16;
+        green *= 1 - capRing * 0.16;
+        blue *= 1 - capRing * 0.16;
+      }
+    }
+
+    pixels[offset] = clamp(red, 0, 255);
+    pixels[offset + 1] = clamp(green, 0, 255);
+    pixels[offset + 2] = clamp(blue, 0, 255);
     pixels[offset + 3] = alpha;
   }
 

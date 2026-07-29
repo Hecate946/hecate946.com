@@ -246,6 +246,18 @@ void main() {
 
   vec3 color = panelColor(panelIndex) * shade + vec3(specular * 0.44);
 
+  float topCapDistance = objectNormal.y > 0.0 ? length(objectNormal.xz) : 10.0;
+  float bottomCapDistance = objectNormal.y < 0.0 ? length(objectNormal.xz) : 10.0;
+  float capDistance = min(topCapDistance, bottomCapDistance);
+  float capMask = 1.0 - smoothstep(0.22, 0.34, capDistance);
+  float capRing = smoothstep(0.24, 0.30, capDistance) - smoothstep(0.30, 0.36, capDistance);
+
+  if (capMask > 0.0) {
+    vec3 capColor = vec3(0.9725, 0.9765, 0.9647) * (0.88 + (shade - 0.56) * 0.52) + vec3(specular * 0.26);
+    color = mix(color, capColor, capMask);
+    color *= 1.0 - capRing * 0.16;
+  }
+
   float rim = smoothstep(0.82, 1.0, sqrt(radiusSquared));
   color = mix(color, vec3(0.0196, 0.0902, 0.1569), rim * 0.23);
 

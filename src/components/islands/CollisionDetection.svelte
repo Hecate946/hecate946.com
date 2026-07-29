@@ -1,8 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import SeasonSelector from '@/components/islands/SeasonSelector.svelte';
-  import { VALID_SEASONS } from '@/lib/seasonal-shower/seasons';
-  import { seasonSprites } from '@/lib/seasonal-shower/sprites';
+  import { SEASONAL_SHOWERS, VALID_SEASONS } from '@/lib/seasonal-shower/seasons';
+  import {
+    prewarmSeasonSpriteFrames,
+    seasonSpriteAtPhase,
+    seasonSprites,
+  } from '@/lib/seasonal-shower/sprites';
   import {
     createSummerBallWebGlRenderer,
     type SummerBallWebGlRenderer,
@@ -91,6 +95,9 @@
 
   function applySeason(nextSeason: Season) {
     activeSeason = nextSeason;
+    if ((SEASONAL_SHOWERS[nextSeason].animationFrames ?? 1) > 1) {
+      void prewarmSeasonSpriteFrames(nextSeason, 5);
+    }
     const sprites = seasonSprites(nextSeason);
 
     objects.forEach((object, index) => {
@@ -175,11 +182,21 @@
         continue;
       }
 
+      const animatedSprite =
+        (SEASONAL_SHOWERS[activeSeason].animationFrames ?? 1) > 1
+          ? seasonSpriteAtPhase(
+              activeSeason,
+              object.spriteVariant,
+              rotation * 1.4 + object.r * 0.17,
+            )
+          : object.sprite;
+      const displayRotation = activeSeason === 'autumn' ? rotation * 0.42 : rotation;
+
       context.save();
       context.translate(x, y);
-      context.rotate(rotation);
+      context.rotate(displayRotation);
       context.drawImage(
-        object.sprite,
+        animatedSprite,
         -halfSize,
         -halfSize,
         halfSize * 2,

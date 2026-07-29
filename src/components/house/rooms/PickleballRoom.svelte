@@ -1,7 +1,7 @@
 <script lang="ts">
   import { withBase } from '@/lib/paths';
 
-  const imageHref = withBase('/images/house/windows/picklabell-court.png');
+  const imageHref = withBase('/images/house/windows/pickleball-court.png');
 </script>
 
 <svg
@@ -11,7 +11,7 @@
   role="img"
   aria-labelledby="pickleball-room-title pickleball-room-description"
 >
-  <title id="pickleball-room-title">The Picklabell Court</title>
+  <title id="pickleball-room-title">The Pickleball Court</title>
   <desc id="pickleball-room-description">
     A clean top-down purple pickleball court with a centered net.
   </desc>
