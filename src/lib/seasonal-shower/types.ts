@@ -18,6 +18,7 @@ export interface Particle {
   age: number;
   opacity: number;
   sprite: HTMLCanvasElement;
+  spriteVariant: number;
   velocityX: number;
   velocityY: number;
   gravity: number;
@@ -35,6 +36,8 @@ export interface Range {
 
 export interface SeasonDefinition {
   variantCount: number;
+  animationFrames?: number;
+  spriteSize?: number;
   particleCount: {
     compact: number;
     desktop: number;
@@ -50,5 +53,9 @@ export interface SeasonDefinition {
   flutterRate: Range;
   opacity: Range;
   flutter: boolean;
-  drawSprite: (context: CanvasRenderingContext2D, variant: number) => void;
+  drawSprite: (
+    context: CanvasRenderingContext2D,
+    variant: number,
+    animationFrame?: number,
+  ) => void;
 }

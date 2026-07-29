@@ -1,10 +1,13 @@
 <script lang="ts">
   import type { HouseDestination } from '@/config/house-scene';
   import { withBase } from '@/lib/paths';
+  import '@/styles/house-window-scenes.css';
   import HouseWindow from './HouseWindow.svelte';
 
   export let destinations: readonly HouseDestination[] = [];
   export let navigationEnabled = true;
+  export let debugWindows = false;
+  export let scenesEnabled = true;
 
   const imageHref = withBase('/images/house/house-white-current.png');
 </script>
@@ -15,11 +18,12 @@
   role="img"
   aria-labelledby="house-illustration-title house-illustration-description"
   preserveAspectRatio="xMidYMid meet"
+  data-window-debug={debugWindows ? 'true' : 'false'}
+  data-scenes={scenesEnabled ? 'on' : 'off'}
 >
   <title id="house-illustration-title">Cyrus's interactive house</title>
   <desc id="house-illustration-description">
-    A white neoclassical two-story house with five upper windows, two broad first-story windows,
-    a centered arched entrance, a triangular pediment, and three proportionally narrowed entry steps.
+    A white neoclassical house whose five upper windows contain interactive miniature room scenes.
   </desc>
 
   <defs>
@@ -28,11 +32,7 @@
     </filter>
   </defs>
 
-  <!--
-    The full 1672 × 941 PNG is the frozen visual source of truth. The staircase
-    is already corrected inside this image, so there is no second staircase,
-    mask, patch, or SVG overlay that can drift or expose the previous steps.
-  -->
+  <!-- Frozen full-house artwork. -->
   <image
     class="house-illustration__reference"
     href={imageHref}
@@ -44,7 +44,11 @@
     pointer-events="none"
   />
 
+  <!-- Scene artwork and interaction live in the same SVG coordinate system. -->
   {#each destinations as destination (destination.id)}
-    <HouseWindow {destination} {navigationEnabled} />
+    <HouseWindow
+      {destination}
+      {navigationEnabled}
+    />
   {/each}
 </svg>

@@ -1,0 +1,26 @@
+---
+import BaseHead from '@/components/core/BaseHead.astro';
+import ChessBoardRoom from '@/components/house/rooms/ChessBoardRoom.svelte';
+import { withBase } from '@/lib/paths';
+import '@/styles/house-room-pages.css';
+
+const homeHref = withBase('/');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title="Chess Room — Cyrus Asasi"
+      description="A full-screen chess board hidden inside the second house window."
+    />
+  </head>
+  <body>
+    <main class="house-room-page">
+      <a class="house-room-back" href={homeHref}>Back to house</a>
+      <div class="house-room-stage">
+        <ChessBoardRoom />
+      </div>
+    </main>
+  </body>
+</html>

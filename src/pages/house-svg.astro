@@ -14,9 +14,29 @@ const destinations = houseScene.destinations.map((destination) => ({
 <HousePreviewLayout
   active="svg"
   title="House SVG Preview — Cyrus Asasi"
-  description="Full-screen SVG-coordinate preview of the current white house with aligned window overlays."
+  description="Full-screen preview of the live house SVG, window scenes, and aligned interaction regions."
 >
   <div class="house-preview-art house-preview-art--svg">
-    <HouseIllustration {destinations} navigationEnabled={false} />
+    <HouseIllustration
+      {destinations}
+      navigationEnabled={false}
+      debugWindows={false}
+      scenesEnabled={true}
+    />
   </div>
 </HousePreviewLayout>
+
+
+<script is:inline>
+  function applyHousePreviewOptions() {
+    const illustration = document.querySelector('.house-preview-art--svg .house-illustration');
+    if (!(illustration instanceof SVGElement)) return;
+
+    const params = new URLSearchParams(window.location.search);
+    illustration.dataset.scenes = params.get('scenes') === 'off' ? 'off' : 'on';
+    illustration.dataset.windowDebug = params.get('debug') === 'windows' ? 'true' : 'false';
+  }
+
+  applyHousePreviewOptions();
+  document.addEventListener('astro:page-load', applyHousePreviewOptions);
+</script>

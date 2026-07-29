@@ -2,13 +2,28 @@
   import { onMount } from 'svelte';
   import { SEASONAL_SHOWERS, VALID_SEASONS } from '../../lib/seasonal-shower/seasons';
   import { seasonSprites } from '../../lib/seasonal-shower/sprites';
+  import {
+    createSummerBallWebGlRenderer,
+    type SummerBallWebGlRenderer,
+  } from '../../lib/seasonal-shower/summer-ball-webgl';
+  import {
+    createSummerBallVisualState,
+    type SummerBallVisualState,
+    updateSummerBallPhysicsTargets,
+    updateSummerBallPresentation,
+  } from '../../lib/seasonal-shower/summer-ball-motion';
   import type { Particle, Range, Season } from '../../lib/seasonal-shower/types';
+
+  interface ShowerParticle extends Particle, SummerBallVisualState {}
 
   const SHOWER_INTERVAL_MS = 60_000;
   const MAX_PIXEL_RATIO = 2;
   const OLD_SEASON_FADE_MS = 900;
+  const SUMMER_DISPLAY_SCALE = 1.46;
+  const MAX_SUMMER_PARTICLES = 32;
 
   let canvas!: HTMLCanvasElement;
+  let summerCanvas!: HTMLCanvasElement;
   let active = false;
 
   function currentSeason(): Season {
@@ -54,7 +69,7 @@
     return randomBetween(range.minimum, range.maximum);
   }
 
-  function makeParticles(season: Season, width: number): Particle[] {
+  function makeParticles(season: Season, width: number): ShowerParticle[] {
     const definition = SEASONAL_SHOWERS[season];
     const sprites = seasonSprites(season);
     const compact = width < 620;
@@ -66,12 +81,13 @@
       const baseSize = randomFrom(definition.size) * definition.scale;
       const startX = randomBetween(baseSize, Math.max(baseSize, width - baseSize));
       const speed = randomFrom(definition.speed);
+      const startY = -baseSize * randomBetween(1.2, 4.8);
 
       return {
         season,
         startX,
         x: startX,
-        y: -baseSize * randomBetween(1.2, 4.8),
+        y: startY,
         size: baseSize,
         speed,
         drift: randomFrom(definition.drift),
@@ -85,6 +101,7 @@
         age: 0,
         opacity: randomFrom(definition.opacity),
         sprite: sprites[index % sprites.length]!,
+        spriteVariant: index % definition.variantCount,
         velocityX: season === 'summer' ? randomFrom(definition.drift) : 0,
         velocityY: season === 'summer' ? speed : 0,
         gravity: definition.gravity ? randomFrom(definition.gravity) : 0,
@@ -93,6 +110,7 @@
         fadeStartedAt: null,
         fadeDuration: OLD_SEASON_FADE_MS / 1000,
         expired: false,
+        ...createSummerBallVisualState(startX, startY, index),
       };
     });
   }
@@ -106,10 +124,13 @@
     let width = window.innerWidth;
     let height = window.innerHeight;
     let pixelRatio = 1;
-    let particles: Particle[] = [];
+    let particles: ShowerParticle[] = [];
     let animationFrame = 0;
     let lastTime = performance.now();
     let observedSeason = currentSeason();
+    let summerRenderer: SummerBallWebGlRenderer | null =
+      createSummerBallWebGlRenderer(summerCanvas);
+    const summerInstanceData = new Float32Array(MAX_SUMMER_PARTICLES * 8);
 
     function resize() {
       width = window.innerWidth;
@@ -120,20 +141,34 @@
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'medium';
+      summerRenderer?.resize(width, height, pixelRatio);
     }
 
     function stopAnimation(clear = true) {
       window.cancelAnimationFrame(animationFrame);
       animationFrame = 0;
       active = false;
-      if (clear) context.clearRect(0, 0, width, height);
+      if (clear) {
+        context.clearRect(0, 0, width, height);
+        summerRenderer?.clear();
+      }
     }
 
-    function beginFade(particle: Particle, nowSeconds: number) {
+    function beginFade(particle: ShowerParticle, nowSeconds: number) {
       if (particle.fadeStartedAt === null) particle.fadeStartedAt = nowSeconds;
     }
 
-    function updateSummerParticle(particle: Particle, delta: number, nowSeconds: number) {
+    // Preserve the original homepage summer behavior: balls fall under gravity,
+    // rebound from the floor and side walls, lose energy, and fade after their
+    // assigned number of bounces. Only their 3D surface rotation is shared with
+    // the collision page.
+    function updateSummerParticle(
+      particle: ShowerParticle,
+      delta: number,
+      nowSeconds: number,
+    ) {
       particle.velocityY += particle.gravity * delta;
       particle.x += particle.velocityX * delta;
       particle.y += particle.velocityY * delta;
@@ -162,7 +197,8 @@
             (isSecondBounce ? randomBetween(0.28, 0.38) : randomBetween(0.51, 0.65)),
         );
         particle.velocityY = -rebound;
-        particle.velocityX = particle.velocityX * randomBetween(0.86, 0.95) + randomBetween(-24, 24);
+        particle.velocityX =
+          particle.velocityX * randomBetween(0.86, 0.95) + randomBetween(-24, 24);
         hitSurface = true;
         hitFloor = true;
       }
@@ -177,7 +213,26 @@
         if (particle.bounceCount >= particle.maxBounces) beginFade(particle, nowSeconds);
       }
 
-      if (particle.y - radius > height + particle.size * 2) beginFade(particle, nowSeconds);
+      if (particle.y - radius > height + particle.size * 2) {
+        beginFade(particle, nowSeconds);
+      }
+
+      updateSummerBallPhysicsTargets(
+        particle,
+        { x: particle.velocityX, y: particle.velocityY },
+        particle.spin,
+        particle.size / SUMMER_DISPLAY_SCALE,
+        width,
+        (velocity) => {
+          particle.spin = velocity;
+        },
+      );
+      updateSummerBallPresentation(particle, particle.x, particle.y, delta);
+
+      // The homepage keeps its original positional mechanics exactly; the
+      // shared presentation integrator is used only for quaternion rotation.
+      particle.summerVisualX = particle.x;
+      particle.summerVisualY = particle.y;
     }
 
     function frame(now: number) {
@@ -186,6 +241,7 @@
       lastTime = now;
       context.clearRect(0, 0, width, height);
       let hasVisibleParticle = false;
+      let summerCount = 0;
 
       for (const particle of particles) {
         if (particle.expired) continue;
@@ -211,7 +267,8 @@
             particle.drift * travelAge +
             Math.sin(travelAge * particle.swayRate + particle.phase) * particle.sway;
           flutter =
-            0.76 + Math.abs(Math.cos(travelAge * particle.flutterRate + particle.phase)) * 0.24;
+            0.76 +
+            Math.abs(Math.cos(travelAge * particle.flutterRate + particle.phase)) * 0.24;
 
           if (particle.y >= height + particle.size * 2.2) {
             particle.expired = true;
@@ -221,7 +278,8 @@
 
         let fadeMultiplier = 1;
         if (particle.fadeStartedAt !== null) {
-          fadeMultiplier = 1 - (nowSeconds - particle.fadeStartedAt) / particle.fadeDuration;
+          fadeMultiplier =
+            1 - (nowSeconds - particle.fadeStartedAt) / particle.fadeDuration;
           if (fadeMultiplier <= 0) {
             particle.expired = true;
             continue;
@@ -229,6 +287,21 @@
         }
 
         hasVisibleParticle = true;
+
+        if (particle.season === 'summer' && summerRenderer) {
+          const dataOffset = summerCount * 8;
+          summerInstanceData[dataOffset] = particle.summerVisualX;
+          summerInstanceData[dataOffset + 1] = particle.summerVisualY;
+          summerInstanceData[dataOffset + 2] = particle.size;
+          summerInstanceData[dataOffset + 3] = particle.summerQx;
+          summerInstanceData[dataOffset + 4] = particle.summerQy;
+          summerInstanceData[dataOffset + 5] = particle.summerQz;
+          summerInstanceData[dataOffset + 6] = particle.summerQw;
+          summerInstanceData[dataOffset + 7] = particle.opacity * fadeMultiplier;
+          summerCount += 1;
+          continue;
+        }
+
         context.save();
         context.globalAlpha = particle.opacity * fadeMultiplier;
         context.translate(x, particle.y);
@@ -246,6 +319,14 @@
 
       particles = particles.filter((particle) => !particle.expired);
 
+      if (summerRenderer) {
+        if (summerCount > 0) {
+          summerRenderer.draw(summerInstanceData, summerCount, width, height);
+        } else {
+          summerRenderer.clear();
+        }
+      }
+
       if (hasVisibleParticle && document.visibilityState === 'visible') {
         animationFrame = window.requestAnimationFrame(frame);
       } else {
@@ -254,7 +335,13 @@
     }
 
     function ensureAnimation() {
-      if (animationFrame || reducedMotion.matches || document.visibilityState !== 'visible') return;
+      if (
+        animationFrame ||
+        reducedMotion.matches ||
+        document.visibilityState !== 'visible'
+      ) {
+        return;
+      }
       active = true;
       lastTime = performance.now();
       animationFrame = window.requestAnimationFrame(frame);
@@ -272,6 +359,7 @@
       } else {
         particles = [];
         context.clearRect(0, 0, width, height);
+        summerRenderer?.clear();
       }
 
       particles.push(...makeParticles(season, width));
@@ -283,7 +371,7 @@
 
     function handleVisibility() {
       if (document.visibilityState !== 'visible') {
-        stopAnimation();
+        stopAnimation(false);
       } else if (particles.length > 0) {
         ensureAnimation();
       }
@@ -316,6 +404,8 @@
 
     return () => {
       stopAnimation();
+      summerRenderer?.dispose();
+      summerRenderer = null;
       showerClock.listeners.delete(runScheduledShower);
       seasonObserver.disconnect();
       window.removeEventListener('resize', resize);
@@ -326,6 +416,12 @@
 </script>
 
 <canvas bind:this={canvas} class:active class="seasonal-shower" aria-hidden="true"></canvas>
+<canvas
+  bind:this={summerCanvas}
+  class:active
+  class="seasonal-shower seasonal-shower-summer"
+  aria-hidden="true"
+></canvas>
 
 <style>
   .seasonal-shower {
@@ -337,6 +433,10 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 220ms ease;
+  }
+
+  .seasonal-shower-summer {
+    z-index: 46;
   }
 
   .seasonal-shower.active {

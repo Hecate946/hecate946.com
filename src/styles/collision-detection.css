@@ -47,6 +47,7 @@
 }
 
 .collision-stage {
+  position: relative;
   width: 100%;
   margin-inline: auto;
   overflow: hidden;
@@ -58,11 +59,22 @@
 }
 
 .collision-stage canvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100% !important;
   height: 100% !important;
+}
+
+.collision-interaction-layer {
+  z-index: 1;
   cursor: crosshair;
   touch-action: none;
+}
+
+.collision-summer-layer {
+  z-index: 2;
+  pointer-events: none;
 }
 
 .collision-credit {

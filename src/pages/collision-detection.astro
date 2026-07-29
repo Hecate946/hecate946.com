@@ -6,7 +6,7 @@ import '@/styles/collision-detection.css';
 
 <BaseLayout
   title="Collision Detection"
-  description="An interactive D3 force-collision simulation using the site’s seasonal flowers, beach balls, leaves, and snowflakes."
+  description="An interactive Rapier rigid-body simulation using the site’s seasonal flowers, beach balls, leaves, and snowflakes."
 >
   <section
     class="collision-page interior-page interior-page--eight"
@@ -19,8 +19,8 @@ import '@/styles/collision-detection.css';
     <div class="collision-content interior-page-content interior-page-content--balanced">
       <div class="collision-copy">
         <p>
-          Move your pointer through the field to push the objects aside. The site’s seasonal
-          selector switches the simulation between spring flowers, summer beach balls,
+          Move your pointer through the field to open a large space in the moving cluster.
+          The site’s seasonal selector switches between spring flowers, summer beach balls,
           autumn leaves, and winter snowflakes.
         </p>
       </div>
@@ -28,12 +28,14 @@ import '@/styles/collision-detection.css';
       <CollisionDetection client:load />
 
       <p class="collision-credit">
-        Physics reproduced from Mike Bostock’s
+        Rigid-body physics powered by
+        <a href="https://rapier.rs/" target="_blank" rel="noopener noreferrer">Rapier</a>.
+        Original visual experiment inspired by Mike Bostock’s
         <a
           href="https://observablehq.com/@d3/collision-detection/2?collection=@d3/d3-force"
           target="_blank"
           rel="noopener noreferrer"
-        >Observable example</a>.
+        >D3 collision example</a>.
       </p>
     </div>
   </section>

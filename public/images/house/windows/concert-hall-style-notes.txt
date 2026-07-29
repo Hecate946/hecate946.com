@@ -1,0 +1,36 @@
+Concert Hall Cartoon Style Notes
+================================
+
+Overall aesthetic
+- Clue-inspired theatrical cartoon interior.
+- Matte, softly rendered surfaces rather than glossy or photorealistic ones.
+- Clean, readable shapes with elegant proportions and simplified detail.
+- Warm, rich, upscale mood: refined but still stylized.
+
+Rendering language
+- Use smooth digital illustration with crisp outlines or subtle dark edge definition.
+- Avoid heavy texture noise, hyperreal reflections, or photographic detail.
+- Keep shading simple and controlled: broad gradients, gentle falloff, and minimal micro-detail.
+- Favor shape clarity over realism.
+
+Color and lighting
+- Warm amber-brown architectural palette.
+- Deep burgundy or wine-red curtains with gold trim/tassels.
+- Lighting should feel well-lit but not harsh: warm chandelier glow, soft wall-sconce glow, even ambient fill.
+- Saturation should be moderate, slightly muted, not neon.
+
+
+Composition rules for future matching scenes
+- Center the main object or room focal point.
+- Maintain strong symmetry where possible.
+- Keep foreground framing elements (like curtains) clear and intentional.
+- Prefer large, legible masses over tiny detail.
+- The final image should look like a polished storybook / board-game illustration, not a realistic rendering.
+
+Do / don't
+- DO keep it matte, elegant, cartoonish, and clue-like.
+- DO use warm theatrical lighting.
+- DO simplify forms while preserving the key physical elements.
+- DON'T introduce photo textures or extreme realism.
+- DON'T make colors overly saturated.
+- DON'T clutter the room with too many extra objects.
