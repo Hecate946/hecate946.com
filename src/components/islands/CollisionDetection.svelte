@@ -46,7 +46,9 @@
     currentRotation: number;
   }
 
-  const NODE_COUNT = 220;
+  // Every season uses the same object count. Keeping the shared count low
+  // improves performance while preserving exact seasonal parity.
+  const NODE_COUNT = 100;
   const MAX_PIXEL_RATIO = 2;
   const WALL_THICKNESS = 42;
 
@@ -55,9 +57,19 @@
   // match each body's circular collider.
   const SPRITE_DISPLAY_SCALE: Record<Season, number> = {
     spring: 1.52,
-    summer: 1.62,
-    autumn: 2.42,
+    summer: 1.64,
+    autumn: 2.78,
     winter: 1.56,
+  };
+
+
+  // Summer uses a larger invisible collider than its visible artwork so the
+  // balls maintain a clean gap instead of visually overlapping in the cluster.
+  const COLLIDER_SPACING: Record<Season, number> = {
+    spring: SUMMER_BALL_COLLIDER_SPACING,
+    summer: 2.06,
+    autumn: SUMMER_BALL_COLLIDER_SPACING,
+    winter: SUMMER_BALL_COLLIDER_SPACING,
   };
 
   let activeSeason: Season = 'summer';
@@ -278,7 +290,9 @@
       radiusScale * 1.08 + Math.random() * (radiusScale * 4.2 - radiusScale * 1.08);
     const sprites = seasonSprites(activeSeason);
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-    const d3Spacing = (activeSeason === 'autumn' ? 8.7 : 11.4) * (width / 800);
+    const d3Spacing =
+      (activeSeason === 'autumn' ? 9.4 : activeSeason === 'summer' ? 11.6 : 11.4) *
+      (width / 800);
 
     objects = Array.from({ length: NODE_COUNT }, (_, index) => {
       const radius = randomRadius();
@@ -302,7 +316,7 @@
 
       world!.createCollider(
         rapier!
-          .ColliderDesc.ball(radius * SUMMER_BALL_COLLIDER_SPACING)
+          .ColliderDesc.ball(radius * COLLIDER_SPACING[activeSeason])
           .setDensity(0.012)
           .setFriction(0.32)
           .setRestitution(0.04),

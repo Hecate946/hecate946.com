@@ -1,5 +1,14 @@
 <script lang="ts">
-  import ChessBoardArtwork from './shared/ChessBoardArtwork.svelte';
+  import { withBase } from '@/lib/paths';
+
+  const imageHref = withBase('/images/house/windows/chess-rook-window.png');
 </script>
 
-<ChessBoardArtwork />
+<image
+  href={imageHref}
+  x="0"
+  y="0"
+  width="68"
+  height="124"
+  preserveAspectRatio="none"
+/>

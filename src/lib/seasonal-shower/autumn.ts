@@ -7,6 +7,7 @@ const AUTUMN_DRAW_SIZE = 340;
 const AUTUMN_LEAF_ASSET_PATHS = [
   '/images/seasonal/autumn/autumn-leaf-3.png',
   '/images/seasonal/autumn/autumn-leaf-4.png',
+  '/images/seasonal/autumn/autumn-leaf-orange.png',
 ] as const;
 
 let autumnLeafImages: HTMLImageElement[] | null = null;

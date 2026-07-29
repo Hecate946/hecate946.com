@@ -4,11 +4,4 @@
   const imageHref = withBase('/images/house/windows/concert-hall-cartoon-window.png');
 </script>
 
-<image
-  href={imageHref}
-  x="0"
-  y="0"
-  width="279"
-  height="172"
-  preserveAspectRatio="none"
-/>
+<image href={imageHref} x="0" y="0" width="268" height="162" preserveAspectRatio="none" />

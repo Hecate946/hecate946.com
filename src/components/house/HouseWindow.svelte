@@ -1,31 +1,74 @@
 <script lang="ts">
-  import type { HouseDestination } from '@/config/house-scene';
+  import type { HouseDestination, HouseWindowPaneAxis } from '@/config/house-scene';
   import WindowScene from './WindowScene.svelte';
 
   export let destination: HouseDestination;
   export let navigationEnabled = true;
 
+  type Pane = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+
+  function buildPanes(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    columns: number,
+    rows: number,
+    mullionX: number,
+    mullionY: number,
+    paneColumns?: readonly HouseWindowPaneAxis[],
+    paneRows?: readonly HouseWindowPaneAxis[],
+  ): Pane[] {
+    if (paneColumns?.length && paneRows?.length) {
+      return paneRows.flatMap((row) =>
+        paneColumns.map((column) => ({
+          x: x + column.offset,
+          y: y + row.offset,
+          width: column.size,
+          height: row.size,
+        })),
+      );
+    }
+
+    const paneWidth = (width - mullionX * (columns - 1)) / columns;
+    const paneHeight = (height - mullionY * (rows - 1)) / rows;
+
+    return Array.from({ length: columns * rows }, (_, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+
+      return {
+        x: x + column * (paneWidth + mullionX),
+        y: y + row * (paneHeight + mullionY),
+        width: paneWidth,
+        height: paneHeight,
+      };
+    });
+  }
+
   $: geometry = destination.geometry;
   $: clipId = `house-pane-clip-${destination.id}`;
   $: sceneWidth = destination.sceneViewBox?.width ?? 100;
   $: sceneHeight = destination.sceneViewBox?.height ?? 140;
-  $: sceneFit = destination.sceneViewBox?.fit ?? 'meet';
-  $: paneWidth =
-    (geometry.width - geometry.mullionX * (geometry.columns - 1)) / geometry.columns;
-  $: paneHeight =
-    (geometry.height - geometry.mullionY * (geometry.rows - 1)) / geometry.rows;
-  $: panes = Array.from({ length: geometry.columns * geometry.rows }, (_, index) => {
-    const column = index % geometry.columns;
-    const row = Math.floor(index / geometry.columns);
-
-    return {
-      x: geometry.x + column * (paneWidth + geometry.mullionX),
-      y: geometry.y + row * (paneHeight + geometry.mullionY),
-      width: paneWidth,
-      height: paneHeight,
-    };
-  });
-  $: labelY = geometry.y > 500 ? geometry.y - 27 : geometry.y + geometry.height + 29;
+  $: sceneFit = destination.sceneViewBox?.fit ?? 'slice';
+  $: panes = buildPanes(
+    geometry.x,
+    geometry.y,
+    geometry.width,
+    geometry.height,
+    geometry.columns,
+    geometry.rows,
+    geometry.mullionX,
+    geometry.mullionY,
+    geometry.paneColumns,
+    geometry.paneRows,
+  );
+  $: labelY = geometry.y > 560 ? geometry.y - 27 : geometry.y + geometry.height + 29;
 
   function handleClick(event: MouseEvent) {
     if (!navigationEnabled) event.preventDefault();
@@ -35,7 +78,7 @@
 <defs>
   <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
     {#each panes as pane}
-      <rect x={pane.x} y={pane.y} width={pane.width} height={pane.height} rx="0.6" />
+      <rect x={pane.x} y={pane.y} width={pane.width} height={pane.height} rx="0.45" />
     {/each}
   </clipPath>
 </defs>

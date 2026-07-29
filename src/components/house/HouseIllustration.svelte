@@ -14,7 +14,7 @@
 
 <svg
   class="house-illustration"
-  viewBox="0 0 1672 941"
+  viewBox="0 0 1536 1024"
   role="img"
   aria-labelledby="house-illustration-title house-illustration-description"
   preserveAspectRatio="xMidYMid meet"
@@ -23,7 +23,7 @@
 >
   <title id="house-illustration-title">Cyrus's interactive house</title>
   <desc id="house-illustration-description">
-    A white neoclassical house whose five upper windows contain interactive miniature room scenes.
+    A transparent white neoclassical house whose windows contain interactive miniature scenes.
   </desc>
 
   <defs>
@@ -32,23 +32,18 @@
     </filter>
   </defs>
 
-  <!-- Frozen full-house artwork. -->
   <image
     class="house-illustration__reference"
     href={imageHref}
     x="0"
     y="0"
-    width="1672"
-    height="941"
+    width="1536"
+    height="1024"
     preserveAspectRatio="none"
     pointer-events="none"
   />
 
-  <!-- Scene artwork and interaction live in the same SVG coordinate system. -->
   {#each destinations as destination (destination.id)}
-    <HouseWindow
-      {destination}
-      {navigationEnabled}
-    />
+    <HouseWindow {destination} {navigationEnabled} />
   {/each}
 </svg>
