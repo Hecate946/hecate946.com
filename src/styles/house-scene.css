@@ -8,23 +8,19 @@
   border-top: 1px solid var(--line);
 }
 
-.house-scene-section__header {
+.house-scene-section__hint {
   position: relative;
   z-index: 2;
-  display: flex;
   width: min(100%, 104.5rem);
-  justify-content: center;
-  margin-inline: auto;
-  pointer-events: none;
-}
-
-.house-scene-section__hint {
-  margin: 0;
+  margin: clamp(-0.15rem, -0.2vw, 0rem) auto 0;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: clamp(0.65rem, 1vw, 0.76rem);
-  letter-spacing: 0.14em;
+  font-size: clamp(0.56rem, 0.72vw, 0.66rem);
+  letter-spacing: 0.12em;
+  text-align: center;
   text-transform: uppercase;
+  opacity: 0.52;
+  pointer-events: none;
 }
 
 .house-experience {
@@ -38,7 +34,7 @@
   position: relative;
   isolation: isolate;
   overflow: visible;
-  aspect-ratio: 1672 / 941;
+  aspect-ratio: 3 / 2;
   contain: layout paint;
 }
 
@@ -91,71 +87,6 @@
   stroke-linecap: butt;
 }
 
-/* Invisible interaction layer over the five upper windows. ------------- */
-
-.house-window {
-  cursor: pointer;
-  outline: none;
-}
-
-.house-window[aria-disabled='true'] {
-  cursor: default;
-}
-
-.house-window__glow {
-  fill: rgb(255 226 141 / 0);
-  filter: url(#house-hover-glow);
-  pointer-events: none;
-  transition: fill 160ms ease;
-}
-
-.house-window__hit {
-  fill: transparent;
-  stroke: transparent;
-  stroke-width: 4;
-  pointer-events: all;
-  transition: stroke 160ms ease;
-}
-
-.house-window__label {
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity 140ms ease,
-    transform 140ms ease;
-}
-
-.house-window__label rect {
-  fill: var(--surface);
-  stroke: var(--line);
-  stroke-width: 1.5;
-}
-
-.house-window__label text {
-  fill: var(--text);
-  font-family: var(--font-mono);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.house-window:hover .house-window__glow,
-.house-window:focus-visible .house-window__glow {
-  fill: rgb(255 226 141 / 0.24);
-}
-
-.house-window:hover .house-window__hit,
-.house-window:focus-visible .house-window__hit {
-  stroke: #f3d889;
-}
-
-.house-window:hover .house-window__label,
-.house-window:focus-visible .house-window__label {
-  opacity: 1;
-  transform: translateY(3px);
-}
-
 @media (max-width: 760px) {
   .house-scene-section {
     padding-inline: 0.1rem;
@@ -166,15 +97,5 @@
     margin-left: -6%;
   }
 
-  .house-window__label text {
-    font-size: 17px;
-  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .house-window__glow,
-  .house-window__hit,
-  .house-window__label {
-    transition: none;
-  }
-}

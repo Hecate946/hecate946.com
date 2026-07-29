@@ -127,8 +127,8 @@ body.house-preview-page {
 }
 
 .house-preview-art--svg {
-  width: min(96vw, calc((100svh - 5.8rem) * 1.776833));
-  aspect-ratio: 1672 / 941;
+  width: min(96vw, calc((100svh - 5.8rem) * 1.5));
+  aspect-ratio: 3 / 2;
 }
 
 .house-preview-art--svg .house-illustration {

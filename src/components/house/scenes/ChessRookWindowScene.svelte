@@ -10,5 +10,5 @@
   y="0"
   width="68"
   height="124"
-  preserveAspectRatio="none"
+  preserveAspectRatio="xMidYMid slice"
 />

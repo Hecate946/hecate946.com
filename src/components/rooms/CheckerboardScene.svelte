@@ -2,130 +2,99 @@
   import { onDestroy } from 'svelte';
   import { T, useThrelte } from '@threlte/core';
   import { useGltf } from '@threlte/extras';
-  import {
-    Color,
-    FogExp2,
-    Mesh,
-    MeshPhysicalMaterial,
-    MeshStandardMaterial,
-    type Material,
-    type Object3D,
-  } from 'three';
+  import { Light, Mesh, MeshStandardMaterial } from 'three';
   import LookAroundCamera from './LookAroundCamera.svelte';
-  import WarmChandelier from './WarmChandelier.svelte';
 
   export let onReady: () => void = () => {};
   export let resetSignal = 0;
 
-  const { scene } = useThrelte();
+  const { renderer, scene, invalidate } = useThrelte();
   const room = useGltf('/models/checkerboard.glb');
 
-  const originalBackground = scene.background;
-  const originalFog = scene.fog;
+  /*
+   * V11 deliberately uses a single simple overhead warm light exported by
+   * Blender. There is no RoomEnvironment, ambient light, or website-side
+   * fallback light rig. Blender uses -0.65 exposure stops; the equivalent
+   * linear Three.js multiplier is 2 ** -0.65 = 0.6372803137.
+   */
+  const previousExposure = renderer.toneMappingExposure;
+  const previousEnvironment = scene.environment;
+  const previousEnvironmentIntensity = scene.environmentIntensity;
 
-  scene.background = new Color('#010503');
-  scene.fog = new FogExp2('#031008', 0.018);
+  renderer.toneMappingExposure = 0.6372803137;
+  scene.environment = null;
+  scene.environmentIntensity = 0;
+  invalidate();
+
+  let readySent = false;
+  let roomPrepared = false;
 
   onDestroy(() => {
-    scene.background = originalBackground;
-    scene.fog = originalFog;
+    renderer.toneMappingExposure = previousExposure;
+    scene.environment = previousEnvironment;
+    scene.environmentIntensity = previousEnvironmentIntensity;
   });
 
-  let roomPrepared = false;
-  let chandelierPrepared = false;
-  let readySent = false;
+  $: if ($room && !roomPrepared) {
+    $room.scene.traverse((object) => {
+      const objectName = object.name.toLowerCase();
 
-  function maybeReady() {
-    if (roomPrepared && chandelierPrepared && !readySent) {
-      readySent = true;
-      onReady();
-    }
-  }
+      // Hide any chandelier geometry from older GLBs so the website stays in
+      // sync with the chandelier-free Blender scene.
+      if (objectName.includes('chandelier')) {
+        object.visible = false;
+        return;
+      }
 
-  function styleMaterial(material: Material) {
-    const standard = material as MeshStandardMaterial;
-    standard.metalness = 0;
-    standard.envMapIntensity = 1.18;
+      if (object instanceof Mesh) {
+        // The shared Blender/web overhead spotlight is intentionally shadowless.
+        object.castShadow = false;
+        object.receiveShadow = false;
 
-    if (material.name.startsWith('Wall_Green_')) {
-      standard.roughness = 0.075;
-      const physical = material as MeshPhysicalMaterial;
-      physical.clearcoat = 0.9;
-      physical.clearcoatRoughness = 0.035;
-    } else if (material.name.startsWith('Floor_Green_Marble_')) {
-      standard.roughness = 0.105;
-      const physical = material as MeshPhysicalMaterial;
-      physical.clearcoat = 0.72;
-      physical.clearcoatRoughness = 0.045;
-    } else if (material.name.startsWith('Floor_Ivory_Marble_')) {
-      standard.roughness = 0.13;
-      const physical = material as MeshPhysicalMaterial;
-      physical.clearcoat = 0.65;
-      physical.clearcoatRoughness = 0.055;
-    } else if (material.name.includes('Marble Veins')) {
-      standard.roughness = 0.19;
-    } else if (material.name === 'Deep Green Grout') {
-      standard.color.set('#020b07');
-      standard.roughness = 0.64;
-    } else if (material.name === 'Warm Shadow Ceiling') {
-      standard.color.set('#333a30');
-      standard.roughness = 0.78;
-    }
+        const materials = Array.isArray(object.material)
+          ? object.material
+          : [object.material];
 
-    material.needsUpdate = true;
-  }
+        for (const material of materials) {
+          if (!(material instanceof MeshStandardMaterial)) continue;
 
-  function prepareRoom(root: Object3D) {
-    root.traverse((object) => {
-      if (!(object instanceof Mesh)) return;
+          // Do not add website-only environment reflections. Direct specular
+          // highlights now come from Room_Overhead_Warm_Spot in the GLB.
+          material.envMapIntensity = 0;
+          material.needsUpdate = true;
+        }
+      }
 
-      object.castShadow = !object.name.includes('Ceiling');
-      object.receiveShadow = true;
+      if (object instanceof Light) {
+        const isSharedRoomLight = objectName.startsWith('room_');
 
-      const materials = Array.isArray(object.material)
-        ? object.material
-        : [object.material];
-
-      for (const material of materials) {
-        styleMaterial(material);
+        if (isSharedRoomLight) {
+          // Preserve the exported Blender color, intensity, cone, position,
+          // and direction. Only shadows are explicitly disabled.
+          object.visible = true;
+          object.castShadow = false;
+        } else {
+          // Hide all older light rigs, including earlier web lights and any
+          // stray chandelier lights from previous GLBs.
+          object.visible = false;
+          object.intensity = 0;
+          object.castShadow = false;
+        }
       }
     });
-  }
 
-  function markChandelierReady() {
-    chandelierPrepared = true;
-    maybeReady();
-  }
-
-  $: if ($room && !roomPrepared) {
-    prepareRoom($room.scene);
     roomPrepared = true;
-    maybeReady();
+    invalidate();
+  }
+
+  $: if ($room && !readySent) {
+    readySent = true;
+    onReady();
   }
 </script>
 
 <LookAroundCamera {resetSignal} />
 
-<T.HemisphereLight args={['#6d9b78', '#010302', 0.52]} />
-<T.AmbientLight intensity={0.14} color="#b5c8b7" />
-
-<T.PointLight
-  position={[-2.65, 1.3, -3.8]}
-  intensity={6.5}
-  distance={6.5}
-  decay={2}
-  color="#0d5c31"
-/>
-<T.PointLight
-  position={[2.65, 1.15, 3.6]}
-  intensity={5.5}
-  distance={6.2}
-  decay={2}
-  color="#174c2e"
-/>
-
 {#if $room}
   <T is={$room.scene} />
 {/if}
-
-<WarmChandelier onReady={markChandelierReady} />

@@ -4,4 +4,4 @@
   const imageHref = withBase('/images/house/windows/clarinet-window.png');
 </script>
 
-<image href={imageHref} x="0" y="0" width="66" height="124" preserveAspectRatio="none" />
+<image href={imageHref} x="0" y="0" width="66" height="124" preserveAspectRatio="xMidYMid slice" />

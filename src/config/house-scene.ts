@@ -20,7 +20,7 @@ export interface HouseWindowPaneAxis {
 }
 
 export interface HouseWindowGeometry {
-  /** Full glass area in the current 1536 × 1024 house coordinate system. */
+  /** Full artwork-mapping area in the current 1800 × 1200 house coordinate system. */
   x: number;
   y: number;
   width: number;
@@ -30,7 +30,7 @@ export interface HouseWindowGeometry {
   rows: number;
   mullionX: number;
   mullionY: number;
-  /** Optional exact pane measurements for pixel-accurate clipping. */
+  /** Exact visible pane measurements measured from the Blender render. */
   paneColumns?: readonly HouseWindowPaneAxis[];
   paneRows?: readonly HouseWindowPaneAxis[];
 }
@@ -61,12 +61,62 @@ export interface HouseSceneConfig {
   destinations: readonly HouseDestination[];
 }
 
+const upperOuterColumns = [
+  { offset: 0, size: 30 },
+  { offset: 35, size: 27 },
+  { offset: 66, size: 30 },
+] as const;
+
+const upperInnerColumns = [
+  { offset: 0, size: 29 },
+  { offset: 34, size: 27 },
+  { offset: 66, size: 29 },
+] as const;
+
+const upperRows = [
+  { offset: 0, size: 41 },
+  { offset: 45, size: 38 },
+  { offset: 88, size: 38 },
+  { offset: 130, size: 41 },
+] as const;
+
+const centerColumns = [
+  { offset: 0, size: 30 },
+  { offset: 35, size: 26 },
+  { offset: 66, size: 30 },
+] as const;
+
+const centerRows = [
+  { offset: 0, size: 40 },
+  { offset: 45, size: 37 },
+  { offset: 87, size: 38 },
+  { offset: 130, size: 40 },
+] as const;
+
+const lowerLeftColumns = [
+  { offset: 0, size: 39 },
+  { offset: 43, size: 37 },
+  { offset: 84, size: 37 },
+  { offset: 125, size: 37 },
+  { offset: 166, size: 37 },
+  { offset: 207, size: 37 },
+  { offset: 248, size: 37 },
+  { offset: 289, size: 39 },
+] as const;
+
+const lowerRows = [
+  { offset: 0, size: 46 },
+  { offset: 50, size: 44 },
+  { offset: 98, size: 44 },
+  { offset: 146, size: 46 },
+] as const;
+
 export const houseScene = {
-  enabled: false,
+  enabled: true,
   navigationEnabled: true,
   showHint: true,
-  referenceWidth: 1536,
-  referenceHeight: 1024,
+  referenceWidth: 1800,
+  referenceHeight: 1200,
   destinations: [
     {
       id: 'collision-window',
@@ -77,57 +127,39 @@ export const houseScene = {
       scene: 'collision',
       sceneViewBox: { width: 100, height: 140, fit: 'slice' },
       geometry: {
-        x: 272,
-        y: 361,
-        width: 67,
-        height: 124,
+        x: 246,
+        y: 401,
+        width: 96,
+        height: 171,
         kind: 'square',
         columns: 3,
         rows: 4,
-        mullionX: 2,
-        mullionY: 2,
-        paneColumns: [
-          { offset: 0, size: 21 },
-          { offset: 23, size: 20 },
-          { offset: 45, size: 22 },
-        ],
-        paneRows: [
-          { offset: 0, size: 26 },
-          { offset: 29, size: 30 },
-          { offset: 61, size: 30 },
-          { offset: 93, size: 31 },
-        ],
+        mullionX: 4,
+        mullionY: 4,
+        paneColumns: upperOuterColumns,
+        paneRows: upperRows,
       },
     },
     {
       id: 'chess-window',
       label: 'Chess',
-      roomLabel: 'The Chess Room',
-      description: 'A full-screen chess board centered on a black rook.',
-      href: '/chess-board/',
+      roomLabel: 'The Checkerboard Room',
+      description: 'An immersive three-dimensional checkerboard room.',
+      href: '/rooms/checkerboard/',
       scene: 'chess-rook',
       sceneViewBox: { width: 68, height: 124, fit: 'meet' },
       geometry: {
-        x: 474,
-        y: 361,
-        width: 68,
-        height: 124,
+        x: 480,
+        y: 401,
+        width: 95,
+        height: 171,
         kind: 'square',
         columns: 3,
         rows: 4,
-        mullionX: 2,
-        mullionY: 2,
-        paneColumns: [
-          { offset: 0, size: 23 },
-          { offset: 25, size: 20 },
-          { offset: 47, size: 21 },
-        ],
-        paneRows: [
-          { offset: 0, size: 27 },
-          { offset: 29, size: 30 },
-          { offset: 61, size: 30 },
-          { offset: 93, size: 31 },
-        ],
+        mullionX: 4,
+        mullionY: 4,
+        paneColumns: upperInnerColumns,
+        paneRows: upperRows,
       },
     },
     {
@@ -139,57 +171,39 @@ export const houseScene = {
       scene: 'clarinet',
       sceneViewBox: { width: 66, height: 124, fit: 'slice' },
       geometry: {
-        x: 759,
-        y: 361,
-        width: 66,
-        height: 124,
+        x: 852,
+        y: 402,
+        width: 96,
+        height: 170,
         kind: 'square',
         columns: 3,
         rows: 4,
-        mullionX: 2,
-        mullionY: 2,
-        paneColumns: [
-          { offset: 0, size: 19 },
-          { offset: 21, size: 22 },
-          { offset: 45, size: 21 },
-        ],
-        paneRows: [
-          { offset: 0, size: 27 },
-          { offset: 29, size: 31 },
-          { offset: 62, size: 30 },
-          { offset: 94, size: 30 },
-        ],
+        mullionX: 4,
+        mullionY: 4,
+        paneColumns: centerColumns,
+        paneRows: centerRows,
       },
     },
     {
       id: 'pickleball-window',
       label: 'Pickleball',
       roomLabel: 'The Pickleball Court',
-      description: 'A top-down pickleball court scene.',
+      description: 'A purple pickleball-court scene.',
       href: '/pickleball/',
       scene: 'pickleball',
       sceneViewBox: { width: 66, height: 124, fit: 'slice' },
       geometry: {
-        x: 1041,
-        y: 361,
-        width: 66,
-        height: 124,
+        x: 1225,
+        y: 401,
+        width: 95,
+        height: 171,
         kind: 'square',
         columns: 3,
         rows: 4,
-        mullionX: 2,
-        mullionY: 2,
-        paneColumns: [
-          { offset: 0, size: 20 },
-          { offset: 22, size: 21 },
-          { offset: 45, size: 21 },
-        ],
-        paneRows: [
-          { offset: 0, size: 26 },
-          { offset: 29, size: 30 },
-          { offset: 61, size: 30 },
-          { offset: 93, size: 31 },
-        ],
+        mullionX: 4,
+        mullionY: 4,
+        paneColumns: upperInnerColumns,
+        paneRows: upperRows,
       },
     },
     {
@@ -201,26 +215,17 @@ export const houseScene = {
       scene: 'contact',
       sceneViewBox: { width: 100, height: 140, fit: 'slice' },
       geometry: {
-        x: 1245,
-        y: 361,
-        width: 65,
-        height: 124,
+        x: 1458,
+        y: 401,
+        width: 96,
+        height: 171,
         kind: 'square',
         columns: 3,
         rows: 4,
-        mullionX: 2,
-        mullionY: 2,
-        paneColumns: [
-          { offset: 0, size: 20 },
-          { offset: 21, size: 23 },
-          { offset: 46, size: 19 },
-        ],
-        paneRows: [
-          { offset: 0, size: 26 },
-          { offset: 29, size: 30 },
-          { offset: 61, size: 30 },
-          { offset: 93, size: 31 },
-        ],
+        mullionX: 4,
+        mullionY: 4,
+        paneColumns: upperOuterColumns,
+        paneRows: upperRows,
       },
     },
     {
@@ -232,31 +237,17 @@ export const houseScene = {
       scene: 'concert-hall',
       sceneViewBox: { width: 268, height: 162, fit: 'slice' },
       geometry: {
-        x: 268,
-        y: 619,
-        width: 268,
-        height: 162,
+        x: 247,
+        y: 714,
+        width: 328,
+        height: 192,
         kind: 'square',
-        columns: 7,
-        rows: 5,
-        mullionX: 2,
-        mullionY: 2,
-        paneColumns: [
-          { offset: 0, size: 35 },
-          { offset: 37, size: 38 },
-          { offset: 77, size: 34 },
-          { offset: 113, size: 39 },
-          { offset: 155, size: 36 },
-          { offset: 193, size: 37 },
-          { offset: 232, size: 36 },
-        ],
-        paneRows: [
-          { offset: 0, size: 30 },
-          { offset: 32, size: 30 },
-          { offset: 65, size: 29 },
-          { offset: 96, size: 31 },
-          { offset: 129, size: 33 },
-        ],
+        columns: 8,
+        rows: 4,
+        mullionX: 4,
+        mullionY: 4,
+        paneColumns: lowerLeftColumns,
+        paneRows: lowerRows,
       },
     },
   ],

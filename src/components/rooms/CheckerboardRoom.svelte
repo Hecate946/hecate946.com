@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core';
+  import { AgXToneMapping, PCFSoftShadowMap, SRGBColorSpace } from 'three';
   import CheckerboardScene from './CheckerboardScene.svelte';
 
   let shell: HTMLDivElement;
@@ -41,12 +42,15 @@
   aria-label="Interactive three-dimensional checkerboard room"
 >
   <div class="room-canvas" aria-hidden={!ready}>
-    <Canvas shadows dpr={1.5}>
+    <Canvas
+      shadows={PCFSoftShadowMap}
+      toneMapping={AgXToneMapping}
+      colorSpace={SRGBColorSpace}
+      dpr={1.5}
+    >
       <CheckerboardScene onReady={markReady} {resetSignal} />
     </Canvas>
   </div>
-
-  <div class="room-vignette" aria-hidden="true"></div>
 
   <div class="room-topbar">
     <a class="room-exit" href="/projects/">← Back to projects</a>
@@ -64,7 +68,7 @@
   <div class="room-caption">
     <p class="room-kicker">Room 001</p>
     <h1>The Checkerboard Room</h1>
-    <p>Drag to look around. Your viewpoint stays fixed inside the room.</p>
+    <p>Drag to look around. Scroll or pinch to zoom.</p>
   </div>
 
   <div
@@ -89,10 +93,7 @@
     width: 100%;
     min-height: clamp(38rem, calc(100svh - var(--header-height)), 68rem);
     overflow: hidden;
-    background:
-      radial-gradient(circle at 50% 38%, rgb(64 45 21 / 28%), transparent 28%),
-      radial-gradient(circle at 50% 58%, rgb(8 46 27 / 52%), transparent 58%),
-      #010503;
+    background: #020202;
     color: #eef7ef;
   }
 
@@ -131,17 +132,7 @@
   }
 
   .room-canvas :global(canvas:focus-visible) {
-    box-shadow: inset 0 0 0 2px rgb(255 222 174 / 72%);
-  }
-
-  .room-vignette {
-    position: absolute;
-    z-index: 2;
-    inset: 0;
-    background:
-      linear-gradient(180deg, rgb(0 0 0 / 42%), transparent 27%, transparent 68%, rgb(0 0 0 / 68%)),
-      radial-gradient(circle at center, transparent 45%, rgb(0 0 0 / 62%) 118%);
-    pointer-events: none;
+    box-shadow: inset 0 0 0 2px rgb(255 255 255 / 64%);
   }
 
   .room-topbar {
@@ -171,11 +162,11 @@
     align-items: center;
     justify-content: center;
     padding: 0.55rem 0.9rem;
-    background: rgb(2 10 6 / 72%);
-    border: 1px solid rgb(255 225 184 / 18%);
+    background: rgb(0 0 0 / 68%);
+    border: 1px solid rgb(255 255 255 / 20%);
     border-radius: 999px;
     box-shadow: 0 0.75rem 2.2rem rgb(0 0 0 / 24%);
-    color: #f2f7f1;
+    color: #f5f5f5;
     font: inherit;
     font-size: 0.78rem;
     letter-spacing: 0.035em;
@@ -186,8 +177,8 @@
 
   .room-exit:hover,
   .room-control:hover {
-    background: rgb(61 39 19 / 76%);
-    border-color: rgb(255 220 167 / 42%);
+    background: rgb(24 24 24 / 84%);
+    border-color: rgb(255 255 255 / 42%);
     color: #fff;
   }
 
@@ -222,12 +213,12 @@
   }
 
   .room-caption > p:last-child {
-    color: rgb(242 239 224 / 78%);
+    color: rgb(255 255 255 / 76%);
     font-size: clamp(0.82rem, 1.6vw, 1rem);
   }
 
   .room-kicker {
-    color: #efbd77;
+    color: rgb(255 255 255 / 72%);
     font-family: var(--font-mono);
     font-size: 0.7rem;
     letter-spacing: 0.16em;
@@ -242,8 +233,8 @@
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    background: #010503;
-    color: rgb(235 231 214 / 74%);
+    background: #020202;
+    color: rgb(255 255 255 / 72%);
     font-family: var(--font-mono);
     font-size: 0.75rem;
     letter-spacing: 0.1em;
@@ -261,7 +252,7 @@
   .room-loader-mark {
     width: 0.7rem;
     aspect-ratio: 1;
-    border: 1px solid #edb96f;
+    border: 1px solid rgb(255 255 255 / 72%);
     transform: rotate(45deg);
     animation: room-pulse 1.1s ease-in-out infinite alternate;
   }
@@ -272,14 +263,14 @@
     inset: auto 1rem 1rem;
     margin: 0;
     padding: 0.8rem 1rem;
-    background: #07150d;
+    background: #111;
     border: 1px solid rgb(255 255 255 / 18%);
   }
 
   @keyframes room-pulse {
     to {
-      background: #edb96f;
-      box-shadow: 0 0 1.25rem rgb(237 185 111 / 62%);
+      background: rgb(255 255 255 / 72%);
+      box-shadow: 0 0 1.25rem rgb(255 255 255 / 32%);
       transform: rotate(135deg) scale(1.16);
     }
   }

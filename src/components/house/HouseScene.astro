@@ -21,22 +21,21 @@ const destinations = houseScene.destinations.map((destination) => ({
       class:list={['house-scene-section', className]}
       aria-labelledby="house-scene-title"
     >
-      <header class="house-scene-section__header">
-        <h2 id="house-scene-title" class="visually-hidden">
-          Explore the house
-        </h2>
-        {
-          houseScene.showHint && (
-            <p class="house-scene-section__hint">Choose a window</p>
-          )
-        }
-      </header>
+      <h2 id="house-scene-title" class="visually-hidden">
+        Explore the house
+      </h2>
 
       <HouseExperience
         client:visible
         {destinations}
         navigationEnabled={houseScene.navigationEnabled}
       />
+
+      {
+        houseScene.showHint && (
+          <p class="house-scene-section__hint">Select a window</p>
+        )
+      }
     </section>
   )
 }

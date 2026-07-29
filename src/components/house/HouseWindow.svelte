@@ -68,7 +68,6 @@
     geometry.paneColumns,
     geometry.paneRows,
   );
-  $: labelY = geometry.y > 560 ? geometry.y - 27 : geometry.y + geometry.height + 29;
 
   function handleClick(event: MouseEvent) {
     if (!navigationEnabled) event.preventDefault();
@@ -114,14 +113,6 @@
     />
   </g>
 
-  <rect
-    class="house-window__glow"
-    x={geometry.x - 6}
-    y={geometry.y - 6}
-    width={geometry.width + 12}
-    height={geometry.height + 12}
-    rx="4"
-  />
 
   <rect
     class="house-window__hit"
@@ -150,13 +141,5 @@
         {destination.id} · {geometry.x},{geometry.y} · {geometry.width}×{geometry.height}
       </text>
     </g>
-  </g>
-
-  <g
-    class="house-window__label"
-    transform={`translate(${geometry.x + geometry.width / 2} ${labelY})`}
-  >
-    <rect x="-76" y="-17" width="152" height="34" rx="17" />
-    <text text-anchor="middle" dominant-baseline="central">{destination.label}</text>
   </g>
 </a>
