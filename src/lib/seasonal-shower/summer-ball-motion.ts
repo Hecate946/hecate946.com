@@ -26,9 +26,9 @@ export const SUMMER_BALL_FIXED_TIMESTEP = 1 / 60;
 export const SUMMER_BALL_MAX_FRAME_DELTA = 0.05;
 export const SUMMER_BALL_MAX_STEPS_PER_FRAME = 2;
 
-// The beach-ball drawing is rendered at 1.46x the base physics radius. A
-// 1.72x collider therefore leaves a clear but still natural gap between the
-// visible balls instead of allowing their artwork to overlap.
+// Default collider spacing shared by the non-summer collision objects.
+// The collision page applies a larger summer-only spacing value so beach-ball
+// artwork retains a visible gap even when its display scale is increased.
 export const SUMMER_BALL_COLLIDER_SPACING = 1.72;
 
 const D3_ALPHA_TARGET = 0.3;
@@ -38,6 +38,11 @@ const D3_CENTER_STRENGTH = 0.01;
 const D3_POINTER_STRENGTH_RATIO = 2 / 3;
 const D3_TICKS_PER_SECOND = 60;
 const POINTER_MIN_DISTANCE_RATIO = 0.045;
+// Expands the strong part of the pointer charge without removing its gentle
+// long-range tail. At typical desktop sizes, a little more than the nearest third of the
+// collision field now moves together when the cursor passes through it.
+const POINTER_INFLUENCE_RADIUS_RATIO = 0.39;
+const POINTER_INFLUENCE_BOOST = 0.9;
 const MAX_SPEED_PER_TICK = 9;
 
 const ROTATION_SLEEP_LINEAR_SPEED = 42;
@@ -93,7 +98,15 @@ export function summerBallD3Velocity(
         width * POINTER_MIN_DISTANCE_RATIO,
       );
       const softenedDistance = Math.max(distance, pointerMinimumDistance);
-      const repulsion = (pointerStrength * alpha) / softenedDistance;
+      const influenceRadius = Math.max(
+        195,
+        width * POINTER_INFLUENCE_RADIUS_RATIO,
+      );
+      const influence =
+        1 - smoothstep(influenceRadius * 0.58, influenceRadius, distance);
+      const radiusMultiplier = 1 + influence * POINTER_INFLUENCE_BOOST;
+      const repulsion =
+        ((pointerStrength * alpha) / softenedDistance) * radiusMultiplier;
       velocityX += (offsetX / distance) * repulsion;
       velocityY += (offsetY / distance) * repulsion;
     }

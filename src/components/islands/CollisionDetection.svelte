@@ -27,6 +27,7 @@
   } from '@/lib/seasonal-shower/summer-ball-motion';
   import type { Season } from '@/lib/seasonal-shower/types';
   import type {
+    Collider as RapierCollider,
     RigidBody as RapierRigidBody,
     World as RapierWorld,
   } from '@dimforge/rapier2d-compat';
@@ -36,6 +37,7 @@
   interface CollisionObject extends SummerBallVisualState {
     r: number;
     body: RapierRigidBody;
+    collider: RapierCollider;
     sprite: HTMLCanvasElement;
     spriteVariant: number;
     previousX: number;
@@ -46,9 +48,13 @@
     currentRotation: number;
   }
 
-  // Every season uses the same object count. Keeping the shared count low
-  // improves performance while preserving exact seasonal parity.
-  const NODE_COUNT = 100;
+  const MAX_NODE_COUNT = 100;
+  const SEASON_NODE_COUNT: Record<Season, number> = {
+    spring: 100,
+    summer: 100,
+    autumn: 100,
+    winter: 100,
+  };
   const MAX_PIXEL_RATIO = 2;
   const WALL_THICKNESS = 42;
 
@@ -56,10 +62,10 @@
   // sprite canvas. These display scales make the visible artwork approximately
   // match each body's circular collider.
   const SPRITE_DISPLAY_SCALE: Record<Season, number> = {
-    spring: 1.52,
-    summer: 1.64,
-    autumn: 2.78,
-    winter: 1.56,
+    spring: 1.6,
+    summer: 1.76,
+    autumn: 2.92,
+    winter: 1.64,
   };
 
 
@@ -91,7 +97,12 @@
   let simulationVisible = true;
   let animationPrepared = false;
   let summerRenderer: SummerBallWebGlRenderer | null = null;
-  const summerInstanceData = new Float32Array(NODE_COUNT * 8);
+  let summerRendererWarmed = false;
+  let activeObjectCount = SEASON_NODE_COUNT.summer;
+  let seasonChangeId = 0;
+  let transparentSprite: HTMLCanvasElement | null = null;
+  const summerInstanceData = new Float32Array(MAX_NODE_COUNT * 8);
+  const summerWarmupData = new Float32Array([0, 0, 1, 0, 0, 0, 1, 0]);
 
   function readSeason(): Season {
     const season = document.documentElement.dataset.season;
@@ -102,25 +113,87 @@
     return minimum + Math.random() * (maximum - minimum);
   }
 
+  function getSeasonNodeCount(season: Season) {
+    return SEASON_NODE_COUNT[season];
+  }
+
   function shortestAngleDelta(from: number, to: number) {
     return Math.atan2(Math.sin(to - from), Math.cos(to - from));
   }
 
+  function getTransparentSprite() {
+    if (transparentSprite) return transparentSprite;
+    transparentSprite = document.createElement('canvas');
+    transparentSprite.width = 1;
+    transparentSprite.height = 1;
+    return transparentSprite;
+  }
+
+  function spritesForSeason(season: Season) {
+    if (season === 'summer' && summerRenderer) return [getTransparentSprite()];
+    return seasonSprites(season);
+  }
+
   async function prepareSeasonAssets(season: Season) {
+    // Summer is procedural WebGL. Pre-generating 8 × 64 Canvas sphere frames
+    // was the largest source of the season-switch delay and served no purpose
+    // while the WebGL renderer was available.
+    if (season === 'summer') {
+      if (!summerRenderer) seasonSprites('summer');
+      return;
+    }
+
     if (season === 'autumn') await preloadAutumnLeafAssets();
     if ((SEASONAL_SHOWERS[season].animationFrames ?? 1) > 1) {
       await prewarmSeasonSpriteFrames(season, 5);
     }
   }
 
-  async function applySeason(nextSeason: Season) {
-    await prepareSeasonAssets(nextSeason);
-    activeSeason = nextSeason;
-    const sprites = seasonSprites(nextSeason);
+  function initialPosition(index: number, season: Season) {
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const spacing =
+      (season === 'autumn' ? 9.4 : season === 'summer' ? 11.6 : 11.4) *
+      (width / 800);
+    const distance = spacing * Math.sqrt(index + 0.5);
+    const angle = index * goldenAngle;
+    return {
+      x: Math.cos(angle) * distance,
+      y: Math.sin(angle) * distance,
+    };
+  }
 
-    objects.forEach((object, index) => {
+  function commitSeason(nextSeason: Season) {
+    const previousObjectCount = activeObjectCount;
+    activeSeason = nextSeason;
+    activeObjectCount = getSeasonNodeCount(nextSeason);
+    const sprites = spritesForSeason(nextSeason);
+    const colliderSpacing = COLLIDER_SPACING[nextSeason];
+
+    for (let index = 0; index < objects.length; index += 1) {
+      const object = objects[index]!;
+      const enabled = index < activeObjectCount;
+      const wasEnabled = index < previousObjectCount;
+
+      object.body.setEnabled(enabled);
+      if (!enabled) continue;
+
+      object.collider.setRadius(object.r * colliderSpacing);
       object.spriteVariant = index % sprites.length;
       object.sprite = sprites[object.spriteVariant]!;
+
+      if (!wasEnabled) {
+        const position = initialPosition(index, nextSeason);
+        object.body.setTranslation(position, true);
+        object.body.setLinvel(
+          { x: randomBetween(-4, 4), y: randomBetween(-4, 4) },
+          true,
+        );
+        object.body.setAngvel(randomBetween(-0.08, 0.08), true);
+        object.previousX = position.x;
+        object.previousY = position.y;
+        object.currentX = position.x;
+        object.currentY = position.y;
+      }
 
       if (nextSeason === 'summer') {
         resetSummerBallVisualState(
@@ -130,10 +203,20 @@
           index,
         );
       }
-    });
+    }
 
+    d3Alpha = Math.max(d3Alpha, 0.82);
+    accumulator = 0;
+    lastFrameTime = performance.now();
     if (nextSeason !== 'summer') summerRenderer?.clear();
     draw();
+  }
+
+  async function applySeason(nextSeason: Season) {
+    const changeId = ++seasonChangeId;
+    await prepareSeasonAssets(nextSeason);
+    if (changeId !== seasonChangeId) return;
+    commitSeason(nextSeason);
   }
 
   function drawSprite(
@@ -163,7 +246,8 @@
     if (activeSeason === 'summer' && summerRenderer) {
       let dataOffset = 0;
 
-      for (const object of objects) {
+      for (let index = 0; index < activeObjectCount; index += 1) {
+        const object = objects[index]!;
         summerInstanceData[dataOffset] = object.summerVisualX + width / 2;
         summerInstanceData[dataOffset + 1] = object.summerVisualY + width / 2;
         summerInstanceData[dataOffset + 2] = object.r * displayScale;
@@ -175,7 +259,7 @@
         dataOffset += 8;
       }
 
-      summerRenderer.draw(summerInstanceData, objects.length, width, width);
+      summerRenderer.draw(summerInstanceData, activeObjectCount, width, width);
       return;
     }
 
@@ -183,7 +267,8 @@
     context.save();
     context.translate(width / 2, width / 2);
 
-    for (const object of objects) {
+    for (let index = 0; index < activeObjectCount; index += 1) {
+      const object = objects[index]!;
       const x =
         object.previousX + (object.currentX - object.previousX) * interpolation;
       const y =
@@ -252,6 +337,13 @@
     createWall(thickness, half + thickness, half + thickness, 0);
   }
 
+  function warmSummerRenderer() {
+    if (!summerRenderer || summerRendererWarmed || width <= 0) return;
+    summerRenderer.draw(summerWarmupData, 1, width, width);
+    summerRenderer.clear();
+    summerRendererWarmed = true;
+  }
+
   function createWorld(nextWidth: number) {
     if (!context || !rapier) return;
 
@@ -277,6 +369,7 @@
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = 'medium';
     summerRenderer?.resize(width, width, pixelRatio);
+    warmSummerRenderer();
 
     const nextWorld = new rapier.World({ x: 0, y: 0 });
     nextWorld.timestep = SUMMER_BALL_FIXED_TIMESTEP;
@@ -286,15 +379,19 @@
     addBoundaryColliders(width);
 
     const radiusScale = width / 175;
+    const minimumRadius = radiusScale * 1.42;
+    const maximumRadius = radiusScale * 4.45;
     const randomRadius = () =>
-      radiusScale * 1.08 + Math.random() * (radiusScale * 4.2 - radiusScale * 1.08);
-    const sprites = seasonSprites(activeSeason);
+      minimumRadius + Math.random() * (maximumRadius - minimumRadius);
+    const sprites = spritesForSeason(activeSeason);
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
     const d3Spacing =
       (activeSeason === 'autumn' ? 9.4 : activeSeason === 'summer' ? 11.6 : 11.4) *
       (width / 800);
 
-    objects = Array.from({ length: NODE_COUNT }, (_, index) => {
+    activeObjectCount = getSeasonNodeCount(activeSeason);
+
+    objects = Array.from({ length: MAX_NODE_COUNT }, (_, index) => {
       const radius = randomRadius();
       const distance = d3Spacing * Math.sqrt(index + 0.5);
       const angle = index * goldenAngle;
@@ -314,7 +411,7 @@
           .setCanSleep(false),
       );
 
-      world!.createCollider(
+      const collider = world!.createCollider(
         rapier!
           .ColliderDesc.ball(radius * COLLIDER_SPACING[activeSeason])
           .setDensity(0.012)
@@ -323,11 +420,14 @@
         body,
       );
 
+      const enabled = index < activeObjectCount;
+      body.setEnabled(enabled);
       const initialRotation = body.rotation();
 
       return {
         r: radius,
         body,
+        collider,
         sprite: sprites[spriteVariant]!,
         spriteVariant,
         previousX: x,
@@ -346,7 +446,8 @@
 
     d3Alpha = advanceSummerBallD3Alpha(d3Alpha);
 
-    for (const object of objects) {
+    for (let index = 0; index < activeObjectCount; index += 1) {
+      const object = objects[index]!;
       const body = object.body;
       const velocity = summerBallD3Velocity(
         object.currentX,
@@ -362,7 +463,8 @@
   }
 
   function capturePhysicsState() {
-    for (const object of objects) {
+    for (let index = 0; index < activeObjectCount; index += 1) {
+      const object = objects[index]!;
       object.previousX = object.currentX;
       object.previousY = object.currentY;
       object.previousRotation = object.currentRotation;
@@ -401,7 +503,8 @@
       accumulator / SUMMER_BALL_FIXED_TIMESTEP,
     );
 
-    for (const object of objects) {
+    for (let index = 0; index < activeObjectCount; index += 1) {
+      const object = objects[index]!;
       const desiredX =
         object.previousX + (object.currentX - object.previousX) * interpolation;
       const desiredY =
@@ -570,7 +673,7 @@
     <canvas
       class="collision-interaction-layer"
       bind:this={canvas}
-      aria-label="Two hundred seasonal objects move with D3-style force motion and Rapier collision physics. An extremely large invisible pointer charge pushes much of the field away."
+      aria-label="Seasonal objects move with D3-style force motion and Rapier collision physics. An extremely large invisible pointer charge pushes much of the field away."
       role="img"
     >
       An interactive Rapier rigid-body collision simulation.

@@ -1,17 +1,17 @@
-# Seasonal collision and homepage summer update
+# Seasonal collision update
 
 ## What changed
 
-- The collision page now uses a `1.72x` invisible collider radius. Beach balls remain the same visible size, but the collision cloud has substantially more breathing room.
-- The homepage summer shower has its original falling, gravity, wall-bounce, floor-bounce, energy-loss, and fade behavior restored.
-- Only the homepage beach-ball rotation is shared with the collision simulator: both use the same continuous WebGL quaternion renderer and the same sleep/wake rotation mechanics.
-- The homepage no longer uses the collision page's D3 centering or pointer-repulsion movement.
-- Spring, autumn, and winter shower behavior is unchanged.
+- Every season still uses exactly **100 collision bodies**.
+- The invisible cursor influence radius is substantially larger.
+- Nearby objects receive a smooth extra push across a wide area, so the cursor moves more of the field at once without creating a hard force boundary.
+- The original gentle long-range pointer force remains intact.
+- Seasonal object sizes, beach-ball spacing, and instant summer switching are unchanged.
 
 ## Install
 
 ```bash
-unzip -o ~/Downloads/hecate946-seasonal-collision-homepage-bounce-rotation.zip
+unzip -o ~/Downloads/hecate946-seasonal-collision-larger-cursor-radius.zip
 npm run dev
 ```
 

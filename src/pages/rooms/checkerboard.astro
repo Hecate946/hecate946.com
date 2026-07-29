@@ -1,0 +1,25 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CheckerboardRoom from '@/components/rooms/CheckerboardRoom.svelte';
+---
+
+<BaseLayout
+  title="The Checkerboard Room | Cyrus Asasi"
+  description="An immersive, fixed-viewpoint three-dimensional checkerboard room."
+>
+  <section class="checkerboard-page">
+    <CheckerboardRoom client:only="svelte" />
+  </section>
+</BaseLayout>
+
+<style>
+  .checkerboard-page {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  :global(#main-content) {
+    padding-inline: 0;
+  }
+</style>
