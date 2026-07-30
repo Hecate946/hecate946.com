@@ -23,8 +23,8 @@
   const SETTLE_EPSILON = 0.0001;
   const KEY_LOOK_STEP = 0.075;
   const KEY_ZOOM_STEP = 3;
-  const MIN_PITCH = MathUtils.degToRad(-48);
-  const MAX_PITCH = MathUtils.degToRad(34);
+  const MIN_PITCH = MathUtils.degToRad(-20);
+  const MAX_PITCH = MathUtils.degToRad(20);
 
   type PointerPosition = { x: number; y: number };
 
