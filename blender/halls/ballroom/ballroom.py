@@ -52,16 +52,16 @@ import bpy
 from mathutils import Vector
 
 
-SCRIPT_VERSION = "ballroom-smaller-floor-tiles-v1-2026-07-29"
+SCRIPT_VERSION = "ballroom-large-flat-floor-v2-2026-07-29"
 
 
 # -----------------------------------------------------------------------------
 # USER SETTINGS
 # -----------------------------------------------------------------------------
 
-ROOM_WIDTH = 14.0       # X dimension, meters
-ROOM_DEPTH = 10.0       # Y dimension, meters
-ROOM_HEIGHT = 6.40      # finished floor to ceiling, meters
+ROOM_WIDTH = 28.0       # doubled X dimension for a larger, more distant room
+ROOM_DEPTH = 20.0       # doubled Y dimension for a larger, more distant room
+ROOM_HEIGHT = 6.40      # retain the original ceiling height and proportions
 WALL_THICKNESS = 0.24
 
 CAMERA_HEIGHT = 1.68
@@ -92,9 +92,9 @@ AUTO_SAVE_BLEND = False
 # When True, uses Cycles. When False, uses Eevee Next for faster previews.
 USE_CYCLES = True
 
-# Floor proportions adjusted for smaller tiles with no visible spacing.
-FLOOR_TILE_PITCH = 0.50
-FLOOR_TILE_SIZE = 0.50
+# Smaller checker tiles. Pitch equals size, so adjacent tiles meet exactly.
+FLOOR_TILE_PITCH = 0.36
+FLOOR_TILE_SIZE = 0.36
 FLOOR_TILE_THICKNESS = 0.035
 FLOOR_ROTATION_DEGREES = 45.0
 
@@ -110,6 +110,8 @@ class MaterialSet:
     plaster_shadow: bpy.types.Material
     black_marble: bpy.types.Material
     white_marble: bpy.types.Material
+    floor_black: bpy.types.Material
+    floor_white: bpy.types.Material
     grout: bpy.types.Material
     doorway_dark: bpy.types.Material
 
@@ -524,6 +526,18 @@ def create_materials() -> MaterialSet:
         scale=2.4,
         distortion=6.0,
     )
+    # The floor uses clean, uniform colors rather than the procedural marble
+    # texture used by the architectural marble trim.
+    floor_black = create_simple_material(
+        "Flat Black Floor Tile",
+        (0.012, 0.014, 0.018, 1.0),
+        roughness=0.18,
+    )
+    floor_white = create_simple_material(
+        "Flat Ivory Floor Tile",
+        (0.80, 0.81, 0.79, 1.0),
+        roughness=0.18,
+    )
     grout = create_simple_material(
         "Dark Grout",
         (0.035, 0.038, 0.040, 1.0),
@@ -540,6 +554,8 @@ def create_materials() -> MaterialSet:
         plaster_shadow=plaster_shadow,
         black_marble=black_marble,
         white_marble=white_marble,
+        floor_black=floor_black,
+        floor_white=floor_white,
         grout=grout,
         doorway_dark=doorway_dark,
     )
@@ -684,18 +700,18 @@ def add_wall_prism(
 # -----------------------------------------------------------------------------
 
 
-def add_cube_geometry(
+def add_floor_tile_geometry(
     vertices: list[tuple[float, float, float]],
     faces: list[tuple[int, ...]],
     material_indices: list[int],
     center_x: float,
     center_y: float,
     size: float,
-    z_bottom: float,
     z_top: float,
     rotation_radians: float,
     material_index: int,
 ) -> None:
+    """Add one perfectly flat tile top with no beveled or recessed edges."""
     half = size / 2.0
     local_corners = [
         (-half, -half),
@@ -707,23 +723,13 @@ def add_cube_geometry(
     sine = math.sin(rotation_radians)
 
     base_index = len(vertices)
-    for z in (z_bottom, z_top):
-        for x_local, y_local in local_corners:
-            x_rotated = x_local * cosine - y_local * sine
-            y_rotated = x_local * sine + y_local * cosine
-            vertices.append((center_x + x_rotated, center_y + y_rotated, z))
+    for x_local, y_local in local_corners:
+        x_rotated = x_local * cosine - y_local * sine
+        y_rotated = x_local * sine + y_local * cosine
+        vertices.append((center_x + x_rotated, center_y + y_rotated, z_top))
 
-    cube_faces = [
-        (0, 3, 2, 1),
-        (4, 5, 6, 7),
-        (0, 1, 5, 4),
-        (1, 2, 6, 5),
-        (2, 3, 7, 6),
-        (3, 0, 4, 7),
-    ]
-    for face in cube_faces:
-        faces.append(tuple(base_index + vertex for vertex in face))
-        material_indices.append(material_index)
+    faces.append((base_index, base_index + 1, base_index + 2, base_index + 3))
+    material_indices.append(material_index)
 
 
 def build_checkerboard_floor(
@@ -763,14 +769,13 @@ def build_checkerboard_floor(
             if abs(center_y) > ROOM_DEPTH / 2.0 + FLOOR_TILE_SIZE:
                 continue
 
-            add_cube_geometry(
+            add_floor_tile_geometry(
                 vertices,
                 faces,
                 material_indices,
                 center_x,
                 center_y,
                 FLOOR_TILE_SIZE,
-                0.0,
                 FLOOR_TILE_THICKNESS,
                 angle,
                 (i + j) & 1,
@@ -779,15 +784,15 @@ def build_checkerboard_floor(
     mesh = bpy.data.meshes.new("Checkerboard Marble Floor Mesh")
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
-    mesh.materials.append(materials.white_marble)
-    mesh.materials.append(materials.black_marble)
+    mesh.materials.append(materials.floor_white)
+    mesh.materials.append(materials.floor_black)
 
     for polygon, material_index in zip(mesh.polygons, material_indices):
         polygon.material_index = material_index
 
-    floor = bpy.data.objects.new("Checkerboard marble tiles", mesh)
+    floor = bpy.data.objects.new("Flat checkerboard floor tiles", mesh)
     floor_collection.objects.link(floor)
-    add_bevel_modifier(floor, 0.006, segments=2)
+    # Deliberately no bevel: neighboring tiles meet flush with no grooves.
 
     # A thin marble threshold / perimeter band hides uncut diagonal tile edges.
     perimeter_height = 0.045
@@ -797,7 +802,7 @@ def build_checkerboard_floor(
         "Floor perimeter north",
         (ROOM_WIDTH, perimeter_width, perimeter_height),
         (0.0, ROOM_DEPTH / 2.0 - perimeter_width / 2.0, z),
-        materials.black_marble,
+        materials.floor_black,
         floor_collection,
         bevel=0.008,
     )
@@ -805,7 +810,7 @@ def build_checkerboard_floor(
         "Floor perimeter south",
         (ROOM_WIDTH, perimeter_width, perimeter_height),
         (0.0, -ROOM_DEPTH / 2.0 + perimeter_width / 2.0, z),
-        materials.black_marble,
+        materials.floor_black,
         floor_collection,
         bevel=0.008,
     )
@@ -813,7 +818,7 @@ def build_checkerboard_floor(
         "Floor perimeter west",
         (perimeter_width, ROOM_DEPTH - 2.0 * perimeter_width, perimeter_height),
         (-ROOM_WIDTH / 2.0 + perimeter_width / 2.0, 0.0, z),
-        materials.black_marble,
+        materials.floor_black,
         floor_collection,
         bevel=0.008,
     )
@@ -821,7 +826,7 @@ def build_checkerboard_floor(
         "Floor perimeter east",
         (perimeter_width, ROOM_DEPTH - 2.0 * perimeter_width, perimeter_height),
         (ROOM_WIDTH / 2.0 - perimeter_width / 2.0, 0.0, z),
-        materials.black_marble,
+        materials.floor_black,
         floor_collection,
         bevel=0.008,
     )
