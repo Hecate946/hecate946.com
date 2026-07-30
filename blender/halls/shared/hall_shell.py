@@ -9,13 +9,13 @@ loading each hall's unique objects from a separate GLB.
 The recovered large-floor version includes:
 
 - a 28 m × 20 m room with the original 6.4 m ceiling height
-- small, flush 0.36 m diagonal black-and-white checkerboard marble tiles
+- small, flush 0.36 m diagonal black-and-white checkerboard tiles
 - ivory plaster walls and plain white recessed ceiling
-- black marble dado / base trim
+- flat black dado / base trim
 - layered cornices and wall panel moldings
 - fluted pilasters with simplified classical capitals
-- three evenly aligned decorative groups on the left short wall
-- a centered arched niche with aligned side groups on the right short wall
+- three equidistant frame-and-cartouche groups across each uninterrupted wall
+- a centered arched niche with equidistant side groups on the right short wall
 - plaster cartouches and garland-like relief details
 - invisible soft lighting (no visible ceiling fixtures)
 - centered equirectangular 360° preview camera
@@ -55,7 +55,7 @@ import bpy
 from mathutils import Vector
 
 
-SCRIPT_VERSION = "shared-hall-large-flat-floor-v2-2026-07-30"
+SCRIPT_VERSION = "shared-hall-flat-materials-equidistant-v3-2026-07-30"
 
 
 # -----------------------------------------------------------------------------
@@ -111,10 +111,8 @@ class MaterialSet:
     plaster: bpy.types.Material
     plaster_detail: bpy.types.Material
     plaster_shadow: bpy.types.Material
-    black_marble: bpy.types.Material
-    white_marble: bpy.types.Material
-    floor_black: bpy.types.Material
-    floor_white: bpy.types.Material
+    black_stone: bpy.types.Material
+    white_stone: bpy.types.Material
     grout: bpy.types.Material
     doorway_dark: bpy.types.Material
 
@@ -394,90 +392,6 @@ def create_plaster_material(
     return material
 
 
-def create_marble_material(
-    name: str,
-    base_color: tuple[float, float, float, float],
-    vein_color: tuple[float, float, float, float],
-    roughness: float,
-    scale: float,
-    distortion: float,
-) -> bpy.types.Material:
-    material = bpy.data.materials.new(name=name)
-    material.use_nodes = True
-    nodes = material.node_tree.nodes
-    links = material.node_tree.links
-    nodes.clear()
-
-    output = nodes.new("ShaderNodeOutputMaterial")
-    bsdf = nodes.new("ShaderNodeBsdfPrincipled")
-    texcoord = nodes.new("ShaderNodeTexCoord")
-    mapping = nodes.new("ShaderNodeMapping")
-    wave = nodes.new("ShaderNodeTexWave")
-    noise = nodes.new("ShaderNodeTexNoise")
-    mix = nodes.new("ShaderNodeMixRGB")
-    ramp = nodes.new("ShaderNodeValToRGB")
-    bump = nodes.new("ShaderNodeBump")
-
-    output.location = (800, 40)
-    bsdf.location = (560, 40)
-    bump.location = (330, -120)
-    ramp.location = (310, 90)
-    mix.location = (90, 90)
-    wave.location = (-160, 140)
-    noise.location = (-160, -100)
-    mapping.location = (-390, 50)
-    texcoord.location = (-620, 50)
-
-    set_node_input(bsdf, ["Roughness"], roughness)
-    set_node_input(bsdf, ["Metallic"], 0.0)
-    set_node_input(bsdf, ["Specular IOR Level", "Specular"], 0.48)
-    set_node_input(bsdf, ["Coat Weight", "Clearcoat"], 0.18)
-    set_node_input(bsdf, ["Coat Roughness", "Clearcoat Roughness"], 0.10)
-
-    wave.wave_type = "BANDS"
-    wave.bands_direction = "X"
-    set_node_input(wave, ["Scale"], scale)
-    set_node_input(wave, ["Distortion"], distortion)
-    set_node_input(wave, ["Detail"], 5.0)
-    set_node_input(wave, ["Detail Scale"], 1.8)
-
-    set_node_input(noise, ["Scale"], scale * 1.7)
-    set_node_input(noise, ["Detail"], 7.0)
-    set_node_input(noise, ["Roughness"], 0.75)
-
-    mix.blend_type = "MULTIPLY"
-    mix.inputs[0].default_value = 0.68
-
-    color_ramp = ramp.color_ramp
-    color_ramp.elements.remove(color_ramp.elements[1])
-    first = color_ramp.elements[0]
-    first.position = 0.30
-    first.color = base_color
-    middle = color_ramp.elements.new(0.53)
-    middle.color = base_color
-    vein = color_ramp.elements.new(0.61)
-    vein.color = vein_color
-    final = color_ramp.elements.new(0.68)
-    final.color = base_color
-
-    set_node_input(bump, ["Strength"], 0.10)
-    set_node_input(bump, ["Distance"], 0.035)
-
-    links.new(texcoord.outputs["Generated"], mapping.inputs["Vector"])
-    links.new(mapping.outputs["Vector"], wave.inputs["Vector"])
-    links.new(mapping.outputs["Vector"], noise.inputs["Vector"])
-    links.new(wave.outputs["Color"], mix.inputs[1])
-    links.new(noise.outputs["Fac"], mix.inputs[2])
-    links.new(mix.outputs["Color"], ramp.inputs["Fac"])
-    links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
-    links.new(mix.outputs["Color"], bump.inputs["Height"])
-    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
-    links.new(bsdf.outputs["BSDF"], output.inputs["Surface"])
-
-    material.diffuse_color = base_color
-    return material
-
-
 def create_simple_material(
     name: str,
     base_color: tuple[float, float, float, float],
@@ -509,35 +423,18 @@ def create_materials() -> MaterialSet:
     )
     plaster_shadow = create_plaster_material(
         "Recessed Plaster",
-        (0.73, 0.71, 0.68, 1.0),
+        (0.69, 0.67, 0.64, 1.0),
         roughness=0.82,
-        bump_strength=0.045,
+        bump_strength=0.040,
     )
-    black_marble = create_marble_material(
-        "Black Marble",
-        (0.012, 0.014, 0.018, 1.0),
-        (0.24, 0.25, 0.27, 1.0),
-        roughness=0.16,
-        scale=2.9,
-        distortion=7.0,
-    )
-    white_marble = create_marble_material(
-        "White Marble",
-        (0.78, 0.79, 0.77, 1.0),
-        (0.30, 0.32, 0.34, 1.0),
-        roughness=0.15,
-        scale=2.4,
-        distortion=6.0,
-    )
-    # The floor uses clean, uniform colors rather than the procedural marble
-    # texture used by the architectural marble trim.
-    floor_black = create_simple_material(
-        "Flat Black Floor Tile",
+    # Flat polished stone colors: no procedural texture, mapping, veins, or bump.
+    black_stone = create_simple_material(
+        "Flat Polished Black Stone",
         (0.012, 0.014, 0.018, 1.0),
         roughness=0.18,
     )
-    floor_white = create_simple_material(
-        "Flat Ivory Floor Tile",
+    white_stone = create_simple_material(
+        "Flat Polished Ivory Stone",
         (0.80, 0.81, 0.79, 1.0),
         roughness=0.18,
     )
@@ -555,10 +452,8 @@ def create_materials() -> MaterialSet:
         plaster=plaster,
         plaster_detail=plaster_detail,
         plaster_shadow=plaster_shadow,
-        black_marble=black_marble,
-        white_marble=white_marble,
-        floor_black=floor_black,
-        floor_white=floor_white,
+        black_stone=black_stone,
+        white_stone=white_stone,
         grout=grout,
         doorway_dark=doorway_dark,
     )
@@ -740,7 +635,7 @@ def build_checkerboard_floor(
     architecture_collection: bpy.types.Collection,
     floor_collection: bpy.types.Collection,
 ) -> None:
-    # Dark under-slab appears as grout between the individual marble tiles.
+    # Dark under-slab appears as grout between the individual checkerboard tiles.
     create_box(
         "Floor grout slab",
         (ROOM_WIDTH - 0.08, ROOM_DEPTH - 0.08, 0.08),
@@ -784,11 +679,11 @@ def build_checkerboard_floor(
                 (i + j) & 1,
             )
 
-    mesh = bpy.data.meshes.new("Checkerboard Marble Floor Mesh")
+    mesh = bpy.data.meshes.new("Checkerboard Floor Mesh")
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
-    mesh.materials.append(materials.floor_white)
-    mesh.materials.append(materials.floor_black)
+    mesh.materials.append(materials.white_stone)
+    mesh.materials.append(materials.black_stone)
 
     for polygon, material_index in zip(mesh.polygons, material_indices):
         polygon.material_index = material_index
@@ -797,7 +692,7 @@ def build_checkerboard_floor(
     floor_collection.objects.link(floor)
     # Deliberately no bevel: neighboring tiles meet flush with no grooves.
 
-    # A thin marble threshold / perimeter band hides uncut diagonal tile edges.
+    # A thin stone threshold / perimeter band hides uncut diagonal tile edges.
     perimeter_height = 0.045
     perimeter_width = 0.16
     z = FLOOR_TILE_THICKNESS / 2.0
@@ -805,7 +700,7 @@ def build_checkerboard_floor(
         "Floor perimeter north",
         (ROOM_WIDTH, perimeter_width, perimeter_height),
         (0.0, ROOM_DEPTH / 2.0 - perimeter_width / 2.0, z),
-        materials.floor_black,
+        materials.black_stone,
         floor_collection,
         bevel=0.008,
     )
@@ -813,7 +708,7 @@ def build_checkerboard_floor(
         "Floor perimeter south",
         (ROOM_WIDTH, perimeter_width, perimeter_height),
         (0.0, -ROOM_DEPTH / 2.0 + perimeter_width / 2.0, z),
-        materials.floor_black,
+        materials.black_stone,
         floor_collection,
         bevel=0.008,
     )
@@ -821,7 +716,7 @@ def build_checkerboard_floor(
         "Floor perimeter west",
         (perimeter_width, ROOM_DEPTH - 2.0 * perimeter_width, perimeter_height),
         (-ROOM_WIDTH / 2.0 + perimeter_width / 2.0, 0.0, z),
-        materials.floor_black,
+        materials.black_stone,
         floor_collection,
         bevel=0.008,
     )
@@ -829,7 +724,7 @@ def build_checkerboard_floor(
         "Floor perimeter east",
         (perimeter_width, ROOM_DEPTH - 2.0 * perimeter_width, perimeter_height),
         (ROOM_WIDTH / 2.0 - perimeter_width / 2.0, 0.0, z),
-        materials.floor_black,
+        materials.black_stone,
         floor_collection,
         bevel=0.008,
     )
@@ -890,27 +785,27 @@ def add_baseboard_system(
     length = wall_length(wall)
 
     add_wall_box(
-        f"{wall} black marble dado",
+        f"{wall} flat black dado",
         wall,
         0.0,
         0.46,
         length - 0.04,
         0.79,
         0.090,
-        materials.black_marble,
+        materials.black_stone,
         architecture,
         offset=0.005,
         bevel=0.012,
     )
     add_wall_box(
-        f"{wall} lower marble plinth",
+        f"{wall} lower black plinth",
         wall,
         0.0,
         0.12,
         length - 0.01,
         0.18,
         0.125,
-        materials.black_marble,
+        materials.black_stone,
         architecture,
         bevel=0.012,
     )
@@ -927,7 +822,7 @@ def add_baseboard_system(
         bevel=0.018,
     )
 
-    # Pale inlay rails over the dark marble band.
+    # Pale inlay rails over the dark dado band.
     add_wall_box(
         f"{wall} dado upper inlay",
         wall,
@@ -987,11 +882,11 @@ def add_panel_frame(
         center_z,
         width - 0.12,
         height - 0.12,
-        0.014,
+        0.020,
         materials.plaster_shadow,
         decoration,
         offset=0.004,
-        bevel=0.012,
+        bevel=0.008,
     )
 
     def frame(frame_width: float, frame_height: float, rail: float, depth: float, suffix: str) -> None:
@@ -1005,7 +900,7 @@ def add_panel_frame(
             depth,
             materials.plaster_detail,
             decoration,
-            bevel=rail * 0.18,
+            bevel=rail * 0.10,
         )
         add_wall_box(
             f"{wall} panel {suffix} bottom",
@@ -1017,7 +912,7 @@ def add_panel_frame(
             depth,
             materials.plaster_detail,
             decoration,
-            bevel=rail * 0.18,
+            bevel=rail * 0.10,
         )
         add_wall_box(
             f"{wall} panel {suffix} left",
@@ -1029,7 +924,7 @@ def add_panel_frame(
             depth,
             materials.plaster_detail,
             decoration,
-            bevel=rail * 0.18,
+            bevel=rail * 0.10,
         )
         add_wall_box(
             f"{wall} panel {suffix} right",
@@ -1041,12 +936,12 @@ def add_panel_frame(
             depth,
             materials.plaster_detail,
             decoration,
-            bevel=rail * 0.18,
+            bevel=rail * 0.10,
         )
 
-    frame(width, height, 0.060, 0.055, "outer")
+    frame(width, height, 0.060, 0.072, "outer")
     if double_frame and width > 1.0 and height > 1.2:
-        frame(width - 0.16, height - 0.16, 0.027, 0.063, "inner")
+        frame(width - 0.16, height - 0.16, 0.027, 0.082, "inner")
 
 
 def add_pilaster(
@@ -1070,7 +965,7 @@ def add_pilaster(
         0.18,
         materials.plaster_detail,
         architecture,
-        bevel=0.022,
+        bevel=0.014,
     )
     add_wall_box(
         f"{wall} pilaster base upper",
@@ -1082,7 +977,7 @@ def add_pilaster(
         0.15,
         materials.plaster_detail,
         architecture,
-        bevel=0.018,
+        bevel=0.012,
     )
 
     shaft_bottom = z_bottom + 0.47
@@ -1097,10 +992,10 @@ def add_pilaster(
         shaft_center,
         width * 0.72,
         shaft_height,
-        0.115,
+        0.122,
         materials.plaster_detail,
         architecture,
-        bevel=0.022,
+        bevel=0.014,
     )
 
     # Raised reeds approximate the reference's fluting.
@@ -1118,10 +1013,10 @@ def add_pilaster(
             shaft_center,
             0.026,
             shaft_height - 0.14,
-            0.139,
+            0.151,
             materials.plaster_shadow,
             decoration,
-            bevel=0.010,
+            bevel=0.006,
         )
 
     # Simplified Ionic/Corinthian capital built as layered relief.
@@ -1136,7 +1031,7 @@ def add_pilaster(
         0.145,
         materials.plaster_detail,
         decoration,
-        bevel=0.016,
+        bevel=0.010,
     )
     add_wall_box(
         f"{wall} pilaster capital block",
@@ -1148,7 +1043,7 @@ def add_pilaster(
         0.185,
         materials.plaster_detail,
         decoration,
-        bevel=0.036,
+        bevel=0.024,
     )
     add_wall_box(
         f"{wall} pilaster capital top",
@@ -1160,7 +1055,7 @@ def add_pilaster(
         0.215,
         materials.plaster_detail,
         decoration,
-        bevel=0.018,
+        bevel=0.012,
     )
 
     for side in (-1.0, 1.0):
@@ -1189,53 +1084,14 @@ def add_pilaster(
         )
 
 
-def build_primary_wall_layout(
-    wall: str,
-    materials: MaterialSet,
-    architecture: bpy.types.Collection,
-    decoration: bpy.types.Collection,
-) -> None:
-    # Front/back composition inferred from the reference.
-    add_panel_frame(wall, 0.0, 2.72, 6.55, 2.56, materials, decoration)
-    add_panel_frame(wall, -5.18, 2.72, 1.75, 2.56, materials, decoration)
-    add_panel_frame(wall, 5.18, 2.72, 1.75, 2.56, materials, decoration)
-
-    for u in (-3.95, 3.95):
-        add_pilaster(wall, u, materials, architecture, decoration)
-
-    # Near-corner narrow pilasters make the panoramic corners feel complete.
-    for u in (-6.35, 6.35):
-        add_pilaster(
-            wall,
-            u,
-            materials,
-            architecture,
-            decoration,
-            width=0.40,
-        )
-
-
-def build_secondary_wall_layout(
-    wall: str,
-    materials: MaterialSet,
-    architecture: bpy.types.Collection,
-    decoration: bpy.types.Collection,
-    reserve_center: bool = False,
-) -> None:
-    # Side walls are inferred from the same proportional language.
-    if reserve_center:
-        add_panel_frame(wall, -3.15, 2.72, 2.25, 2.56, materials, decoration)
-        add_panel_frame(wall, 3.15, 2.72, 2.25, 2.56, materials, decoration)
-        for u in (-4.55, -1.72, 1.72, 4.55):
-            add_pilaster(wall, u, materials, architecture, decoration, width=0.40)
-    else:
-        add_panel_frame(wall, -2.52, 2.72, 3.45, 2.56, materials, decoration)
-        add_panel_frame(wall, 2.52, 2.72, 3.45, 2.56, materials, decoration)
-        for u in (-4.55, 0.0, 4.55):
-            add_pilaster(wall, u, materials, architecture, decoration, width=0.40)
-
-
-SIDE_DECOR_CENTERS = (-3.15, 0.0, 3.15)
+def equidistant_group_centers(wall: str, count: int = 3) -> tuple[float, ...]:
+    """Return centers of equal wall-width zones, including equal edge margins."""
+    length = wall_length(wall)
+    zone_width = length / count
+    return tuple(
+        -length / 2.0 + zone_width * (index + 0.5)
+        for index in range(count)
+    )
 
 
 def add_framed_panel_with_columns(
@@ -1250,7 +1106,7 @@ def add_framed_panel_with_columns(
     pilaster_offset: float = 1.02,
     pilaster_width: float = 0.38,
 ) -> None:
-    """Add a framed wall panel with a pilaster on each side."""
+    """Add one unchanged-size framed panel with a pilaster on each side."""
     add_panel_frame(
         wall,
         center_u,
@@ -1260,26 +1116,58 @@ def add_framed_panel_with_columns(
         materials,
         decoration,
     )
-    add_pilaster(
-        wall,
-        center_u - pilaster_offset,
-        materials,
-        architecture,
-        decoration,
-        z_bottom=0.90,
-        z_top=4.52,
-        width=pilaster_width,
+    for side in (-1.0, 1.0):
+        add_pilaster(
+            wall,
+            center_u + side * pilaster_offset,
+            materials,
+            architecture,
+            decoration,
+            z_bottom=0.90,
+            z_top=4.52,
+            width=pilaster_width,
+        )
+
+
+def build_primary_wall_layout(
+    wall: str,
+    materials: MaterialSet,
+    architecture: bpy.types.Collection,
+    decoration: bpy.types.Collection,
+) -> None:
+    """Three equidistant framed groups across each 28 m long wall."""
+    centers = equidistant_group_centers(wall)
+
+    # Preserve the exact previous frame sizes: narrow, wide, narrow.
+    frame_specs = (
+        (1.75, 0.40, 1.46, 0.48),
+        (6.55, 0.48, 3.95, 0.92),
+        (1.75, 0.40, 1.46, 0.48),
     )
-    add_pilaster(
-        wall,
-        center_u + pilaster_offset,
-        materials,
-        architecture,
-        decoration,
-        z_bottom=0.90,
-        z_top=4.52,
-        width=pilaster_width,
-    )
+    for center_u, (panel_width, pilaster_width, pilaster_offset, cartouche_scale) in zip(
+        centers,
+        frame_specs,
+    ):
+        add_framed_panel_with_columns(
+            wall,
+            center_u,
+            materials,
+            architecture,
+            decoration,
+            panel_width=panel_width,
+            panel_height=2.56,
+            panel_center_z=2.72,
+            pilaster_offset=pilaster_offset,
+            pilaster_width=pilaster_width,
+        )
+        add_cartouche(
+            wall,
+            center_u=center_u,
+            center_z=5.53,
+            scale=cartouche_scale,
+            materials=materials,
+            decoration=decoration,
+        )
 
 
 def build_left_short_wall(
@@ -1287,8 +1175,8 @@ def build_left_short_wall(
     architecture: bpy.types.Collection,
     decoration: bpy.types.Collection,
 ) -> None:
-    """Three equidistant decorative groups, no dark doorway."""
-    for center_u in SIDE_DECOR_CENTERS:
+    """Three unchanged-size framed groups centered in equal wall-width zones."""
+    for center_u in equidistant_group_centers("LEFT"):
         add_framed_panel_with_columns(
             "LEFT",
             center_u,
@@ -1311,17 +1199,27 @@ def build_right_short_wall(
     architecture: bpy.types.Collection,
     decoration: bpy.types.Collection,
 ) -> None:
-    """Keep the rounded arched opening in the center, with framed groups on both sides."""
+    """Use three equal zones: framed group, arched opening, framed group."""
+    left_center, center_center, right_center = equidistant_group_centers("RIGHT")
+
     add_arch_niche(
         "RIGHT",
-        center_u=0.0,
+        center_u=center_center,
         materials=materials,
         architecture=architecture,
         decoration=decoration,
     )
 
-    # Three equidistant upper decorations, aligned with left, center, and right zones.
-    for center_u in SIDE_DECOR_CENTERS:
+    for center_u in (left_center, right_center):
+        add_framed_panel_with_columns(
+            "RIGHT",
+            center_u,
+            materials,
+            architecture,
+            decoration,
+        )
+
+    for center_u in (left_center, center_center, right_center):
         add_cartouche(
             "RIGHT",
             center_u=center_u,
@@ -1329,16 +1227,6 @@ def build_right_short_wall(
             scale=0.48,
             materials=materials,
             decoration=decoration,
-        )
-
-    # Framed groups sit directly below the left and right decoration elements.
-    for center_u in (-3.15, 3.15):
-        add_framed_panel_with_columns(
-            "RIGHT",
-            center_u,
-            materials,
-            architecture,
-            decoration,
         )
 
 
@@ -1885,7 +1773,7 @@ def build_scene() -> None:
     configure_scene()
 
     architecture = get_or_create_collection("01 Architecture")
-    floor = get_or_create_collection("02 Marble Floor")
+    floor = get_or_create_collection("02 Checkerboard Floor")
     decoration = get_or_create_collection("03 Moldings and Relief")
     lighting = get_or_create_collection("04 Invisible Lighting")
     cameras = get_or_create_collection("05 Cameras")
@@ -1905,24 +1793,6 @@ def build_scene() -> None:
     # Short-side custom compositions.
     build_left_short_wall(materials, architecture, decoration)
     build_right_short_wall(materials, architecture, decoration)
-
-    # Central upper reliefs echo the reference image on both principal walls.
-    add_cartouche(
-        "FRONT",
-        center_u=0.0,
-        center_z=5.53,
-        scale=0.92,
-        materials=materials,
-        decoration=decoration,
-    )
-    add_cartouche(
-        "BACK",
-        center_u=0.0,
-        center_z=5.53,
-        scale=0.92,
-        materials=materials,
-        decoration=decoration,
-    )
 
     build_ceiling_moldings(materials, decoration)
     build_lighting(lighting)
