@@ -7,9 +7,7 @@
 
   export let space: ImmersiveSpace;
 
-  let shell: HTMLDivElement;
   let ready = false;
-  let fullscreen = false;
   let resetSignal = 0;
   let indexHref = withBase('/');
   $: indexHref = withBase(space.kind === 'room' ? '/rooms/' : '/halls/');
@@ -21,30 +19,11 @@
   function resetView() {
     resetSignal += 1;
   }
-
-  async function toggleFullscreen() {
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      } else {
-        await shell.requestFullscreen();
-      }
-    } catch {
-      // Fullscreen is optional; the scene remains usable without it.
-    }
-  }
-
-  function updateFullscreenState() {
-    fullscreen = document.fullscreenElement === shell;
-  }
 </script>
-
-<svelte:window onfullscreenchange={updateFullscreenState} />
 
 <div
   class:ready
   class="immersive-shell"
-  bind:this={shell}
   aria-label={`Interactive Cycles-rendered ${space.title}`}
   style={`--space-accent: ${space.accent}`}
 >
@@ -66,20 +45,7 @@
       <button class="immersive-control" type="button" onclick={resetView}>
         Reset view
       </button>
-      <button class="immersive-control" type="button" onclick={toggleFullscreen}>
-        {fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-      </button>
     </div>
-  </div>
-
-  <div class="immersive-caption">
-    <p class="immersive-kicker">{space.label}</p>
-    <h1>{space.title}</h1>
-    <p>
-      Drag to look around. Scroll or pinch to zoom.{space.interactiveUrl
-        ? ' Grab interactive objects.'
-        : ''}
-    </p>
   </div>
 
   <div
@@ -89,7 +55,7 @@
     aria-hidden={ready}
   >
     <span class="immersive-loader-mark" aria-hidden="true"></span>
-    <span>{ready ? 'Scene ready' : `Loading ${space.title.toLowerCase()}…`}</span>
+    <span>{ready ? 'Scene ready' : 'Loading scene…'}</span>
   </div>
 
   <noscript>
@@ -101,17 +67,13 @@
   .immersive-shell {
     position: relative;
     isolation: isolate;
-    width: 100%;
-    min-height: clamp(38rem, calc(100svh - var(--header-height)), 68rem);
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
     overflow: hidden;
     background: #020202;
     color: #eef7ef;
-  }
-
-  .immersive-shell:fullscreen {
-    width: 100vw;
-    height: 100vh;
-    min-height: 100vh;
   }
 
   .immersive-canvas,
@@ -198,45 +160,6 @@
     cursor: pointer;
   }
 
-  .immersive-caption {
-    position: absolute;
-    z-index: 3;
-    right: clamp(1rem, 4vw, 3rem);
-    bottom: clamp(1.2rem, 4vw, 3rem);
-    left: clamp(1rem, 4vw, 3rem);
-    max-width: 36rem;
-    pointer-events: none;
-    text-shadow: 0 0.18rem 1.1rem rgb(0 0 0 / 88%);
-  }
-
-  .immersive-caption h1,
-  .immersive-caption p {
-    margin: 0;
-  }
-
-  .immersive-caption h1 {
-    margin-block: 0.2rem 0.45rem;
-    font-family: var(--font-display);
-    font-size: clamp(2.2rem, 6vw, 5.4rem);
-    font-weight: 400;
-    letter-spacing: -0.045em;
-    line-height: 0.94;
-    text-wrap: balance;
-  }
-
-  .immersive-caption > p:last-child {
-    color: rgb(255 255 255 / 76%);
-    font-size: clamp(0.82rem, 1.6vw, 1rem);
-  }
-
-  .immersive-kicker {
-    color: color-mix(in srgb, var(--space-accent), white 68%);
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-  }
-
   .immersive-loader {
     position: absolute;
     z-index: 5;
@@ -302,11 +225,6 @@
       min-height: 2.35rem;
       padding-inline: 0.75rem;
       font-size: 0.7rem;
-    }
-
-    .immersive-caption {
-      bottom: 1.25rem;
-      max-width: calc(100% - 2rem);
     }
   }
 

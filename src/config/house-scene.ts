@@ -10,7 +10,8 @@ export type HouseWindowSceneId =
   | 'chess-rook'
   | 'clarinet'
   | 'ballroom'
-  | 'pickleball';
+  | 'pickleball'
+  | 'museum';
 
 export interface HouseWindowPaneAxis {
   /** Offset from the window glass rectangle's x or y coordinate. */
@@ -67,18 +68,18 @@ export interface HouseSceneConfig {
  * every responsive size; the browser scales the house and overlays together.
  */
 export const houseScene = {
-  enabled: false,
+  enabled: true,
   navigationEnabled: true,
   showHint: true,
   referenceWidth: 1800,
   referenceHeight: 1200,
   destinations: [
     {
-      id: 'collision-window',
-      label: 'Collision detection',
-      roomLabel: 'The Collision Lab',
-      description: 'A live collision-detection playground.',
-      href: '/collision-detection/',
+      id: 'red-room-window',
+      label: 'Red Room',
+      roomLabel: 'The Red Room',
+      description: 'An immersive fixed-viewpoint red tiled room.',
+      href: '/rooms/red/',
       scene: 'collision',
       sceneViewBox: { width: 100, height: 140, fit: 'slice' },
       geometry: {
@@ -105,11 +106,11 @@ export const houseScene = {
       },
     },
     {
-      id: 'chess-window',
-      label: 'Chess',
-      roomLabel: 'The Chess Room',
-      description: 'A full-screen chess board centered on a black rook.',
-      href: '/chess-board/',
+      id: 'green-room-window',
+      label: 'Green Room',
+      roomLabel: 'The Green Room',
+      description: 'An immersive fixed-viewpoint green tiled room.',
+      href: '/rooms/green/',
       scene: 'chess-rook',
       sceneViewBox: { width: 68, height: 124, fit: 'slice' },
       geometry: {
@@ -136,11 +137,11 @@ export const houseScene = {
       },
     },
     {
-      id: 'clarinet-window',
-      label: 'Resume',
-      roomLabel: 'The Clarinet Room',
-      description: 'A detailed clarinet display previewing the resume page.',
-      href: '/resume/',
+      id: 'orange-room-window',
+      label: 'Orange Room',
+      roomLabel: 'The Orange Room',
+      description: 'An immersive fixed-viewpoint orange tiled room.',
+      href: '/rooms/orange/',
       scene: 'clarinet',
       sceneViewBox: { width: 66, height: 124, fit: 'slice' },
       geometry: {
@@ -167,11 +168,11 @@ export const houseScene = {
       },
     },
     {
-      id: 'pickleball-window',
-      label: 'Pickleball',
-      roomLabel: 'The Pickleball Court',
-      description: 'A top-down pickleball court scene.',
-      href: '/pickleball/',
+      id: 'blue-room-window',
+      label: 'Blue Room',
+      roomLabel: 'The Blue Room',
+      description: 'An immersive fixed-viewpoint blue tiled room.',
+      href: '/rooms/blue/',
       scene: 'pickleball',
       sceneViewBox: { width: 66, height: 124, fit: 'slice' },
       geometry: {
@@ -198,11 +199,11 @@ export const houseScene = {
       },
     },
     {
-      id: 'contact-window',
-      label: 'Contact',
-      roomLabel: 'The Correspondence Room',
-      description: 'Get in touch about software, music, or collaboration.',
-      href: '/contact/',
+      id: 'purple-room-window',
+      label: 'Purple Room',
+      roomLabel: 'The Purple Room',
+      description: 'An immersive fixed-viewpoint purple tiled room.',
+      href: '/rooms/purple/',
       scene: 'contact',
       sceneViewBox: { width: 100, height: 140, fit: 'slice' },
       geometry: {
@@ -238,6 +239,42 @@ export const houseScene = {
       sceneViewBox: { width: 268, height: 162, fit: 'slice' },
       geometry: {
         x: 247,
+        y: 714,
+        width: 328,
+        height: 192,
+        kind: 'square',
+        columns: 8,
+        rows: 4,
+        mullionX: 5,
+        mullionY: 5,
+        paneColumns: [
+          { offset: 0, size: 38 },
+          { offset: 43, size: 37 },
+          { offset: 84, size: 37 },
+          { offset: 125, size: 37 },
+          { offset: 166, size: 37 },
+          { offset: 207, size: 37 },
+          { offset: 248, size: 37 },
+          { offset: 289, size: 39 },
+        ],
+        paneRows: [
+          { offset: 0, size: 46 },
+          { offset: 51, size: 43 },
+          { offset: 99, size: 43 },
+          { offset: 147, size: 45 },
+        ],
+      },
+    },
+    {
+      id: 'museum-window',
+      label: 'Museum',
+      roomLabel: 'The Museum',
+      description: 'An immersive museum hall on the ground floor.',
+      href: '/halls/museum/',
+      scene: 'museum',
+      sceneViewBox: { width: 268, height: 162, fit: 'slice' },
+      geometry: {
+        x: 1225,
         y: 714,
         width: 328,
         height: 192,

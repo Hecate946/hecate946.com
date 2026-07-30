@@ -5,6 +5,7 @@
   import ClarinetWindowScene from './scenes/ClarinetWindowScene.svelte';
   import CollisionWindowScene from './scenes/CollisionWindowScene.svelte';
   import BallroomWindowScene from './scenes/BallroomWindowScene.svelte';
+  import MuseumWindowScene from './scenes/MuseumWindowScene.svelte';
   import ContactWindowScene from './scenes/ContactWindowScene.svelte';
   import PickleballWindowScene from './scenes/PickleballWindowScene.svelte';
   import PortfolioWindowScene from './scenes/PortfolioWindowScene.svelte';
@@ -22,6 +23,8 @@
   <ClarinetWindowScene />
 {:else if scene === 'ballroom'}
   <BallroomWindowScene />
+{:else if scene === 'museum'}
+  <MuseumWindowScene />
 {:else if scene === 'pickleball'}
   <PickleballWindowScene />
 {:else if scene === 'portfolio'}
