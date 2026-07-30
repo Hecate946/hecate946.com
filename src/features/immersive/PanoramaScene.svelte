@@ -18,9 +18,9 @@
     Vector3,
     type PerspectiveCamera,
   } from 'three';
-  import type { ImmersiveSpace } from './catalog';
+  import type { ImmersiveModelLayer, ImmersiveSpace } from './catalog';
   import PanoramaCamera from './PanoramaCamera.svelte';
-  import InteractiveLayer from './InteractiveLayer.svelte';
+  import ModelLayer from './ModelLayer.svelte';
   import SpaceExtras from './SpaceExtras.svelte';
 
   export let space: ImmersiveSpace;
@@ -29,6 +29,7 @@
 
   const CAMERA_POSITION = space.cameraPosition;
   const PANORAMA_YAW_OFFSET = space.panoramaYaw;
+  const MODEL_LAYERS = space.modelLayers;
   const { renderer, scene, invalidate } = useThrelte();
 
   const previousExposure = renderer.toneMappingExposure;
@@ -62,9 +63,15 @@
   let displayTexture: Texture | null = null;
   let environmentTexture: Texture | null = null;
   let readySent = false;
-  let interactivePrepared = false;
   let interactiveScene: Object3D | null = null;
   let grabbableMeshes: Mesh[] = [];
+
+  const requiredAssetKeys = new Set([
+    ...(space.panoramaUrl ? ['panorama'] : []),
+    ...MODEL_LAYERS.map((layer) => `model:${layer.id}`),
+  ]);
+  const readyAssetKeys = new Set<string>();
+  const preparedLayerIds = new Set<string>();
 
   const raycaster = new Raycaster();
   const pointer = new Vector2();
@@ -83,9 +90,14 @@
     onReady();
   }
 
+  function markAssetReady(key: string) {
+    readyAssetKeys.add(key);
+    if (readyAssetKeys.size >= requiredAssetKeys.size) sendReady();
+  }
+
   function findGrabRoot(object: Object3D | null) {
     let current = object;
-    while (current && current !== interactiveScene) {
+    while (current) {
       if (current.name.startsWith('Grab_')) return current;
       current = current.parent;
     }
@@ -180,24 +192,29 @@
     event.stopImmediatePropagation();
   }
 
-  function prepareInteractive(sceneRoot: Object3D) {
-    if (interactivePrepared) return;
+  function prepareModelLayer(layer: ImmersiveModelLayer, sceneRoot: Object3D) {
+    if (preparedLayerIds.has(layer.id)) return;
+    preparedLayerIds.add(layer.id);
 
-    interactiveScene = sceneRoot;
-    grabbableMeshes = [];
-
-    interactiveScene.traverse((object) => {
+    sceneRoot.traverse((object) => {
       if (object instanceof Mesh) {
-        object.castShadow = true;
+        object.castShadow = layer.role === 'objects';
         object.receiveShadow = true;
-        if (findGrabRoot(object)) grabbableMeshes.push(object);
+
+        if (layer.role === 'objects' && findGrabRoot(object)) {
+          grabbableMeshes.push(object);
+        }
       }
 
       if (object instanceof Light) object.castShadow = true;
     });
 
-    interactivePrepared = true;
+    if (layer.role === 'objects' && !interactiveScene) {
+      interactiveScene = sceneRoot;
+    }
+
     invalidate();
+    markAssetReady(`model:${layer.id}`);
   }
 
   onMount(() => {
@@ -208,28 +225,32 @@
     canvas.addEventListener('pointerup', endObjectDrag, true);
     canvas.addEventListener('pointercancel', endObjectDrag, true);
 
-    new TextureLoader().load(
-      space.panoramaUrl!,
-      (texture) => {
-        texture.colorSpace = SRGBColorSpace;
-        displayTexture = texture;
-        panoramaMaterial.map = displayTexture;
-        panoramaMaterial.needsUpdate = true;
+    if (space.panoramaUrl) {
+      new TextureLoader().load(
+        space.panoramaUrl,
+        (texture) => {
+          texture.colorSpace = SRGBColorSpace;
+          displayTexture = texture;
+          panoramaMaterial.map = displayTexture;
+          panoramaMaterial.needsUpdate = true;
 
-        environmentTexture = texture.clone();
-        environmentTexture.colorSpace = SRGBColorSpace;
-        environmentTexture.mapping = EquirectangularReflectionMapping;
-        environmentTexture.needsUpdate = true;
-        scene.environment = environmentTexture;
+          environmentTexture = texture.clone();
+          environmentTexture.colorSpace = SRGBColorSpace;
+          environmentTexture.mapping = EquirectangularReflectionMapping;
+          environmentTexture.needsUpdate = true;
+          scene.environment = environmentTexture;
 
-        invalidate();
-        sendReady();
-      },
-      undefined,
-      () => {
-        sendReady();
-      },
-    );
+          invalidate();
+          markAssetReady('panorama');
+        },
+        undefined,
+        () => {
+          markAssetReady('panorama');
+        },
+      );
+    }
+
+    if (requiredAssetKeys.size === 0) sendReady();
 
     return () => {
       canvas.removeEventListener('pointerdown', beginObjectDrag, true);
@@ -261,10 +282,23 @@
   position={CAMERA_POSITION}
   ariaLabel={`Drag to look around. Scroll or pinch to zoom within ${space.title}.`}
 />
-<T is={panoramaMesh} />
 
-{#if space.interactiveUrl}
-  <InteractiveLayer url={space.interactiveUrl} onPrepared={prepareInteractive} />
+{#if space.panoramaUrl}
+  <T is={panoramaMesh} />
+{:else}
+  <!-- GLB-only halls need dependable web lighting because glTF does not export Blender area lights. -->
+  <T.AmbientLight intensity={0.9} />
+  <T.PointLight
+    position={[0, 4.6, 0]}
+    intensity={180}
+    distance={20}
+    decay={2}
+    castShadow
+  />
 {/if}
+
+{#each MODEL_LAYERS as layer (layer.id)}
+  <ModelLayer {layer} onPrepared={prepareModelLayer} />
+{/each}
 
 <SpaceExtras {space} {interactiveScene} />

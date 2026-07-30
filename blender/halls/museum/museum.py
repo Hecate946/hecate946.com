@@ -1,7 +1,7 @@
-"""Compatibility entry point for building the ballroom assets.
+"""Compatibility entry point for building the museum assets.
 
 The architectural source lives in ../shared/hall_shell.py. Run this file when
-only the shared shell and ballroom object file should be rebuilt.
+only the shared shell and museum object file should be rebuilt.
 """
 
 from pathlib import Path
@@ -67,7 +67,7 @@ runpy.run_path(
     str(HALLS_ROOT / "build_halls.py"),
     run_name="__main__",
     init_globals={
-        "HALL_TO_BUILD": "BALLROOM",
+        "HALL_TO_BUILD": "MUSEUM",
         "REBUILD_SHARED_SHELL": True,
         "HALLS_ROOT_OVERRIDE": str(HALLS_ROOT),
     },

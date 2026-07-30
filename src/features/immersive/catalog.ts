@@ -7,6 +7,17 @@ export type RoomSlug = (typeof roomSlugs)[number];
 export type HallSlug = (typeof hallSlugs)[number];
 export type ImmersiveSlug = RoomSlug | HallSlug;
 export type ImmersiveKind = 'room' | 'hall';
+export type ImmersiveModelRole = 'shell' | 'objects';
+export type Vector3Tuple = [number, number, number];
+
+export type ImmersiveModelLayer = {
+  id: string;
+  role: ImmersiveModelRole;
+  url: string;
+  position?: Vector3Tuple;
+  rotation?: Vector3Tuple;
+  scale?: Vector3Tuple;
+};
 
 export type ImmersiveSpace = {
   kind: ImmersiveKind;
@@ -16,12 +27,18 @@ export type ImmersiveSpace = {
   description: string;
   accent: string;
   panoramaUrl?: string;
-  interactiveUrl?: string;
+  modelLayers: ImmersiveModelLayer[];
   implemented: boolean;
-  cameraPosition: [number, number, number];
+  cameraPosition: Vector3Tuple;
   panoramaYaw: number;
   windowIndex?: number;
 };
+
+const objectsLayer = (id: string, url: string): ImmersiveModelLayer => ({
+  id,
+  role: 'objects',
+  url: withBase(url),
+});
 
 const room = (
   slug: RoomSlug,
@@ -37,12 +54,42 @@ const room = (
   title,
   description,
   accent,
-  panoramaUrl: withBase(`/scenes/rooms/${slug}/panorama.webp`),
-  interactiveUrl: withBase(`/scenes/rooms/${slug}/interactive.glb`),
+  panoramaUrl: withBase(`/scenes/rooms/${slug}/panorama.png`),
+  modelLayers: [objectsLayer(`${slug}-objects`, `/scenes/rooms/${slug}/interactive.glb`)],
   implemented: true,
   cameraPosition: [0, 1.65, 3.8],
   panoramaYaw: -Math.PI / 2,
   windowIndex,
+});
+
+const SHARED_HALL_SHELL_URL = withBase('/scenes/halls/shared/shell.glb');
+
+const hall = (
+  slug: HallSlug,
+  label: string,
+  title: string,
+  description: string,
+  accent: string,
+  mirrorShell: boolean,
+): ImmersiveSpace => ({
+  kind: 'hall',
+  slug,
+  label,
+  title,
+  description,
+  accent,
+  modelLayers: [
+    {
+      id: 'shared-hall-shell',
+      role: 'shell',
+      url: SHARED_HALL_SHELL_URL,
+      scale: mirrorShell ? [-1, 1, 1] : [1, 1, 1],
+    },
+    objectsLayer(`${slug}-objects`, `/scenes/halls/${slug}/objects.glb`),
+  ],
+  implemented: true,
+  cameraPosition: [0, 1.68, 0],
+  panoramaYaw: 0,
 });
 
 export const rooms = {
@@ -54,29 +101,22 @@ export const rooms = {
 } as const satisfies Record<RoomSlug, ImmersiveSpace>;
 
 export const halls = {
-  ballroom: {
-    kind: 'hall',
-    slug: 'ballroom',
-    label: 'Hall 001',
-    title: 'The Ballroom',
-    description: 'A panoramic neoclassical ballroom with polished marble flooring.',
-    accent: '#7d6848',
-    panoramaUrl: withBase('/scenes/halls/ballroom/panorama.webp'),
-    implemented: true,
-    cameraPosition: [0, 1.68, 0],
-    panoramaYaw: -Math.PI / 2,
-  },
-  museum: {
-    kind: 'hall',
-    slug: 'museum',
-    label: 'Hall 002',
-    title: 'The Museum',
-    description: 'A future immersive museum hall.',
-    accent: '#59606d',
-    implemented: false,
-    cameraPosition: [0, 1.68, 0],
-    panoramaYaw: -Math.PI / 2,
-  },
+  ballroom: hall(
+    'ballroom',
+    'Hall 001',
+    'The Ballroom',
+    'A mirrored instance of the shared neoclassical hall with ballroom-specific objects.',
+    '#7d6848',
+    true,
+  ),
+  museum: hall(
+    'museum',
+    'Hall 002',
+    'The Museum',
+    'The canonical shared neoclassical hall with museum-specific objects.',
+    '#59606d',
+    false,
+  ),
 } as const satisfies Record<HallSlug, ImmersiveSpace>;
 
 export const secondStoryRooms = roomSlugs.map((slug) => rooms[slug]);
