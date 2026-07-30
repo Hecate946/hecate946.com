@@ -20,7 +20,7 @@ import bpy
 from mathutils import Vector
 
 
-ROOM_BUILDER_VERSION = "2026-07-30-v6-public-shared-assets"
+ROOM_BUILDER_VERSION = "2026-07-30-v7-corner-seam-dimmer-lighting"
 
 ROOM_WIDTH = 6.8
 ROOM_DEPTH = 10.0
@@ -43,9 +43,10 @@ DOOR_WIDTH = 1.15
 DOOR_HEIGHT = 2.85
 DOOR_DEPTH = 0.05
 
-AREA_LIGHT_POWER = 2200.0
+AREA_LIGHT_POWER = 1400.0
 AREA_LIGHT_SIZE = 2.8
 AREA_LIGHT_LOCATION = (0.0, 0.0, ROOM_HEIGHT - 0.28)
+WORLD_LIGHT_STRENGTH = 0.24
 
 
 @dataclass(frozen=True)
@@ -336,6 +337,71 @@ def aim(obj, target) -> None:
     ).to_track_quat("-Z", "Y").to_euler()
 
 
+def normalize_angle(angle: float) -> float:
+    """Wrap an angle to Blender/Three's conventional [-pi, pi) range."""
+    return (angle + math.pi) % (2.0 * math.pi) - math.pi
+
+
+def horizontal_yaw(direction: Vector) -> float:
+    """Return yaw measured from Blender +Y toward +X."""
+    return math.atan2(direction.x, direction.y)
+
+
+def choose_panorama_seam_corner(camera_location) -> tuple[str, Vector, float]:
+    """Choose the room corner that produces the least-visible panorama seam.
+
+    The default equirectangular seam points directly behind a camera facing
+    Blender +Y. We evaluate all four room corners, choose the one requiring
+    the smallest camera rotation, then use physical distance as the tie-break.
+    A final stable right-side preference handles perfectly centered rooms.
+    """
+    camera_point = Vector(camera_location)
+    default_seam_yaw = math.pi  # Blender -Y, behind the original +Y view.
+    corners = (
+        ("entry-right", Vector((ROOM_WIDTH / 2, -ROOM_DEPTH / 2, camera_point.z))),
+        ("entry-left", Vector((-ROOM_WIDTH / 2, -ROOM_DEPTH / 2, camera_point.z))),
+        ("back-right", Vector((ROOM_WIDTH / 2, ROOM_DEPTH / 2, camera_point.z))),
+        ("back-left", Vector((-ROOM_WIDTH / 2, ROOM_DEPTH / 2, camera_point.z))),
+    )
+
+    candidates = []
+    for order, (name, corner) in enumerate(corners):
+        direction = corner - camera_point
+        direction.z = 0.0
+        corner_yaw = horizontal_yaw(direction)
+        rotation_required = abs(normalize_angle(corner_yaw - default_seam_yaw))
+        candidates.append(
+            (
+                round(rotation_required, 12),
+                round(direction.length_squared, 12),
+                order,
+                name,
+                corner,
+                corner_yaw,
+            )
+        )
+
+    _, _, _, name, corner, seam_yaw = min(candidates, key=lambda item: item[:3])
+    return name, corner, seam_yaw
+
+
+def orient_camera_seam_to_corner(camera) -> tuple[str, Vector, float, float]:
+    """Rotate the panorama camera so its wrap seam passes through a corner.
+
+    Returns the corner name, corner location, Blender camera-forward yaw, and
+    the matching Three.js panorama-sphere yaw needed to preserve alignment.
+    """
+    corner_name, corner, seam_yaw = choose_panorama_seam_corner(camera.location)
+    forward_yaw = normalize_angle(seam_yaw - math.pi)
+    forward_direction = Vector((math.sin(forward_yaw), math.cos(forward_yaw), 0.0))
+    aim(camera, camera.location + forward_direction)
+
+    # The existing +Y-centered render uses -pi/2 in Three.js. Rotating the
+    # Blender camera by forward_yaw requires the opposite sphere compensation.
+    website_panorama_yaw = normalize_angle(-math.pi / 2.0 - forward_yaw)
+    return corner_name, corner, forward_yaw, website_panorama_yaw
+
+
 def reset_scene() -> bpy.types.Scene:
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
@@ -387,7 +453,7 @@ def configure_render(scene: bpy.types.Scene, settings: RenderSettings, output_fi
     world.use_nodes = True
     background = world.node_tree.nodes.get("Background")
     background.inputs["Color"].default_value = (0.09, 0.09, 0.09, 1.0)
-    background.inputs["Strength"].default_value = 0.45
+    background.inputs["Strength"].default_value = WORLD_LIGHT_STRENGTH
 
 
 def load_shared_asset_library(blender_root: Path):
@@ -760,14 +826,23 @@ def build_room(
                 "This Blender build does not expose an equirectangular panorama setting."
             )
 
-    aim(
-        camera,
-        (
-            CAMERA_LOCATION[0],
-            CAMERA_LOCATION[1] + 1.0,
-            CAMERA_LOCATION[2],
-        ),
+    seam_corner_name, seam_corner, camera_forward_yaw, website_panorama_yaw = (
+        orient_camera_seam_to_corner(camera)
     )
+    camera["panorama_seam_corner"] = seam_corner_name
+    camera["panorama_forward_yaw"] = camera_forward_yaw
+    camera["website_panorama_yaw"] = website_panorama_yaw
+    scene["panorama_seam_corner"] = seam_corner_name
+    scene["website_panorama_yaw"] = website_panorama_yaw
+    interaction_origin["panorama_seam_corner"] = seam_corner_name
+    interaction_origin["website_panorama_yaw"] = website_panorama_yaw
+
+    print(
+        "Panorama seam:",
+        seam_corner_name,
+        tuple(round(value, 4) for value in seam_corner),
+    )
+    print(f"Website panorama yaw: {website_panorama_yaw:.12f} radians")
 
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_file))
 

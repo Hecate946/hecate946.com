@@ -33,19 +33,19 @@ from mathutils import Vector
 
 INCH = 0.0254
 
-# A 22-inch tournament-style chessboard leaves exactly six inches of table on
-# every side. These values preserve the tall, nearly square proportions chosen
-# from the reference image.
+# The larger 42-inch square top gives a 22-inch tournament chessboard ten
+# inches of breathing room on every side. The slightly increased height and
+# heavier structural members preserve the substantial, monolithic silhouette.
 CHESSBOARD_SIZE = 22.0 * INCH
-TABLE_WIDTH = 34.0 * INCH
-TABLE_DEPTH = 34.0 * INCH
-TABLE_HEIGHT = 31.5 * INCH
+TABLE_WIDTH = 42.0 * INCH
+TABLE_DEPTH = 42.0 * INCH
+TABLE_HEIGHT = 34.0 * INCH
 
-TOP_THICKNESS = 2.75 * INCH
-LEG_THICKNESS = 6.75 * INCH
-APRON_HEIGHT = 6.0 * INCH
-APRON_THICKNESS = 2.25 * INCH
-EDGE_BEVEL = 0.20 * INCH
+TOP_THICKNESS = 3.0 * INCH
+LEG_THICKNESS = 7.5 * INCH
+APRON_HEIGHT = 6.5 * INCH
+APRON_THICKNESS = 2.5 * INCH
+EDGE_BEVEL = 0.22 * INCH
 
 # Room-local placement. The front edge faces the panorama camera at negative Y.
 TABLE_LOCATION = (0.0, 0.0, 0.0)
@@ -163,15 +163,17 @@ def _create_blackwood_texture_set(size: int = TEXTURE_SIZE):
     height = 0.56 + fibers * 0.145 + pores * 0.052 + fine * 0.010
     height = np.clip(height, 0.0, 1.0)
 
-    # Read as black first; the warm undertone and grain emerge only in light.
-    luminance = 0.014 + height * 0.034
+    # Neutral, true black rather than dark brown. The restrained grayscale
+    # variation keeps the wood grain readable under highlights without giving
+    # the table a warm tint.
+    luminance = 0.008 + height * 0.020
     base = np.empty((size, size, 4), dtype=np.float32)
-    base[..., 0] = luminance * 1.00
-    base[..., 1] = luminance * 0.78
-    base[..., 2] = luminance * 0.59
+    base[..., 0] = luminance
+    base[..., 1] = luminance
+    base[..., 2] = luminance
     base[..., 3] = 1.0
 
-    rough = np.clip(0.205 + (1.0 - height) * 0.145 + pores * 0.018, 0.18, 0.40)
+    rough = np.clip(0.185 + (1.0 - height) * 0.125 + pores * 0.015, 0.16, 0.34)
     roughness = np.empty((size, size, 4), dtype=np.float32)
     roughness[..., 0] = rough
     roughness[..., 1] = rough
@@ -205,7 +207,7 @@ def _create_blackwood_material() -> bpy.types.Material:
 
     material = bpy.data.materials.new("GreenTable_AfricanBlackwood")
     material.use_nodes = True
-    material.diffuse_color = (0.012, 0.009, 0.006, 1.0)
+    material.diffuse_color = (0.006, 0.006, 0.006, 1.0)
 
     nodes = material.node_tree.nodes
     links = material.node_tree.links
@@ -216,9 +218,9 @@ def _create_blackwood_material() -> bpy.types.Material:
 
     bsdf = nodes.new("ShaderNodeBsdfPrincipled")
     bsdf.location = (420, 0)
-    _set_socket(bsdf, "Roughness", 0.27)
-    _set_socket(bsdf, ("Coat Weight", "Clearcoat"), 0.28)
-    _set_socket(bsdf, ("Coat Roughness", "Clearcoat Roughness"), 0.10)
+    _set_socket(bsdf, "Roughness", 0.23)
+    _set_socket(bsdf, ("Coat Weight", "Clearcoat"), 0.34)
+    _set_socket(bsdf, ("Coat Roughness", "Clearcoat Roughness"), 0.085)
     _set_socket(bsdf, ("Specular IOR Level", "Specular"), 0.42)
 
     base_texture = nodes.new("ShaderNodeTexImage")

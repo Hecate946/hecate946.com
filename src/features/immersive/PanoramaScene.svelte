@@ -196,7 +196,14 @@
     if (preparedLayerIds.has(layer.id)) return;
     preparedLayerIds.add(layer.id);
 
+    let generatedPanoramaYaw: number | null = null;
+
     sceneRoot.traverse((object) => {
+      const metadataYaw = object.userData?.website_panorama_yaw;
+      if (typeof metadataYaw === 'number' && Number.isFinite(metadataYaw)) {
+        generatedPanoramaYaw = metadataYaw;
+      }
+
       if (object instanceof Mesh) {
         object.castShadow = layer.role === 'objects';
         object.receiveShadow = true;
@@ -208,6 +215,10 @@
 
       if (object instanceof Light) object.castShadow = true;
     });
+
+    if (layer.role === 'objects' && generatedPanoramaYaw !== null) {
+      panoramaMesh.rotation.y = generatedPanoramaYaw;
+    }
 
     if (layer.role === 'objects' && !interactiveScene) {
       interactiveScene = sceneRoot;

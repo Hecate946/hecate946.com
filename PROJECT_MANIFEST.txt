@@ -1,8 +1,8 @@
 HECATE946 SOURCE PACKAGE
-Generated: 2026-07-30T18:11:07.625Z
+Generated: 2026-07-30T18:20:44.333Z
 Mode: lean source
-Git branch: unavailable
-Git commit: unavailable
+Git branch: main
+Git commit: 74b9bf37719d2e77ed87d1dd82bbe9066e9e03b6
 
 GIT STATUS
 clean or unavailable
@@ -15,7 +15,7 @@ INCLUDED FILES (214)
            3  .nvmrc
           46  .prettierignore
          297  .prettierrc.mjs
-       11143  PROJECT_MANIFEST.txt
+       11187  PROJECT_MANIFEST.txt
         1161  ROOM-FIX-V3.txt
          262  astro.config.mjs
         1714  blender/assets/README.md
@@ -223,7 +223,90 @@ INCLUDED FILES (214)
           19  svelte.config.js
          187  tsconfig.json
 
-OMITTED FILES (0)
+OMITTED FILES (83)
+         101  README.md  [markdown intentionally excluded]  sha256:7a49a1d3528f7416fdef79ab3c5cc23d985e2506424f43fb1cc0d3b6bfb1a89c
+        1224  blender/halls/ballroom/__pycache__/unique.cpython-313.pyc  [generated/dependency directory]  sha256:bd0034b4c2a1e84fc7cabf2a7ee7bcceb7bcf12ee978300e18cb32430a4bb8ea
+     2168112  blender/halls/ballroom/ballroom-objects.blend  [generated or heavyweight binary]  sha256:feaf27a8d4aefb0b31f2f9a533daba45ff4f4747f22e815d2fa57efd23250329
+     1844684  blender/halls/ballroom/ballroom-objects.blend1  [generated or heavyweight binary]  sha256:ea2c3c0850d17e2d5f3ed749c85d8133ee65da018d2ceb31ce419422c678f3b3
+    12349552  blender/halls/ballroom/ballroom-objects.glb  [generated or heavyweight binary]  sha256:106045ee7336ddffd6f8a6c2da0637b6d076e5c8b52d2dc40b720b78b0319d31
+     1101819  blender/halls/ballroom/ballroom.blend  [generated or heavyweight binary]  sha256:43d421f2c97ffe639dc9abc73947645092def70007641c45c5fb27701b5f4733
+      930562  blender/halls/ballroom/ballroom.blend1  [generated or heavyweight binary]  sha256:cbd2d33995a91abaaa037977382c4aa6de231a5240055c59a8471e45a975e415
+    10138992  blender/halls/ballroom/ballroom.glb  [generated or heavyweight binary]  sha256:dac61b6da2418d991e59f32274d663e9490c93bd087385a7811007ca52032c6c
+    27458586  blender/halls/ballroom/ballroom.png  [Blender output; Python source retained]  sha256:526eb1da20488eec3a55d0e21bbfc41e761a14d0bb4f134ff09ab8cac27f1221
+           0  blender/halls/museum/.gitkeep  [Blender output; Python source retained]  sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+         745  blender/halls/museum/__pycache__/unique.cpython-313.pyc  [generated/dependency directory]  sha256:e881d25695efff833c358208edfcf13187e504544bcf41b2df96ef2146a031b5
+     2169777  blender/halls/museum/museum-objects.blend  [generated or heavyweight binary]  sha256:ffb206589f5242ad9ca3ec03eb510e9a634efa9b4fc680d87a1201d87aadea0c
+     1843594  blender/halls/museum/museum-objects.blend1  [generated or heavyweight binary]  sha256:0e0edc70856ca7be58d4ee165191f575f4d933ecbce70e12de506d5a4be40b89
+    12349500  blender/halls/museum/museum-objects.glb  [generated or heavyweight binary]  sha256:68216a50335fb5e3bd7ece795966ff2c1e63729b574c388202ac677150d09bcb
+       60380  blender/halls/shared/__pycache__/hall_shell.cpython-313.pyc  [generated/dependency directory]  sha256:56337d990959c658f4f3e05b152bd028faf07809966ab531f204ef21948f30e4
+     1180913  blender/halls/shared/hall-shell.blend  [generated or heavyweight binary]  sha256:9003a98f4d11f1e138d8579912479eff0f0db22e8c9eb09a72fba93d80e60dac
+      997038  blender/halls/shared/hall-shell.blend1  [generated or heavyweight binary]  sha256:c0871ce5a4aaed81e09de4d89ba2de7367e0045b2f7f07eb896bc2433f09b8ba
+    11932616  blender/halls/shared/hall-shell.glb  [generated or heavyweight binary]  sha256:ca0c8f24b20f750de9d723c5ef5ad08a1c301f912662f596a523dde46510d0ef
+      919512  blender/house/house.blend  [generated or heavyweight binary]  sha256:dc66ecf2b405f348ba1b892530ff68c63ff14aad8c5255fe11ebfb1d7e45de83
+      914715  blender/house/house.blend1  [generated or heavyweight binary]  sha256:00cce947458c95fe547c6ded8cb1d103b950ed28278311d3f9754ba303693c1b
+     1808009  blender/house/house.png  [Blender output; Python source retained]  sha256:66afaf97d6128fbd47250b7d286e4ced700f5728a2a3fe91bfc024b6422e15a9
+        1111  blender/rooms/blue/__pycache__/unique.cpython-313.pyc  [generated/dependency directory]  sha256:efb186427b8e1904ee8e615ff2c7487c0bf1f36b092e8e835239ffc2f3ca2d03
+    54043364  blender/rooms/blue/blue-room-interactive.glb  [generated or heavyweight binary]  sha256:2812754eb014cd9c68e8630740050c4ca232d7625b5df94ea54c5871390f5642
+    19975332  blender/rooms/blue/blue-room-panorama.png  [Blender output; Python source retained]  sha256:336ef24cce4ddaf689bb13fa4e9ed91d98f97b84a521ce9943bf1e88bc5e39e6
+     1257661  blender/rooms/blue/blue-room.blend  [generated or heavyweight binary]  sha256:1249f201eb47ef8c71038dece1a1a8314f9e4098770c03cf994dc654ff36b061
+     1257661  blender/rooms/blue/blue-room.blend1  [generated or heavyweight binary]  sha256:1249f201eb47ef8c71038dece1a1a8314f9e4098770c03cf994dc654ff36b061
+       20458  blender/rooms/green/__pycache__/unique.cpython-313.pyc  [generated/dependency directory]  sha256:47466a6897c65e80eb432f5d6b74bb02da065690ac4187e05d27486bd87f1daf
+     2489836  blender/rooms/green/green-room-interactive.glb  [generated or heavyweight binary]  sha256:598afe38fc4144bc6d54933cf705d19c637396494ecc2863a6c2e7a814b76db3
+     2334752  blender/rooms/green/green-room-panorama.png  [Blender output; Python source retained]  sha256:657fc01703ac8bb603bb3ed5f7cc654e6c99c8c178b1000ce1813bbd06ad447c
+      881780  blender/rooms/green/green-room.blend  [generated or heavyweight binary]  sha256:6bb882d226021cc81d7029056cfad8a4e34e0cd0aac056a79a6d77ba5e825e3c
+      881894  blender/rooms/green/green-room.blend1  [generated or heavyweight binary]  sha256:763fd427366a19c2c1f433900dcd7a2b9cf7807f65ed5f00a2594f5910bf7f98
+        1121  blender/rooms/orange/__pycache__/unique.cpython-313.pyc  [generated/dependency directory]  sha256:b120f2569ef21971ae7b4e4103a41386d7828172055c8b98c3fd356bf00ee186
+    54043372  blender/rooms/orange/orange-room-interactive.glb  [generated or heavyweight binary]  sha256:c0f0c8f591a352711a3ef73cc9150cd96ac152d936845db8f0920370e331cabd
+    20522634  blender/rooms/orange/orange-room-panorama.png  [Blender output; Python source retained]  sha256:b2b34adec9b74904ac6cdf76cedcc7f70f1ff0ba3547d3c47b949b9dc32d4d2d
+     1257686  blender/rooms/orange/orange-room.blend  [generated or heavyweight binary]  sha256:ff5a69ca700b112adbc9a7bad4f43970aa17bd633abb3a55ae654eb2046db272
+     1257686  blender/rooms/orange/orange-room.blend1  [generated or heavyweight binary]  sha256:ff5a69ca700b112adbc9a7bad4f43970aa17bd633abb3a55ae654eb2046db272
+        1121  blender/rooms/purple/__pycache__/unique.cpython-313.pyc  [generated/dependency directory]  sha256:d97ed9d21f90a724b93f0577f580846e5a33da5de9c8298905ce6cc75ae0a4ac
+    54043372  blender/rooms/purple/purple-room-interactive.glb  [generated or heavyweight binary]  sha256:8a2cd5d78a7d6c2e6b1f407e9861f10539ad221d3b0325bb3d53cbddc146056e
+    19193848  blender/rooms/purple/purple-room-panorama.png  [Blender output; Python source retained]  sha256:6372aed28adb082467f1c27cfeef828c53df4754ad13ec68435df47b722d72c7
+     1257697  blender/rooms/purple/purple-room.blend  [generated or heavyweight binary]  sha256:5b02d08a0a5344c3a0a7dd6878fdf5c28de279b8ef323ba878365933500a98a8
+     1257697  blender/rooms/purple/purple-room.blend1  [generated or heavyweight binary]  sha256:5b02d08a0a5344c3a0a7dd6878fdf5c28de279b8ef323ba878365933500a98a8
+        1106  blender/rooms/red/__pycache__/unique.cpython-313.pyc  [generated/dependency directory]  sha256:65e262154d5ab942296d071501c925c6897f8e1bced6737013bb2133dfc036a6
+    54043388  blender/rooms/red/red-room-interactive.glb  [generated or heavyweight binary]  sha256:463800fdd6507f82c17244fea199e21b061baffc05cbcb294630f0457cb19ed3
+     2478471  blender/rooms/red/red-room-panorama.png  [Blender output; Python source retained]  sha256:d81e34791003f4285bdbeb8d2dcb13c2373620afdaee441108653531d67f523f
+     1258817  blender/rooms/red/red-room.blend  [generated or heavyweight binary]  sha256:fd8d40df58633dad23f3da100f66d119e3883b51ba22dcea5bd33b2151941421
+     1259118  blender/rooms/red/red-room.blend1  [generated or heavyweight binary]  sha256:e1c8865cd30e1013a4b86058299a8c75461cd4c827f2d59ee06a1eb20a8754be
+         298  blender/rooms/shared/__pycache__/__init__.cpython-313.pyc  [generated/dependency directory]  sha256:1a382d5592c2168ad754bea163dbb3ec4eeae4ba65e0d27b1c53756d824adbfd
+       35811  blender/rooms/shared/__pycache__/room_builder.cpython-313.pyc  [generated/dependency directory]  sha256:0d8bdda6be9ef819bc5ab9fb875d32fbce63e598bac568558a208bc102da3f3a
+       10652  blender/shared/__pycache__/asset_library.cpython-313.pyc  [generated/dependency directory]  sha256:8ec5ee610b205730b3d0392c3587dabfcfb45d5336c0ffb5044cf39e9c54b04d
+     2242195  public/images/pig.png  [unreferenced asset exceeds 524288 bytes]  sha256:9560f5a12f2d447ee9b73326a68c8a3b7d580363482125056470471342d3191d
+     1768601  public/images/projects/keycad.png  [larger duplicate with WebP/AVIF sibling]  sha256:68e74ac236f06c85dc6ffaaa8cc28ba59de6405d13a522179e691c8e31753e7f
+     2149696  public/images/projects/neutra.png  [larger duplicate with WebP/AVIF sibling]  sha256:ef235434fea45c9a99a40a97d1d8b0b738c0e832192bf60694edf9bb6bf63adb
+     1979160  public/images/projects/portfolio.png  [larger duplicate with WebP/AVIF sibling]  sha256:a929b86acf1b2812f77da6ae06a4f9ff4dfbeb9894dad3b25f3b8ae7f08c07b6
+     2255360  public/images/projects/sunset.png  [larger duplicate with WebP/AVIF sibling]  sha256:e953764606e8de0f8426257ccb017cfafddc042bd890ab434802ebf163a2222d
+    12349552  public/scenes/halls/ballroom/objects.glb  [generated or heavyweight binary]  sha256:106045ee7336ddffd6f8a6c2da0637b6d076e5c8b52d2dc40b720b78b0319d31
+    10138992  public/scenes/halls/ballroom/scene.glb  [generated or heavyweight binary]  sha256:dac61b6da2418d991e59f32274d663e9490c93bd087385a7811007ca52032c6c
+    12349500  public/scenes/halls/museum/objects.glb  [generated or heavyweight binary]  sha256:68216a50335fb5e3bd7ece795966ff2c1e63729b574c388202ac677150d09bcb
+    11932616  public/scenes/halls/shared/shell.glb  [generated or heavyweight binary]  sha256:ca0c8f24b20f750de9d723c5ef5ad08a1c301f912662f596a523dde46510d0ef
+     1041511  public/scenes/house/versions/house-outline-v1.png  [unreferenced asset exceeds 524288 bytes]  sha256:22dba2a990d831c9b5212d55b16fda20f2d332ac84ef5470fa842f1961731a67
+     1397456  public/scenes/house/versions/house-white-low-roof-v2.png  [unreferenced asset exceeds 524288 bytes]  sha256:af7b1da89a4b6cb358409dce929ff604e8dbba179d1e6e9f6a75b19c2fe154fe
+     3727043  public/scenes/house/versions/house-white-low-roof-v2.svg  [unreferenced asset exceeds 524288 bytes]  sha256:02945c5f1ef3815a90c92c5ed57433832a7cce293c79609bd62c76300485fd96
+     1393378  public/scenes/house/versions/house-white-narrow-steps-v4.png  [unreferenced asset exceeds 524288 bytes]  sha256:94de6c3e559fa28913e999d5ad9ff89a1aa46c17c258ac2fbd75600135db5e00
+     1858275  public/scenes/house/versions/house-white-narrow-steps-v4.svg  [unreferenced asset exceeds 524288 bytes]  sha256:8651fd97f48b777e525f0a509a9e4185f686c88296a0b7275e40aa848b32de4a
+     2453344  public/scenes/house/versions/house-white-raised-roof-v3.png  [unreferenced asset exceeds 524288 bytes]  sha256:0d480412e864160407505eeb72bdd58308bd73c155a05b568e3ba688a8ea847f
+     3271603  public/scenes/house/versions/house-white-raised-roof-v3.svg  [unreferenced asset exceeds 524288 bytes]  sha256:614dff142f243fa8d9b8649aa0dd7e64f4ce6b1376a931ad114f4536a6b8d37d
+     1188194  public/scenes/house/versions/neoclassical-house-blender-v10.png  [larger duplicate with WebP/AVIF sibling]  sha256:a97f612f0fee989a66ab685a27eb2f1fd536481906d0419a336774ad178bffb2
+     2573159  public/scenes/house/windows/picklabell-court.png  [unreferenced asset exceeds 524288 bytes]  sha256:7123bae77b5d8dbb2196262892073c6b47870faaaa850ac28fcaf4ea1ec247bc
+    54043364  public/scenes/rooms/blue/interactive.glb  [generated or heavyweight binary]  sha256:2812754eb014cd9c68e8630740050c4ca232d7625b5df94ea54c5871390f5642
+    19975332  public/scenes/rooms/blue/panorama.png  [larger duplicate with WebP/AVIF sibling]  sha256:336ef24cce4ddaf689bb13fa4e9ed91d98f97b84a521ce9943bf1e88bc5e39e6
+      764228  public/scenes/rooms/blue/panorama.webp  [unreferenced asset exceeds 524288 bytes]  sha256:161d061d536503e2218d01687e41c4e248fed16f5345a470e018bd00cf4d9097
+     2489836  public/scenes/rooms/green/interactive.glb  [generated or heavyweight binary]  sha256:598afe38fc4144bc6d54933cf705d19c637396494ecc2863a6c2e7a814b76db3
+     2334752  public/scenes/rooms/green/panorama.png  [larger duplicate with WebP/AVIF sibling]  sha256:657fc01703ac8bb603bb3ed5f7cc654e6c99c8c178b1000ce1813bbd06ad447c
+      636616  public/scenes/rooms/green/panorama.webp  [unreferenced asset exceeds 524288 bytes]  sha256:eff6a36d15d7abb672ed9e0219dab53b4e0ec9d0b2a3ccdd5a6df4d9cd9aec05
+    54043372  public/scenes/rooms/orange/interactive.glb  [generated or heavyweight binary]  sha256:c0f0c8f591a352711a3ef73cc9150cd96ac152d936845db8f0920370e331cabd
+    20522634  public/scenes/rooms/orange/panorama.png  [larger duplicate with WebP/AVIF sibling]  sha256:b2b34adec9b74904ac6cdf76cedcc7f70f1ff0ba3547d3c47b949b9dc32d4d2d
+      832642  public/scenes/rooms/orange/panorama.webp  [unreferenced asset exceeds 524288 bytes]  sha256:22ec3b54d5e1c034fccc420bd376c3db1c9e445fc29da2641e04285c076991f3
+    54043372  public/scenes/rooms/purple/interactive.glb  [generated or heavyweight binary]  sha256:8a2cd5d78a7d6c2e6b1f407e9861f10539ad221d3b0325bb3d53cbddc146056e
+    19193848  public/scenes/rooms/purple/panorama.png  [larger duplicate with WebP/AVIF sibling]  sha256:6372aed28adb082467f1c27cfeef828c53df4754ad13ec68435df47b722d72c7
+      634924  public/scenes/rooms/purple/panorama.webp  [unreferenced asset exceeds 524288 bytes]  sha256:a335340fef8fea42aae9b7e43d32ee0afa2e90a06a184b83561b11e60f3f21e7
+    54043388  public/scenes/rooms/red/interactive.glb  [generated or heavyweight binary]  sha256:463800fdd6507f82c17244fea199e21b061baffc05cbcb294630f0457cb19ed3
+     2478471  public/scenes/rooms/red/panorama.png  [larger duplicate with WebP/AVIF sibling]  sha256:d81e34791003f4285bdbeb8d2dcb13c2373620afdaee441108653531d67f523f
+      882608  public/scenes/rooms/red/panorama.webp  [unreferenced asset exceeds 524288 bytes]  sha256:0bb845473f191a5ee58011ec6921faf3cf5fc4d5d67dffebed7d975091027cc8
+        1907  src/styles/tokens.css  [secret or environment file]  sha256:2f7550f8c098e73338b9ef103b76e0c66cdbba5fccc533ef7cb90a202bba21a6
 
 NOTES
 - Markdown, secrets, dependencies, build output, Git history, Blender binaries, GLBs, and rendered panoramas are intentionally excluded.
