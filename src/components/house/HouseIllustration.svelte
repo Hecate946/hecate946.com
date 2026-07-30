@@ -9,12 +9,12 @@
   export let debugWindows = false;
   export let scenesEnabled = true;
 
-  const imageHref = withBase('/images/house/house-shell.webp');
+  const imageHref = withBase('/scenes/house/shell.png');
 </script>
 
 <svg
   class="house-illustration"
-  viewBox="0 0 1800 1200"
+  viewBox="0 0 1536 1024"
   role="img"
   aria-labelledby="house-illustration-title house-illustration-description"
   preserveAspectRatio="xMidYMid meet"
@@ -23,16 +23,22 @@
 >
   <title id="house-illustration-title">Cyrus's interactive house</title>
   <desc id="house-illustration-description">
-    A transparent cream neoclassical house with a dark slate roof whose windows contain interactive miniature scenes.
+    A transparent white neoclassical house whose windows contain interactive miniature scenes.
   </desc>
+
+  <defs>
+    <filter id="house-hover-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" />
+    </filter>
+  </defs>
 
   <image
     class="house-illustration__reference"
     href={imageHref}
     x="0"
     y="0"
-    width="1800"
-    height="1200"
+    width="1536"
+    height="1024"
     preserveAspectRatio="none"
     pointer-events="none"
   />

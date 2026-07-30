@@ -4,7 +4,7 @@
   import ChessRookWindowScene from './scenes/ChessRookWindowScene.svelte';
   import ClarinetWindowScene from './scenes/ClarinetWindowScene.svelte';
   import CollisionWindowScene from './scenes/CollisionWindowScene.svelte';
-  import ConcertHallWindowScene from './scenes/ConcertHallWindowScene.svelte';
+  import BallroomWindowScene from './scenes/BallroomWindowScene.svelte';
   import ContactWindowScene from './scenes/ContactWindowScene.svelte';
   import PickleballWindowScene from './scenes/PickleballWindowScene.svelte';
   import PortfolioWindowScene from './scenes/PortfolioWindowScene.svelte';
@@ -20,8 +20,8 @@
   <ChessRookWindowScene />
 {:else if scene === 'clarinet'}
   <ClarinetWindowScene />
-{:else if scene === 'concert-hall'}
-  <ConcertHallWindowScene />
+{:else if scene === 'ballroom'}
+  <BallroomWindowScene />
 {:else if scene === 'pickleball'}
   <PickleballWindowScene />
 {:else if scene === 'portfolio'}

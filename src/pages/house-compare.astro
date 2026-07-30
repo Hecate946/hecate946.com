@@ -5,7 +5,7 @@ import HousePreviewLayout from '@/layouts/HousePreviewLayout.astro';
 import { withBase } from '@/lib/paths';
 import '@/styles/house-scene.css';
 
-const pngSrc = withBase('/images/house/house-white-current.png');
+const pngSrc = withBase('/scenes/house/shell.png');
 const destinations = houseScene.destinations.map((destination) => ({
   ...destination,
   href: withBase(destination.href),
@@ -22,13 +22,13 @@ const destinations = houseScene.destinations.map((destination) => ({
       <figcaption>PNG reference</figcaption>
       <img
         src={pngSrc}
-        alt="Blender PNG master of the white neoclassical house."
+        alt="Frozen PNG reference of the white neoclassical house."
         draggable="false"
       />
     </figure>
 
     <figure class="house-comparison__panel">
-      <figcaption>Interactive window overlay</figcaption>
+      <figcaption>Live Svelte SVG</figcaption>
       <div class="house-preview-art house-preview-art--svg house-comparison__svg-panel">
         <HouseIllustration {destinations} navigationEnabled={false} />
       </div>

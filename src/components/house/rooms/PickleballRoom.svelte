@@ -1,7 +1,7 @@
 <script lang="ts">
   import { withBase } from '@/lib/paths';
 
-  const imageHref = withBase('/images/house/windows/pickleball-court.png');
+  const imageHref = withBase('/scenes/house/windows/pickleball-court.png');
 </script>
 
 <svg

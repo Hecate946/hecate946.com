@@ -10,7 +10,7 @@
 }
 
 .house-window__scene {
-  opacity: 0.74;
+  opacity: 0.72;
   pointer-events: none;
   transition:
     opacity 180ms ease,
@@ -23,23 +23,69 @@
   transition: fill 180ms ease;
 }
 
-.house-window__hit {
-  fill: transparent;
-  stroke: none;
-  pointer-events: all;
+.house-window__glow {
+  fill: rgb(255 218 132 / 0);
+  filter: url(#house-hover-glow);
+  pointer-events: none;
+  transition: fill 180ms ease;
 }
 
-/* Hovering only brightens the miniature artwork behind the existing
-   mullions. There is deliberately no border, halo, or destination label. */
+.house-window__hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 3;
+  pointer-events: all;
+  transition: stroke 180ms ease;
+}
+
+.house-window__label {
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+.house-window__label rect {
+  fill: var(--surface, #fffaf0);
+  stroke: var(--line, rgb(20 36 39 / 0.24));
+  stroke-width: 1.5;
+}
+
+.house-window__label text {
+  fill: var(--text, #10282c);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .house-window:hover .house-window__scene,
 .house-window:focus-visible .house-window__scene {
   opacity: 1;
-  filter: brightness(1.34) saturate(1.1) contrast(1.03);
+  filter: saturate(1.08) brightness(1.08);
 }
 
 .house-window:hover .house-window__glass,
 .house-window:focus-visible .house-window__glass {
-  fill: rgb(255 235 184 / 0.035);
+  fill: rgb(19 32 38 / 0.06);
+}
+
+.house-window:hover .house-window__glow,
+.house-window:focus-visible .house-window__glow {
+  fill: rgb(255 218 132 / 0.22);
+}
+
+.house-window:hover .house-window__hit,
+.house-window:focus-visible .house-window__hit {
+  stroke: #f0d38a;
+}
+
+.house-window:hover .house-window__label,
+.house-window:focus-visible .house-window__label {
+  opacity: 1;
+  transform: translateY(3px);
 }
 
 .window-scene__lamp-glow {
@@ -53,13 +99,14 @@
 
 .house-window:hover .window-scene__lamp-glow,
 .house-window:focus-visible .window-scene__lamp-glow {
-  opacity: 0.86;
+  opacity: 0.78;
 }
 
 .house-window:hover .window-scene__screen,
 .house-window:focus-visible .window-scene__screen {
   opacity: 1;
 }
+
 
 /* Static-build-safe preview controls. The query-string script changes these
    data attributes directly; no hydrated Svelte component is required. */
@@ -107,13 +154,17 @@
 @media (prefers-reduced-motion: reduce) {
   .house-window__scene,
   .house-window__glass,
+  .house-window__glow,
+  .house-window__hit,
+  .house-window__label,
   .window-scene__lamp-glow,
   .window-scene__screen {
     transition: none;
   }
 }
 
-.house-window[data-window-scene='concert-hall'] .house-window__scene {
+/* The lower concert window uses a wider hit target and label above the glass. */
+.house-window[data-window-scene='ballroom'] .house-window__scene {
   opacity: 0.82;
 }
 

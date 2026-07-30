@@ -1,7 +1,7 @@
 <script lang="ts">
   import { withBase } from '@/lib/paths';
 
-  const imageHref = withBase('/images/house/windows/chess-rook-window.png');
+  const imageHref = withBase('/scenes/house/windows/chess-rook-window.png');
 </script>
 
 <image
@@ -10,5 +10,5 @@
   y="0"
   width="68"
   height="124"
-  preserveAspectRatio="xMidYMid slice"
+  preserveAspectRatio="none"
 />

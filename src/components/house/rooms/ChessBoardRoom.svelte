@@ -1,6 +1,6 @@
 <script lang="ts">
   import { withBase } from '@/lib/paths';
-  const imageHref = withBase('/images/house/windows/chess-black-rook-room.png');
+  const imageHref = withBase('/scenes/house/windows/chess-black-rook-room.png');
 </script>
 
 <section
