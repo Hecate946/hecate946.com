@@ -9,3 +9,10 @@ dist/
 
 hecate946-source.zip
 secrets.txt
+# Python bytecode and cache directories
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Blender automatic backup files
+*.blend1
