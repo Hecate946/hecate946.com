@@ -11,7 +11,8 @@
     "check": "astro check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "assets:sync": "node scripts/sync-scene-assets.mjs"
+    "assets:sync": "node scripts/sync-scene-assets.mjs",
+    "site:zip": "node scripts/create-website-source-zip.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
