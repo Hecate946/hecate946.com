@@ -280,6 +280,7 @@
 <PanoramaCamera
   {resetSignal}
   position={CAMERA_POSITION}
+  initialYaw={space.cameraYaw}
   ariaLabel={`Drag to look around. Scroll or pinch to zoom within ${space.title}.`}
 />
 

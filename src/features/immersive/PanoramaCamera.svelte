@@ -5,12 +5,12 @@
 
   export let resetSignal = 0;
   export let position: [number, number, number] = [0, 1.65, 3.8];
+  export let initialYaw = 0;
   export let ariaLabel =
     'Drag to look around. Scroll or pinch to zoom. Drag interactive objects to move them.';
 
   const { renderer, invalidate } = useThrelte();
 
-  const INITIAL_YAW = 0;
   const INITIAL_PITCH = 0;
   const MIN_FOV = 32;
   const MAX_FOV = 76;
@@ -23,16 +23,16 @@
   const SETTLE_EPSILON = 0.0001;
   const KEY_LOOK_STEP = 0.075;
   const KEY_ZOOM_STEP = 3;
-  const MIN_PITCH = MathUtils.degToRad(-20);
-  const MAX_PITCH = MathUtils.degToRad(20);
+  const MIN_PITCH = MathUtils.degToRad(-48);
+  const MAX_PITCH = MathUtils.degToRad(34);
 
   type PointerPosition = { x: number; y: number };
 
   let camera: PerspectiveCamera;
-  let yaw = INITIAL_YAW;
+  let yaw = initialYaw;
   let pitch = INITIAL_PITCH;
   let fov = INITIAL_FOV;
-  let targetYaw = INITIAL_YAW;
+  let targetYaw = initialYaw;
   let targetPitch = INITIAL_PITCH;
   let targetFov = INITIAL_FOV;
   let animationFrame = 0;
@@ -87,7 +87,7 @@
   }
 
   function resetView() {
-    targetYaw = INITIAL_YAW;
+    targetYaw = initialYaw;
     targetPitch = INITIAL_PITCH;
     targetFov = INITIAL_FOV;
     requestCameraAnimation();

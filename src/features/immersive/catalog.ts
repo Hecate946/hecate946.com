@@ -30,6 +30,7 @@ export type ImmersiveSpace = {
   modelLayers: ImmersiveModelLayer[];
   implemented: boolean;
   cameraPosition: Vector3Tuple;
+  cameraYaw: number;
   panoramaYaw: number;
   windowIndex?: number;
 };
@@ -58,11 +59,14 @@ const room = (
   modelLayers: [objectsLayer(`${slug}-objects`, `/scenes/rooms/${slug}/interactive.glb`)],
   implemented: true,
   cameraPosition: [0, 1.65, 3.8],
+  cameraYaw: 0,
   panoramaYaw: -Math.PI / 2,
   windowIndex,
 });
 
 const SHARED_HALL_SHELL_URL = withBase('/scenes/halls/shared/shell.glb');
+
+const HALL_ENTRY_CAMERA_X = 12.75;
 
 const hall = (
   slug: HallSlug,
@@ -71,26 +75,35 @@ const hall = (
   description: string,
   accent: string,
   mirrorShell: boolean,
-): ImmersiveSpace => ({
-  kind: 'hall',
-  slug,
-  label,
-  title,
-  description,
-  accent,
-  modelLayers: [
-    {
-      id: 'shared-hall-shell',
-      role: 'shell',
-      url: SHARED_HALL_SHELL_URL,
-      scale: mirrorShell ? [-1, 1, 1] : [1, 1, 1],
-    },
-    objectsLayer(`${slug}-objects`, `/scenes/halls/${slug}/objects.glb`),
-  ],
-  implemented: true,
-  cameraPosition: [0, 1.68, 0],
-  panoramaYaw: 0,
-});
+): ImmersiveSpace => {
+  // The canonical shell's archway is on its right wall. Mirroring the shell
+  // moves that entrance to the left, so the camera entry point mirrors too.
+  const entrySide = mirrorShell ? -1 : 1;
+
+  return {
+    kind: 'hall',
+    slug,
+    label,
+    title,
+    description,
+    accent,
+    modelLayers: [
+      {
+        id: 'shared-hall-shell',
+        role: 'shell',
+        url: SHARED_HALL_SHELL_URL,
+        scale: mirrorShell ? [-1, 1, 1] : [1, 1, 1],
+      },
+      objectsLayer(`${slug}-objects`, `/scenes/halls/${slug}/objects.glb`),
+    ],
+    implemented: true,
+    // About 1.25 m inside the entrance wall, matching the close-to-the-wall
+    // starting composition used by the five colored rooms.
+    cameraPosition: [entrySide * HALL_ENTRY_CAMERA_X, 1.68, 0],
+    cameraYaw: entrySide > 0 ? Math.PI / 2 : -Math.PI / 2,
+    panoramaYaw: 0,
+  };
+};
 
 export const rooms = {
   red: room('red', 'Room 001', 'The Red Room', 'An immersive fixed-viewpoint red tiled room.', '#4a1f24', 0),
