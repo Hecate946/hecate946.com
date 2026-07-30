@@ -54,10 +54,13 @@ class HallObjectContext:
     scene: bpy.types.Scene
     objects_collection: bpy.types.Collection
     objects_root: bpy.types.Object
+    assets_root: Path
     add_box: object
     material: object
     linear_hex: object
     import_glb: object
+    asset_path: object
+    place_asset: object
 
 
 def _is_halls_root(path: Path) -> bool:
@@ -440,16 +443,48 @@ def build_hall_objects(definition: HallDefinition) -> None:
     objects_root["hall_slug"] = definition.slug
     objects_root["shell_mirrored_x"] = definition.mirror_shell_x
 
+    blender_root = HALLS_ROOT.parent
+    project_root = blender_root.parent
+    assets_root = project_root / "public" / "scenes" / "assets"
+    asset_library = load_module(
+        "hecate_shared_asset_library_halls",
+        blender_root / "shared" / "asset_library.py",
+    )
+
+    def asset_path(asset_id, *, file_name=None):
+        return asset_library.resolve_asset_path(
+            assets_root,
+            asset_id,
+            file_name=file_name,
+        )
+
+    def place_asset(asset_id, *, name=None, extras=None, **placement):
+        placed = asset_library.place_asset(
+            assets_root=assets_root,
+            asset_id=asset_id,
+            collection=objects_collection,
+            name=name,
+            extras=extras,
+            **placement,
+        )
+        matrix_world = placed.root.matrix_world.copy()
+        placed.root.parent = objects_root
+        placed.root.matrix_world = matrix_world
+        return placed
+
     context = HallObjectContext(
         definition=definition,
         output_directory=output_directory,
         scene=scene,
         objects_collection=objects_collection,
         objects_root=objects_root,
+        assets_root=assets_root,
         add_box=add_box,
         material=material,
         linear_hex=linear_hex,
         import_glb=import_glb,
+        asset_path=asset_path,
+        place_asset=place_asset,
     )
 
     unique_module = load_unique_module(output_directory / "unique.py")

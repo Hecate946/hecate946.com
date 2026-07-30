@@ -1,10 +1,12 @@
-import { access, copyFile, mkdir } from 'node:fs/promises';
+import { access, copyFile, mkdir, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, '..');
 const publicRoot = path.join(projectRoot, 'public', 'scenes');
+const blenderSharedAssetsRoot = path.join(projectRoot, 'blender', 'assets');
+const publicSharedAssetsRoot = path.join(publicRoot, 'assets');
 
 const roomSlugs = ['red', 'green', 'orange', 'blue', 'purple'];
 const hallSlugs = ['ballroom', 'museum'];
@@ -39,6 +41,50 @@ async function copyAsset({ source, destination, required = false, label }) {
   console.log(`Copied ${path.relative(projectRoot, destination)}`);
   copied += 1;
 }
+
+async function findGlbFiles(directory) {
+  let entries;
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+
+  const files = [];
+  for (const entry of entries) {
+    const absolute = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await findGlbFiles(absolute)));
+    } else if (entry.isFile() && path.extname(entry.name).toLowerCase() === '.glb') {
+      files.push(absolute);
+    }
+  }
+
+  return files.sort((left, right) => left.localeCompare(right));
+}
+
+async function syncSharedGlbs() {
+  const sharedGlbs = await findGlbFiles(blenderSharedAssetsRoot);
+
+  if (sharedGlbs.length === 0) {
+    console.log('No reusable GLBs found beneath blender/assets.');
+    return;
+  }
+
+  console.log(`Publishing ${sharedGlbs.length} reusable shared GLB(s)...`);
+  for (const source of sharedGlbs) {
+    const relativeAssetPath = path.relative(blenderSharedAssetsRoot, source);
+    await copyAsset({
+      source,
+      destination: path.join(publicSharedAssetsRoot, relativeAssetPath),
+      required: true,
+      label: `shared asset ${relativeAssetPath}`,
+    });
+  }
+}
+
+await syncSharedGlbs();
 
 await copyAsset({
   source: path.join(projectRoot, 'blender', 'house', 'house.png'),

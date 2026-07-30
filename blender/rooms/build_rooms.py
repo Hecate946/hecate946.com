@@ -114,6 +114,7 @@ build_room = room_builder.build_room
 
 print(f"Loaded room builder from: {builder_file.resolve()}")
 print(f"Room builder version:    {room_builder.ROOM_BUILDER_VERSION}")
+print(f"Shared asset directory:  {(ROOMS_ROOT.parent / 'assets').resolve()}")
 
 
 ROOMS = (

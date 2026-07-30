@@ -1,34 +1,42 @@
 HECATE946 SOURCE PACKAGE
-Generated: 2026-07-30T03:12:17.872Z
+Generated: 2026-07-30T18:11:07.625Z
 Mode: lean source
-Git branch: main
-Git commit: 308b89bd363d6caef7fbb86a2250bea6c7876f17
+Git branch: unavailable
+Git commit: unavailable
 
 GIT STATUS
-M package.json
-?? README.md
-?? blender/hall/
-?? scripts/create-website-source-zip.mjs
+clean or unavailable
 
-INCLUDED FILES (198)
+INCLUDED FILES (214)
          118  .env.example
         1007  .github/workflows/deploy.yml
          359  .github/workflows/quality.yml
-         116  .gitignore
+         103  .gitignore
            3  .nvmrc
           46  .prettierignore
          297  .prettierrc.mjs
+       11143  PROJECT_MANIFEST.txt
+        1161  ROOM-FIX-V3.txt
          262  astro.config.mjs
-       59338  blender/halls/ballroom/ballroom.py
+        1714  blender/assets/README.md
+        2090  blender/assets/_template/build_asset.py
+        1970  blender/halls/ballroom/ballroom.py
+        1046  blender/halls/ballroom/unique.py
+       17191  blender/halls/build_halls.py
+        1964  blender/halls/museum/museum.py
+         508  blender/halls/museum/unique.py
+       55453  blender/halls/shared/hall_shell.py
        60449  blender/house/house.py
-         865  blender/rooms/blue/unique.py
-        3612  blender/rooms/build_rooms.py
-         869  blender/rooms/green/unique.py
-         873  blender/rooms/orange/unique.py
-         873  blender/rooms/purple/unique.py
-         861  blender/rooms/red/unique.py
-         131  blender/rooms/shared/__init__.py
-       17596  blender/rooms/shared/room_builder.py
+        1444  blender/rooms/blue/unique.py
+        4929  blender/rooms/build_rooms.py
+       17066  blender/rooms/green/unique.py
+        1454  blender/rooms/orange/unique.py
+        1454  blender/rooms/purple/unique.py
+        1439  blender/rooms/red/unique.py
+         228  blender/rooms/shared/__init__.py
+       25191  blender/rooms/shared/room_builder.py
+          72  blender/shared/__init__.py
+        7479  blender/shared/asset_library.py
           59  cloudflare/stats-worker/.gitignore
        50054  cloudflare/stats-worker/package-lock.json
          490  cloudflare/stats-worker/package.json
@@ -57,6 +65,8 @@ INCLUDED FILES (198)
       298323  public/images/seasonal/autumn/autumn-leaf-orange.png
        89315  public/resumes/cyrus-asasi-clarinet-performance-resume.pdf
        83543  public/resumes/cyrus-asasi-software-engineering-resume.pdf
+           0  public/scenes/assets/.gitkeep
+      253870  public/scenes/halls/ballroom/panorama.webp
            0  public/scenes/halls/museum/.gitkeep
      1808009  public/scenes/house/shell.png
       187249  public/scenes/house/shell.svg
@@ -71,9 +81,9 @@ INCLUDED FILES (198)
        38513  public/scenes/house/windows/picklabell-court-window.png
         7336  public/scenes/house/windows/pickleball-court-window.png
      2573159  public/scenes/house/windows/pickleball-court.png
-       11567  scripts/create-website-source-zip.mjs
+       11781  scripts/create-website-source-zip.mjs
         5508  scripts/generate-code-stats.mjs
-        3278  scripts/sync-scene-assets.mjs
+        4484  scripts/sync-scene-assets.mjs
         2391  src/components/core/BaseHead.astro
        11006  src/components/core/Footer.astro
         2536  src/components/core/Header.astro
@@ -83,26 +93,28 @@ INCLUDED FILES (198)
        27587  src/components/graphs/ForceNetwork.svelte
         1331  src/components/graphs/types.ts
          408  src/components/house/HouseExperience.svelte
-        1444  src/components/house/HouseIllustration.svelte
+        1612  src/components/house/HouseIllustration.svelte
          929  src/components/house/HouseScene.astro
         5756  src/components/house/HouseShell.svelte
          239  src/components/house/HouseSteps.svelte
-        3920  src/components/house/HouseWindow.svelte
-        1422  src/components/house/WindowScene.svelte
+        4109  src/components/house/HouseWindow.svelte
+        1545  src/components/house/WindowScene.svelte
          659  src/components/house/rooms/ChessBoardRoom.svelte
          638  src/components/house/rooms/PickleballRoom.svelte
         1642  src/components/house/scenes/AboutWindowScene.svelte
-         239  src/components/house/scenes/BallroomWindowScene.svelte
-         252  src/components/house/scenes/ChessRookWindowScene.svelte
-         238  src/components/house/scenes/ClarinetWindowScene.svelte
+         182  src/components/house/scenes/BallroomWindowScene.svelte
+         189  src/components/house/scenes/ChessRookWindowScene.svelte
+         181  src/components/house/scenes/ClarinetWindowScene.svelte
         1327  src/components/house/scenes/CollisionWindowScene.svelte
         1599  src/components/house/scenes/ContactWindowScene.svelte
-         246  src/components/house/scenes/PickleballWindowScene.svelte
+         303  src/components/house/scenes/MuseumWindowScene.svelte
+         189  src/components/house/scenes/PickleballWindowScene.svelte
         1757  src/components/house/scenes/PortfolioWindowScene.svelte
         1663  src/components/house/scenes/ProjectsWindowScene.svelte
         1470  src/components/house/scenes/ResumeWindowScene.svelte
         2139  src/components/house/scenes/shared/ChessBoardArtwork.svelte
          623  src/components/house/scenes/shared/RookGlyph.svelte
+         345  src/components/house/scenes/shared/WindowImage.svelte
        21125  src/components/islands/CollisionDetection.svelte
         1799  src/components/islands/ColorModeToggle.svelte
          662  src/components/islands/CommandMenuButton.svelte
@@ -124,7 +136,7 @@ INCLUDED FILES (198)
         2127  src/components/ui/ContentCard.astro
          640  src/components/ui/PageIntro.astro
          693  src/components/ui/Section.astro
-        6712  src/config/house-scene.ts
+        7975  src/config/house-scene.ts
          644  src/config/navigation.ts
         1404  src/config/railway.ts
          880  src/config/seasonal-shower.ts
@@ -136,11 +148,12 @@ INCLUDED FILES (198)
        76802  src/data/world-map.ts
           39  src/env.d.ts
          426  src/features/immersive/InteractiveLayer.svelte
-        7093  src/features/immersive/PanoramaCamera.svelte
-        8203  src/features/immersive/PanoramaScene.svelte
-        7545  src/features/immersive/PanoramaViewer.svelte
+         963  src/features/immersive/ModelLayer.svelte
+        8439  src/features/immersive/PanoramaCamera.svelte
+        9231  src/features/immersive/PanoramaScene.svelte
+        5464  src/features/immersive/PanoramaViewer.svelte
         1456  src/features/immersive/SpaceExtras.svelte
-        2964  src/features/immersive/catalog.ts
+        3758  src/features/immersive/catalog.ts
          257  src/features/immersive/extras/halls/BallroomExtras.svelte
          257  src/features/immersive/extras/halls/MuseumExtras.svelte
          457  src/features/immersive/extras/rooms/BlueRoomExtras.svelte
@@ -151,6 +164,7 @@ INCLUDED FILES (198)
         3221  src/layouts/BaseLayout.astro
         1114  src/layouts/EntryLayout.astro
         2463  src/layouts/HousePreviewLayout.astro
+         898  src/layouts/ImmersiveLayout.astro
          427  src/layouts/PageLayout.astro
         6973  src/lib/analytics.ts
         2080  src/lib/canvas.ts
@@ -172,7 +186,7 @@ INCLUDED FILES (198)
         1527  src/pages/collision-detection.astro
        21601  src/pages/contact.astro
          882  src/pages/d3.astro
-         785  src/pages/halls/[slug].astro
+         812  src/pages/halls/[slug].astro
         2480  src/pages/halls/index.astro
         1309  src/pages/house-compare.astro
          605  src/pages/house-png.astro
@@ -183,8 +197,7 @@ INCLUDED FILES (198)
          390  src/pages/projects/[slug].astro
          848  src/pages/projects/index.astro
         1681  src/pages/resume.astro
-         785  src/pages/rooms/[slug].astro
-         515  src/pages/rooms/hall.astro
+         812  src/pages/rooms/[slug].astro
         2202  src/pages/rooms/index.astro
          931  src/pages/stats.astro
        11448  src/styles/about.css
@@ -198,7 +211,7 @@ INCLUDED FILES (198)
         4445  src/styles/house-preview.css
         2290  src/styles/house-room-pages.css
         1950  src/styles/house-scene.css
-        3820  src/styles/house-window-scenes.css
+        4504  src/styles/house-window-scenes.css
          949  src/styles/layout.css
         2915  src/styles/not-found.css
         3788  src/styles/project-showcase.css
@@ -210,71 +223,7 @@ INCLUDED FILES (198)
           19  svelte.config.js
          187  tsconfig.json
 
-OMITTED FILES (64)
-          90  README.md  [markdown intentionally excluded]  sha256:10ee24e74a6eb4faf9b69e75c3bbc229f9de379335505bccd053054bc041559a
-    31943048  blender/hall/hall.glb  [generated or heavyweight binary]  sha256:150a2f66c1c91807078ae88b2409e7d027f7803217242d5d5a0f7933888a4487
-     1385515  blender/halls/ballroom/ballroom.blend  [generated or heavyweight binary]  sha256:013b5f7a6d731c8b455863aaf74a2a38c38f0d25442016d1a27bcb1b8ab362cc
-     1287063  blender/halls/ballroom/ballroom.blend1  [generated or heavyweight binary]  sha256:a07bb253a463d6b8790d3c8df2dc252db0ac728ccea1315d90794c4dd4cd8160
-    31943048  blender/halls/ballroom/ballroom.glb  [generated or heavyweight binary]  sha256:4af33dfa9925ddb6bf9d4ad9e3bfc9528560214144ae15f15192e31884881989
-    27245098  blender/halls/ballroom/ballroom.png  [Blender output; Python source retained]  sha256:49da098993f40c2f7e942725cc29b9418f585006697c7d5c866c8c8aeb507cec
-           0  blender/halls/museum/.gitkeep  [Blender output; Python source retained]  sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-      919512  blender/house/house.blend  [generated or heavyweight binary]  sha256:dc66ecf2b405f348ba1b892530ff68c63ff14aad8c5255fe11ebfb1d7e45de83
-      914715  blender/house/house.blend1  [generated or heavyweight binary]  sha256:00cce947458c95fe547c6ded8cb1d103b950ed28278311d3f9754ba303693c1b
-     1808009  blender/house/house.png  [Blender output; Python source retained]  sha256:66afaf97d6128fbd47250b7d286e4ced700f5728a2a3fe91bfc024b6422e15a9
-        1111  blender/rooms/blue/__pycache__/unique.cpython-313.pyc  [Blender output; Python source retained]  sha256:efb186427b8e1904ee8e615ff2c7487c0bf1f36b092e8e835239ffc2f3ca2d03
-    54043364  blender/rooms/blue/blue-room-interactive.glb  [generated or heavyweight binary]  sha256:2812754eb014cd9c68e8630740050c4ca232d7625b5df94ea54c5871390f5642
-    19975332  blender/rooms/blue/blue-room-panorama.png  [Blender output; Python source retained]  sha256:336ef24cce4ddaf689bb13fa4e9ed91d98f97b84a521ce9943bf1e88bc5e39e6
-     1257661  blender/rooms/blue/blue-room.blend  [generated or heavyweight binary]  sha256:1249f201eb47ef8c71038dece1a1a8314f9e4098770c03cf994dc654ff36b061
-     1257661  blender/rooms/blue/blue-room.blend1  [generated or heavyweight binary]  sha256:1249f201eb47ef8c71038dece1a1a8314f9e4098770c03cf994dc654ff36b061
-        1116  blender/rooms/green/__pycache__/unique.cpython-313.pyc  [Blender output; Python source retained]  sha256:157d270e2c7ff1b05ba9e38befd72d410ed4065f885cefdedf9085d445d0f6b2
-    54043384  blender/rooms/green/green-room-interactive.glb  [generated or heavyweight binary]  sha256:ceaa41c884b4379b297d8595027b1f3dec1d74ee29060f404bba4cc2a89200f6
-    19300095  blender/rooms/green/green-room-panorama.png  [Blender output; Python source retained]  sha256:89ef78a5c08edeb958f4ace6c0afb745a3d7c99c3849422af2948fd5b91be6e1
-     1257661  blender/rooms/green/green-room.blend  [generated or heavyweight binary]  sha256:2039b6fa406478ac862633b935763633f0514b9177bed28f9da352e88b7b247b
-     1257661  blender/rooms/green/green-room.blend1  [generated or heavyweight binary]  sha256:2039b6fa406478ac862633b935763633f0514b9177bed28f9da352e88b7b247b
-        1121  blender/rooms/orange/__pycache__/unique.cpython-313.pyc  [Blender output; Python source retained]  sha256:b120f2569ef21971ae7b4e4103a41386d7828172055c8b98c3fd356bf00ee186
-    54043372  blender/rooms/orange/orange-room-interactive.glb  [generated or heavyweight binary]  sha256:c0f0c8f591a352711a3ef73cc9150cd96ac152d936845db8f0920370e331cabd
-    20522634  blender/rooms/orange/orange-room-panorama.png  [Blender output; Python source retained]  sha256:b2b34adec9b74904ac6cdf76cedcc7f70f1ff0ba3547d3c47b949b9dc32d4d2d
-     1257686  blender/rooms/orange/orange-room.blend  [generated or heavyweight binary]  sha256:ff5a69ca700b112adbc9a7bad4f43970aa17bd633abb3a55ae654eb2046db272
-     1257686  blender/rooms/orange/orange-room.blend1  [generated or heavyweight binary]  sha256:ff5a69ca700b112adbc9a7bad4f43970aa17bd633abb3a55ae654eb2046db272
-        1121  blender/rooms/purple/__pycache__/unique.cpython-313.pyc  [Blender output; Python source retained]  sha256:d97ed9d21f90a724b93f0577f580846e5a33da5de9c8298905ce6cc75ae0a4ac
-    54043372  blender/rooms/purple/purple-room-interactive.glb  [generated or heavyweight binary]  sha256:8a2cd5d78a7d6c2e6b1f407e9861f10539ad221d3b0325bb3d53cbddc146056e
-    19193848  blender/rooms/purple/purple-room-panorama.png  [Blender output; Python source retained]  sha256:6372aed28adb082467f1c27cfeef828c53df4754ad13ec68435df47b722d72c7
-     1257697  blender/rooms/purple/purple-room.blend  [generated or heavyweight binary]  sha256:5b02d08a0a5344c3a0a7dd6878fdf5c28de279b8ef323ba878365933500a98a8
-     1257697  blender/rooms/purple/purple-room.blend1  [generated or heavyweight binary]  sha256:5b02d08a0a5344c3a0a7dd6878fdf5c28de279b8ef323ba878365933500a98a8
-        1106  blender/rooms/red/__pycache__/unique.cpython-313.pyc  [Blender output; Python source retained]  sha256:8e275dd6271faa21685539bfc09e2f892781ee60b1b29294009944b11d4cde45
-    54043348  blender/rooms/red/red-room-interactive.glb  [generated or heavyweight binary]  sha256:b3e38e894e8865d443d11bfa70a7621c3556c46715d9fa085929157fda74bb34
-    20854660  blender/rooms/red/red-room-panorama.png  [Blender output; Python source retained]  sha256:385f94144d816265c1698edc35ba71c82abbe26b95e6ca39945af7dcc9b17dab
-     1257622  blender/rooms/red/red-room.blend  [generated or heavyweight binary]  sha256:89b0707b7a4943a4a2458717d3fb2f14949a769a143e3a094a3f324a0eb1c3e8
-     1257613  blender/rooms/red/red-room.blend1  [generated or heavyweight binary]  sha256:76e00376b0af82a6e7204eec6690b88bd8877a09e776575c4a8f1d19147e9f81
-         298  blender/rooms/shared/__pycache__/__init__.cpython-313.pyc  [Blender output; Python source retained]  sha256:caef14560258d82474067727cb322668faf04ad7a970460a60e22a87f27829b6
-       26730  blender/rooms/shared/__pycache__/room_builder.cpython-313.pyc  [Blender output; Python source retained]  sha256:99f90541c77325583fdd94a034ccd49b7d8a47534cc8321fa377ffea0c330b96
-     2242195  public/images/pig.png  [unreferenced asset exceeds 524288 bytes]  sha256:9560f5a12f2d447ee9b73326a68c8a3b7d580363482125056470471342d3191d
-     1768601  public/images/projects/keycad.png  [larger duplicate with WebP/AVIF sibling]  sha256:68e74ac236f06c85dc6ffaaa8cc28ba59de6405d13a522179e691c8e31753e7f
-     2149696  public/images/projects/neutra.png  [larger duplicate with WebP/AVIF sibling]  sha256:ef235434fea45c9a99a40a97d1d8b0b738c0e832192bf60694edf9bb6bf63adb
-     1979160  public/images/projects/portfolio.png  [larger duplicate with WebP/AVIF sibling]  sha256:a929b86acf1b2812f77da6ae06a4f9ff4dfbeb9894dad3b25f3b8ae7f08c07b6
-     2255360  public/images/projects/sunset.png  [larger duplicate with WebP/AVIF sibling]  sha256:e953764606e8de0f8426257ccb017cfafddc042bd890ab434802ebf163a2222d
-    27245098  public/scenes/halls/ballroom/panorama.png  [referenced asset exceeds 3145728 bytes]  sha256:49da098993f40c2f7e942725cc29b9418f585006697c7d5c866c8c8aeb507cec
-    31943048  public/scenes/halls/ballroom/scene.glb  [generated or heavyweight binary]  sha256:4af33dfa9925ddb6bf9d4ad9e3bfc9528560214144ae15f15192e31884881989
-     1041511  public/scenes/house/versions/house-outline-v1.png  [unreferenced asset exceeds 524288 bytes]  sha256:22dba2a990d831c9b5212d55b16fda20f2d332ac84ef5470fa842f1961731a67
-     1397456  public/scenes/house/versions/house-white-low-roof-v2.png  [unreferenced asset exceeds 524288 bytes]  sha256:af7b1da89a4b6cb358409dce929ff604e8dbba179d1e6e9f6a75b19c2fe154fe
-     3727043  public/scenes/house/versions/house-white-low-roof-v2.svg  [unreferenced asset exceeds 524288 bytes]  sha256:02945c5f1ef3815a90c92c5ed57433832a7cce293c79609bd62c76300485fd96
-     1393378  public/scenes/house/versions/house-white-narrow-steps-v4.png  [unreferenced asset exceeds 524288 bytes]  sha256:94de6c3e559fa28913e999d5ad9ff89a1aa46c17c258ac2fbd75600135db5e00
-     1858275  public/scenes/house/versions/house-white-narrow-steps-v4.svg  [unreferenced asset exceeds 524288 bytes]  sha256:8651fd97f48b777e525f0a509a9e4185f686c88296a0b7275e40aa848b32de4a
-     2453344  public/scenes/house/versions/house-white-raised-roof-v3.png  [unreferenced asset exceeds 524288 bytes]  sha256:0d480412e864160407505eeb72bdd58308bd73c155a05b568e3ba688a8ea847f
-     3271603  public/scenes/house/versions/house-white-raised-roof-v3.svg  [unreferenced asset exceeds 524288 bytes]  sha256:614dff142f243fa8d9b8649aa0dd7e64f4ce6b1376a931ad114f4536a6b8d37d
-     1188194  public/scenes/house/versions/neoclassical-house-blender-v10.png  [larger duplicate with WebP/AVIF sibling]  sha256:a97f612f0fee989a66ab685a27eb2f1fd536481906d0419a336774ad178bffb2
-     2573159  public/scenes/house/windows/picklabell-court.png  [unreferenced asset exceeds 524288 bytes]  sha256:7123bae77b5d8dbb2196262892073c6b47870faaaa850ac28fcaf4ea1ec247bc
-    54043364  public/scenes/rooms/blue/interactive.glb  [generated or heavyweight binary]  sha256:2812754eb014cd9c68e8630740050c4ca232d7625b5df94ea54c5871390f5642
-    19975332  public/scenes/rooms/blue/panorama.png  [unreferenced asset exceeds 524288 bytes]  sha256:336ef24cce4ddaf689bb13fa4e9ed91d98f97b84a521ce9943bf1e88bc5e39e6
-    54043384  public/scenes/rooms/green/interactive.glb  [generated or heavyweight binary]  sha256:ceaa41c884b4379b297d8595027b1f3dec1d74ee29060f404bba4cc2a89200f6
-    19300095  public/scenes/rooms/green/panorama.png  [unreferenced asset exceeds 524288 bytes]  sha256:89ef78a5c08edeb958f4ace6c0afb745a3d7c99c3849422af2948fd5b91be6e1
-    54043372  public/scenes/rooms/orange/interactive.glb  [generated or heavyweight binary]  sha256:c0f0c8f591a352711a3ef73cc9150cd96ac152d936845db8f0920370e331cabd
-    20522634  public/scenes/rooms/orange/panorama.png  [unreferenced asset exceeds 524288 bytes]  sha256:b2b34adec9b74904ac6cdf76cedcc7f70f1ff0ba3547d3c47b949b9dc32d4d2d
-    54043372  public/scenes/rooms/purple/interactive.glb  [generated or heavyweight binary]  sha256:8a2cd5d78a7d6c2e6b1f407e9861f10539ad221d3b0325bb3d53cbddc146056e
-    19193848  public/scenes/rooms/purple/panorama.png  [unreferenced asset exceeds 524288 bytes]  sha256:6372aed28adb082467f1c27cfeef828c53df4754ad13ec68435df47b722d72c7
-    54043348  public/scenes/rooms/red/interactive.glb  [generated or heavyweight binary]  sha256:b3e38e894e8865d443d11bfa70a7621c3556c46715d9fa085929157fda74bb34
-    20854660  public/scenes/rooms/red/panorama.png  [unreferenced asset exceeds 524288 bytes]  sha256:385f94144d816265c1698edc35ba71c82abbe26b95e6ca39945af7dcc9b17dab
-        1907  src/styles/tokens.css  [secret or environment file]  sha256:2f7550f8c098e73338b9ef103b76e0c66cdbba5fccc533ef7cb90a202bba21a6
+OMITTED FILES (0)
 
 NOTES
 - Markdown, secrets, dependencies, build output, Git history, Blender binaries, GLBs, and rendered panoramas are intentionally excluded.

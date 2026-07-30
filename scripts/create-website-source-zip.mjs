@@ -30,6 +30,7 @@ const ignoredDirectoryNames = new Set([
   '.svelte-kit',
   '.vercel',
   '.wrangler',
+  '__pycache__',
   'build',
   'coverage',
   'dist',
@@ -211,6 +212,9 @@ function classify(path, sourceText) {
   if (shouldIgnoreDirectory(normalized)) return { include: false, reason: 'generated/dependency directory' };
   if (isSensitive(normalized)) return { include: false, reason: 'secret or environment file' };
   if (extension === '.md' || extension === '.markdown') {
+    if (normalized.startsWith('blender/assets/')) {
+      return { include: true, reason: 'shared Blender asset documentation' };
+    }
     return { include: false, reason: 'markdown intentionally excluded' };
   }
   if (generatedOrHeavyExtensions.has(extension)) {
@@ -218,7 +222,11 @@ function classify(path, sourceText) {
   }
 
   // Blender source is useful; rendered/exported Blender outputs are not.
-  if (normalized.startsWith('blender/') && extension !== '.py') {
+  if (
+    normalized.startsWith('blender/') &&
+    extension !== '.py' &&
+    !normalized.startsWith('blender/assets/')
+  ) {
     return { include: false, reason: 'Blender output; Python source retained' };
   }
 

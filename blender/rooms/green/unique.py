@@ -2,11 +2,16 @@
 
 The shared room builder imports this file and calls ``add_static`` and
 ``add_interactive``. The coffee table is created inside the existing
-``INTERACTIVE_EXPORT`` collection, so the same object:
+``INTERACTIVE_EXPORT`` collection, so it:
 
-- appears in the Cycles panorama,
+- remains out of the baked Cycles panorama to avoid a duplicate overlay,
 - is exported inside ``green-room-interactive.glb``, and
 - stays aligned with the room's existing Blender/Three.js coordinate system.
+
+Other reusable objects should be exported once beneath ``blender/assets``,
+published to ``public/scenes/assets`` with ``npm run assets:sync``, and placed
+here with ``context.place_static_asset`` or
+``context.place_interactive_asset`` rather than copied into this file.
 
 The table is deliberately *not* named with the ``Grab_`` prefix, so the current
 website drag handler will not let visitors move the entire table. It carries

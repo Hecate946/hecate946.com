@@ -1,34 +1,46 @@
 """Unique Blender additions for the blue room.
 
-The shared builder calls add_static() before the Cycles panorama render and
-add_interactive() before the lightweight interactive GLB export.
+Reusable sources belong in ``blender/assets/<asset-id>`` and are published to
+``public/scenes/assets/<asset-id>`` by ``npm run assets:sync``. They can be placed here
+with room-specific transforms. The shared builder calls ``add_static`` before
+the panorama render and ``add_interactive`` before interactive GLB export.
 """
 
 
 def add_static(context):
-    """Add permanent room-specific objects that should appear in the panorama.
+    """Add permanent blue-room objects that are baked into the panorama.
 
-    Example:
-        accent = context.material(
-            "Blue accent",
-            context.linear_hex("#FFFFFF"),
-            roughness=0.4,
+    Example shared chair placement::
+
+        context.place_static_asset(
+            "chair",
+            name="BlueReadingChair",
+            location=(-1.4, 2.6, 0.0),
+            rotation_degrees=(0.0, 0.0, 35.0),
+            scale=1.0,
         )
-        context.add_box(
-            "Blue shelf",
-            (0.0, 4.6, 1.2),
-            (2.0, 0.25, 0.12),
-            accent,
-            context.static_collection,
-            bevel=0.03,
-        )
+
+    The asset ID ``chair`` resolves to
+    ``public/scenes/assets/chair/chair.glb``.
     """
     pass
 
 
 def add_interactive(context):
-    """Add movable objects exported to the room's interactive GLB.
+    """Add browser-side blue-room objects to the interactive GLB.
 
-    Name a grabbable root with the prefix Grab_, such as Grab_BlueBook.
+    Example movable shared chair placement::
+
+        context.place_interactive_asset(
+            "chair",
+            name="BlueMovableChair",
+            grabbable=True,
+            location=(1.2, 2.1, 0.0),
+            rotation_degrees=(0.0, 0.0, -25.0),
+        )
+
+    ``grabbable=True`` automatically prefixes the exported root with ``Grab_``.
+    Interactive objects are hidden while the panorama renders, preventing a
+    baked duplicate from remaining after the visitor moves the live object.
     """
     pass

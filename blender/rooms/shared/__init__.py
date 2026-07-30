@@ -1,3 +1,5 @@
-from .room_builder import RoomDefinition, RenderSettings, build_room
+"""Public entry points for the shared five-room Blender builder."""
 
-__all__ = ["RoomDefinition", "RenderSettings", "build_room"]
+from .room_builder import RoomContext, RoomDefinition, RenderSettings, build_room
+
+__all__ = ["RoomContext", "RoomDefinition", "RenderSettings", "build_room"]

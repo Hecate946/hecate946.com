@@ -13,13 +13,14 @@ import importlib.util
 import math
 import random
 import shutil
+import sys
 from typing import Callable
 
 import bpy
 from mathutils import Vector
 
 
-ROOM_BUILDER_VERSION = "2026-07-30-v4-interactive-overlay-render-fix"
+ROOM_BUILDER_VERSION = "2026-07-30-v6-public-shared-assets"
 
 ROOM_WIDTH = 6.8
 ROOM_DEPTH = 10.0
@@ -76,9 +77,14 @@ class RoomContext:
     ceiling_material: bpy.types.Material
     colored_floor_material: bpy.types.Material
     white_floor_material: bpy.types.Material
+    assets_root: Path
     add_box: Callable
     material: Callable
     linear_hex: Callable
+    asset_path: Callable
+    place_asset: Callable
+    place_static_asset: Callable
+    place_interactive_asset: Callable
 
 
 def linear_hex(value: str):
@@ -384,6 +390,35 @@ def configure_render(scene: bpy.types.Scene, settings: RenderSettings, output_fi
     background.inputs["Strength"].default_value = 0.45
 
 
+def load_shared_asset_library(blender_root: Path):
+    """Load the project-wide reusable asset helper fresh from disk."""
+    library_file = blender_root / "shared" / "asset_library.py"
+    if not library_file.exists():
+        raise FileNotFoundError(
+            f"Shared Blender asset library is missing: {library_file}"
+        )
+
+    module_name = "hecate_shared_asset_library_live"
+    importlib.invalidate_caches()
+    sys.modules.pop(module_name, None)
+
+    try:
+        pyc_path = Path(importlib.util.cache_from_source(str(library_file)))
+        if pyc_path.exists():
+            pyc_path.unlink()
+    except Exception:
+        pass
+
+    spec = importlib.util.spec_from_file_location(module_name, library_file)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Could not load shared asset library: {library_file}")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def load_unique_module(unique_file: Path):
     if not unique_file.exists():
         return None
@@ -407,15 +442,18 @@ def call_unique_hook(module, hook_name: str, context: RoomContext):
 
 
 def hide_interactive_geometry_for_panorama(collection: bpy.types.Collection):
-    """Hide live GLB geometry during the panorama render without hiding lights.
+    """Hide browser-only objects while retaining the tagged panorama light.
 
-    The interactive collection also contains the room's area light, so hiding
-    the entire collection would make the panorama render incorrectly. Instead,
-    temporarily hide every non-light object and return its previous state.
+    Hiding the entire interactive collection would remove the room's shared
+    area light. Instead, only objects explicitly tagged ``keep_for_panorama``
+    remain render-visible; everything else is temporarily hidden and restored.
     """
     previous_states = []
     for obj in collection.all_objects:
-        if obj.type == "LIGHT":
+        # The shared room light remains active for the panorama. Any light that
+        # belongs to a reusable interactive asset is hidden with that asset so
+        # its browser-only lighting is not accidentally baked into the image.
+        if obj.type == "LIGHT" and obj.get("keep_for_panorama", False):
             continue
         previous_states.append((obj, obj.hide_render))
         obj.hide_render = True
@@ -463,6 +501,11 @@ def build_room(
 
     output_directory = rooms_root / definition.slug
     output_directory.mkdir(parents=True, exist_ok=True)
+
+    blender_root = rooms_root.parent
+    project_root = blender_root.parent
+    assets_root = project_root / "public" / "scenes" / "assets"
+    asset_library = load_shared_asset_library(blender_root)
 
     blend_file = output_directory / f"{definition.slug}-room.blend"
     panorama_file = output_directory / f"{definition.slug}-room-panorama.png"
@@ -622,10 +665,57 @@ def build_room(
     interactive_collection.objects.link(light)
     light.location = AREA_LIGHT_LOCATION
     light.rotation_euler = (math.radians(180.0), 0.0, 0.0)
+    light["keep_for_panorama"] = True
 
     interaction_origin = bpy.data.objects.new("Interaction_Origin", None)
     interactive_collection.objects.link(interaction_origin)
     interaction_origin.location = CAMERA_LOCATION
+
+    def asset_path(asset_id, *, file_name=None):
+        return asset_library.resolve_asset_path(
+            assets_root,
+            asset_id,
+            file_name=file_name,
+        )
+
+    def place_asset(asset_id, *, collection, **placement):
+        return asset_library.place_asset(
+            assets_root=assets_root,
+            asset_id=asset_id,
+            collection=collection,
+            **placement,
+        )
+
+    def place_static_asset(asset_id, **placement):
+        return place_asset(
+            asset_id,
+            collection=static_collection,
+            **placement,
+        )
+
+    def place_interactive_asset(
+        asset_id,
+        *,
+        name=None,
+        grabbable=False,
+        extras=None,
+        **placement,
+    ):
+        root_name = name or Path(str(asset_id)).stem or "SharedAsset"
+        if grabbable and not root_name.startswith("Grab_"):
+            root_name = f"Grab_{root_name}"
+
+        root_extras = dict(extras or {})
+        root_extras.setdefault("draggable", bool(grabbable))
+        root_extras.setdefault("interaction", "grab" if grabbable else "static")
+
+        return place_asset(
+            asset_id,
+            collection=interactive_collection,
+            name=root_name,
+            extras=root_extras,
+            **placement,
+        )
 
     context = RoomContext(
         definition=definition,
@@ -638,9 +728,14 @@ def build_room(
         ceiling_material=ceiling_mat,
         colored_floor_material=colored_floor,
         white_floor_material=white_floor,
+        assets_root=assets_root,
         add_box=add_box,
         material=material,
         linear_hex=linear_hex,
+        asset_path=asset_path,
+        place_asset=place_asset,
+        place_static_asset=place_static_asset,
+        place_interactive_asset=place_interactive_asset,
     )
 
     unique_module = load_unique_module(output_directory / "unique.py")
