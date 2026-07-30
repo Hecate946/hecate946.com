@@ -93,6 +93,7 @@
 >
   <g class="house-window__scene" clip-path={`url(#${clipId})`}>
     <svg
+      class="house-window__viewport"
       x={geometry.x}
       y={geometry.y}
       width={geometry.width}
@@ -105,6 +106,14 @@
     </svg>
 
     <rect
+      class="house-window__glow"
+      x={geometry.x}
+      y={geometry.y}
+      width={geometry.width}
+      height={geometry.height}
+    />
+
+    <rect
       class="house-window__glass"
       x={geometry.x}
       y={geometry.y}
@@ -112,7 +121,6 @@
       height={geometry.height}
     />
   </g>
-
 
   <rect
     class="house-window__hit"

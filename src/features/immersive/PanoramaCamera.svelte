@@ -12,9 +12,9 @@
 
   const INITIAL_YAW = 0;
   const INITIAL_PITCH = 0;
+  const INITIAL_FOV = 50;
   const MIN_FOV = 32;
   const MAX_FOV = 76;
-  const INITIAL_FOV = MAX_FOV;
   const DRAG_SENSITIVITY = 0.0032;
   const WHEEL_ZOOM_SENSITIVITY = 0.025;
   const PINCH_ZOOM_SENSITIVITY = 0.09;

@@ -175,3 +175,34 @@
 .house-window[data-window-scene='collision'] .house-window__scene {
   opacity: 0.86;
 }
+
+/* Image-backed rooms ---------------------------------------------------- */
+
+.house-window__viewport {
+  overflow: hidden;
+}
+
+.house-window__image {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    filter 220ms ease;
+}
+
+.house-window:hover .house-window__image,
+.house-window:focus-visible .house-window__image {
+  filter: saturate(1.06) contrast(1.025);
+  transform: scale(1.035);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .house-window__image {
+    transition: none;
+  }
+
+  .house-window:hover .house-window__image,
+  .house-window:focus-visible .house-window__image {
+    transform: none;
+  }
+}

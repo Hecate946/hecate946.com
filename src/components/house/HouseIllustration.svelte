@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { HouseDestination } from '@/config/house-scene';
+  import { houseScene, type HouseDestination } from '@/config/house-scene';
   import { withBase } from '@/lib/paths';
   import '@/styles/house-window-scenes.css';
   import HouseWindow from './HouseWindow.svelte';
@@ -10,11 +10,13 @@
   export let scenesEnabled = true;
 
   const imageHref = withBase('/scenes/house/shell.png');
+  const referenceWidth = houseScene.referenceWidth;
+  const referenceHeight = houseScene.referenceHeight;
 </script>
 
 <svg
   class="house-illustration"
-  viewBox="0 0 1536 1024"
+  viewBox={`0 0 ${referenceWidth} ${referenceHeight}`}
   role="img"
   aria-labelledby="house-illustration-title house-illustration-description"
   preserveAspectRatio="xMidYMid meet"
@@ -37,8 +39,8 @@
     href={imageHref}
     x="0"
     y="0"
-    width="1536"
-    height="1024"
+    width={referenceWidth}
+    height={referenceHeight}
     preserveAspectRatio="none"
     pointer-events="none"
   />
