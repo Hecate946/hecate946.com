@@ -62,7 +62,7 @@ export interface HouseSceneConfig {
 }
 
 export const houseScene = {
-  enabled: false,
+  enabled: true,
   navigationEnabled: true,
   showHint: true,
   referenceWidth: 1536,

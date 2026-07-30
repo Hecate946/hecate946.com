@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
+import ImmersiveLayout from '@/layouts/ImmersiveLayout.astro';
 import PanoramaViewer from '@/features/immersive/PanoramaViewer.svelte';
 import { secondStoryRooms, type ImmersiveSpace } from '@/features/immersive/catalog';
 
@@ -17,20 +17,19 @@ interface Props {
 const { space } = Astro.props;
 ---
 
-<BaseLayout title={`${space.title} | Cyrus Asasi`} description={space.description}>
+<ImmersiveLayout title={`${space.title} | Cyrus Asasi`} description={space.description}>
   <section class="panorama-page">
     <PanoramaViewer client:only="svelte" {space} />
   </section>
-</BaseLayout>
+</ImmersiveLayout>
 
 <style>
   .panorama-page {
-    width: 100%;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
     margin: 0;
     padding: 0;
-  }
-
-  :global(#main-content) {
-    padding-inline: 0;
+    overflow: hidden;
   }
 </style>
