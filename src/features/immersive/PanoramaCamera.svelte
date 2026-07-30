@@ -15,13 +15,16 @@
   const MIN_FOV = 32;
   const MAX_FOV = 76;
   const INITIAL_FOV = MAX_FOV;
-  const DRAG_SENSITIVITY = 0.0032;
-  const WHEEL_ZOOM_SENSITIVITY = 0.025;
-  const PINCH_ZOOM_SENSITIVITY = 0.09;
+  const DRAG_SENSITIVITY = 0.00225;
+  const WHEEL_ZOOM_SENSITIVITY = 0.018;
+  const PINCH_ZOOM_SENSITIVITY = 0.065;
+  const LOOK_SMOOTHING = 0.16;
+  const ZOOM_SMOOTHING = 0.12;
+  const SETTLE_EPSILON = 0.0001;
   const KEY_LOOK_STEP = 0.075;
   const KEY_ZOOM_STEP = 3;
-  const MIN_PITCH = MathUtils.degToRad(-82);
-  const MAX_PITCH = MathUtils.degToRad(82);
+  const MIN_PITCH = MathUtils.degToRad(-48);
+  const MAX_PITCH = MathUtils.degToRad(34);
 
   type PointerPosition = { x: number; y: number };
 
@@ -29,6 +32,10 @@
   let yaw = INITIAL_YAW;
   let pitch = INITIAL_PITCH;
   let fov = INITIAL_FOV;
+  let targetYaw = INITIAL_YAW;
+  let targetPitch = INITIAL_PITCH;
+  let targetFov = INITIAL_FOV;
+  let animationFrame = 0;
   let previousResetSignal = resetSignal;
   let dragPointer: number | null = null;
   let lastX = 0;
@@ -46,16 +53,44 @@
     invalidate();
   }
 
-  function setFov(nextFov: number) {
-    fov = MathUtils.clamp(nextFov, MIN_FOV, MAX_FOV);
+  function animateCamera() {
+    animationFrame = 0;
+
+    yaw = MathUtils.lerp(yaw, targetYaw, LOOK_SMOOTHING);
+    pitch = MathUtils.lerp(pitch, targetPitch, LOOK_SMOOTHING);
+    fov = MathUtils.lerp(fov, targetFov, ZOOM_SMOOTHING);
+    applyCamera();
+
+    const stillMoving =
+      Math.abs(targetYaw - yaw) > SETTLE_EPSILON ||
+      Math.abs(targetPitch - pitch) > SETTLE_EPSILON ||
+      Math.abs(targetFov - fov) > SETTLE_EPSILON;
+
+    if (stillMoving) {
+      animationFrame = requestAnimationFrame(animateCamera);
+      return;
+    }
+
+    yaw = targetYaw;
+    pitch = targetPitch;
+    fov = targetFov;
     applyCamera();
   }
 
+  function requestCameraAnimation() {
+    if (!animationFrame) animationFrame = requestAnimationFrame(animateCamera);
+  }
+
+  function setFov(nextFov: number) {
+    targetFov = MathUtils.clamp(nextFov, MIN_FOV, MAX_FOV);
+    requestCameraAnimation();
+  }
+
   function resetView() {
-    yaw = INITIAL_YAW;
-    pitch = INITIAL_PITCH;
-    fov = INITIAL_FOV;
-    applyCamera();
+    targetYaw = INITIAL_YAW;
+    targetPitch = INITIAL_PITCH;
+    targetFov = INITIAL_FOV;
+    requestCameraAnimation();
   }
 
   function getPinchDistance() {
@@ -124,7 +159,10 @@
       if (pointers.size >= 2) {
         const distance = getPinchDistance();
         if (distance !== null && previousPinchDistance !== null) {
-          setFov(fov - (distance - previousPinchDistance) * PINCH_ZOOM_SENSITIVITY);
+          setFov(
+            targetFov -
+              (distance - previousPinchDistance) * PINCH_ZOOM_SENSITIVITY,
+          );
         }
         previousPinchDistance = distance;
         return;
@@ -137,13 +175,13 @@
       lastX = event.clientX;
       lastY = event.clientY;
 
-      yaw -= deltaX * DRAG_SENSITIVITY;
-      pitch = MathUtils.clamp(
-        pitch - deltaY * DRAG_SENSITIVITY,
+      targetYaw -= deltaX * DRAG_SENSITIVITY;
+      targetPitch = MathUtils.clamp(
+        targetPitch - deltaY * DRAG_SENSITIVITY,
         MIN_PITCH,
         MAX_PITCH,
       );
-      applyCamera();
+      requestCameraAnimation();
     }
 
     function releasePointer(event: PointerEvent) {
@@ -175,24 +213,34 @@
     function handleWheel(event: WheelEvent) {
       event.preventDefault();
       const scale = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
-      setFov(fov + event.deltaY * scale * WHEEL_ZOOM_SENSITIVITY);
+      setFov(
+        targetFov + event.deltaY * scale * WHEEL_ZOOM_SENSITIVITY,
+      );
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       let handled = true;
       switch (event.key) {
-        case 'ArrowLeft': yaw += KEY_LOOK_STEP; break;
-        case 'ArrowRight': yaw -= KEY_LOOK_STEP; break;
+        case 'ArrowLeft': targetYaw += KEY_LOOK_STEP; break;
+        case 'ArrowRight': targetYaw -= KEY_LOOK_STEP; break;
         case 'ArrowUp':
-          pitch = MathUtils.clamp(pitch + KEY_LOOK_STEP, MIN_PITCH, MAX_PITCH);
+          targetPitch = MathUtils.clamp(
+            targetPitch + KEY_LOOK_STEP,
+            MIN_PITCH,
+            MAX_PITCH,
+          );
           break;
         case 'ArrowDown':
-          pitch = MathUtils.clamp(pitch - KEY_LOOK_STEP, MIN_PITCH, MAX_PITCH);
+          targetPitch = MathUtils.clamp(
+            targetPitch - KEY_LOOK_STEP,
+            MIN_PITCH,
+            MAX_PITCH,
+          );
           break;
         case '+':
-        case '=': setFov(fov - KEY_ZOOM_STEP); break;
+        case '=': setFov(targetFov - KEY_ZOOM_STEP); break;
         case '-':
-        case '_': setFov(fov + KEY_ZOOM_STEP); break;
+        case '_': setFov(targetFov + KEY_ZOOM_STEP); break;
         case '0':
         case 'Home': resetView(); break;
         default: handled = false;
@@ -200,7 +248,7 @@
 
       if (handled) {
         event.preventDefault();
-        applyCamera();
+        requestCameraAnimation();
       }
     }
 
@@ -226,6 +274,7 @@
       canvas.removeEventListener('contextmenu', preventContextMenu);
       canvas.classList.remove('is-looking');
       pointers.clear();
+      if (animationFrame) cancelAnimationFrame(animationFrame);
     };
   });
 </script>
