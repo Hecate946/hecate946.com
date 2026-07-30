@@ -14,6 +14,7 @@ section for normal use.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import importlib
 import importlib.util
 from pathlib import Path
 import sys
@@ -161,12 +162,41 @@ HALLS = (
 
 
 def load_module(module_name: str, file_path: Path):
+    """Load a Python module fresh from disk, bypassing Blender/Python caches."""
+    file_path = Path(file_path).expanduser().resolve()
+    if not file_path.exists():
+        raise FileNotFoundError(f"Blender module does not exist: {file_path}")
+
+    # Refresh Python's import-system caches.
+    importlib.invalidate_caches()
+
+    # Remove a module with the same name from this Blender session.
+    sys.modules.pop(module_name, None)
+
+    # Remove the compiled bytecode cache. This avoids stale .pyc files when a
+    # source file is replaced quickly and keeps the same timestamp or size.
+    try:
+        pyc_path = Path(importlib.util.cache_from_source(str(file_path)))
+        if pyc_path.exists():
+            pyc_path.unlink()
+    except (NotImplementedError, OSError, ValueError):
+        pass
+
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Could not load Blender module: {file_path}")
 
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    sys.modules[module_name] = module
+
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        # Do not leave a partially initialized module cached after a failure.
+        sys.modules.pop(module_name, None)
+        raise
+
+    print(f"Loaded fresh module from: {file_path}")
     return module
 
 

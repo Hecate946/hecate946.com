@@ -5,6 +5,8 @@ section for normal use.
 """
 
 from pathlib import Path
+import importlib
+import importlib.util
 import sys
 
 import bpy
@@ -18,7 +20,7 @@ ROOM_TO_BUILD = "GREEN"
 
 # True renders the panorama immediately. False builds/saves/exports without
 # waiting for the Cycles panorama render.
-AUTO_RENDER_PANORAMA = False
+AUTO_RENDER_PANORAMA = True
 
 # "FAST", "SLOW", or "CRISP"
 RENDER_QUALITY = "FAST"
@@ -71,11 +73,47 @@ def script_directory() -> Path:
     return Path.cwd().resolve()
 
 
+def load_live_room_builder(builder_file: Path):
+    """Force-load the shared builder fresh from disk every run."""
+    module_name = "hecate_room_builder_live"
+
+    # Invalidate finder caches.
+    importlib.invalidate_caches()
+
+    # Remove any previously loaded copy of the module.
+    sys.modules.pop(module_name, None)
+
+    # Optionally remove the compiled .pyc cache too.
+    try:
+        pyc_path = Path(importlib.util.cache_from_source(str(builder_file)))
+        if pyc_path.exists():
+            pyc_path.unlink()
+    except Exception:
+        pass
+
+    spec = importlib.util.spec_from_file_location(module_name, builder_file)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Could not load shared room builder: {builder_file}")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 ROOMS_ROOT = script_directory()
 if str(ROOMS_ROOT) not in sys.path:
     sys.path.insert(0, str(ROOMS_ROOT))
 
-from shared.room_builder import RoomDefinition, RenderSettings, build_room
+builder_file = ROOMS_ROOT / "shared" / "room_builder.py"
+room_builder = load_live_room_builder(builder_file)
+
+RoomDefinition = room_builder.RoomDefinition
+RenderSettings = room_builder.RenderSettings
+build_room = room_builder.build_room
+
+print(f"Loaded room builder from: {builder_file.resolve()}")
+print(f"Room builder version:    {room_builder.ROOM_BUILDER_VERSION}")
 
 
 ROOMS = (

@@ -12,29 +12,39 @@ from pathlib import Path
 import importlib.util
 import math
 import random
+import shutil
 from typing import Callable
 
 import bpy
 from mathutils import Vector
 
 
+ROOM_BUILDER_VERSION = "2026-07-30-v4-interactive-overlay-render-fix"
+
 ROOM_WIDTH = 6.8
 ROOM_DEPTH = 10.0
 ROOM_HEIGHT = 3.6
-CAMERA_LOCATION = (0.0, -3.8, 1.65)
+ENTRY_CLEARANCE = 0.45
+CAMERA_LOCATION = (0.0, -(ROOM_DEPTH / 2) + ENTRY_CLEARANCE, 1.65)
 
 TILE_WIDTH = 0.205
 TILE_HEIGHT = 0.074
-TILE_GAP = 0.005
+WALL_GROUT = 0.0015
 TILE_DEPTH = 0.024
-TILE_BEVEL = 0.0035
+TILE_BEVEL = 0.0
 
 FLOOR_TILE_SIZE = 0.285
-FLOOR_GAP = 0.005
+FLOOR_GAP = 0.0
 FLOOR_TILE_DEPTH = 0.036
+FLOOR_BEVEL = 0.0
 
-POINT_LIGHT_POWER = 650.0
-POINT_LIGHT_LOCATION = (0.0, -0.8, 3.0)
+DOOR_WIDTH = 1.15
+DOOR_HEIGHT = 2.85
+DOOR_DEPTH = 0.05
+
+AREA_LIGHT_POWER = 2200.0
+AREA_LIGHT_SIZE = 2.8
+AREA_LIGHT_LOCATION = (0.0, 0.0, ROOM_HEIGHT - 0.28)
 
 
 @dataclass(frozen=True)
@@ -215,22 +225,103 @@ def mesh_from_boxes(name, boxes, mats, collection, bevel=0.0):
     return obj
 
 
-def spans(total, length, gap, offset=0.0):
-    """Return clipped spans with proper half-tiles at staggered wall edges."""
+def tile_intervals(minimum, maximum, tile_length, grout, offset=0.0):
+    """Return clipped tile intervals that fully cover the bounds."""
     result = []
-    step = length + gap
+    step = tile_length + grout
+    cursor = minimum + offset
+    if offset > 0:
+        cursor -= step
 
-    # One module before the boundary means an offset row clips into a true
-    # half-tile instead of exposing a vertical strip of grout in the corner.
-    cursor = -total / 2 + offset - step
-    while cursor < total / 2:
-        lower = max(-total / 2, cursor)
-        upper = min(total / 2, cursor + length)
-        clipped_width = upper - lower
-        if clipped_width > max(length * 0.08, 0.012):
-            result.append(((lower + upper) / 2, clipped_width))
+    while cursor < maximum:
+        lower = max(minimum, cursor)
+        upper = min(maximum, cursor + tile_length)
+        if upper - lower > max(tile_length * 0.08, 0.004):
+            result.append((lower, upper))
         cursor += step
+
     return result
+
+
+def grout_intervals(intervals):
+    """Return the small spans between consecutive tile intervals."""
+    result = []
+    for (_, upper), (next_lower, _) in zip(intervals, intervals[1:]):
+        if next_lower - upper > 0.00001:
+            result.append((upper, next_lower))
+    return result
+
+
+def mesh_from_faces(name, vertices, faces, material_indices, mats, collection):
+    mesh = bpy.data.meshes.new(f"{name}_Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.validate()
+    mesh.update()
+
+    for mat in mats:
+        mesh.materials.append(mat)
+    for polygon, material_index in zip(mesh.polygons, material_indices):
+        polygon.material_index = material_index
+
+    obj = bpy.data.objects.new(name, mesh)
+    collection.objects.link(obj)
+    return obj
+
+
+def append_quad(vertices, faces, material_indices, corners, material_index):
+    start = len(vertices)
+    vertices.extend(corners)
+    faces.append((start, start + 1, start + 2, start + 3))
+    material_indices.append(material_index)
+
+
+def append_wall_surface(
+    vertices,
+    faces,
+    material_indices,
+    span_min,
+    span_max,
+    fixed,
+    axis,
+    reverse_winding,
+):
+    """Append one wall as a single, gap-free mosaic of tile and grout faces."""
+    row_tiles = tile_intervals(0.0, ROOM_HEIGHT, TILE_HEIGHT, WALL_GROUT)
+    row_grout = grout_intervals(row_tiles)
+
+    def add_cell(span_range, z_range, material_index):
+        s0, s1 = span_range
+        z0, z1 = z_range
+        if axis == "x":
+            corners = [
+                (s0, fixed, z0),
+                (s1, fixed, z0),
+                (s1, fixed, z1),
+                (s0, fixed, z1),
+            ]
+        else:
+            corners = [
+                (fixed, s0, z0),
+                (fixed, s1, z0),
+                (fixed, s1, z1),
+                (fixed, s0, z1),
+            ]
+        if reverse_winding:
+            corners.reverse()
+        append_quad(vertices, faces, material_indices, corners, material_index)
+
+    for row_index, z_range in enumerate(row_tiles):
+        offset = (TILE_WIDTH + WALL_GROUT) / 2 if row_index % 2 else 0.0
+        column_tiles = tile_intervals(span_min, span_max, TILE_WIDTH, WALL_GROUT, offset)
+        column_grout = grout_intervals(column_tiles)
+
+        for span_range in column_tiles:
+            add_cell(span_range, z_range, 0)
+        for grout_range in column_grout:
+            add_cell(grout_range, z_range, 1)
+
+    for grout_z_range in row_grout:
+        add_cell((span_min, span_max), grout_z_range, 1)
 
 
 def aim(obj, target) -> None:
@@ -289,8 +380,8 @@ def configure_render(scene: bpy.types.Scene, settings: RenderSettings, output_fi
     scene.world = world
     world.use_nodes = True
     background = world.node_tree.nodes.get("Background")
-    background.inputs["Color"].default_value = (0.05, 0.05, 0.05, 1.0)
-    background.inputs["Strength"].default_value = 1.0
+    background.inputs["Color"].default_value = (0.09, 0.09, 0.09, 1.0)
+    background.inputs["Strength"].default_value = 0.45
 
 
 def load_unique_module(unique_file: Path):
@@ -313,6 +404,28 @@ def call_unique_hook(module, hook_name: str, context: RoomContext):
     hook = getattr(module, hook_name, None)
     if callable(hook):
         hook(context)
+
+
+def hide_interactive_geometry_for_panorama(collection: bpy.types.Collection):
+    """Hide live GLB geometry during the panorama render without hiding lights.
+
+    The interactive collection also contains the room's area light, so hiding
+    the entire collection would make the panorama render incorrectly. Instead,
+    temporarily hide every non-light object and return its previous state.
+    """
+    previous_states = []
+    for obj in collection.all_objects:
+        if obj.type == "LIGHT":
+            continue
+        previous_states.append((obj, obj.hide_render))
+        obj.hide_render = True
+    return previous_states
+
+
+def restore_render_visibility(previous_states) -> None:
+    """Restore object render flags after the panorama has finished."""
+    for obj, was_hidden in previous_states:
+        obj.hide_render = was_hidden
 
 
 def export_interactive_collection(
@@ -355,6 +468,13 @@ def build_room(
     panorama_file = output_directory / f"{definition.slug}-room-panorama.png"
     interactive_file = output_directory / f"{definition.slug}-room-interactive.glb"
 
+    print(f"Room builder version: {ROOM_BUILDER_VERSION}")
+    print(f"Room builder source:  {Path(__file__).resolve()}")
+
+    # Never allow an old panorama to masquerade as a successful new render.
+    if settings.auto_render and panorama_file.exists():
+        panorama_file.unlink()
+
     scene = reset_scene()
     configure_render(scene, settings, panorama_file)
 
@@ -392,34 +512,6 @@ def build_room(
         static_collection,
     )
     add_box(
-        "Back grout",
-        (0, ROOM_DEPTH / 2 + 0.02, ROOM_HEIGHT / 2),
-        (ROOM_WIDTH, 0.06, ROOM_HEIGHT),
-        grout_mat,
-        static_collection,
-    )
-    add_box(
-        "Front grout",
-        (0, -ROOM_DEPTH / 2 - 0.02, ROOM_HEIGHT / 2),
-        (ROOM_WIDTH, 0.06, ROOM_HEIGHT),
-        grout_mat,
-        static_collection,
-    )
-    add_box(
-        "Left grout",
-        (-ROOM_WIDTH / 2 - 0.02, 0, ROOM_HEIGHT / 2),
-        (0.06, ROOM_DEPTH, ROOM_HEIGHT),
-        grout_mat,
-        static_collection,
-    )
-    add_box(
-        "Right grout",
-        (ROOM_WIDTH / 2 + 0.02, 0, ROOM_HEIGHT / 2),
-        (0.06, ROOM_DEPTH, ROOM_HEIGHT),
-        grout_mat,
-        static_collection,
-    )
-    add_box(
         "Ceiling",
         (0, 0, ROOM_HEIGHT + 0.04),
         (ROOM_WIDTH, ROOM_DEPTH, 0.08),
@@ -427,69 +519,73 @@ def build_room(
         static_collection,
     )
 
-    wall_boxes = []
-    row_step = TILE_HEIGHT + TILE_GAP
-    row_count = math.ceil(ROOM_HEIGHT / row_step)
+    wall_vertices = []
+    wall_faces = []
+    wall_material_indices = []
 
-    for row in range(row_count):
-        z_lower = row * row_step + TILE_GAP / 2
-        z_upper = min(ROOM_HEIGHT, z_lower + TILE_HEIGHT)
-        tile_height = z_upper - z_lower
-        if tile_height <= TILE_HEIGHT * 0.20:
-            continue
+    # Back wall inward normal: -Y.
+    append_wall_surface(
+        wall_vertices,
+        wall_faces,
+        wall_material_indices,
+        -ROOM_WIDTH / 2,
+        ROOM_WIDTH / 2,
+        ROOM_DEPTH / 2,
+        "x",
+        False,
+    )
+    # Entry wall inward normal: +Y.
+    append_wall_surface(
+        wall_vertices,
+        wall_faces,
+        wall_material_indices,
+        -ROOM_WIDTH / 2,
+        ROOM_WIDTH / 2,
+        -ROOM_DEPTH / 2,
+        "x",
+        True,
+    )
+    # Left wall inward normal: +X.
+    append_wall_surface(
+        wall_vertices,
+        wall_faces,
+        wall_material_indices,
+        -ROOM_DEPTH / 2,
+        ROOM_DEPTH / 2,
+        -ROOM_WIDTH / 2,
+        "y",
+        False,
+    )
+    # Right wall inward normal: -X.
+    append_wall_surface(
+        wall_vertices,
+        wall_faces,
+        wall_material_indices,
+        -ROOM_DEPTH / 2,
+        ROOM_DEPTH / 2,
+        ROOM_WIDTH / 2,
+        "y",
+        True,
+    )
 
-        z = (z_lower + z_upper) / 2
-        stagger = (TILE_WIDTH + TILE_GAP) / 2 if row % 2 else 0.0
-
-        for x, width in spans(ROOM_WIDTH, TILE_WIDTH, TILE_GAP, stagger):
-            wall_boxes.append(
-                (
-                    (x, ROOM_DEPTH / 2 - TILE_DEPTH / 2, z),
-                    (width, TILE_DEPTH, tile_height),
-                    0,
-                )
-            )
-            wall_boxes.append(
-                (
-                    (x, -ROOM_DEPTH / 2 + TILE_DEPTH / 2, z),
-                    (width, TILE_DEPTH, tile_height),
-                    0,
-                )
-            )
-
-        for y, width in spans(ROOM_DEPTH, TILE_WIDTH, TILE_GAP, stagger):
-            wall_boxes.append(
-                (
-                    (-ROOM_WIDTH / 2 + TILE_DEPTH / 2, y, z),
-                    (TILE_DEPTH, width, tile_height),
-                    0,
-                )
-            )
-            wall_boxes.append(
-                (
-                    (ROOM_WIDTH / 2 - TILE_DEPTH / 2, y, z),
-                    (TILE_DEPTH, width, tile_height),
-                    0,
-                )
-            )
-
-    mesh_from_boxes(
-        "Glazed wall tiles",
-        wall_boxes,
-        [wall_mat],
+    mesh_from_faces(
+        "Wall_Surface_Mosaic",
+        wall_vertices,
+        wall_faces,
+        wall_material_indices,
+        [wall_mat, grout_mat],
         static_collection,
-        bevel=TILE_BEVEL,
     )
 
     floor_boxes = []
-    xs = spans(ROOM_WIDTH, FLOOR_TILE_SIZE, FLOOR_GAP)
-    ys = spans(ROOM_DEPTH, FLOOR_TILE_SIZE, FLOOR_GAP)
-    for ix, (x, width) in enumerate(xs):
-        for iy, (y, depth) in enumerate(ys):
+    x_intervals = tile_intervals(-ROOM_WIDTH / 2, ROOM_WIDTH / 2, FLOOR_TILE_SIZE, FLOOR_GAP)
+    y_intervals = tile_intervals(-ROOM_DEPTH / 2, ROOM_DEPTH / 2, FLOOR_TILE_SIZE, FLOOR_GAP)
+    for ix, x_range in enumerate(x_intervals):
+        for iy, y_range in enumerate(y_intervals):
             floor_boxes.append(
                 (
-                    (x, y, FLOOR_TILE_DEPTH / 2),
-                    (width, depth, FLOOR_TILE_DEPTH),
+                    ((x_range[0] + x_range[1]) / 2, (y_range[0] + y_range[1]) / 2, FLOOR_TILE_DEPTH / 2),
+                    (x_range[1] - x_range[0], y_range[1] - y_range[0], FLOOR_TILE_DEPTH),
                     (ix + iy) % 2,
                 )
             )
@@ -499,15 +595,33 @@ def build_room(
         floor_boxes,
         [colored_floor, white_floor],
         static_collection,
-        bevel=0.001,
+        bevel=FLOOR_BEVEL,
     )
 
-    light_data = bpy.data.lights.new("Room_Default_Point", type="POINT")
-    light_data.energy = POINT_LIGHT_POWER
-    light_data.shadow_soft_size = 0.25
-    light = bpy.data.objects.new("Room_Default_Point", light_data)
+    door_mat = material("Room door", linear_hex("#050505"), roughness=0.24, coat=0.10)
+    add_box(
+        "Entry_Door_Frame",
+        (0, -ROOM_DEPTH / 2 + DOOR_DEPTH * 0.55, (DOOR_HEIGHT + 0.12) / 2),
+        (DOOR_WIDTH + 0.14, DOOR_DEPTH, DOOR_HEIGHT + 0.12),
+        door_mat,
+        static_collection,
+    )
+    add_box(
+        "Entry_Door",
+        (0, -ROOM_DEPTH / 2 + DOOR_DEPTH * 1.1, DOOR_HEIGHT / 2),
+        (DOOR_WIDTH, DOOR_DEPTH, DOOR_HEIGHT),
+        door_mat,
+        static_collection,
+    )
+
+    light_data = bpy.data.lights.new("Room_Area_Light", type="AREA")
+    light_data.energy = AREA_LIGHT_POWER
+    light_data.shape = "SQUARE"
+    light_data.size = AREA_LIGHT_SIZE
+    light = bpy.data.objects.new("Room_Area_Light", light_data)
     interactive_collection.objects.link(light)
-    light.location = POINT_LIGHT_LOCATION
+    light.location = AREA_LIGHT_LOCATION
+    light.rotation_euler = (math.radians(180.0), 0.0, 0.0)
 
     interaction_origin = bpy.data.objects.new("Interaction_Origin", None)
     interactive_collection.objects.link(interaction_origin)
@@ -563,14 +677,34 @@ def build_room(
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_file))
 
     if settings.auto_render:
-        bpy.ops.render.render(write_still=True)
+        # Keep the area light active, but prevent live GLB objects such as the
+        # coffee table from being baked into the panorama behind themselves.
+        previous_render_states = hide_interactive_geometry_for_panorama(
+            interactive_collection
+        )
+        try:
+            bpy.ops.render.render(write_still=True)
+            if not panorama_file.exists():
+                raise RuntimeError(f"Panorama render did not create {panorama_file}")
+        finally:
+            restore_render_visibility(previous_render_states)
     else:
         print(f"Skipped panorama render for {definition.slug}.")
 
     export_interactive_collection(scene, interactive_collection, interactive_file)
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_file))
 
+    # Copy directly into the website so the browser cannot keep using an old
+    # public asset after a successful Blender run.
+    project_root = rooms_root.parent.parent
+    public_directory = project_root / "public" / "scenes" / "rooms" / definition.slug
+    public_directory.mkdir(parents=True, exist_ok=True)
+    if settings.auto_render:
+        shutil.copy2(panorama_file, public_directory / "panorama.png")
+    shutil.copy2(interactive_file, public_directory / "interactive.glb")
+
     print(f"Built {definition.title}")
     print(f"  Blend:       {blend_file}")
     print(f"  Panorama:    {panorama_file}")
     print(f"  Interactive: {interactive_file}")
+    print(f"  Website:     {public_directory}")
