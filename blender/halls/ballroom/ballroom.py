@@ -1,12 +1,12 @@
 """
-Neoclassical Ballroom 360° Generator for Blender 4.x
+Neoclassical 360° Room Generator for Blender 4.x
 =================================================
 
-This script builds a complete, enclosed 360-degree neoclassical ballroom
+This script builds a complete, enclosed 360-degree neoclassical gallery room
 inspired by the supplied reference image:
 
 - centered, symmetrical room proportions
-- polished diagonal black-and-white marble floor
+- polished black-and-white diagonal checkerboard marble floor
 - ivory plaster walls and plain white recessed ceiling
 - black marble dado / base trim
 - layered cornices and wall panel moldings
@@ -52,7 +52,7 @@ import bpy
 from mathutils import Vector
 
 
-SCRIPT_VERSION = "ballroom-cycles-v1-2026-07-29"
+SCRIPT_VERSION = "ballroom-smaller-floor-tiles-v1-2026-07-29"
 
 
 # -----------------------------------------------------------------------------
@@ -86,12 +86,15 @@ BLEND_OUTPUT_PATH = OUTPUT_DIRECTORY / "ballroom.blend"
 
 # The GLB is exported every time the script successfully builds the scene.
 AUTO_EXPORT_GLB = True
-AUTO_RENDER = False
+AUTO_RENDER = True
 AUTO_SAVE_BLEND = False
 
-# Floor proportions inferred from the reference.
-FLOOR_TILE_PITCH = 0.78
-FLOOR_TILE_SIZE = 0.745
+# When True, uses Cycles. When False, uses Eevee Next for faster previews.
+USE_CYCLES = True
+
+# Floor proportions adjusted for smaller tiles with no visible spacing.
+FLOOR_TILE_PITCH = 0.50
+FLOOR_TILE_SIZE = 0.50
 FLOOR_TILE_THICKNESS = 0.035
 FLOOR_ROTATION_DEGREES = 45.0
 
@@ -723,7 +726,7 @@ def add_cube_geometry(
         material_indices.append(material_index)
 
 
-def build_alternating_marble_floor(
+def build_checkerboard_floor(
     materials: MaterialSet,
     architecture_collection: bpy.types.Collection,
     floor_collection: bpy.types.Collection,
@@ -773,7 +776,7 @@ def build_alternating_marble_floor(
                 (i + j) & 1,
             )
 
-    mesh = bpy.data.meshes.new("Alternating Marble Floor Mesh")
+    mesh = bpy.data.meshes.new("Checkerboard Marble Floor Mesh")
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
     mesh.materials.append(materials.white_marble)
@@ -782,7 +785,7 @@ def build_alternating_marble_floor(
     for polygon, material_index in zip(mesh.polygons, material_indices):
         polygon.material_index = material_index
 
-    floor = bpy.data.objects.new("Alternating marble tiles", mesh)
+    floor = bpy.data.objects.new("Checkerboard marble tiles", mesh)
     floor_collection.objects.link(floor)
     add_bevel_modifier(floor, 0.006, segments=2)
 
@@ -1224,6 +1227,113 @@ def build_secondary_wall_layout(
             add_pilaster(wall, u, materials, architecture, decoration, width=0.40)
 
 
+SIDE_DECOR_CENTERS = (-3.15, 0.0, 3.15)
+
+
+def add_framed_panel_with_columns(
+    wall: str,
+    center_u: float,
+    materials: MaterialSet,
+    architecture: bpy.types.Collection,
+    decoration: bpy.types.Collection,
+    panel_width: float = 1.55,
+    panel_height: float = 2.56,
+    panel_center_z: float = 2.72,
+    pilaster_offset: float = 1.02,
+    pilaster_width: float = 0.38,
+) -> None:
+    """Add a framed wall panel with a pilaster on each side."""
+    add_panel_frame(
+        wall,
+        center_u,
+        panel_center_z,
+        panel_width,
+        panel_height,
+        materials,
+        decoration,
+    )
+    add_pilaster(
+        wall,
+        center_u - pilaster_offset,
+        materials,
+        architecture,
+        decoration,
+        z_bottom=0.90,
+        z_top=4.52,
+        width=pilaster_width,
+    )
+    add_pilaster(
+        wall,
+        center_u + pilaster_offset,
+        materials,
+        architecture,
+        decoration,
+        z_bottom=0.90,
+        z_top=4.52,
+        width=pilaster_width,
+    )
+
+
+def build_left_short_wall(
+    materials: MaterialSet,
+    architecture: bpy.types.Collection,
+    decoration: bpy.types.Collection,
+) -> None:
+    """Three equidistant decorative groups, no dark doorway."""
+    for center_u in SIDE_DECOR_CENTERS:
+        add_framed_panel_with_columns(
+            "LEFT",
+            center_u,
+            materials,
+            architecture,
+            decoration,
+        )
+        add_cartouche(
+            "LEFT",
+            center_u=center_u,
+            center_z=5.58,
+            scale=0.48,
+            materials=materials,
+            decoration=decoration,
+        )
+
+
+def build_right_short_wall(
+    materials: MaterialSet,
+    architecture: bpy.types.Collection,
+    decoration: bpy.types.Collection,
+) -> None:
+    """Keep the rounded arched opening in the center, with framed groups on both sides."""
+    add_arch_niche(
+        "RIGHT",
+        center_u=0.0,
+        materials=materials,
+        architecture=architecture,
+        decoration=decoration,
+    )
+
+    # Three equidistant upper decorations, aligned with left, center, and right zones.
+    for center_u in SIDE_DECOR_CENTERS:
+        add_cartouche(
+            "RIGHT",
+            center_u=center_u,
+            center_z=5.58,
+            scale=0.48,
+            materials=materials,
+            decoration=decoration,
+        )
+
+    # Framed groups sit directly below the left and right decoration elements.
+    for center_u in (-3.15, 3.15):
+        add_framed_panel_with_columns(
+            "RIGHT",
+            center_u,
+            materials,
+            architecture,
+            decoration,
+        )
+
+
 # -----------------------------------------------------------------------------
 # CORNICE, CEILING MOLDINGS, AND RELIEF DETAILS
 # -----------------------------------------------------------------------------
@@ -1582,12 +1692,13 @@ def add_twisted_column_doorway(
         double_frame=True,
     )
 
-    column_offset = 0.99
-    for side in (-1.0, 1.0):
+    # Move the twisted columns outward so they flank the framed wall panels
+    # on either side of the doorway rather than hugging the door itself.
+    for column_u in (-1.90, 1.90):
         add_twisted_column(
-            f"{wall} twisted column {side:+.0f}",
+            f"{wall} twisted column {column_u:+.2f}",
             wall,
-            center_u + side * column_offset,
+            center_u + column_u,
             base_z=0.18,
             height=3.28,
             radius=0.245,
@@ -1776,27 +1887,86 @@ def build_lighting(lighting: bpy.types.Collection) -> None:
     )
 
 
+def configure_equirectangular_projection(camera_data: bpy.types.Camera) -> None:
+    """Force a full 360x180 equirectangular projection across Blender versions."""
+    configured_paths: list[str] = []
+
+    # Current Blender versions expose the panorama projection directly on Camera.
+    if hasattr(camera_data, "panorama_type"):
+        try:
+            camera_data.panorama_type = "EQUIRECTANGULAR"
+            configured_paths.append("Camera.panorama_type")
+        except (AttributeError, TypeError, ValueError):
+            pass
+
+    # Some Blender/Cycles versions expose the same option through Camera.cycles.
+    cycles_settings = getattr(camera_data, "cycles", None)
+    if cycles_settings is not None and hasattr(cycles_settings, "panorama_type"):
+        try:
+            cycles_settings.panorama_type = "EQUIRECTANGULAR"
+            configured_paths.append("Camera.cycles.panorama_type")
+        except (AttributeError, TypeError, ValueError):
+            pass
+
+        for attribute, value in (
+            ("latitude_min", -math.pi / 2.0),
+            ("latitude_max", math.pi / 2.0),
+            ("longitude_min", -math.pi),
+            ("longitude_max", math.pi),
+        ):
+            if hasattr(cycles_settings, attribute):
+                setattr(cycles_settings, attribute, value)
+
+    detected_values: list[str] = []
+    if hasattr(camera_data, "panorama_type"):
+        detected_values.append(str(camera_data.panorama_type))
+    if cycles_settings is not None and hasattr(cycles_settings, "panorama_type"):
+        detected_values.append(str(cycles_settings.panorama_type))
+
+    if "EQUIRECTANGULAR" not in detected_values:
+        raise RuntimeError(
+            "The 360 camera did not accept the EQUIRECTANGULAR projection. "
+            f"Detected panorama settings: {detected_values or ['unavailable']}"
+        )
+
+    print(
+        "[Hall] Full 360x180 equirectangular projection confirmed via: "
+        + ", ".join(configured_paths)
+    )
+
+
+def verify_equirectangular_render_camera(camera: bpy.types.Object) -> None:
+    """Stop before rendering rather than silently producing a circular fisheye."""
+    if camera.type != "CAMERA" or camera.data.type != "PANO":
+        raise RuntimeError("The active hall render camera is not a panoramic camera.")
+
+    values: list[str] = []
+    if hasattr(camera.data, "panorama_type"):
+        values.append(str(camera.data.panorama_type))
+    cycles_settings = getattr(camera.data, "cycles", None)
+    if cycles_settings is not None and hasattr(cycles_settings, "panorama_type"):
+        values.append(str(cycles_settings.panorama_type))
+
+    if "EQUIRECTANGULAR" not in values:
+        raise RuntimeError(
+            "Refusing to render because the camera is not equirectangular. "
+            f"Detected panorama settings: {values or ['unavailable']}"
+        )
+
+
 def build_360_camera(cameras: bpy.types.Collection) -> bpy.types.Object:
     camera_data = bpy.data.cameras.new("Camera_360_Data")
     camera_data.type = "PANO"
-    camera_data.lens = 18.0
     camera_data.clip_start = 0.05
     camera_data.clip_end = 100.0
-
-    # Equirectangular rendering is provided by Cycles camera settings.
-    if hasattr(camera_data, "cycles"):
-        camera_data.cycles.panorama_type = "EQUIRECTANGULAR"
-        camera_data.cycles.latitude_min = -math.pi / 2.0
-        camera_data.cycles.latitude_max = math.pi / 2.0
-        camera_data.cycles.longitude_min = -math.pi
-        camera_data.cycles.longitude_max = math.pi
+    configure_equirectangular_projection(camera_data)
 
     camera = bpy.data.objects.new("Camera_360_Centered", camera_data)
     camera.location = (0.0, 0.0, CAMERA_HEIGHT)
     cameras.objects.link(camera)
 
-    # The seam faces toward the back wall; the camera remains perfectly level.
-    point_camera_at(camera, (0.0, ROOM_DEPTH / 2.0, CAMERA_HEIGHT))
+    # Keep the panorama perfectly level; only its longitude seam changes.
+    camera.rotation_euler = (math.pi / 2.0, 0.0, 0.0)
     bpy.context.scene.camera = camera
     return camera
 
@@ -1820,48 +1990,34 @@ def configure_scene() -> None:
     scene.render.film_transparent = False
     scene.render.filepath = str(PNG_OUTPUT_PATH)
 
-    # Use Cycles directly. No alternate render engine is assigned anywhere.
-    print(f"[Ballroom {SCRIPT_VERSION}] Setting render engine to CYCLES")
+    # Cycles only; no alternate render-engine assignments are used.
     scene.render.engine = "CYCLES"
-    if scene.render.engine != "CYCLES":
-        raise RuntimeError(
-            f"Could not activate Cycles. Blender reported: {scene.render.engine!r}"
-        )
+    scene.cycles.samples = CYCLES_SAMPLES
+    scene.cycles.use_denoising = True
+    scene.cycles.preview_samples = min(48, CYCLES_SAMPLES)
+    scene.cycles.max_bounces = 9
+    scene.cycles.diffuse_bounces = 4
+    scene.cycles.glossy_bounces = 5
+    scene.cycles.transparent_max_bounces = 4
+    if hasattr(scene.cycles, "use_adaptive_sampling"):
+        scene.cycles.use_adaptive_sampling = True
 
-    cycles = scene.cycles
-    cycles.samples = CYCLES_SAMPLES
-    cycles.preview_samples = min(48, CYCLES_SAMPLES)
-    cycles.use_denoising = True
-    cycles.max_bounces = 9
-    cycles.diffuse_bounces = 4
-    cycles.glossy_bounces = 5
-    cycles.transparent_max_bounces = 4
-
-    if hasattr(cycles, "use_adaptive_sampling"):
-        cycles.use_adaptive_sampling = True
-
-    # Prefer a supported GPU, but fall back cleanly to the CPU when Blender
-    # cannot find CUDA, OptiX, HIP, Metal, or oneAPI devices.
-    cycles.device = "CPU"
+    # Prefer GPU when available, but fall back safely to CPU.
     try:
-        cycles_preferences = bpy.context.preferences.addons["cycles"].preferences
-        cycles_preferences.get_devices()
-
-        supported_gpu_types = {"CUDA", "OPTIX", "HIP", "METAL", "ONEAPI"}
-        usable_gpu_found = False
-
-        for device in cycles_preferences.devices:
-            if device.type in supported_gpu_types:
+        prefs = bpy.context.preferences.addons["cycles"].preferences
+        prefs.get_devices()
+        scene.cycles.device = "CPU"
+        gpu_types = {"CUDA", "OPTIX", "HIP", "METAL", "ONEAPI"}
+        has_gpu = False
+        for device in getattr(prefs, "devices", []):
+            if getattr(device, "type", None) in gpu_types:
                 device.use = True
-                usable_gpu_found = True
-
-        if usable_gpu_found:
-            cycles.device = "GPU"
-            print("Cycles render device: GPU")
-        else:
-            print("Cycles render device: CPU (no supported GPU device found)")
+                has_gpu = True
+        if has_gpu:
+            scene.cycles.device = "GPU"
     except Exception as error:
-        print(f"Cycles GPU detection warning; using CPU: {error}")
+        print(f"Cycles device setup warning: {error}")
+        scene.cycles.device = "CPU"
 
     # Physically plausible soft contrast.
     try:
@@ -1892,8 +2048,7 @@ def configure_scene() -> None:
 
 def build_scene() -> None:
     loaded_from = globals().get("__file__", "<Blender Text Editor>")
-    print(f"\n[Ballroom {SCRIPT_VERSION}] Running script: {loaded_from}")
-    print("[Ballroom] Cycles-only build loaded.")
+    print(f"\n[Hall {SCRIPT_VERSION}] Running script: {loaded_from}")
     clear_scene()
     configure_scene()
 
@@ -1906,7 +2061,7 @@ def build_scene() -> None:
     materials = create_materials()
 
     build_shell(materials, architecture)
-    build_alternating_marble_floor(materials, architecture, floor)
+    build_checkerboard_floor(materials, architecture, floor)
 
     for wall in WALLS:
         add_baseboard_system(wall, materials, architecture, decoration)
@@ -1915,24 +2070,9 @@ def build_scene() -> None:
     build_primary_wall_layout("FRONT", materials, architecture, decoration)
     build_primary_wall_layout("BACK", materials, architecture, decoration)
 
-    # Side walls reserve their center regions for architectural openings.
-    build_secondary_wall_layout("LEFT", materials, architecture, decoration, reserve_center=True)
-    build_secondary_wall_layout("RIGHT", materials, architecture, decoration, reserve_center=True)
-
-    add_twisted_column_doorway(
-        "LEFT",
-        center_u=0.0,
-        materials=materials,
-        architecture=architecture,
-        decoration=decoration,
-    )
-    add_arch_niche(
-        "RIGHT",
-        center_u=0.0,
-        materials=materials,
-        architecture=architecture,
-        decoration=decoration,
-    )
+    # Short-side custom compositions.
+    build_left_short_wall(materials, architecture, decoration)
+    build_right_short_wall(materials, architecture, decoration)
 
     # Central upper reliefs echo the reference image on both principal walls.
     add_cartouche(
@@ -1952,18 +2092,6 @@ def build_scene() -> None:
         decoration=decoration,
     )
 
-    # Smaller upper corner reliefs on the side walls.
-    for wall in ("LEFT", "RIGHT"):
-        for u in (-3.55, 3.55):
-            add_cartouche(
-                wall,
-                center_u=u,
-                center_z=5.58,
-                scale=0.52,
-                materials=materials,
-                decoration=decoration,
-            )
-
     build_ceiling_moldings(materials, decoration)
     build_lighting(lighting)
     build_360_camera(cameras)
@@ -1982,6 +2110,9 @@ def build_scene() -> None:
 
     if AUTO_RENDER:
         ensure_output_directory()
+        if bpy.context.scene.camera is None:
+            raise RuntimeError("No active camera is assigned for the panorama render.")
+        verify_equirectangular_render_camera(bpy.context.scene.camera)
         bpy.context.scene.render.filepath = str(PNG_OUTPUT_PATH)
         bpy.ops.render.render(write_still=True)
         print(f"Panorama rendered to: {PNG_OUTPUT_PATH}")
@@ -1996,5 +2127,4 @@ def build_scene() -> None:
 
 
 if __name__ == "__main__":
-    print(f"[Ballroom {SCRIPT_VERSION}] Loaded corrected Cycles-only script: {Path(__file__).resolve()}")
     build_scene()
