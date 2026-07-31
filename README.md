@@ -4,3 +4,5 @@ TODO:
 - fix embedded house images
 - museum? 
 - add objects??
+
+LAST PUSH WITH BAKED WEBP
