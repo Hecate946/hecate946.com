@@ -20,12 +20,12 @@ import bpy
 from mathutils import Vector
 
 
-ROOM_BUILDER_VERSION = "2026-07-30-v7-corner-seam-dimmer-lighting"
+ROOM_BUILDER_VERSION = "2026-07-30-v47-tubular-gold-handle"
 
-ROOM_WIDTH = 6.8
-ROOM_DEPTH = 10.0
-ROOM_HEIGHT = 3.6
-ENTRY_CLEARANCE = 0.45
+ROOM_WIDTH = 3.99
+ROOM_DEPTH = 5.70
+ROOM_HEIGHT = 3.1
+ENTRY_CLEARANCE = 1.95
 CAMERA_LOCATION = (0.0, -(ROOM_DEPTH / 2) + ENTRY_CLEARANCE, 1.65)
 
 TILE_WIDTH = 0.205
@@ -39,14 +39,20 @@ FLOOR_GAP = 0.0
 FLOOR_TILE_DEPTH = 0.036
 FLOOR_BEVEL = 0.0
 
-DOOR_WIDTH = 1.15
-DOOR_HEIGHT = 2.85
-DOOR_DEPTH = 0.05
+DOOR_WIDTH = 0.88
+DOOR_HEIGHT = 2.28
+DOOR_DEPTH = 0.055
+DOOR_FRAME_WIDTH = 0.095
+DOOR_FRAME_DEPTH = 0.07
 
-AREA_LIGHT_POWER = 1400.0
-AREA_LIGHT_SIZE = 2.8
-AREA_LIGHT_LOCATION = (0.0, 0.0, ROOM_HEIGHT - 0.28)
-WORLD_LIGHT_STRENGTH = 0.24
+PENDANT_SOURCE_RIM_HEIGHT = 2.48
+PENDANT_RIM_HEIGHT = 2.06
+PENDANT_FIXTURE_SCALE = 0.50
+PENDANT_LIGHT_POWER = 190.0
+PENDANT_LIGHT_SIZE = 1.85
+PENDANT_LIGHT_COLOR = (1.0, 0.84, 0.72)
+WORLD_LIGHT_STRENGTH = 0.01
+PENDANT_OFFSET_Y = ROOM_DEPTH / 3
 
 
 @dataclass(frozen=True)
@@ -131,31 +137,240 @@ def material(name, color, roughness=0.35, coat=0.0, metallic=0.0):
     return mat
 
 
-def marble_material(name, dark, light):
-    mat = material(name, dark, roughness=0.20, coat=0.35)
+def wood_material(name, dark, light, roughness=0.30, coat=0.18):
+    """Create subtle, vertically grained black-stained wood."""
+    mat = material(name, dark, roughness=roughness, coat=coat)
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
     bsdf = nodes.get("Principled BSDF")
 
+    texture_coordinates = nodes.new("ShaderNodeTexCoord")
+    mapping = nodes.new("ShaderNodeMapping")
+    mapping.inputs["Scale"].default_value = (7.0, 2.0, 0.65)
+
     noise = nodes.new("ShaderNodeTexNoise")
-    noise.inputs["Scale"].default_value = 3.2
+    noise.inputs["Scale"].default_value = 3.5
     noise.inputs["Detail"].default_value = 5.0
-    noise.inputs["Roughness"].default_value = 0.72
-    noise.inputs["Distortion"].default_value = 2.0
+    noise.inputs["Roughness"].default_value = 0.68
+    noise.inputs["Distortion"].default_value = 0.18
 
     ramp = nodes.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].position = 0.28
+    ramp.color_ramp.elements[0].position = 0.24
     ramp.color_ramp.elements[0].color = dark
-    ramp.color_ramp.elements[1].position = 0.72
+    ramp.color_ramp.elements[1].position = 0.78
     ramp.color_ramp.elements[1].color = light
 
     bump = nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value = 0.12
-    bump.inputs["Distance"].default_value = 0.04
+    bump.inputs["Strength"].default_value = 0.13
+    bump.inputs["Distance"].default_value = 0.025
+
+    links.new(texture_coordinates.outputs["Generated"], mapping.inputs["Vector"])
+    links.new(mapping.outputs["Vector"], noise.inputs["Vector"])
+    links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
+    links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    return mat
+
+
+def chrome_material(name):
+    """Create a realistic brushed blackened-steel finish for the pendant parts."""
+    mat = material(
+        name,
+        linear_hex("#2C3032"),
+        roughness=0.085,
+        coat=0.22,
+        metallic=1.0,
+    )
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    bsdf = nodes.get("Principled BSDF")
+    set_socket(bsdf, "Anisotropic", 0.92)
+    set_socket(bsdf, "Anisotropic Rotation", 0.14)
+
+    texture_coordinates = nodes.new("ShaderNodeTexCoord")
+    mapping = nodes.new("ShaderNodeMapping")
+    mapping.inputs["Scale"].default_value = (1.0, 56.0, 1.0)
+
+    wave = nodes.new("ShaderNodeTexWave")
+    wave.wave_type = "BANDS"
+    wave.bands_direction = "Y"
+    wave.inputs["Scale"].default_value = 215.0
+    wave.inputs["Distortion"].default_value = 0.20
+    wave.inputs["Detail"].default_value = 1.0
+    wave.inputs["Detail Scale"].default_value = 2.0
+
+    noise = nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = 10.0
+    noise.inputs["Detail"].default_value = 4.0
+    noise.inputs["Roughness"].default_value = 0.28
+
+    multiply = nodes.new("ShaderNodeMixRGB")
+    multiply.blend_type = "MULTIPLY"
+    multiply.inputs["Fac"].default_value = 0.12
+
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.0026
+    bump.inputs["Distance"].default_value = 0.00075
+
+    links.new(texture_coordinates.outputs["Object"], mapping.inputs["Vector"])
+    links.new(mapping.outputs["Vector"], wave.inputs["Vector"])
+    links.new(mapping.outputs["Vector"], noise.inputs["Vector"])
+    links.new(wave.outputs["Color"], multiply.inputs[1])
+    links.new(noise.outputs["Color"], multiply.inputs[2])
+    links.new(multiply.outputs["Color"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    return mat
+
+
+def gold_material(name):
+    """Create a realistic brushed-polished gold finish for the door hardware."""
+    mat = material(
+        name,
+        linear_hex("#C9A13A"),
+        roughness=0.10,
+        coat=0.18,
+        metallic=1.0,
+    )
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    bsdf = nodes.get("Principled BSDF")
+    set_socket(bsdf, "Anisotropic", 0.55)
+    set_socket(bsdf, "Anisotropic Rotation", 0.08)
+
+    noise = nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = 55.0
+    noise.inputs["Detail"].default_value = 3.0
+    noise.inputs["Roughness"].default_value = 0.30
+
+    ramp = nodes.new("ShaderNodeValToRGB")
+    ramp.color_ramp.elements[0].position = 0.30
+    ramp.color_ramp.elements[0].color = linear_hex("#8D6A15")
+    ramp.color_ramp.elements[1].position = 0.78
+    ramp.color_ramp.elements[1].color = linear_hex("#E2C15E")
+
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.0015
+    bump.inputs["Distance"].default_value = 0.0010
 
     links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
     links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
     links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    return mat
+
+
+def diffuser_material(name):
+    """Soft white glass-like diffuser with a restrained visible glow."""
+    glow = linear_hex("#F3E6D3")
+    mat = material(name, glow, roughness=0.62, coat=0.02)
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    set_socket(bsdf, ("Emission Color", "Emission"), glow)
+    set_socket(bsdf, "Emission Strength", 0.002)
+    return mat
+
+
+def image_marble_material(name, image_path, *, roughness=0.48, coat=0.06, bump_strength=0.035):
+    """Create a repeating image-based marble material from the provided texture."""
+    if not Path(image_path).exists():
+        raise FileNotFoundError(f"Missing marble texture: {image_path}")
+
+    mat = material(name, linear_hex("#8A8A8A"), roughness=roughness, coat=coat)
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    bsdf = nodes.get("Principled BSDF")
+
+    texture_coordinates = nodes.new("ShaderNodeTexCoord")
+    mapping = nodes.new("ShaderNodeMapping")
+    mapping.inputs["Scale"].default_value = (
+        1.0 / FLOOR_TILE_SIZE,
+        1.0 / FLOOR_TILE_SIZE,
+        1.0,
+    )
+
+    image_texture = nodes.new("ShaderNodeTexImage")
+    image_texture.image = bpy.data.images.load(str(image_path), check_existing=True)
+    image_texture.extension = "REPEAT"
+    image_texture.interpolation = "Linear"
+
+    luminance = nodes.new("ShaderNodeRGBToBW")
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = bump_strength
+    bump.inputs["Distance"].default_value = 0.02
+
+    links.new(texture_coordinates.outputs["Object"], mapping.inputs["Vector"])
+    links.new(mapping.outputs["Vector"], image_texture.inputs["Vector"])
+    links.new(image_texture.outputs["Color"], bsdf.inputs["Base Color"])
+    links.new(image_texture.outputs["Color"], luminance.inputs["Color"])
+    links.new(luminance.outputs["Val"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    return mat
+
+
+def checker_floor_material(
+    name,
+    image_path,
+    dark_tile_hex,
+    *,
+    roughness=0.44,
+    coat=0.05,
+    bump_strength=0.024,
+):
+    """Create a repeating 2x2 checker texture whose dark tiles match the wall color."""
+    if not Path(image_path).exists():
+        raise FileNotFoundError(f"Missing checker texture: {image_path}")
+
+    mat = material(name, linear_hex(dark_tile_hex), roughness=roughness, coat=coat)
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    bsdf = nodes.get("Principled BSDF")
+
+    texture_coordinates = nodes.new("ShaderNodeTexCoord")
+    mapping = nodes.new("ShaderNodeMapping")
+    mapping.inputs["Scale"].default_value = (
+        1.0 / (FLOOR_TILE_SIZE * 2.0),
+        1.0 / (FLOOR_TILE_SIZE * 2.0),
+        1.0,
+    )
+
+    image_texture = nodes.new("ShaderNodeTexImage")
+    image_texture.image = bpy.data.images.load(str(image_path), check_existing=True)
+    image_texture.extension = "REPEAT"
+    image_texture.interpolation = "Linear"
+
+    luminance = nodes.new("ShaderNodeRGBToBW")
+
+    # Separate the bright white tiles from the dark tiles using the full checker
+    # reference image as a mask, then recolor the dark half to match the wall.
+    tile_mask = nodes.new("ShaderNodeValToRGB")
+    tile_mask.color_ramp.elements[0].position = 0.36
+    tile_mask.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+    tile_mask.color_ramp.elements[1].position = 0.56
+    tile_mask.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
+
+    dark_variation = nodes.new("ShaderNodeValToRGB")
+    dark_variation.color_ramp.elements[0].position = 0.0
+    dark_variation.color_ramp.elements[0].color = linear_hex(mix_hex(dark_tile_hex, target="#000000", amount=0.18))
+    dark_variation.color_ramp.elements[1].position = 1.0
+    dark_variation.color_ramp.elements[1].color = linear_hex(mix_hex(dark_tile_hex, target="#FFFFFF", amount=0.08))
+
+    mix_color = nodes.new("ShaderNodeMixRGB")
+    mix_color.inputs["Fac"].default_value = 0.0
+
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = bump_strength
+    bump.inputs["Distance"].default_value = 0.010
+
+    links.new(texture_coordinates.outputs["Object"], mapping.inputs["Vector"])
+    links.new(mapping.outputs["Vector"], image_texture.inputs["Vector"])
+    links.new(image_texture.outputs["Color"], luminance.inputs["Color"])
+    links.new(luminance.outputs["Val"], tile_mask.inputs["Fac"])
+    links.new(luminance.outputs["Val"], dark_variation.inputs["Fac"])
+    links.new(tile_mask.outputs["Color"], mix_color.inputs["Fac"])
+    links.new(dark_variation.outputs["Color"], mix_color.inputs[1])
+    links.new(image_texture.outputs["Color"], mix_color.inputs[2])
+    links.new(mix_color.outputs["Color"], bsdf.inputs["Base Color"])
+    links.new(luminance.outputs["Val"], bump.inputs["Height"])
     links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
     return mat
 
@@ -178,6 +393,289 @@ def add_box(name, center, size, mat, collection, bevel=0.0):
         modifier.segments = 2
 
     return obj
+
+
+def add_cylinder(
+    name,
+    center,
+    radius,
+    depth,
+    mat,
+    collection,
+    rotation=(0.0, 0.0, 0.0),
+    bevel=0.0,
+):
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=48,
+        radius=radius,
+        depth=depth,
+        location=center,
+        rotation=rotation,
+    )
+    obj = bpy.context.object
+    obj.name = name
+    obj.data.materials.append(mat)
+
+    for polygon in obj.data.polygons:
+        polygon.use_smooth = True
+
+    for old_collection in list(obj.users_collection):
+        old_collection.objects.unlink(obj)
+    collection.objects.link(obj)
+
+    if bevel > 0:
+        modifier = obj.modifiers.new("Rounded edges", "BEVEL")
+        modifier.width = bevel
+        modifier.segments = 3
+
+    return obj
+
+
+def add_revolved_profile(
+    name,
+    profile,
+    mat,
+    collection,
+    *,
+    segments=128,
+    closed_profile=True,
+):
+    """Build a smooth lathed mesh from ``(radius, z)`` profile coordinates."""
+    vertices = []
+    faces = []
+    profile_count = len(profile)
+
+    for radius, z_value in profile:
+        for segment in range(segments):
+            angle = math.tau * segment / segments
+            vertices.append(
+                (
+                    radius * math.cos(angle),
+                    radius * math.sin(angle),
+                    z_value,
+                )
+            )
+
+    edge_count = profile_count if closed_profile else profile_count - 1
+    for profile_index in range(edge_count):
+        next_profile = (profile_index + 1) % profile_count
+        for segment in range(segments):
+            next_segment = (segment + 1) % segments
+            current = profile_index * segments + segment
+            current_next = profile_index * segments + next_segment
+            adjacent = next_profile * segments + segment
+            adjacent_next = next_profile * segments + next_segment
+            faces.append((current, adjacent, adjacent_next, current_next))
+
+    mesh = bpy.data.meshes.new(f"{name}_Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.validate()
+    mesh.update()
+
+    obj = bpy.data.objects.new(name, mesh)
+    obj.data.materials.append(mat)
+    collection.objects.link(obj)
+    for polygon in obj.data.polygons:
+        polygon.use_smooth = True
+    return obj
+
+
+def add_torus(
+    name,
+    center,
+    major_radius,
+    minor_radius,
+    mat,
+    collection,
+):
+    bpy.ops.mesh.primitive_torus_add(
+        major_radius=major_radius,
+        minor_radius=minor_radius,
+        major_segments=128,
+        minor_segments=20,
+        location=center,
+    )
+    obj = bpy.context.object
+    obj.name = name
+    obj.data.materials.append(mat)
+    for polygon in obj.data.polygons:
+        polygon.use_smooth = True
+
+    for old_collection in list(obj.users_collection):
+        old_collection.objects.unlink(obj)
+    collection.objects.link(obj)
+    return obj
+
+
+def add_center_pendant(static_collection, interactive_collection):
+    """Add the single shared pendant, shifted deeper into the larger room."""
+    chrome_mat = chrome_material("Pendant blackened steel")
+    cord_mat = material(
+        "Pendant black suspension cord",
+        linear_hex("#070707"),
+        roughness=0.40,
+    )
+    diffuser_mat = diffuser_material("Pendant warm white diffuser")
+
+    def fixture_radius(source_radius: float) -> float:
+        return source_radius * PENDANT_FIXTURE_SCALE
+
+    def fixture_z(source_z: float) -> float:
+        return PENDANT_RIM_HEIGHT + (
+            source_z - PENDANT_SOURCE_RIM_HEIGHT
+        ) * PENDANT_FIXTURE_SCALE
+
+    def shift_back(obj):
+        obj.location.y += PENDANT_OFFSET_Y
+        return obj
+
+    # Add a larger filled circular ceiling canopy so the suspension cord clearly
+    # terminates into a proper blackened-steel ceiling fixture.
+    canopy_radius = fixture_radius(0.165)
+    canopy_height = fixture_radius(0.060)
+    canopy_z = ROOM_HEIGHT - canopy_height / 2
+    shift_back(
+        add_cylinder(
+            "Center_Pendant_Ceiling_Canopy",
+            (0.0, 0.0, canopy_z),
+            canopy_radius,
+            canopy_height,
+            chrome_mat,
+            static_collection,
+            bevel=fixture_radius(0.012),
+        )
+    )
+
+    # Tighten the silhouette so the pendant reads more crisply: a clearer upper
+    # shoulder, a straighter sidewall, and a more defined rolled lower rim.
+    shade_profile = tuple(
+        (fixture_radius(radius), fixture_z(z))
+        for radius, z in (
+            (0.180, 3.008),
+            (0.220, 2.998),
+            (0.300, 2.980),
+            (0.415, 2.940),
+            (0.545, 2.885),
+            (0.655, 2.805),
+            (0.730, 2.710),
+            (0.778, 2.612),
+            (0.805, 2.540),
+            (0.814, 2.490),
+            (0.812, 2.458),
+            (0.795, 2.438),
+            (0.760, 2.430),
+            (0.736, 2.448),
+            (0.724, 2.490),
+            (0.720, 2.560),
+            (0.690, 2.655),
+            (0.618, 2.752),
+            (0.500, 2.842),
+            (0.372, 2.910),
+            (0.252, 2.955),
+            (0.180, 2.980),
+        )
+    )
+    shift_back(
+        add_revolved_profile(
+            "Center_Pendant_Chrome_Shade",
+            shade_profile,
+            chrome_mat,
+            static_collection,
+        )
+    )
+
+    socket_profile = tuple(
+        (fixture_radius(radius), fixture_z(z))
+        for radius, z in (
+            (0.088, 3.315),
+            (0.120, 3.310),
+            (0.152, 3.286),
+            (0.172, 3.235),
+            (0.184, 3.145),
+            (0.190, 3.070),
+            (0.178, 3.030),
+            (0.212, 3.006),
+            (0.258, 2.986),
+            (0.292, 2.952),
+            (0.286, 2.918),
+            (0.248, 2.894),
+            (0.105, 2.894),
+            (0.088, 3.315),
+        )
+    )
+    shift_back(
+        add_revolved_profile(
+            "Center_Pendant_Stepped_Socket",
+            socket_profile,
+            chrome_mat,
+            static_collection,
+        )
+    )
+
+    shift_back(
+        add_torus(
+            "Center_Pendant_Crown_Ring",
+            (0.0, 0.0, fixture_z(2.955)),
+            fixture_radius(0.268),
+            fixture_radius(0.022),
+            chrome_mat,
+            static_collection,
+        )
+    )
+    shift_back(
+        add_torus(
+            "Center_Pendant_Rolled_Rim",
+            (0.0, 0.0, fixture_z(2.454)),
+            fixture_radius(0.792),
+            fixture_radius(0.019),
+            chrome_mat,
+            static_collection,
+        )
+    )
+
+    shift_back(
+        add_cylinder(
+            "Center_Pendant_Diffuser",
+            (0.0, 0.0, fixture_z(2.436)),
+            fixture_radius(0.736),
+            fixture_radius(0.018),
+            diffuser_mat,
+            static_collection,
+            bevel=fixture_radius(0.010),
+        )
+    )
+
+    cord_bottom = fixture_z(3.285)
+    cord_top = ROOM_HEIGHT - fixture_radius(0.060)
+    shift_back(
+        add_cylinder(
+            "Center_Pendant_Cord",
+            (0.0, 0.0, (cord_bottom + cord_top) / 2),
+            0.010,
+            cord_top - cord_bottom,
+            cord_mat,
+            static_collection,
+            bevel=0.002,
+        )
+    )
+
+    light_data = bpy.data.lights.new("Center_Pendant_Light", type="AREA")
+    light_data.energy = PENDANT_LIGHT_POWER
+    light_data.color = PENDANT_LIGHT_COLOR
+    light_data.shape = "DISK"
+    light_data.size = PENDANT_LIGHT_SIZE
+    if hasattr(light_data, "spread"):
+        light_data.spread = math.radians(125.0)
+
+    light = bpy.data.objects.new("Center_Pendant_Light", light_data)
+    interactive_collection.objects.link(light)
+    light.location = (0.0, PENDANT_OFFSET_Y, fixture_z(2.505))
+    # Blender area lights emit along local -Z, so the default rotation aims
+    # the warm area source downward from the bottom opening of the pendant.
+    light.rotation_euler = (0.0, 0.0, 0.0)
+    light["keep_for_panorama"] = True
+    light["fixture"] = "center_chrome_pendant"
+    return light
 
 
 def append_box(vertices, faces, material_indices, center, size, material_index):
@@ -508,15 +1006,15 @@ def call_unique_hook(module, hook_name: str, context: RoomContext):
 
 
 def hide_interactive_geometry_for_panorama(collection: bpy.types.Collection):
-    """Hide browser-only objects while retaining the tagged panorama light.
+    """Hide browser-only objects while retaining the tagged pendant light.
 
     Hiding the entire interactive collection would remove the room's shared
-    area light. Instead, only objects explicitly tagged ``keep_for_panorama``
+    pendant light. Instead, only objects explicitly tagged ``keep_for_panorama``
     remain render-visible; everything else is temporarily hidden and restored.
     """
     previous_states = []
     for obj in collection.all_objects:
-        # The shared room light remains active for the panorama. Any light that
+        # The shared pendant light remains active for the panorama. Any light that
         # belongs to a reusable interactive asset is hidden with that asset so
         # its browser-only lighting is not accidentally baked into the image.
         if obj.type == "LIGHT" and obj.get("keep_for_panorama", False):
@@ -593,24 +1091,24 @@ def build_room(
     scene.collection.children.link(interactive_collection)
 
     lighter_color = mix_hex(definition.color_hex, amount=0.27)
+    texture_directory = Path(__file__).resolve().parent / "textures"
+    checker_texture = texture_directory / "checker-texture.png"
 
     wall_mat = material(
         f"{definition.title} glossy tile",
         linear_hex(definition.color_hex),
-        roughness=0.085,
-        coat=0.74,
+        roughness=0.18,
+        coat=0.26,
     )
     grout_mat = material("White grout", linear_hex("#EEF2EC"), roughness=0.76)
-    ceiling_mat = material("Plain ceiling", linear_hex("#D8D8D8"), roughness=0.65)
-    colored_floor = marble_material(
-        f"{definition.title} colored marble",
-        linear_hex(definition.color_hex),
-        linear_hex(lighter_color),
-    )
-    white_floor = marble_material(
-        "White marble",
-        linear_hex("#D5DBD8"),
-        linear_hex("#FBFBF7"),
+    ceiling_mat = material("Plain ceiling", linear_hex("#9EA5AE"), roughness=0.54)
+    checker_floor = checker_floor_material(
+        f"{definition.title} full checker marble",
+        checker_texture,
+        definition.color_hex,
+        roughness=0.78,
+        coat=0.0,
+        bump_strength=0.012,
     )
 
     add_box(
@@ -686,52 +1184,170 @@ def build_room(
         static_collection,
     )
 
-    floor_boxes = []
-    x_intervals = tile_intervals(-ROOM_WIDTH / 2, ROOM_WIDTH / 2, FLOOR_TILE_SIZE, FLOOR_GAP)
-    y_intervals = tile_intervals(-ROOM_DEPTH / 2, ROOM_DEPTH / 2, FLOOR_TILE_SIZE, FLOOR_GAP)
-    for ix, x_range in enumerate(x_intervals):
-        for iy, y_range in enumerate(y_intervals):
-            floor_boxes.append(
-                (
-                    ((x_range[0] + x_range[1]) / 2, (y_range[0] + y_range[1]) / 2, FLOOR_TILE_DEPTH / 2),
-                    (x_range[1] - x_range[0], y_range[1] - y_range[0], FLOOR_TILE_DEPTH),
-                    (ix + iy) % 2,
-                )
-            )
-
-    mesh_from_boxes(
-        "Alternating marble floor",
-        floor_boxes,
-        [colored_floor, white_floor],
+    add_box(
+        "Checker marble floor",
+        (0, 0, FLOOR_TILE_DEPTH / 2),
+        (ROOM_WIDTH, ROOM_DEPTH, FLOOR_TILE_DEPTH),
+        checker_floor,
         static_collection,
         bevel=FLOOR_BEVEL,
     )
 
-    door_mat = material("Room door", linear_hex("#050505"), roughness=0.24, coat=0.10)
+    # A very restrained dark baseboard helps ground the room and makes the door
+    # opening feel more integrated with the walls.
+    baseboard_mat = material(
+        "Minimal charcoal baseboard",
+        linear_hex("#111211"),
+        roughness=0.46,
+        coat=0.05,
+    )
+    baseboard_height = 0.105
+    baseboard_depth = 0.012
+    baseboard_z = baseboard_height / 2
     add_box(
-        "Entry_Door_Frame",
-        (0, -ROOM_DEPTH / 2 + DOOR_DEPTH * 0.55, (DOOR_HEIGHT + 0.12) / 2),
-        (DOOR_WIDTH + 0.14, DOOR_DEPTH, DOOR_HEIGHT + 0.12),
-        door_mat,
+        "Baseboard_Back",
+        (0, ROOM_DEPTH / 2 - baseboard_depth / 2, baseboard_z),
+        (ROOM_WIDTH, baseboard_depth, baseboard_height),
+        baseboard_mat,
         static_collection,
+        bevel=0.003,
     )
     add_box(
+        "Baseboard_Left",
+        (-ROOM_WIDTH / 2 + baseboard_depth / 2, 0, baseboard_z),
+        (baseboard_depth, ROOM_DEPTH, baseboard_height),
+        baseboard_mat,
+        static_collection,
+        bevel=0.003,
+    )
+    add_box(
+        "Baseboard_Right",
+        (ROOM_WIDTH / 2 - baseboard_depth / 2, 0, baseboard_z),
+        (baseboard_depth, ROOM_DEPTH, baseboard_height),
+        baseboard_mat,
+        static_collection,
+        bevel=0.003,
+    )
+    entry_segment_width = (ROOM_WIDTH - (DOOR_WIDTH + DOOR_FRAME_WIDTH * 2)) / 2
+    add_box(
+        "Baseboard_Entry_Left",
+        (-(ROOM_WIDTH / 2) + entry_segment_width / 2, -ROOM_DEPTH / 2 + baseboard_depth / 2, baseboard_z),
+        (entry_segment_width, baseboard_depth, baseboard_height),
+        baseboard_mat,
+        static_collection,
+        bevel=0.003,
+    )
+    add_box(
+        "Baseboard_Entry_Right",
+        ((ROOM_WIDTH / 2) - entry_segment_width / 2, -ROOM_DEPTH / 2 + baseboard_depth / 2, baseboard_z),
+        (entry_segment_width, baseboard_depth, baseboard_height),
+        baseboard_mat,
+        static_collection,
+        bevel=0.003,
+    )
+
+    door_mat = wood_material(
+        "Black-stained wood door",
+        linear_hex("#010101"),
+        linear_hex("#100C08"),
+        roughness=0.44,
+        coat=0.06,
+    )
+    brass_mat = gold_material("Warm realistic gold")
+
+    entry_wall_y = -ROOM_DEPTH / 2
+    # Keep the frame slightly proud of the tiled wall, but set the slab mostly
+    # within the wall plane so the door reads normally instead of floating in
+    # front of the wall.
+    frame_y = entry_wall_y + DOOR_FRAME_DEPTH * 0.32
+    door_y = entry_wall_y + 0.002
+    door_front_y = door_y + DOOR_DEPTH / 2
+
+    # A three-piece casing reads as a real frame instead of the previous
+    # oversized black rectangle behind the door slab.
+    add_box(
+        "Entry_Door_Frame_Left",
+        (-(DOOR_WIDTH + DOOR_FRAME_WIDTH) / 2, frame_y, DOOR_HEIGHT / 2),
+        (DOOR_FRAME_WIDTH, DOOR_FRAME_DEPTH, DOOR_HEIGHT),
+        door_mat,
+        static_collection,
+        bevel=0.012,
+    )
+    add_box(
+        "Entry_Door_Frame_Right",
+        ((DOOR_WIDTH + DOOR_FRAME_WIDTH) / 2, frame_y, DOOR_HEIGHT / 2),
+        (DOOR_FRAME_WIDTH, DOOR_FRAME_DEPTH, DOOR_HEIGHT),
+        door_mat,
+        static_collection,
+        bevel=0.012,
+    )
+    add_box(
+        "Entry_Door_Frame_Top",
+        (0, frame_y, DOOR_HEIGHT + DOOR_FRAME_WIDTH / 2),
+        (DOOR_WIDTH + DOOR_FRAME_WIDTH * 2, DOOR_FRAME_DEPTH, DOOR_FRAME_WIDTH),
+        door_mat,
+        static_collection,
+        bevel=0.012,
+    )
+
+    add_box(
         "Entry_Door",
-        (0, -ROOM_DEPTH / 2 + DOOR_DEPTH * 1.1, DOOR_HEIGHT / 2),
+        (0, door_y, DOOR_HEIGHT / 2),
         (DOOR_WIDTH, DOOR_DEPTH, DOOR_HEIGHT),
         door_mat,
         static_collection,
+        bevel=0.018,
     )
 
-    light_data = bpy.data.lights.new("Room_Area_Light", type="AREA")
-    light_data.energy = AREA_LIGHT_POWER
-    light_data.shape = "SQUARE"
-    light_data.size = AREA_LIGHT_SIZE
-    light = bpy.data.objects.new("Room_Area_Light", light_data)
-    interactive_collection.objects.link(light)
-    light.location = AREA_LIGHT_LOCATION
-    light.rotation_euler = (math.radians(180.0), 0.0, 0.0)
-    light["keep_for_panorama"] = True
+    # Keep the slab visually simpler by removing the former raised-panel boxes.
+    # The black-stained wood grain now reads cleanly across the full door face.
+
+    handle_x = DOOR_WIDTH * 0.39
+    handle_z = DOOR_HEIGHT / 2
+    handle_surface_y = door_front_y + 0.012
+
+    # Match the new reference more closely: a slightly taller rectangular gold
+    # plate on the door, with a clean tubular lever all the way through.
+    add_box(
+        "Entry_Door_Handle_Backplate",
+        (handle_x, handle_surface_y, handle_z),
+        (0.082, 0.024, 0.235),
+        brass_mat,
+        static_collection,
+        bevel=0.010,
+    )
+    add_cylinder(
+        "Entry_Door_Handle_Rosette",
+        (handle_x, handle_surface_y + 0.016, handle_z),
+        0.032,
+        0.018,
+        brass_mat,
+        static_collection,
+        rotation=(math.radians(90.0), 0.0, 0.0),
+        bevel=0.004,
+    )
+    add_cylinder(
+        "Entry_Door_Handle_Neck",
+        (handle_x - 0.024, handle_surface_y + 0.038, handle_z),
+        0.013,
+        0.054,
+        brass_mat,
+        static_collection,
+        rotation=(0.0, math.radians(90.0), 0.0),
+        bevel=0.003,
+    )
+    add_cylinder(
+        "Entry_Door_Handle_Lever",
+        (handle_x - 0.095, handle_surface_y + 0.038, handle_z),
+        0.013,
+        0.142,
+        brass_mat,
+        static_collection,
+        rotation=(0.0, math.radians(90.0), 0.0),
+        bevel=0.003,
+    )
+
+    add_center_pendant(static_collection, interactive_collection)
 
     interaction_origin = bpy.data.objects.new("Interaction_Origin", None)
     interactive_collection.objects.link(interaction_origin)
@@ -792,8 +1408,11 @@ def build_room(
         wall_material=wall_mat,
         grout_material=grout_mat,
         ceiling_material=ceiling_mat,
-        colored_floor_material=colored_floor,
-        white_floor_material=white_floor,
+        # Preserve the existing RoomContext API for room-specific hooks. The
+        # new floor uses one complete checker texture, so both compatibility
+        # fields intentionally point to the same material.
+        colored_floor_material=checker_floor,
+        white_floor_material=checker_floor,
         assets_root=assets_root,
         add_box=add_box,
         material=material,
@@ -847,7 +1466,7 @@ def build_room(
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_file))
 
     if settings.auto_render:
-        # Keep the area light active, but prevent live GLB objects such as the
+        # Keep the pendant light active, but prevent live GLB objects such as the
         # coffee table from being baked into the panorama behind themselves.
         previous_render_states = hide_interactive_geometry_for_panorama(
             interactive_collection

@@ -13,7 +13,7 @@
 
   const INITIAL_PITCH = 0;
   const MIN_FOV = 32;
-  const MAX_FOV = 76;
+  const MAX_FOV = 96;
   const INITIAL_FOV = MAX_FOV;
   const DRAG_SENSITIVITY = 0.00225;
   const WHEEL_ZOOM_SENSITIVITY = 0.018;
@@ -23,8 +23,8 @@
   const SETTLE_EPSILON = 0.0001;
   const KEY_LOOK_STEP = 0.075;
   const KEY_ZOOM_STEP = 3;
-  const MIN_PITCH = MathUtils.degToRad(-48);
-  const MAX_PITCH = MathUtils.degToRad(34);
+  const MIN_PITCH = 0;
+  const MAX_PITCH = 0;
 
   type PointerPosition = { x: number; y: number };
 
@@ -171,16 +171,11 @@
       if (dragPointer !== event.pointerId) return;
 
       const deltaX = event.clientX - lastX;
-      const deltaY = event.clientY - lastY;
       lastX = event.clientX;
       lastY = event.clientY;
 
       targetYaw -= deltaX * DRAG_SENSITIVITY;
-      targetPitch = MathUtils.clamp(
-        targetPitch - deltaY * DRAG_SENSITIVITY,
-        MIN_PITCH,
-        MAX_PITCH,
-      );
+      targetPitch = 0;
       requestCameraAnimation();
     }
 
@@ -224,18 +219,8 @@
         case 'ArrowLeft': targetYaw += KEY_LOOK_STEP; break;
         case 'ArrowRight': targetYaw -= KEY_LOOK_STEP; break;
         case 'ArrowUp':
-          targetPitch = MathUtils.clamp(
-            targetPitch + KEY_LOOK_STEP,
-            MIN_PITCH,
-            MAX_PITCH,
-          );
-          break;
         case 'ArrowDown':
-          targetPitch = MathUtils.clamp(
-            targetPitch - KEY_LOOK_STEP,
-            MIN_PITCH,
-            MAX_PITCH,
-          );
+          handled = false;
           break;
         case '+':
         case '=': setFov(targetFov - KEY_ZOOM_STEP); break;

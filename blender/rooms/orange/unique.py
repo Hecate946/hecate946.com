@@ -1,46 +1,44 @@
-"""Unique Blender additions for the orange room.
+"""Orange-room-only Blender objects.
 
-Reusable sources belong in ``blender/assets/<asset-id>`` and are published to
-``public/scenes/assets/<asset-id>`` by ``npm run assets:sync``. They can be placed here
-with room-specific transforms. The shared builder calls ``add_static`` before
-the panorama render and ``add_interactive`` before interactive GLB export.
+The leather armchair is authored once as the shared asset
+``blender/assets/leather-armchair/leather-armchair.glb`` and published to
+``public/scenes/assets/leather-armchair/leather-armchair.glb`` with
+``npm run assets:sync``.
+
+It is placed in the room's interactive collection rather than baked into the
+panorama. This keeps the chair as real GLB geometry in the browser and avoids a
+second, baked copy appearing behind it. The chair is intentionally not marked
+as grabbable yet.
 """
+
+from __future__ import annotations
+
+
+# The room is 6.8 m wide and 10 m deep. The chair sits near the center of the
+# back wall, with enough clearance behind it, and rotates 180 degrees because
+# the shared asset's authored front direction is +Y while the room camera is
+# near the entry wall looking toward +Y.
+ARMCHAIR_LOCATION = (0.0, 3.85, 0.0)
+ARMCHAIR_ROTATION_DEGREES = (0.0, 0.0, 180.0)
+ARMCHAIR_SCALE = 1.0
 
 
 def add_static(context):
-    """Add permanent orange-room objects that are baked into the panorama.
-
-    Example shared chair placement::
-
-        context.place_static_asset(
-            "chair",
-            name="OrangeReadingChair",
-            location=(-1.4, 2.6, 0.0),
-            rotation_degrees=(0.0, 0.0, 35.0),
-            scale=1.0,
-        )
-
-    The asset ID ``chair`` resolves to
-    ``public/scenes/assets/chair/chair.glb``.
-    """
+    """Add orange-room geometry that should be baked into the panorama."""
     pass
 
 
 def add_interactive(context):
-    """Add browser-side orange-room objects to the interactive GLB.
-
-    Example movable shared chair placement::
-
-        context.place_interactive_asset(
-            "chair",
-            name="OrangeMovableChair",
-            grabbable=True,
-            location=(1.2, 2.1, 0.0),
-            rotation_degrees=(0.0, 0.0, -25.0),
-        )
-
-    ``grabbable=True`` automatically prefixes the exported root with ``Grab_``.
-    Interactive objects are hidden while the panorama renders, preventing a
-    baked duplicate from remaining after the visitor moves the live object.
-    """
-    pass
+    """Place the reusable leather armchair in the live room GLB."""
+    context.place_interactive_asset(
+        "leather-armchair",
+        name="OrangeRoomLeatherArmchair",
+        grabbable=False,
+        location=ARMCHAIR_LOCATION,
+        rotation_degrees=ARMCHAIR_ROTATION_DEGREES,
+        scale=ARMCHAIR_SCALE,
+        extras={
+            "category": "furniture/seating",
+            "room": "orange",
+        },
+    )

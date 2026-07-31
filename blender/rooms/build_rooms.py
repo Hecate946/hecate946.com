@@ -7,6 +7,7 @@ section for normal use.
 from pathlib import Path
 import importlib
 import importlib.util
+import os
 import sys
 
 import bpy
@@ -16,14 +17,14 @@ import bpy
 # EASY SETTINGS
 # =============================================================================
 # "RED", "GREEN", "ORANGE", "BLUE", "PURPLE", or "ALL"
-ROOM_TO_BUILD = "GREEN"
+ROOM_TO_BUILD = "ALL"
 
 # True renders the panorama immediately. False builds/saves/exports without
 # waiting for the Cycles panorama render.
 AUTO_RENDER_PANORAMA = True
 
 # "FAST", "SLOW", or "CRISP"
-RENDER_QUALITY = "FAST"
+RENDER_QUALITY = "LIT"
 
 # True requests Cycles GPU Compute. Enable the GPU once in:
 # Edit > Preferences > System > Cycles Render Devices.
@@ -45,6 +46,11 @@ QUALITY_PRESETS = {
         "width": 6144,
         "height": 3072,
         "samples": 48,
+    },
+    "LIT": {
+        "width": 6144,
+        "height": 3072,
+        "samples": 64,
     },
 }
 
@@ -118,10 +124,10 @@ print(f"Shared asset directory:  {(ROOMS_ROOT.parent / 'assets').resolve()}")
 
 
 ROOMS = (
-    RoomDefinition("red", "The Red Room", "Room 001", "#4A1F24"),
-    RoomDefinition("green", "The Green Room", "Room 002", "#1C3A2F"),
-    RoomDefinition("orange", "The Orange Room", "Room 003", "#5A2F18"),
-    RoomDefinition("blue", "The Blue Room", "Room 004", "#18344C"),
+    RoomDefinition("red", "The Red Room", "Room 001", "#9E0012"),
+    RoomDefinition("green", "The Green Room", "Room 002", "#15312C"),
+    RoomDefinition("orange", "The Orange Room", "Room 003", "#AF5500"),
+    RoomDefinition("blue", "The Blue Room", "Room 004", "#3088D6"),
     RoomDefinition("purple", "The Purple Room", "Room 005", "#35213F"),
 )
 

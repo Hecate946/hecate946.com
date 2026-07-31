@@ -132,7 +132,7 @@ for (const slug of hallSlugs) {
   await copyAsset({
     source: path.join(sourceRoot, `${slug}-objects.glb`),
     destination: path.join(destinationRoot, 'objects.glb'),
-    required: true,
+    required: slug !== 'ballroom',
     label: `${slug} object model`,
   });
 }

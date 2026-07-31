@@ -38,8 +38,10 @@ export type ImmersiveSpace = {
 // Must mirror the shared Blender room dimensions used by room_builder.py.
 // The camera is centered near the entry wall; the seam is rotated to the
 // entry-right corner, which is the stable winner after rotation/distance ties.
-const ROOM_WIDTH = 6.8;
-const ROOM_ENTRY_CLEARANCE = 0.45;
+const ROOM_WIDTH = 3.99;
+const ROOM_DEPTH = 5.70;
+const ROOM_ENTRY_CLEARANCE = 1.95;
+const ROOM_CAMERA_Z = ROOM_DEPTH / 2 - ROOM_ENTRY_CLEARANCE;
 const ROOM_PANORAMA_YAW = -Math.atan2(ROOM_ENTRY_CLEARANCE, ROOM_WIDTH / 2);
 
 const objectsLayer = (id: string, url: string): ImmersiveModelLayer => ({
@@ -62,10 +64,10 @@ const room = (
   title,
   description,
   accent,
-  panoramaUrl: withBase(`/scenes/rooms/${slug}/panorama.png?v=room-v4`),
-  modelLayers: [objectsLayer(`${slug}-objects`, `/scenes/rooms/${slug}/interactive.glb?v=room-v4`)],
+  panoramaUrl: withBase(`/scenes/rooms/${slug}/panorama.png?v=room-v42`),
+  modelLayers: [objectsLayer(`${slug}-objects`, `/scenes/rooms/${slug}/interactive.glb?v=room-v42`)],
   implemented: true,
-  cameraPosition: [0, 1.65, 4.55],
+  cameraPosition: [0, 1.65, ROOM_CAMERA_Z],
   cameraYaw: 0,
   panoramaYaw: ROOM_PANORAMA_YAW,
   windowIndex,

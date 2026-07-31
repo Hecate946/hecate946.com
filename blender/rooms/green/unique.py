@@ -33,25 +33,25 @@ from mathutils import Vector
 
 INCH = 0.0254
 
-# The larger 42-inch square top gives a 22-inch tournament chessboard ten
-# inches of breathing room on every side. The slightly increased height and
-# heavier structural members preserve the substantial, monolithic silhouette.
+# The 48-inch square top gives the 22-inch tournament chessboard thirteen
+# inches of breathing room on every side. A 36-inch height and proportionally
+# heavier members make the table read as a large, monolithic centerpiece.
 CHESSBOARD_SIZE = 22.0 * INCH
-TABLE_WIDTH = 42.0 * INCH
-TABLE_DEPTH = 42.0 * INCH
-TABLE_HEIGHT = 34.0 * INCH
+TABLE_WIDTH = 48.0 * INCH
+TABLE_DEPTH = 48.0 * INCH
+TABLE_HEIGHT = 36.0 * INCH
 
-TOP_THICKNESS = 3.0 * INCH
-LEG_THICKNESS = 7.5 * INCH
-APRON_HEIGHT = 6.5 * INCH
-APRON_THICKNESS = 2.5 * INCH
-EDGE_BEVEL = 0.22 * INCH
+TOP_THICKNESS = 3.5 * INCH
+LEG_THICKNESS = 8.5 * INCH
+APRON_HEIGHT = 7.5 * INCH
+APRON_THICKNESS = 3.0 * INCH
+EDGE_BEVEL = 0.24 * INCH
 
 # Room-local placement. The front edge faces the panorama camera at negative Y.
 TABLE_LOCATION = (0.0, 0.0, 0.0)
 
 # One embedded 1K texture set is shared by the whole table mesh. The GLB remains
-# lightweight while retaining visible blackwood grain during close inspection.
+# lightweight while retaining only a very subtle grain beneath the matte finish.
 TEXTURE_SIZE = 1024
 TEXTURE_SEED = 946
 WOOD_REPEAT_METERS = 0.34
@@ -129,12 +129,12 @@ def _blur_wrap(values, iterations: int = 4):
     return result
 
 
-def _create_blackwood_texture_set(size: int = TEXTURE_SIZE):
-    """Generate subtle near-black African-blackwood PBR maps.
+def _create_matte_black_texture_set(size: int = TEXTURE_SIZE):
+    """Generate subtle neutral-black PBR maps for a matte wood finish.
 
     The grain runs in the texture's U direction. Custom UVs rotate that grain
     along the tabletop, aprons, and vertical legs without adding materials or
-    draw calls.
+    draw calls. High roughness and restrained normals keep the result matte.
     """
     import numpy as np
 
@@ -163,17 +163,17 @@ def _create_blackwood_texture_set(size: int = TEXTURE_SIZE):
     height = 0.56 + fibers * 0.145 + pores * 0.052 + fine * 0.010
     height = np.clip(height, 0.0, 1.0)
 
-    # Neutral, true black rather than dark brown. The restrained grayscale
-    # variation keeps the wood grain readable under highlights without giving
-    # the table a warm tint.
-    luminance = 0.008 + height * 0.020
+    # Neutral, true black rather than dark brown. The small grayscale range
+    # keeps the surface readable without turning the grain into glossy streaks.
+    luminance = 0.010 + height * 0.018
     base = np.empty((size, size, 4), dtype=np.float32)
     base[..., 0] = luminance
     base[..., 1] = luminance
     base[..., 2] = luminance
     base[..., 3] = 1.0
 
-    rough = np.clip(0.185 + (1.0 - height) * 0.125 + pores * 0.015, 0.16, 0.34)
+    # High roughness is embedded in the GLB, so the table stays matte in Three.js.
+    rough = np.clip(0.72 + (1.0 - height) * 0.10 + pores * 0.012, 0.68, 0.86)
     roughness = np.empty((size, size, 4), dtype=np.float32)
     roughness[..., 0] = rough
     roughness[..., 1] = rough
@@ -182,7 +182,7 @@ def _create_blackwood_texture_set(size: int = TEXTURE_SIZE):
 
     # Convert the same restrained height field into a tangent-space normal map.
     dv, du = np.gradient(height)
-    normal_strength = 2.4
+    normal_strength = 1.15
     nx = -du * normal_strength
     ny = -dv * normal_strength
     nz = np.ones_like(nx)
@@ -195,19 +195,21 @@ def _create_blackwood_texture_set(size: int = TEXTURE_SIZE):
     normal[..., 3] = 1.0
 
     return (
-        _create_image("GreenTable_Blackwood_BaseColor", base, color_space="sRGB"),
-        _create_image("GreenTable_Blackwood_Roughness", roughness, color_space="Non-Color"),
-        _create_image("GreenTable_Blackwood_Normal", normal, color_space="Non-Color"),
+        _create_image("GreenTable_MatteBlack_BaseColor", base, color_space="sRGB"),
+        _create_image("GreenTable_MatteBlack_Roughness", roughness, color_space="Non-Color"),
+        _create_image("GreenTable_MatteBlack_Normal", normal, color_space="Non-Color"),
     )
 
 
-def _create_blackwood_material() -> bpy.types.Material:
+def _create_matte_black_material() -> bpy.types.Material:
+    # Remove both names so repeated builds cannot retain a stale glossy material.
     _remove_existing_datablock(bpy.data.materials, "GreenTable_AfricanBlackwood")
-    base_image, roughness_image, normal_image = _create_blackwood_texture_set()
+    _remove_existing_datablock(bpy.data.materials, "GreenTable_MatteBlack")
+    base_image, roughness_image, normal_image = _create_matte_black_texture_set()
 
-    material = bpy.data.materials.new("GreenTable_AfricanBlackwood")
+    material = bpy.data.materials.new("GreenTable_MatteBlack")
     material.use_nodes = True
-    material.diffuse_color = (0.006, 0.006, 0.006, 1.0)
+    material.diffuse_color = (0.008, 0.008, 0.008, 1.0)
 
     nodes = material.node_tree.nodes
     links = material.node_tree.links
@@ -218,27 +220,27 @@ def _create_blackwood_material() -> bpy.types.Material:
 
     bsdf = nodes.new("ShaderNodeBsdfPrincipled")
     bsdf.location = (420, 0)
-    _set_socket(bsdf, "Roughness", 0.23)
-    _set_socket(bsdf, ("Coat Weight", "Clearcoat"), 0.34)
-    _set_socket(bsdf, ("Coat Roughness", "Clearcoat Roughness"), 0.085)
-    _set_socket(bsdf, ("Specular IOR Level", "Specular"), 0.42)
+    _set_socket(bsdf, "Roughness", 0.76)
+    _set_socket(bsdf, ("Coat Weight", "Clearcoat"), 0.0)
+    _set_socket(bsdf, ("Coat Roughness", "Clearcoat Roughness"), 0.65)
+    _set_socket(bsdf, ("Specular IOR Level", "Specular"), 0.24)
 
     base_texture = nodes.new("ShaderNodeTexImage")
-    base_texture.name = "African blackwood color"
+    base_texture.name = "Matte black color"
     base_texture.image = base_image
     base_texture.interpolation = "Linear"
     base_texture.extension = "REPEAT"
     base_texture.location = (-520, 150)
 
     roughness_texture = nodes.new("ShaderNodeTexImage")
-    roughness_texture.name = "African blackwood roughness"
+    roughness_texture.name = "Matte black roughness"
     roughness_texture.image = roughness_image
     roughness_texture.interpolation = "Linear"
     roughness_texture.extension = "REPEAT"
     roughness_texture.location = (-520, -70)
 
     normal_texture = nodes.new("ShaderNodeTexImage")
-    normal_texture.name = "African blackwood normal"
+    normal_texture.name = "Matte black normal"
     normal_texture.image = normal_image
     normal_texture.interpolation = "Linear"
     normal_texture.extension = "REPEAT"
@@ -246,7 +248,7 @@ def _create_blackwood_material() -> bpy.types.Material:
 
     normal_map = nodes.new("ShaderNodeNormalMap")
     normal_map.location = (110, -230)
-    normal_map.inputs["Strength"].default_value = 0.34
+    normal_map.inputs["Strength"].default_value = 0.18
 
     links.new(base_texture.outputs["Color"], bsdf.inputs["Base Color"])
     links.new(roughness_texture.outputs["Color"], bsdf.inputs["Roughness"])
@@ -455,7 +457,7 @@ def _aim_local(obj: bpy.types.Object, local_target: Sequence[float]) -> None:
 
 def _add_coffee_table(context) -> bpy.types.Object:
     collection = context.interactive_collection
-    material = _create_blackwood_material()
+    material = _create_matte_black_material()
 
     root = bpy.data.objects.new("Focus_GreenCoffeeTable", None)
     collection.objects.link(root)
@@ -521,5 +523,5 @@ def add_static(context):
 
 
 def add_interactive(context):
-    """Add the centered blackwood coffee table to the room object GLB."""
-    _add_coffee_table(context)
+    """Temporarily disable the green-room table while lighting is tuned."""
+    del context

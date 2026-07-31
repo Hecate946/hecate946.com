@@ -46,16 +46,21 @@ and CYCLES_SAMPLES from 160 to 32.
 
 from __future__ import annotations
 
+import importlib
+import importlib.util
 import math
+import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Callable, Iterable, Sequence
 
 import bpy
 from mathutils import Vector
 
 
 SCRIPT_VERSION = "shared-hall-flat-materials-equidistant-v3-2026-07-30"
+HALL_BUILDER_VERSION = "2026-07-30-v1-shared-shell-room-style-builder"
 
 
 # -----------------------------------------------------------------------------
@@ -115,6 +120,38 @@ class MaterialSet:
     white_stone: bpy.types.Material
     grout: bpy.types.Material
     doorway_dark: bpy.types.Material
+
+
+@dataclass(frozen=True)
+class HallDefinition:
+    slug: str
+    title: str
+    mirror_shell_x: bool
+
+
+@dataclass(frozen=True)
+class RenderSettings:
+    width: int
+    height: int
+    samples: int
+    use_gpu: bool
+    auto_render: bool
+
+
+@dataclass
+class HallObjectContext:
+    definition: HallDefinition
+    output_directory: Path
+    scene: bpy.types.Scene
+    objects_collection: bpy.types.Collection
+    objects_root: bpy.types.Object
+    assets_root: Path
+    add_box: Callable
+    material: Callable
+    linear_hex: Callable
+    import_glb: Callable
+    asset_path: Callable
+    place_asset: Callable
 
 
 # -----------------------------------------------------------------------------
@@ -1696,25 +1733,37 @@ def build_360_camera(cameras: bpy.types.Collection) -> bpy.types.Object:
 # -----------------------------------------------------------------------------
 
 
-def configure_scene() -> None:
+def configure_scene(
+    settings: RenderSettings | None = None,
+    output_path: Path | None = None,
+) -> None:
+    """Configure Cycles using either builder settings or direct-script globals."""
     ensure_output_directory()
     scene = bpy.context.scene
+
+    width = settings.width if settings is not None else RENDER_RESOLUTION[0]
+    height = settings.height if settings is not None else RENDER_RESOLUTION[1]
+    samples = settings.samples if settings is not None else CYCLES_SAMPLES
+    use_gpu = settings.use_gpu if settings is not None else True
+    render_path = Path(output_path) if output_path is not None else PNG_OUTPUT_PATH
+
+    render_path.parent.mkdir(parents=True, exist_ok=True)
     scene.unit_settings.system = "METRIC"
     scene.unit_settings.length_unit = "METERS"
-    scene.render.resolution_x = RENDER_RESOLUTION[0]
-    scene.render.resolution_y = RENDER_RESOLUTION[1]
+    scene.render.resolution_x = width
+    scene.render.resolution_y = height
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGB"
     scene.render.image_settings.color_depth = "16"
     scene.render.film_transparent = False
-    scene.render.filepath = str(PNG_OUTPUT_PATH)
+    scene.render.filepath = str(render_path)
 
     # Cycles only; no alternate render-engine assignments are used.
     scene.render.engine = "CYCLES"
-    scene.cycles.samples = CYCLES_SAMPLES
+    scene.cycles.samples = samples
     scene.cycles.use_denoising = True
-    scene.cycles.preview_samples = min(48, CYCLES_SAMPLES)
+    scene.cycles.preview_samples = min(48, samples)
     scene.cycles.max_bounces = 9
     scene.cycles.diffuse_bounces = 4
     scene.cycles.glossy_bounces = 5
@@ -1722,22 +1771,23 @@ def configure_scene() -> None:
     if hasattr(scene.cycles, "use_adaptive_sampling"):
         scene.cycles.use_adaptive_sampling = True
 
-    # Prefer GPU when available, but fall back safely to CPU.
-    try:
-        prefs = bpy.context.preferences.addons["cycles"].preferences
-        prefs.get_devices()
-        scene.cycles.device = "CPU"
-        gpu_types = {"CUDA", "OPTIX", "HIP", "METAL", "ONEAPI"}
-        has_gpu = False
-        for device in getattr(prefs, "devices", []):
-            if getattr(device, "type", None) in gpu_types:
-                device.use = True
-                has_gpu = True
-        if has_gpu:
-            scene.cycles.device = "GPU"
-    except Exception as error:
-        print(f"Cycles device setup warning: {error}")
-        scene.cycles.device = "CPU"
+    # Prefer GPU when requested and available, but fall back safely to CPU.
+    scene.cycles.device = "CPU"
+    if use_gpu:
+        try:
+            prefs = bpy.context.preferences.addons["cycles"].preferences
+            prefs.get_devices()
+            gpu_types = {"CUDA", "OPTIX", "HIP", "METAL", "ONEAPI"}
+            has_gpu = False
+            for device in getattr(prefs, "devices", []):
+                if getattr(device, "type", None) in gpu_types:
+                    device.use = True
+                    has_gpu = True
+            if has_gpu:
+                scene.cycles.device = "GPU"
+        except Exception as error:
+            print(f"Cycles device setup warning: {error}")
+            scene.cycles.device = "CPU"
 
     # Physically plausible soft contrast.
     try:
@@ -1766,11 +1816,11 @@ def configure_scene() -> None:
 # -----------------------------------------------------------------------------
 
 
-def build_scene() -> None:
+def build_scene(settings: RenderSettings | None = None) -> None:
     loaded_from = globals().get("__file__", "<Blender Text Editor>")
     print(f"\n[Shared Hall {SCRIPT_VERSION}] Running script: {loaded_from}")
     clear_scene()
-    configure_scene()
+    configure_scene(settings=settings)
 
     architecture = get_or_create_collection("01 Architecture")
     floor = get_or_create_collection("02 Checkerboard Floor")
@@ -1821,12 +1871,411 @@ def build_scene() -> None:
 
     print(f"\nShared neoclassical hall shell generated successfully. Version: {SCRIPT_VERSION}")
     print(f"Room dimensions: {ROOM_WIDTH:.2f} m x {ROOM_DEPTH:.2f} m x {ROOM_HEIGHT:.2f} m")
-    print(f"Panorama resolution: {RENDER_RESOLUTION[0]} x {RENDER_RESOLUTION[1]}")
+    scene = bpy.context.scene
+    print(f"Panorama resolution: {scene.render.resolution_x} x {scene.render.resolution_y}")
     print(f"Python target: {PYTHON_OUTPUT_PATH}")
     print(f"GLB path: {GLB_OUTPUT_PATH}")
     print(f"PNG path: {PNG_OUTPUT_PATH}")
     print("Main camera: Camera_360_Centered")
 
+# -----------------------------------------------------------------------------
+# SHARED HALL BUILD WORKFLOW
+# -----------------------------------------------------------------------------
+
+
+def load_live_module(module_name: str, file_path: Path):
+    """Force-load a Blender Python module fresh from disk every run."""
+    file_path = Path(file_path).expanduser().resolve()
+    if not file_path.exists():
+        raise FileNotFoundError(f"Blender module does not exist: {file_path}")
+
+    importlib.invalidate_caches()
+    sys.modules.pop(module_name, None)
+
+    try:
+        pyc_path = Path(importlib.util.cache_from_source(str(file_path)))
+        if pyc_path.exists():
+            pyc_path.unlink()
+    except (NotImplementedError, OSError, ValueError):
+        pass
+
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Could not load Blender module: {file_path}")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        sys.modules.pop(module_name, None)
+        raise
+
+    print(f"Loaded fresh module from: {file_path}")
+    return module
+
+
+def reset_scene_for_hall() -> bpy.types.Scene:
+    """Reset all scene objects and generated collections between hall builds."""
+    clear_scene()
+
+    for collection in list(bpy.data.collections):
+        try:
+            bpy.data.collections.remove(collection)
+        except RuntimeError:
+            pass
+
+    for datablocks in (bpy.data.images, bpy.data.worlds):
+        for block in list(datablocks):
+            if block.users == 0:
+                try:
+                    datablocks.remove(block)
+                except RuntimeError:
+                    pass
+
+    return bpy.context.scene
+
+
+def linear_hex(value: str):
+    """Convert an sRGB hex color to Blender's linear RGBA representation."""
+    value = value.lstrip("#")
+    rgb = [int(value[index : index + 2], 16) / 255.0 for index in (0, 2, 4)]
+
+    def linear(channel: float) -> float:
+        if channel <= 0.04045:
+            return channel / 12.92
+        return ((channel + 0.055) / 1.055) ** 2.4
+
+    return (*[linear(channel) for channel in rgb], 1.0)
+
+
+def object_material(
+    name,
+    color,
+    roughness=0.35,
+    coat=0.0,
+    metallic=0.0,
+):
+    """Create a simple material for hall-specific objects."""
+    material = bpy.data.materials.new(name)
+    material.use_nodes = True
+    bsdf = material.node_tree.nodes.get("Principled BSDF")
+    if bsdf is not None:
+        set_node_input(bsdf, ["Base Color"], color)
+        set_node_input(bsdf, ["Roughness"], roughness)
+        set_node_input(bsdf, ["Coat Weight", "Clearcoat"], coat)
+        set_node_input(bsdf, ["Metallic"], metallic)
+    material.diffuse_color = color
+    return material
+
+
+def add_object_box(
+    name,
+    center,
+    size,
+    material,
+    collection,
+    bevel=0.0,
+    parent=None,
+):
+    """Object-hook box helper with the same argument order as room hooks."""
+    obj = create_box(
+        name=name,
+        dimensions=size,
+        location=center,
+        material=material,
+        collection=collection,
+        bevel=bevel,
+    )
+    if parent is not None:
+        obj.parent = parent
+    return obj
+
+
+def import_glb(file_path, collection, parent=None, name_prefix=""):
+    """Import a GLB and move all imported objects into one export collection."""
+    file_path = Path(file_path).expanduser().resolve()
+    if not file_path.exists():
+        raise FileNotFoundError(f"Object GLB does not exist: {file_path}")
+
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(file_path))
+    imported = [obj for obj in bpy.data.objects if obj not in before]
+    imported_set = set(imported)
+
+    for obj in imported:
+        if name_prefix:
+            obj.name = f"{name_prefix}{obj.name}"
+        move_to_collection(obj, collection)
+
+    for obj in imported:
+        if obj.parent not in imported_set and parent is not None:
+            matrix_world = obj.matrix_world.copy()
+            obj.parent = parent
+            obj.matrix_world = matrix_world
+
+    return imported
+
+
+def export_collection(
+    main_scene: bpy.types.Scene,
+    collection: bpy.types.Collection,
+    output_file: Path,
+) -> None:
+    """Export only one collection as a binary glTF file."""
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    selected_before = [obj for obj in main_scene.objects if obj.select_get()]
+    active_before = bpy.context.view_layer.objects.active
+
+    try:
+        bpy.ops.object.select_all(action="DESELECT")
+        export_objects = list(collection.all_objects)
+        for obj in export_objects:
+            obj.hide_set(False)
+            obj.hide_render = False
+            obj.select_set(True)
+
+        if export_objects:
+            bpy.context.view_layer.objects.active = export_objects[0]
+
+        options = {
+            "filepath": str(output_file),
+            "export_format": "GLB",
+            "use_selection": True,
+            "export_selected_objects": True,
+            "export_lights": True,
+            "export_cameras": False,
+            "export_apply": True,
+            "export_extras": True,
+        }
+        options = _filter_supported_operator_kwargs(bpy.ops.export_scene.gltf, options)
+        result = bpy.ops.export_scene.gltf(**options)
+        if "FINISHED" not in result:
+            raise RuntimeError(f"Hall object GLB export failed: {result}")
+    finally:
+        bpy.ops.object.select_all(action="DESELECT")
+        for obj in selected_before:
+            if obj.name in main_scene.objects:
+                obj.select_set(True)
+        if active_before is not None and active_before.name in main_scene.objects:
+            bpy.context.view_layer.objects.active = active_before
+
+
+def import_shell_preview(
+    scene: bpy.types.Scene,
+    shared_glb: Path,
+    mirror_x: bool,
+) -> bpy.types.Object:
+    """Import the canonical shell and mirror only its preview when requested."""
+    if not shared_glb.exists():
+        raise FileNotFoundError(f"Shared hall shell is missing: {shared_glb}")
+
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(shared_glb))
+    imported = [obj for obj in bpy.data.objects if obj not in before]
+    imported_set = set(imported)
+
+    shell_root = bpy.data.objects.new("Shared_Hall_Shell_Preview", None)
+    scene.collection.objects.link(shell_root)
+
+    for obj in imported:
+        if obj.parent not in imported_set:
+            matrix_world = obj.matrix_world.copy()
+            obj.parent = shell_root
+            obj.matrix_world = matrix_world
+
+    shell_root.scale.x = -1.0 if mirror_x else 1.0
+    shell_root["website_shell_scale_x"] = -1.0 if mirror_x else 1.0
+    shell_root["preview_only"] = True
+    shell_root["exported_separately"] = True
+    bpy.context.view_layer.update()
+    return shell_root
+
+
+def load_unique_module(unique_file: Path):
+    if not unique_file.exists():
+        return None
+    return load_live_module(f"hall_unique_{unique_file.parent.name}", unique_file)
+
+
+def call_unique_hook(module, context: HallObjectContext) -> None:
+    if module is None:
+        return
+    hook = getattr(module, "add_objects", None)
+    if callable(hook):
+        hook(context)
+
+
+def build_shared_shell(settings: RenderSettings, halls_root: Path) -> Path:
+    """Build the canonical architecture once for all requested halls."""
+    global OUTPUT_DIRECTORY
+    global PYTHON_OUTPUT_PATH
+    global GLB_OUTPUT_PATH
+    global PNG_OUTPUT_PATH
+    global BLEND_OUTPUT_PATH
+    global AUTO_EXPORT_GLB
+    global AUTO_RENDER
+    global AUTO_SAVE_BLEND
+
+    shared_root = halls_root / "shared"
+    shared_root.mkdir(parents=True, exist_ok=True)
+
+    OUTPUT_DIRECTORY = shared_root
+    PYTHON_OUTPUT_PATH = shared_root / "hall_shell.py"
+    GLB_OUTPUT_PATH = shared_root / "hall-shell.glb"
+    PNG_OUTPUT_PATH = shared_root / "hall-shell.png"
+    BLEND_OUTPUT_PATH = shared_root / "hall-shell.blend"
+    AUTO_EXPORT_GLB = True
+    AUTO_RENDER = False
+    AUTO_SAVE_BLEND = True
+
+    shell_settings = RenderSettings(
+        width=settings.width,
+        height=settings.height,
+        samples=settings.samples,
+        use_gpu=settings.use_gpu,
+        auto_render=False,
+    )
+    build_scene(settings=shell_settings)
+
+    project_root = halls_root.parent.parent
+    public_shell = project_root / "public" / "scenes" / "halls" / "shared" / "shell.glb"
+    public_shell.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(GLB_OUTPUT_PATH, public_shell)
+    print(f"Published shared hall shell to: {public_shell}")
+    return GLB_OUTPUT_PATH
+
+
+def build_hall_objects(
+    definition: HallDefinition,
+    settings: RenderSettings,
+    halls_root: Path,
+    shared_glb: Path,
+) -> None:
+    """Build one hall's authored objects, preview blend, and optional panorama."""
+    output_directory = halls_root / definition.slug
+    output_directory.mkdir(parents=True, exist_ok=True)
+
+    objects_file = output_directory / f"{definition.slug}-objects.glb"
+    preview_file = output_directory / f"{definition.slug}-objects.blend"
+    panorama_file = output_directory / f"{definition.slug}-panorama.png"
+
+    if settings.auto_render and panorama_file.exists():
+        panorama_file.unlink()
+
+    scene = reset_scene_for_hall()
+    configure_scene(settings=settings, output_path=panorama_file)
+    shell_root = import_shell_preview(scene, shared_glb, definition.mirror_shell_x)
+
+    objects_collection = bpy.data.collections.new("HALL_OBJECTS_EXPORT")
+    scene.collection.children.link(objects_collection)
+
+    objects_root = bpy.data.objects.new(f"{definition.slug.title()}_Objects_Root", None)
+    objects_collection.objects.link(objects_root)
+    objects_root["hall_slug"] = definition.slug
+    objects_root["shell_mirrored_x"] = definition.mirror_shell_x
+
+    blender_root = halls_root.parent
+    project_root = blender_root.parent
+    assets_root = project_root / "public" / "scenes" / "assets"
+    asset_library = load_live_module(
+        "hecate_shared_asset_library_halls",
+        blender_root / "shared" / "asset_library.py",
+    )
+
+    def asset_path(asset_id, *, file_name=None):
+        return asset_library.resolve_asset_path(
+            assets_root,
+            asset_id,
+            file_name=file_name,
+        )
+
+    def place_asset(asset_id, *, name=None, extras=None, **placement):
+        placed = asset_library.place_asset(
+            assets_root=assets_root,
+            asset_id=asset_id,
+            collection=objects_collection,
+            name=name,
+            extras=extras,
+            **placement,
+        )
+        matrix_world = placed.root.matrix_world.copy()
+        placed.root.parent = objects_root
+        placed.root.matrix_world = matrix_world
+        return placed
+
+    context = HallObjectContext(
+        definition=definition,
+        output_directory=output_directory,
+        scene=scene,
+        objects_collection=objects_collection,
+        objects_root=objects_root,
+        assets_root=assets_root,
+        add_box=add_object_box,
+        material=object_material,
+        linear_hex=linear_hex,
+        import_glb=import_glb,
+        asset_path=asset_path,
+        place_asset=place_asset,
+    )
+
+    unique_module = load_unique_module(output_directory / "unique.py")
+    call_unique_hook(unique_module, context)
+
+    shell_root["hall_slug"] = definition.slug
+    camera_collection = get_or_create_collection("HALL_PREVIEW_CAMERA")
+    camera = build_360_camera(camera_collection)
+    scene.camera = camera
+
+    bpy.ops.wm.save_as_mainfile(filepath=str(preview_file))
+
+    if settings.auto_render:
+        verify_equirectangular_render_camera(camera)
+        bpy.ops.render.render(write_still=True)
+        if not panorama_file.exists():
+            raise RuntimeError(f"Panorama render did not create {panorama_file}")
+        print(f"Panorama rendered to: {panorama_file}")
+    else:
+        print(f"Skipped panorama render for {definition.slug}.")
+
+    export_collection(scene, objects_collection, objects_file)
+    bpy.ops.wm.save_as_mainfile(filepath=str(preview_file))
+
+    public_directory = project_root / "public" / "scenes" / "halls" / definition.slug
+    public_directory.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(objects_file, public_directory / "objects.glb")
+    if settings.auto_render:
+        shutil.copy2(panorama_file, public_directory / "panorama.png")
+
+    print(f"Built {definition.title}")
+    print(f"  Shared shell: {shared_glb}")
+    print(f"  Mirrored X:   {definition.mirror_shell_x}")
+    print(f"  Objects GLB:  {objects_file}")
+    print(f"  Preview:      {preview_file}")
+    print(f"  Panorama:     {panorama_file}")
+    print(f"  Website:      {public_directory}")
+
+
+def build_halls(
+    definitions: Sequence[HallDefinition],
+    settings: RenderSettings,
+    halls_root: Path,
+) -> None:
+    """Build the shared shell once, then each selected hall from that shell."""
+    halls_root = Path(halls_root).expanduser().resolve()
+    if not definitions:
+        raise ValueError("At least one hall definition is required.")
+
+    print(f"Hall builder version: {HALL_BUILDER_VERSION}")
+    print(f"Hall builder source:  {Path(__file__).resolve()}")
+    print(f"Shared asset directory: {(halls_root.parent / 'assets').resolve()}")
+
+    shared_glb = build_shared_shell(settings, halls_root)
+    for definition in definitions:
+        build_hall_objects(definition, settings, halls_root, shared_glb)
+
+    print("All requested hall assets finished.")
 
 if __name__ == "__main__":
     build_scene()
