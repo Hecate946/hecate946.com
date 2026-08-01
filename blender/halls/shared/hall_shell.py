@@ -60,7 +60,7 @@ from mathutils import Vector
 
 
 SCRIPT_VERSION = "shared-hall-flat-materials-equidistant-v3-2026-07-30"
-HALL_BUILDER_VERSION = "2026-07-30-v1-shared-shell-room-style-builder"
+HALL_BUILDER_VERSION = "2026-07-31-v2-shared-blend-assets"
 
 
 # -----------------------------------------------------------------------------
@@ -2178,7 +2178,7 @@ def build_hall_objects(
 
     blender_root = halls_root.parent
     project_root = blender_root.parent
-    assets_root = project_root / "public" / "scenes" / "assets"
+    assets_root = blender_root / "assets"
     asset_library = load_live_module(
         "hecate_shared_asset_library_halls",
         blender_root / "shared" / "asset_library.py",

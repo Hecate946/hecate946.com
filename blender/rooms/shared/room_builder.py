@@ -20,7 +20,7 @@ import bpy
 from mathutils import Vector
 
 
-ROOM_BUILDER_VERSION = "2026-07-30-v47-tubular-gold-handle"
+ROOM_BUILDER_VERSION = "2026-07-31-v48-shared-blend-assets"
 
 ROOM_WIDTH = 3.99
 ROOM_DEPTH = 5.70
@@ -1068,7 +1068,7 @@ def build_room(
 
     blender_root = rooms_root.parent
     project_root = blender_root.parent
-    assets_root = project_root / "public" / "scenes" / "assets"
+    assets_root = blender_root / "assets"
     asset_library = load_shared_asset_library(blender_root)
 
     blend_file = output_directory / f"{definition.slug}-room.blend"

@@ -1,56 +1,81 @@
 # Shared Blender assets
 
-Use this folder for editable or procedural sources for objects that can appear
-in more than one room or hall. Blender room and hall builders intentionally do
-**not** import the GLBs from this source folder. They consume the published
-copies under `public/scenes/assets`.
+Use this folder for editable object sources that can appear in more than one
+room or hall. Blender builders load these assets directly from
+`blender/assets`; room- and hall-specific files only provide placement
+transforms.
 
 ## Folder convention
 
 ```text
 blender/assets/
   chair/
-    chair.blend   # editable master source
-    chair.py      # optional procedural source
-    chair.glb     # generated staging artifact
-
-public/scenes/assets/
-  chair/
-    chair.glb     # published copy consumed by room and hall builders
+    asset.json
+    chair.blend
+    textures/
+      ...
+    chair.glb       # optional export/staging artifact
 ```
 
-Author each asset around `(0, 0, 0)`, place its floor contact at `Z = 0`, use
-meters, and make its front face `+Y`. Apply Rotation & Scale before exporting.
+A shared asset can be a `.blend`, `.glb`, or `.gltf`. The resolver prefers the
+file named by `asset.json`, then conventional names such as `chair.blend` and
+`chair.glb`.
 
-After creating or changing any shared GLB, publish all shared assets with:
+## Asset metadata
+
+`asset.json` lets the loader standardize a downloaded model without modifying
+its mesh destructively:
+
+```json
+{
+  "label": "Ornate green chess chair",
+  "source": "chair.blend",
+  "normalize_origin": "floor-center",
+  "source_rotation_degrees": [0, 0, 180]
+}
+```
+
+`normalize_origin: "floor-center"` centers the object's footprint on X/Y and
+places its lowest rendered point at Z=0. `source_rotation_degrees` corrects the
+source model so the shared project convention remains **front = +Y**.
+
+Relative image paths inside appended `.blend` files are resolved against the
+asset folder automatically, so a `textures/` directory can remain beside the
+master source.
+
+## Placement
+
+Room hooks use the shared source by asset ID:
+
+```python
+def add_interactive(context):
+    context.place_interactive_asset(
+        "chair",
+        name="OrangeRoomChessChair",
+        location=(0.0, 1.85, 0.0),
+        rotation_degrees=(0.0, 0.0, 180.0),
+    )
+```
+
+Hall hooks use `context.place_asset(...)` in the same way. The loader creates a
+placement root that owns the room/hall transform while preserving the asset's
+internal hierarchy and materials.
+
+## Optional standalone GLB publishing
+
+When an asset also has a standalone GLB beneath `blender/assets`, publish it to
+the matching website path with:
 
 ```bash
 npm run assets:sync
 ```
 
-The sync script recursively copies every `blender/assets/**/*.glb` file to the
-matching path beneath `public/scenes/assets`. For example:
+For example:
 
 ```text
 blender/assets/chair/chair.glb
     -> public/scenes/assets/chair/chair.glb
 ```
 
-The room context then resolves `"chair"` to the public copy:
-
-```python
-def add_static(context):
-    context.place_static_asset(
-        "chair",
-        name="GreenReadingChair",
-        location=(-1.4, 2.6, 0.0),
-        rotation_degrees=(0.0, 0.0, 35.0),
-    )
-```
-
-For a browser-side object, use `place_interactive_asset`. Set `grabbable=True`
-to give the exported root the required `Grab_` prefix automatically.
-
-Keep the `.blend` or `.py` source under version control. The GLB beneath
-`blender/assets` is the export/staging file, while the synchronized public GLB
-is the canonical file consumed by the scene builders.
+Room and hall builds do not require this standalone public copy; they embed the
+shared source into their generated room/hall GLBs.

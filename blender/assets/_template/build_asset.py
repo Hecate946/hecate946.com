@@ -2,9 +2,10 @@
 
 Copy this folder to ``blender/assets/<asset-id>``, rename this file if desired,
 and replace ``build_asset`` with the actual object-generation code. Running the
-script in Blender exports ``<asset-id>.glb`` beside the script. Then run
-``npm run assets:sync`` from the project root to publish it beneath
-``public/scenes/assets/<asset-id>`` for room and hall builds.
+script in Blender saves the editable ``<asset-id>.blend`` source and exports an
+optional standalone ``<asset-id>.glb`` beside it. Room and hall builders load
+from ``blender/assets`` directly. Run ``npm run assets:sync`` only when the
+standalone GLB should also be published beneath ``public/scenes/assets``.
 """
 
 from __future__ import annotations
@@ -66,7 +67,7 @@ def main() -> None:
         filepath=str(output_directory / f"{ASSET_ID}.blend")
     )
     print(f"Reusable asset exported to: {output_file}")
-    print("Next: run `npm run assets:sync` from the project root.")
+    print("Optional: run `npm run assets:sync` to publish the standalone GLB.")
 
 
 if __name__ == "__main__":

@@ -8,9 +8,8 @@ The shared room builder imports this file and calls ``add_static`` and
 - is exported inside ``green-room-interactive.glb``, and
 - stays aligned with the room's existing Blender/Three.js coordinate system.
 
-Other reusable objects should be exported once beneath ``blender/assets``,
-published to ``public/scenes/assets`` with ``npm run assets:sync``, and placed
-here with ``context.place_static_asset`` or
+Other reusable objects should live once beneath ``blender/assets`` and be
+placed here with ``context.place_static_asset`` or
 ``context.place_interactive_asset`` rather than copied into this file.
 
 The table is deliberately *not* named with the ``Grab_`` prefix, so the current

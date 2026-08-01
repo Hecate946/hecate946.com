@@ -1,8 +1,8 @@
 """Unique Blender additions for the blue room.
 
-Reusable sources belong in ``blender/assets/<asset-id>`` and are published to
-``public/scenes/assets/<asset-id>`` by ``npm run assets:sync``. They can be placed here
-with room-specific transforms. The shared builder calls ``add_static`` before
+Reusable sources belong in ``blender/assets/<asset-id>`` and are loaded directly
+by the shared room builder. They can be placed here with room-specific
+transforms. The shared builder calls ``add_static`` before
 the panorama render and ``add_interactive`` before interactive GLB export.
 """
 
@@ -21,7 +21,7 @@ def add_static(context):
         )
 
     The asset ID ``chair`` resolves to
-    ``public/scenes/assets/chair/chair.glb``.
+    ``blender/assets/chair/chair.blend`` through ``asset.json``.
     """
     pass
 

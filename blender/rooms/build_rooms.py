@@ -17,11 +17,11 @@ import bpy
 # EASY SETTINGS
 # =============================================================================
 # "RED", "GREEN", "ORANGE", "BLUE", "PURPLE", or "ALL"
-ROOM_TO_BUILD = "ALL"
+ROOM_TO_BUILD = "ORANGE"
 
 # True renders the panorama immediately. False builds/saves/exports without
 # waiting for the Cycles panorama render.
-AUTO_RENDER_PANORAMA = True
+AUTO_RENDER_PANORAMA = False
 
 # "FAST", "SLOW", or "CRISP"
 RENDER_QUALITY = "LIT"
