@@ -108,7 +108,15 @@ const commandItems = Array.from(
     <Footer />
     <CommandPalette client:idle items={commandItems} />
 
+    <div class="site-sound-toast" data-site-sound-toast role="status" aria-live="polite"></div>
+
     <script>
+      import { initializeSiteSound } from '@/lib/site-sound';
+
+      initializeSiteSound();
+
+      document.addEventListener('astro:page-load', initializeSiteSound);
+
       const startAnalytics = () => {
         void import('@/lib/analytics').then(({ initAnalytics }) => {
           initAnalytics();
