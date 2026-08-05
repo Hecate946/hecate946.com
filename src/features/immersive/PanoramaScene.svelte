@@ -13,7 +13,6 @@
     SRGBColorSpace,
     Texture,
     TextureLoader,
-    VideoTexture,
     Vector2,
     type Material,
     type PerspectiveCamera,
@@ -70,6 +69,8 @@
 
   const panoramaGeometry = new SphereGeometry(24, 96, 64);
   panoramaGeometry.scale(-1, 1, 1);
+  const overlayGeometry = new SphereGeometry(23.94, 96, 64);
+  overlayGeometry.scale(-1, 1, 1);
 
   function createPanoramaMaterial(opacity: number) {
     return new MeshBasicMaterial({
@@ -84,6 +85,7 @@
     createPanoramaMaterial(1),
     createPanoramaMaterial(0),
   ];
+  const overlayMaterial = createPanoramaMaterial(1);
   const panoramaMeshes = panoramaMaterials.map((material, index) => {
     const mesh = new Mesh(panoramaGeometry, material);
     mesh.name = `${space.kind}_${space.slug}_Cycles_Panorama_${index + 1}`;
@@ -93,10 +95,19 @@
     return mesh;
   });
 
+  const overlayMesh = new Mesh(overlayGeometry, overlayMaterial);
+  overlayMesh.name = `${space.kind}_${space.slug}_Panorama_Overlay`;
+  overlayMesh.position.set(...CAMERA_POSITION);
+  overlayMesh.frustumCulled = false;
+  overlayMesh.renderOrder = -998;
+
   const initialView =
     PANORAMA_VIEWS.find((view) => view.id === activeViewId) ??
     PANORAMA_VIEWS[0];
-  if (initialView) panoramaMeshes[0].rotation.y = initialView.panoramaYaw;
+  if (initialView) {
+    panoramaMeshes[0].rotation.y = initialView.panoramaYaw;
+    overlayMesh.rotation.y = initialView.panoramaYaw;
+  }
 
   let activeView = initialView;
   let displayedViewId = initialView?.id ?? '';
@@ -111,8 +122,7 @@
     | null = null;
 
   const textures = new Map<string, Texture>();
-  const videos = new Map<string, HTMLVideoElement>();
-  let videoAnimationFrame = 0;
+  let overlayTexture: Texture | null = null;
   let environmentTexture: Texture | null = null;
   const requiredAssetKeys = new Set([
     ...(initialView ? [`view:${initialView.id}`] : []),
@@ -132,32 +142,6 @@
   function markAssetReady(key: string) {
     readyAssetKeys.add(key);
     if (readyAssetKeys.size >= requiredAssetKeys.size) sendReady();
-  }
-
-  function startVideoInvalidationLoop() {
-    if (videoAnimationFrame) return;
-
-    function animateVideoFrame() {
-      const hasPlayingVideo = [...videos.values()].some(
-        (video) => !video.paused && !video.ended,
-      );
-      if (!hasPlayingVideo) {
-        videoAnimationFrame = 0;
-        return;
-      }
-
-      invalidate();
-      videoAnimationFrame = requestAnimationFrame(animateVideoFrame);
-    }
-
-    videoAnimationFrame = requestAnimationFrame(animateVideoFrame);
-  }
-
-  function resumePanoramaVideos() {
-    for (const video of videos.values()) {
-      if (video.paused) void video.play().catch(() => {});
-    }
-    startVideoInvalidationLoop();
   }
 
   function activeCamera() {
@@ -268,6 +252,7 @@
     toMaterial.needsUpdate = true;
     toMaterial.opacity = 0;
     toMesh.rotation.y = nextView.panoramaYaw;
+    overlayMesh.rotation.y = nextView.panoramaYaw;
     toMesh.renderOrder = -999;
     panoramaMeshes[fromIndex].renderOrder = -1000;
 
@@ -311,102 +296,7 @@
   onMount(() => {
     const canvas = renderer.domElement;
 
-    function applyViewTexture(
-      view: ImmersivePanoramaView,
-      texture: Texture,
-      useAsEnvironment: boolean,
-    ) {
-      const previousTexture = textures.get(view.id);
-      if (previousTexture && previousTexture !== texture) {
-        previousTexture.dispose();
-      }
-      textures.set(view.id, texture);
-
-      if (view.id === displayedViewId) {
-        panoramaMaterials[activeMeshIndex].map = texture;
-        panoramaMaterials[activeMeshIndex].needsUpdate = true;
-      }
-
-      if (!CYCLES_ONLY && useAsEnvironment && view.id === initialView?.id) {
-        environmentTexture?.dispose();
-        environmentTexture = texture.clone();
-        environmentTexture.colorSpace = SRGBColorSpace;
-        environmentTexture.mapping = EquirectangularReflectionMapping;
-        environmentTexture.needsUpdate = true;
-        scene.environment = environmentTexture;
-      }
-
-      if (view.id === initialView?.id) markAssetReady(`view:${view.id}`);
-      if (view.id === activeViewId && view.id !== displayedViewId) {
-        transitionToView(view.id);
-      }
-      invalidate();
-    }
-
-    function loadStillPanorama(view: ImmersivePanoramaView) {
-      new TextureLoader().load(
-        view.panoramaUrl,
-        (texture) => {
-          texture.colorSpace = SRGBColorSpace;
-          applyViewTexture(view, texture, true);
-        },
-        undefined,
-        () => {
-          if (view.id === initialView?.id) markAssetReady(`view:${view.id}`);
-        },
-      );
-    }
-
-    function loadVideoPanorama(view: ImmersivePanoramaView) {
-      if (!view.panoramaVideoUrl) {
-        loadStillPanorama(view);
-        return;
-      }
-
-      const video = document.createElement('video');
-      video.muted = true;
-      video.defaultMuted = true;
-      video.loop = true;
-      video.autoplay = true;
-      video.playsInline = true;
-      video.preload = 'auto';
-      video.crossOrigin = 'anonymous';
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
-      videos.set(view.id, video);
-
-      let settled = false;
-      const fallBackToStill = () => {
-        if (settled) return;
-        settled = true;
-        videos.delete(view.id);
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
-        loadStillPanorama(view);
-      };
-
-      video.addEventListener(
-        'loadeddata',
-        () => {
-          if (settled) return;
-          settled = true;
-          const texture = new VideoTexture(video);
-          texture.colorSpace = SRGBColorSpace;
-          texture.generateMipmaps = false;
-          applyViewTexture(view, texture, false);
-          void video.play().then(startVideoInvalidationLoop).catch(() => {});
-        },
-        { once: true },
-      );
-      video.addEventListener('error', fallBackToStill, { once: true });
-      video.src = view.panoramaVideoUrl;
-      video.load();
-      void video.play().catch(() => {});
-    }
-
     function handlePointerDown(event: PointerEvent) {
-      resumePanoramaVideos();
       if (event.pointerType === 'mouse' && event.button !== 0) return;
       clickStart = {
         pointerId: event.pointerId,
@@ -456,7 +346,57 @@
     canvas.addEventListener('pointerleave', clearPointerState, true);
 
     for (const view of PANORAMA_VIEWS) {
-      loadVideoPanorama(view);
+      new TextureLoader().load(
+        view.panoramaUrl,
+        (texture) => {
+          texture.colorSpace = SRGBColorSpace;
+          textures.set(view.id, texture);
+
+          if (view.id === displayedViewId) {
+            panoramaMaterials[activeMeshIndex].map = texture;
+            panoramaMaterials[activeMeshIndex].needsUpdate = true;
+          }
+
+          if (!CYCLES_ONLY && view.id === initialView?.id) {
+            environmentTexture?.dispose();
+            environmentTexture = texture.clone();
+            environmentTexture.colorSpace = SRGBColorSpace;
+            environmentTexture.mapping = EquirectangularReflectionMapping;
+            environmentTexture.needsUpdate = true;
+            scene.environment = environmentTexture;
+          }
+
+          if (view.id === initialView?.id) markAssetReady(`view:${view.id}`);
+          if (view.id === activeViewId && view.id !== displayedViewId) {
+            transitionToView(view.id);
+          }
+          invalidate();
+        },
+        undefined,
+        () => {
+          if (view.id === initialView?.id) markAssetReady(`view:${view.id}`);
+        },
+      );
+    }
+
+    if (space.panoramaOverlayUrl) {
+      new TextureLoader().load(
+        space.panoramaOverlayUrl,
+        (texture) => {
+          texture.colorSpace = SRGBColorSpace;
+          overlayTexture?.dispose();
+          overlayTexture = texture;
+          overlayMaterial.map = texture;
+          overlayMaterial.needsUpdate = true;
+          invalidate();
+        },
+        undefined,
+        () => {
+          overlayMaterial.map = null;
+          overlayMaterial.needsUpdate = true;
+          invalidate();
+        },
+      );
     }
 
     if (requiredAssetKeys.size === 0) sendReady();
@@ -473,14 +413,6 @@
 
   onDestroy(() => {
     if (crossfadeFrame) cancelAnimationFrame(crossfadeFrame);
-    if (videoAnimationFrame) cancelAnimationFrame(videoAnimationFrame);
-
-    for (const video of videos.values()) {
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-    }
-    videos.clear();
 
     renderer.toneMappingExposure = previousExposure;
     renderer.outputColorSpace = previousOutputColorSpace;
@@ -490,8 +422,11 @@
     scene.environment = previousEnvironment;
 
     panoramaGeometry.dispose();
+    overlayGeometry.dispose();
     for (const material of panoramaMaterials) material.dispose();
+    overlayMaterial.dispose();
     for (const texture of textures.values()) texture.dispose();
+    overlayTexture?.dispose();
     environmentTexture?.dispose();
   });
 </script>
@@ -518,6 +453,9 @@
 {#if PANORAMA_VIEWS.length > 0}
   <T is={panoramaMeshes[0]} />
   <T is={panoramaMeshes[1]} />
+  {#if space.panoramaOverlayUrl}
+    <T is={overlayMesh} />
+  {/if}
 {:else}
   <!-- GLB-only halls retain web lighting. Green-room views are Cycles-only. -->
   <T.AmbientLight intensity={0.9} />

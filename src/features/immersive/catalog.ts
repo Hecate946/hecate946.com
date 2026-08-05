@@ -14,7 +14,6 @@ export type ImmersivePanoramaView = {
   id: string;
   label: string;
   panoramaUrl: string;
-  panoramaVideoUrl?: string;
   panoramaYaw: number;
   cameraYaw: number;
   cameraPitch: number;
@@ -38,6 +37,7 @@ export type ImmersiveSpace = {
   description: string;
   accent: string;
   panoramaUrl?: string;
+  panoramaOverlayUrl?: string;
   panoramaViews?: ImmersivePanoramaView[];
   cyclesOnly?: boolean;
   modelLayers: ImmersiveModelLayer[];
@@ -72,17 +72,12 @@ const room = (
   windowIndex: number,
   additionalViews: ImmersivePanoramaView[] = [],
   cyclesOnly = false,
-  defaultPanoramaVideoUrl?: string,
-  defaultPanoramaUrl?: string,
 ): ImmersiveSpace => {
-  const panoramaUrl =
-    defaultPanoramaUrl ??
-    withBase(`/scenes/rooms/${slug}/panorama.png?v=room-v49`);
+  const panoramaUrl = withBase(`/scenes/rooms/${slug}/panorama.png?v=room-v49`);
   const defaultView: ImmersivePanoramaView = {
     id: 'default',
     label: 'Room view',
     panoramaUrl,
-    panoramaVideoUrl: defaultPanoramaVideoUrl,
     panoramaYaw: ROOM_PANORAMA_YAW,
     cameraYaw: 0,
     cameraPitch: 0,
@@ -169,18 +164,19 @@ export const rooms = {
     true,
   ),
   orange: room('orange', 'Room 003', 'The Orange Room', 'An immersive fixed-viewpoint orange tiled room.', '#5a2f18', 2),
-  blue: room(
-    'blue',
-    'Room 004',
-    'The Blue Room',
-    'A Cycles-rendered blue tiled room half-filled with animated water.',
-    '#18344c',
-    3,
-    [],
-    true,
-    withBase('/scenes/rooms/blue/water.webm?v=blue-water-v1'),
-    withBase('/scenes/rooms/blue/water-poster.png?v=blue-water-v1'),
-  ),
+  blue: {
+    ...room(
+      'blue',
+      'Room 004',
+      'The Blue Room',
+      'An immersive fixed-viewpoint blue tiled room with a static half-filled water overlay.',
+      '#18344c',
+      3,
+    ),
+    panoramaOverlayUrl: withBase(
+      '/scenes/rooms/blue/water-overlay.png?v=room-v50-water-static',
+    ),
+  },
   purple: room('purple', 'Room 005', 'The Purple Room', 'An immersive fixed-viewpoint purple tiled room.', '#35213f', 4),
 } as const satisfies Record<RoomSlug, ImmersiveSpace>;
 
