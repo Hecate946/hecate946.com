@@ -1,4 +1,5 @@
 ---
+import AsciiSiteTree from '@/components/core/AsciiSiteTree.astro';
 import BaseHead from '@/components/core/BaseHead.astro';
 import Footer from '@/components/core/Footer.astro';
 import Header from '@/components/core/Header.astro';
@@ -35,6 +36,7 @@ const normalizePath = (value: string) => {
 };
 
 const currentPath = normalizePath(Astro.url.pathname);
+const isHomePage = currentPath === normalizePath(withBase('/'));
 const showSeasonalShower = shouldShowSeasonalShower(Astro.url.pathname);
 
 const currentRailwayStop =
@@ -77,13 +79,14 @@ const commandItems = Array.from(
     <ClientRouter fallback="swap" />
   </head>
 
-  <body>
+  <body data-ascii-page={isHomePage ? 'home' : 'interior'}>
     <SkipLink />
+    <AsciiSiteTree {currentPath} />
 
     {
       showSeasonalShower && (
         <SeasonalShower
-          client:idle
+          client:visible
           transition:persist="seasonal-shower"
         />
       )
@@ -114,7 +117,6 @@ const commandItems = Array.from(
     <CommandPalette client:idle items={commandItems} />
 
     <div class="site-sound-toast" data-site-sound-toast role="status" aria-live="polite"></div>
-    <div class="site-display-toast" data-display-mode-toast role="status" aria-live="polite"></div>
 
     <script>
       import { initializeDisplayMode } from '@/lib/display-mode';

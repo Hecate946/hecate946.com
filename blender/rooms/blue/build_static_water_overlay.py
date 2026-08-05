@@ -31,12 +31,12 @@ AUTO_RENDER_BASE_PANORAMA = False
 
 # Small and quick by default so you can preview the motion ASAP.
 # "PREVIEW", "FAST", or "LIT"
-RENDER_QUALITY = "FAST"
+RENDER_QUALITY = "PREVIEW"
 
 USE_GPU = True
 FRAME_START = 1
-FRAME_END = 24
-FRAME_RATE = 12
+FRAME_END = 12
+FRAME_RATE = 6
 KEEP_RENDERED_FRAMES = False
 
 # Water tuning: lower fill, clearer water, calmer motion, and wall-to-wall coverage.
@@ -47,12 +47,17 @@ WATER_RIPPLE_A_STRENGTH = 0.0022
 WATER_RIPPLE_B_STRENGTH = 0.0011
 WATER_EDGE_OVERSCAN = 0.22
 SEAM_FIX_COLUMNS = 6
+WATER_WALL_OVERLAP = 0.18
 
 QUALITY_PRESETS = {
-    "PREVIEW": {"width": 1280, "height": 640, "samples": 16},
+    "PREVIEW": {"width": 1280, "height": 640, "samples": 12},
     "FAST": {"width": 2048, "height": 1024, "samples": 32},
     "LIT": {"width": 4096, "height": 2048, "samples": 64},
 }
+
+
+def is_preview_quality(quality_name: str) -> bool:
+    return quality_name.strip().upper() == "PREVIEW"
 
 
 def script_directory() -> Path:
@@ -109,7 +114,7 @@ def set_socket(node, names, value) -> None:
             return
 
 
-def create_water_material(name: str):
+def create_water_material(name: str, preview_mode: bool = False):
     mat = bpy.data.materials.new(name)
     node_tree = mat.node_tree
     if node_tree is None:
@@ -122,14 +127,15 @@ def create_water_material(name: str):
     if bsdf is None or material_output is None:
         raise RuntimeError("Principled BSDF or Material Output is unavailable.")
 
-    # Clear, pool-like water: very transparent, only lightly tinted, and with
-    # low absorption so the underlying floor remains visible.
-    set_socket(bsdf, "Base Color", (0.975, 0.99, 1.0, 1.0))
-    set_socket(bsdf, "Roughness", 0.0025)
+    # Overlay-only water material: the base room remains visible underneath.
+    # This material renders only subtle tint, highlights, reflections, and
+    # ripple shading, instead of a second refracted copy of the whole room.
+    set_socket(bsdf, "Base Color", (0.78, 0.91, 1.0, 1.0))
+    set_socket(bsdf, "Roughness", 0.028 if preview_mode else 0.018)
     set_socket(bsdf, "IOR", 1.333)
-    set_socket(bsdf, "Specular IOR Level", 0.5)
-    set_socket(bsdf, "Transmission Weight", 1.0)
-    set_socket(bsdf, "Transmission", 1.0)
+    set_socket(bsdf, "Specular IOR Level", 0.22 if preview_mode else 0.32)
+    set_socket(bsdf, "Transmission Weight", 0.0)
+    set_socket(bsdf, "Transmission", 0.0)
 
     noise_a = nodes.new("ShaderNodeTexNoise")
     noise_a.inputs["Scale"].default_value = 11.0
@@ -141,23 +147,38 @@ def create_water_material(name: str):
     noise_b.inputs["Detail"].default_value = 5.0
     noise_b.inputs["Roughness"].default_value = 0.36
 
-    mix = nodes.new("ShaderNodeMixRGB")
-    mix.blend_type = "ADD"
-    mix.inputs["Fac"].default_value = 0.08
+    bump_mix = nodes.new("ShaderNodeMixRGB")
+    bump_mix.blend_type = "ADD"
+    bump_mix.inputs["Fac"].default_value = 0.08
 
     bump = nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value = 0.002
+    bump.inputs["Strength"].default_value = 0.0014 if preview_mode else 0.002
     bump.inputs["Distance"].default_value = 1.0
 
-    absorption = nodes.new("ShaderNodeVolumeAbsorption")
-    absorption.inputs["Color"].default_value = (0.93, 0.98, 1.0, 1.0)
-    absorption.inputs["Density"].default_value = 0.0014
+    transparent = nodes.new("ShaderNodeBsdfTransparent")
+    fresnel = nodes.new("ShaderNodeFresnel")
+    fresnel.inputs["IOR"].default_value = 1.333
+    visibility_scale = nodes.new("ShaderNodeMath")
+    visibility_scale.operation = "MULTIPLY"
+    visibility_scale.inputs[1].default_value = 0.55 if preview_mode else 0.7
+    visibility_bias = nodes.new("ShaderNodeMath")
+    visibility_bias.operation = "ADD"
+    visibility_bias.inputs[1].default_value = 0.05 if preview_mode else 0.08
+    clamp = nodes.new("ShaderNodeClamp")
+    mix_shader = nodes.new("ShaderNodeMixShader")
 
-    links.new(noise_a.outputs["Fac"], mix.inputs[1])
-    links.new(noise_b.outputs["Fac"], mix.inputs[2])
-    links.new(mix.outputs["Color"], bump.inputs["Height"])
+    links.new(noise_a.outputs["Fac"], bump_mix.inputs[1])
+    links.new(noise_b.outputs["Fac"], bump_mix.inputs[2])
+    links.new(bump_mix.outputs["Color"], bump.inputs["Height"])
     links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
-    links.new(absorption.outputs["Volume"], material_output.inputs["Volume"])
+
+    links.new(fresnel.outputs["Fac"], visibility_scale.inputs[0])
+    links.new(visibility_scale.outputs["Value"], visibility_bias.inputs[0])
+    links.new(visibility_bias.outputs["Value"], clamp.inputs["Value"])
+    links.new(clamp.outputs["Result"], mix_shader.inputs[0])
+    links.new(transparent.outputs["BSDF"], mix_shader.inputs[1])
+    links.new(bsdf.outputs["BSDF"], mix_shader.inputs[2])
+    links.new(mix_shader.outputs["Shader"], material_output.inputs["Surface"])
 
     return mat
 
@@ -173,7 +194,11 @@ def add_motion_driver_empty(name: str, location=(0.0, 0.0, 0.0)):
 def add_water_clip_box(room_width: float, room_depth: float, water_height: float):
     bpy.ops.mesh.primitive_cube_add(
         location=(0.0, 0.0, water_height / 2.0),
-        scale=(room_width / 2.0, room_depth / 2.0, water_height / 2.0 + 0.02),
+        scale=(
+            room_width / 2.0 + WATER_WALL_OVERLAP,
+            room_depth / 2.0 + WATER_WALL_OVERLAP,
+            water_height / 2.0 + 0.02,
+        ),
     )
     clip_box = bpy.context.active_object
     clip_box.name = "BlueRoomWaterClipBox"
@@ -182,15 +207,18 @@ def add_water_clip_box(room_width: float, room_depth: float, water_height: float
     return clip_box
 
 
-def add_water_object(room_builder_module, frame_end: int):
+def add_water_object(room_builder_module, frame_end: int, preview_mode: bool = False):
     room_width = room_builder_module.ROOM_WIDTH
     room_depth = room_builder_module.ROOM_DEPTH
     room_height = room_builder_module.ROOM_HEIGHT
 
     water_height = room_height * WATER_FILL_RATIO
+    grid_x = 48 if preview_mode else 120
+    grid_y = 72 if preview_mode else 180
+
     bpy.ops.mesh.primitive_grid_add(
-        x_subdivisions=120,
-        y_subdivisions=180,
+        x_subdivisions=grid_x,
+        y_subdivisions=grid_y,
         size=1.0,
         location=(0.0, 0.0, water_height),
     )
@@ -211,7 +239,7 @@ def add_water_object(room_builder_module, frame_end: int):
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
     water.data.materials.clear()
-    water.data.materials.append(create_water_material("BlueRoomAnimatedWater"))
+    water.data.materials.append(create_water_material("BlueRoomAnimatedWater", preview_mode=preview_mode))
 
     # Large slow slosh travelling across the pool.
     wave_x = water.modifiers.new("WaterSloshX", "WAVE")
@@ -280,18 +308,18 @@ def add_water_object(room_builder_module, frame_end: int):
     clip_box = add_water_clip_box(room_width, room_depth, water_height)
     boolean_clip = water.modifiers.new("WaterRoomClip", "BOOLEAN")
     boolean_clip.operation = "INTERSECT"
-    boolean_clip.solver = "EXACT"
+    boolean_clip.solver = "FLOAT" if preview_mode else "EXACT"
     boolean_clip.object = clip_box
 
     subdivision = water.modifiers.new("WaterSubdivision", "SUBSURF")
-    subdivision.levels = 1
-    subdivision.render_levels = 1
+    subdivision.levels = 0 if preview_mode else 1
+    subdivision.render_levels = 0 if preview_mode else 1
 
     bpy.ops.object.shade_smooth()
     return water
 
 
-def configure_overlay_render(scene: bpy.types.Scene, settings, output_path: Path):
+def configure_overlay_render(scene: bpy.types.Scene, settings, output_path: Path, preview_mode: bool = False):
     scene.render.engine = "CYCLES"
     scene.cycles.samples = settings.samples
     scene.cycles.device = "GPU" if settings.use_gpu else "CPU"
@@ -300,6 +328,18 @@ def configure_overlay_render(scene: bpy.types.Scene, settings, output_path: Path
         scene.cycles.use_adaptive_sampling = True
     except Exception:
         pass
+
+    if preview_mode:
+        scene.cycles.max_bounces = 3
+        scene.cycles.diffuse_bounces = 1
+        scene.cycles.glossy_bounces = 1
+        scene.cycles.transmission_bounces = 2
+        scene.cycles.transparent_max_bounces = 2
+        scene.cycles.volume_bounces = 0
+        try:
+            scene.render.use_persistent_data = True
+        except Exception:
+            pass
 
     scene.render.resolution_x = settings.width
     scene.render.resolution_y = settings.height
@@ -449,6 +489,8 @@ def main():
     if quality_name not in QUALITY_PRESETS:
         raise ValueError('RENDER_QUALITY must be "PREVIEW", "FAST", or "LIT".')
 
+    preview_mode = is_preview_quality(quality_name)
+
     quality = QUALITY_PRESETS[quality_name]
     settings = room_builder.RenderSettings(
         width=quality["width"],
@@ -474,8 +516,11 @@ def main():
     print(f"Frame rate:           {FRAME_RATE} fps")
     print(f"Water fill ratio:     {WATER_FILL_RATIO:.2f}")
     print(f"Water overscan:       {WATER_EDGE_OVERSCAN:.3f} m")
+    print(f"Wall overlap:         {WATER_WALL_OVERLAP:.3f} m")
     print(f"Base panorama render: {settings.auto_render}")
     print(f"Cycles device:        {'GPU' if settings.use_gpu else 'CPU'}")
+    if preview_mode:
+        print("Preview optimizations: overlay-only water shading, no room refraction, reduced bounces, simplified mesh")
     print("=" * 72)
 
     room_builder.build_room(definition, settings, rooms_root)
@@ -492,8 +537,8 @@ def main():
     shutil.rmtree(frames_directory, ignore_errors=True)
 
     scene = bpy.context.scene
-    water = add_water_object(room_builder, FRAME_END)
-    configure_overlay_render(scene, settings, poster_file)
+    water = add_water_object(room_builder, FRAME_END, preview_mode=preview_mode)
+    configure_overlay_render(scene, settings, poster_file, preview_mode=preview_mode)
 
     previous_visibility = set_camera_visibility_excluding(water)
     try:

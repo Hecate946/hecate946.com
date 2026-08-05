@@ -2,9 +2,9 @@ const DISPLAY_MODE_STORAGE_KEY = 'hecate946:display-mode';
 const ASCII_MODE = 'ascii';
 const DEFAULT_MODE = 'default';
 
-let toastTimer: number | undefined;
+type DisplayMode = typeof ASCII_MODE | typeof DEFAULT_MODE;
 
-const readMode = () => {
+const readMode = (): DisplayMode => {
   try {
     return localStorage.getItem(DISPLAY_MODE_STORAGE_KEY) === ASCII_MODE
       ? ASCII_MODE
@@ -14,7 +14,7 @@ const readMode = () => {
   }
 };
 
-const writeMode = (mode: typeof ASCII_MODE | typeof DEFAULT_MODE) => {
+const writeMode = (mode: DisplayMode) => {
   try {
     if (mode === ASCII_MODE) {
       localStorage.setItem(DISPLAY_MODE_STORAGE_KEY, ASCII_MODE);
@@ -22,23 +22,8 @@ const writeMode = (mode: typeof ASCII_MODE | typeof DEFAULT_MODE) => {
       localStorage.removeItem(DISPLAY_MODE_STORAGE_KEY);
     }
   } catch {
-    // The mode still works for the current page when storage is unavailable.
+    // The current page can still switch modes when storage is unavailable.
   }
-};
-
-const showToast = (message: string) => {
-  const toast = document.querySelector<HTMLElement>(
-    '[data-display-mode-toast]',
-  );
-  if (!toast) return;
-
-  window.clearTimeout(toastTimer);
-  toast.textContent = message;
-  toast.dataset.visible = 'true';
-
-  toastTimer = window.setTimeout(() => {
-    toast.dataset.visible = 'false';
-  }, 1_350);
 };
 
 const updateThemeColor = () => {
@@ -58,30 +43,28 @@ const updateControls = (asciiEnabled: boolean) => {
   document
     .querySelectorAll<HTMLButtonElement>('[data-display-mode-toggle]')
     .forEach((button) => {
-      const label = asciiEnabled ? 'Exit ASCII mode' : 'Enable ASCII mode';
+      const label = asciiEnabled
+        ? 'Return to standard site'
+        : 'Enable ASCII mode';
       button.setAttribute('aria-pressed', String(asciiEnabled));
       button.setAttribute('aria-label', label);
       button.dataset.label = label;
+
+      const text = button.querySelector<HTMLElement>('[data-display-mode-text]');
+      if (text) text.textContent = label;
     });
 };
 
-const applyMode = (
-  mode: typeof ASCII_MODE | typeof DEFAULT_MODE,
-  announce = false,
-) => {
+const applyMode = (mode: DisplayMode) => {
   const asciiEnabled = mode === ASCII_MODE;
   document.documentElement.dataset.displayMode = mode;
   document.documentElement.style.colorScheme = asciiEnabled
-    ? 'dark'
+    ? 'light'
     : document.documentElement.dataset.theme === 'dark'
       ? 'dark'
       : 'light';
   updateControls(asciiEnabled);
   updateThemeColor();
-
-  if (announce) {
-    showToast(asciiEnabled ? 'ASCII mode enabled' : 'Standard mode restored');
-  }
 };
 
 export function initializeDisplayMode() {
@@ -94,12 +77,12 @@ export function initializeDisplayMode() {
       button.dataset.displayModeConnected = 'true';
 
       button.addEventListener('click', () => {
-        const nextMode =
+        const nextMode: DisplayMode =
           document.documentElement.dataset.displayMode === ASCII_MODE
             ? DEFAULT_MODE
             : ASCII_MODE;
         writeMode(nextMode);
-        applyMode(nextMode, true);
+        applyMode(nextMode);
       });
     });
 }

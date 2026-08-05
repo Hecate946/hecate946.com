@@ -142,118 +142,52 @@
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-/* Subject picker mirrors the About-page disclosure speed, easing, and icon. */
-.subject-dropdown {
-  overflow: clip;
+/* Subjects stay visible instead of hiding inside a dropdown. */
+.subject-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.subject-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.subject-option {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
   border: 1px solid var(--line);
-  border-radius: 0.85rem;
+  border-radius: 0.7rem;
   background: color-mix(in srgb, var(--bg) 60%, transparent);
   color: var(--text);
+  cursor: pointer;
   transition:
     border-color var(--duration-fast) ease,
-    box-shadow var(--duration-fast) ease;
+    background-color var(--duration-fast) ease;
 }
 
-.subject-dropdown:focus-within {
+.subject-option:hover,
+.subject-option:focus-within {
   border-color: var(--accent-strong);
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
-.subject-dropdown-summary {
-  display: flex;
-  min-height: 3rem;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.48rem 0.48rem 0.48rem 0.9rem;
-  cursor: pointer;
-  list-style: none;
-  user-select: none;
+.subject-option input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--accent-strong);
 }
 
-.subject-dropdown-summary::-webkit-details-marker {
-  display: none;
-}
-
-.subject-dropdown-summary::marker {
-  content: '';
-}
-
-.subject-dropdown-summary:focus-visible {
-  outline: none;
-}
-
-.subject-toggle {
-  position: relative;
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 0.5rem;
-  color: var(--muted);
-  transition:
-    border-color var(--duration-fast) ease,
-    color var(--duration-fast) ease;
-}
-
-.subject-toggle::before {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-right: 1.8px solid currentColor;
-  border-bottom: 1.8px solid currentColor;
-  content: '';
-  transform: translate(-62%, -50%) rotate(-45deg);
-  transform-origin: 58% 58%;
-  transition: transform 960ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.subject-dropdown-summary:hover .subject-toggle,
-.subject-dropdown-summary:focus-visible .subject-toggle {
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
-  color: var(--accent-strong);
-}
-
-.subject-dropdown[open]:not([data-closing='true']) .subject-toggle::before {
-  transform: translate(-50%, -62%) rotate(45deg);
-}
-
-.subject-dropdown-options {
-  display: grid;
-  padding: 0.35rem;
-  border-top: 1px solid var(--line);
-  will-change: opacity, transform;
-}
-
-.subject-dropdown-options button {
-  width: 100%;
-  min-height: 2.65rem;
-  padding: 0.65rem 0.72rem;
-  border: 0;
-  border-radius: 0.62rem;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background-color var(--duration-fast) ease,
-    color var(--duration-fast) ease;
-}
-
-.subject-dropdown-options button:hover,
-.subject-dropdown-options button:focus-visible {
-  outline: none;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  color: var(--accent-strong);
-}
-
-.subject-dropdown-options button[data-selected='true'] {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+.subject-option:has(input:checked) {
+  border-color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--accent-strong);
 }
 
@@ -397,6 +331,7 @@
 
 @media (max-width: 52rem) {
   .contact-switchboard,
+  .subject-options,
   .contact-links {
     grid-template-columns: 1fr;
   }
@@ -441,6 +376,7 @@
     width: 100%;
   }
 
+  .subject-options,
   .contact-links {
     grid-template-columns: 1fr;
   }
@@ -459,9 +395,7 @@
   .compose-button,
   .contact-link-card,
   .contact-link-arrow,
-  .subject-toggle::before,
-  .subject-dropdown,
-  .subject-dropdown-options button {
+  .subject-option {
     transition: none;
   }
 }
@@ -551,6 +485,7 @@
     letter-spacing: -0.025em;
   }
 
+  .subject-options,
   .contact-links {
     grid-template-columns: 1fr;
   }

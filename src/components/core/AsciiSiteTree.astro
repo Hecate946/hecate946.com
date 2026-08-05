@@ -1,0 +1,243 @@
+---
+import { projects } from '@/data/projects';
+import { hallSlugs, roomSlugs } from '@/features/immersive/catalog';
+import { withBase } from '@/lib/paths';
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+const normalizePath = (value: string) => {
+  const normalized = value.replace(/\/+$/, '');
+  return normalized === '' ? '/' : normalized;
+};
+
+const isHome = normalizePath(currentPath) === normalizePath(withBase('/'));
+
+const primaryPages = [
+  { label: 'about', href: '/about/' },
+  { label: 'resume', href: '/resume/' },
+  { label: 'projects/', href: '/projects/' },
+  { label: 'contact', href: '/contact/' },
+  { label: 'stats', href: '/stats/' },
+] as const;
+
+const experimentPages = [
+  { label: 'collision-detection', href: '/collision-detection/' },
+  { label: 'd3', href: '/d3/' },
+  { label: 'chess-board', href: '/chess-board/' },
+  { label: 'pickleball', href: '/pickleball/' },
+  { label: 'picklabell', href: '/picklabell/' },
+] as const;
+
+const housePreviewPages = [
+  { label: 'house-png', href: '/house-png/' },
+  { label: 'house-svg', href: '/house-svg/' },
+  { label: 'house-compare', href: '/house-compare/' },
+] as const;
+---
+
+{
+  isHome ? (
+    <section
+      class="ascii-site-tree"
+      data-ascii-only
+      aria-label="Text mode site index"
+    >
+      <header>
+        <p><strong>hecate946.com</strong></p>
+        <p>Cyrus Asasi</p>
+        <p>software engineer + classical musician</p>
+      </header>
+
+      <nav aria-label="Primary site navigation">
+        <p><strong>navigation/</strong></p>
+        {
+          primaryPages.map((page, index) => {
+            const isProjects = page.href === '/projects/';
+            const branch = index === primaryPages.length - 1 ? '└── ' : '├── ';
+
+            return (
+              <>
+                <div>
+                  <span aria-hidden="true">{branch}</span>
+                  <a href={withBase(page.href)} data-astro-prefetch>
+                    {page.label}
+                  </a>
+                </div>
+
+                {
+                  isProjects &&
+                    projects.map((project, projectIndex) => (
+                      <div>
+                        <span aria-hidden="true">
+                          {projectIndex === projects.length - 1
+                            ? '│   └── '
+                            : '│   ├── '}
+                        </span>
+                        <a
+                          href={withBase(`/projects/${project.slug}/`)}
+                          data-astro-prefetch
+                        >
+                          {project.slug}
+                        </a>
+                      </div>
+                    ))
+                }
+              </>
+            );
+          })
+        }
+      </nav>
+
+      <nav aria-label="All remaining site paths">
+        <p><strong>all paths/</strong></p>
+
+        <div>
+          <span aria-hidden="true">├── </span>
+          <a href={withBase('/rooms/')} data-astro-prefetch>rooms/</a>
+        </div>
+        {
+          roomSlugs.map((slug, index) => (
+            <div>
+              <span aria-hidden="true">
+                {index === roomSlugs.length - 1 ? '│   └── ' : '│   ├── '}
+              </span>
+              <a href={withBase(`/rooms/${slug}/`)}>{slug}</a>
+            </div>
+          ))
+        }
+
+        <div>
+          <span aria-hidden="true">├── </span>
+          <a href={withBase('/halls/')} data-astro-prefetch>halls/</a>
+        </div>
+        {
+          hallSlugs.map((slug, index) => (
+            <div>
+              <span aria-hidden="true">
+                {index === hallSlugs.length - 1 ? '│   └── ' : '│   ├── '}
+              </span>
+              <a href={withBase(`/halls/${slug}/`)}>{slug}</a>
+            </div>
+          ))
+        }
+
+        <div><span aria-hidden="true">├── </span>house-previews/</div>
+        {
+          housePreviewPages.map((page, index) => (
+            <div>
+              <span aria-hidden="true">
+                {index === housePreviewPages.length - 1
+                  ? '│   └── '
+                  : '│   ├── '}
+              </span>
+              <a href={withBase(page.href)}>{page.label}</a>
+            </div>
+          ))
+        }
+
+        <div><span aria-hidden="true">├── </span>experiments/</div>
+        {
+          experimentPages.map((page, index) => (
+            <div>
+              <span aria-hidden="true">
+                {index === experimentPages.length - 1
+                  ? '│   └── '
+                  : '│   ├── '}
+              </span>
+              <a href={withBase(page.href)}>{page.label}</a>
+            </div>
+          ))
+        }
+
+        <div>
+          <span aria-hidden="true">└── </span>
+          <a href={withBase('/404.html')}>404.html</a>
+        </div>
+      </nav>
+
+      <nav aria-label="External links">
+        <p><strong>external/</strong></p>
+        <div>
+          <span aria-hidden="true">├── </span>
+          <a href="mailto:cyrusasasi@gmail.com">email</a>
+        </div>
+        <div>
+          <span aria-hidden="true">├── </span>
+          <a
+            href="https://github.com/Hecate946/"
+            target="_blank"
+            rel="me noopener noreferrer"
+          >
+            github
+          </a>
+        </div>
+        <div>
+          <span aria-hidden="true">├── </span>
+          <a
+            href="https://www.linkedin.com/in/cyrus-asasi/"
+            target="_blank"
+            rel="me noopener noreferrer"
+          >
+            linkedin
+          </a>
+        </div>
+        <div>
+          <span aria-hidden="true">└── </span>
+          <a
+            href="https://buymeacoffee.com/hecate946"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            buy me a coffee
+          </a>
+        </div>
+      </nav>
+
+      <div>
+        <p><strong>settings/</strong></p>
+        <div>
+          <span aria-hidden="true">├── </span>
+          <button
+            type="button"
+            aria-label="Enable sounds"
+            aria-pressed="false"
+            data-label="Enable sounds"
+            data-sound-toggle
+          >
+            <span data-sound-toggle-text>Enable sounds</span>
+          </button>
+        </div>
+        <div>
+          <span aria-hidden="true">└── </span>
+          <button
+            type="button"
+            aria-label="Return to standard site"
+            aria-pressed="true"
+            data-label="Return to standard site"
+            data-display-mode-toggle
+          >
+            <span data-display-mode-text>Return to standard site</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  ) : (
+    <nav class="ascii-back" data-ascii-only aria-label="Text mode controls">
+      <a href={withBase('/')} data-astro-prefetch>&lt;- back</a>
+      <span aria-hidden="true"> | </span>
+      <button
+        type="button"
+        aria-label="Return to standard site"
+        aria-pressed="true"
+        data-label="Return to standard site"
+        data-display-mode-toggle
+      >
+        <span data-display-mode-text>Return to standard site</span>
+      </button>
+    </nav>
+  )
+}

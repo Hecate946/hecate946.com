@@ -20,9 +20,11 @@ const codeStatsUrl = withBase('/generated/code-stats.json');
       <h1 id="stats-title">Stats</h1>
     </header>
 
+    <p data-ascii-only>Live website and code statistics are not rendered in text mode.</p>
+
     <div class="stats-content interior-page-content interior-page-content--balanced">
       <StatsDashboard
-        client:idle
+        client:visible
         apiBase={statsApiBase}
         {codeStatsUrl}
       />

@@ -69,30 +69,22 @@ const links = [
         </div>
 
         <form class="message-builder" data-message-builder>
-          <div class="subject-field">
-            <span class="field-label">What are we talking about?</span>
-            <details class="subject-dropdown" data-subject-dropdown>
-              <summary class="subject-dropdown-summary">
-                <span data-subject-label>{subjects[0].label}</span>
-                <span class="subject-toggle" aria-hidden="true"></span>
-              </summary>
-
-              <div class="subject-dropdown-options" data-subject-options>
-                {subjects.map((subject, index) => (
-                  <button
-                    type="button"
-                    data-subject-option
-                    data-subject-value={subject.value}
-                    data-subject-text={subject.label}
-                    data-selected={index === 0 ? 'true' : 'false'}
-                  >
-                    {subject.label}
-                  </button>
-                ))}
-              </div>
-            </details>
-            <input type="hidden" name="subject" value={subjects[0].value} data-subject-input />
-          </div>
+          <fieldset class="subject-field">
+            <legend class="field-label">What are we talking about?</legend>
+            <div class="subject-options">
+              {subjects.map((subject, index) => (
+                <label class="subject-option">
+                  <input
+                    type="radio"
+                    name="subject"
+                    value={subject.value}
+                    checked={index === 0}
+                  />
+                  <span>{subject.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
           <label>
             <span>A quick note</span>
@@ -167,162 +159,6 @@ const links = [
 
     const copyButton = page.querySelector<HTMLButtonElement>('[data-copy-email]');
     const builder = page.querySelector<HTMLFormElement>('[data-message-builder]');
-    const dropdown = page.querySelector<HTMLDetailsElement>('[data-subject-dropdown]');
-    const dropdownSummary = dropdown?.querySelector<HTMLElement>('summary');
-    const dropdownOptions = dropdown?.querySelector<HTMLElement>('[data-subject-options]');
-    const subjectLabel = dropdown?.querySelector<HTMLElement>('[data-subject-label]');
-    const subjectInput = page.querySelector<HTMLInputElement>('[data-subject-input]');
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const DROPDOWN_DURATION_MS = 960;
-    const DROPDOWN_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
-    let dropdownAnimation: Animation | null = null;
-    let dropdownOptionsAnimation: Animation | null = null;
-    let dropdownClosing = false;
-
-    const finishDropdownClosed = () => {
-      if (!dropdown || !dropdownOptions) return;
-      dropdown.open = false;
-      dropdown.removeAttribute('data-closing');
-      dropdownClosing = false;
-      dropdown.style.height = '';
-      dropdown.style.overflow = '';
-      dropdownOptions.style.opacity = '';
-      dropdownOptions.style.transform = '';
-      dropdownAnimation = null;
-      dropdownOptionsAnimation = null;
-    };
-
-    const finishDropdownOpen = () => {
-      if (!dropdown || !dropdownOptions) return;
-      dropdown.removeAttribute('data-closing');
-      dropdownClosing = false;
-      dropdown.style.height = '';
-      dropdown.style.overflow = '';
-      dropdownOptions.style.opacity = '';
-      dropdownOptions.style.transform = '';
-      dropdownAnimation = null;
-      dropdownOptionsAnimation = null;
-    };
-
-
-    const freezeCurrentDropdownFrame = () => {
-      if (!dropdown || !dropdownOptions) return;
-
-      const height = dropdown.getBoundingClientRect().height;
-      const optionsStyle = getComputedStyle(dropdownOptions);
-      dropdownAnimation?.cancel();
-      dropdownOptionsAnimation?.cancel();
-      dropdown.style.height = `${height}px`;
-      dropdown.style.overflow = 'hidden';
-      dropdownOptions.style.opacity = optionsStyle.opacity;
-      dropdownOptions.style.transform = optionsStyle.transform === 'none' ? 'translateY(0)' : optionsStyle.transform;
-      dropdownAnimation = null;
-      dropdownOptionsAnimation = null;
-    };
-
-    const closeDropdown = () => {
-      if (!dropdown || !dropdownSummary || !dropdownOptions || !dropdown.open) return;
-      freezeCurrentDropdownFrame();
-
-      if (prefersReducedMotion.matches) {
-        finishDropdownClosed();
-        return;
-      }
-
-      dropdownClosing = true;
-      dropdown.setAttribute('data-closing', 'true');
-      const startHeight = dropdown.offsetHeight;
-      const computed = getComputedStyle(dropdown);
-      const endHeight =
-        dropdownSummary.offsetHeight +
-        Number.parseFloat(computed.borderTopWidth) +
-        Number.parseFloat(computed.borderBottomWidth);
-
-      dropdown.style.overflow = 'hidden';
-      dropdownAnimation = dropdown.animate(
-        [{ height: `${startHeight}px` }, { height: `${endHeight}px` }],
-        { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING },
-      );
-      dropdownOptionsAnimation = dropdownOptions.animate(
-        [
-          { opacity: dropdownOptions.style.opacity || '1', transform: dropdownOptions.style.transform || 'translateY(0)' },
-          { opacity: 0, transform: 'translateY(-0.45rem)' },
-        ],
-        { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING, fill: 'forwards' },
-      );
-      dropdownAnimation.onfinish = finishDropdownClosed;
-      dropdownAnimation.oncancel = () => {};
-    };
-
-    const openDropdown = () => {
-      if (!dropdown || !dropdownSummary || !dropdownOptions || (dropdown.open && !dropdownClosing)) return;
-      const wasClosing = dropdownClosing;
-      if (wasClosing) freezeCurrentDropdownFrame();
-
-      if (prefersReducedMotion.matches) {
-        dropdown.open = true;
-        return;
-      }
-
-      const startHeight = dropdown.getBoundingClientRect().height;
-      dropdown.open = true;
-      dropdownClosing = false;
-      dropdown.removeAttribute('data-closing');
-      dropdown.style.height = `${startHeight}px`;
-      dropdown.style.overflow = 'hidden';
-      const endHeight = dropdown.scrollHeight;
-
-      dropdownAnimation = dropdown.animate(
-        [{ height: `${startHeight}px` }, { height: `${endHeight}px` }],
-        { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING },
-      );
-      dropdownOptionsAnimation = dropdownOptions.animate(
-        [
-          {
-            opacity: wasClosing ? dropdownOptions.style.opacity || '0' : '0',
-            transform: wasClosing ? dropdownOptions.style.transform || 'translateY(-0.55rem)' : 'translateY(-0.55rem)',
-          },
-          { opacity: 1, transform: 'translateY(0)' },
-        ],
-        { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING, fill: 'both' },
-      );
-      dropdownAnimation.onfinish = finishDropdownOpen;
-      dropdownAnimation.oncancel = () => {};
-    };
-
-    dropdownSummary?.addEventListener('click', (event) => {
-      event.preventDefault();
-      if (dropdown?.open && !dropdownClosing) closeDropdown();
-      else openDropdown();
-    });
-
-    dropdown?.querySelectorAll<HTMLButtonElement>('[data-subject-option]').forEach((option) => {
-      option.addEventListener('click', () => {
-        const value = option.dataset.subjectValue;
-        const text = option.dataset.subjectText;
-        if (!value || !text || !subjectInput || !subjectLabel) return;
-
-        subjectInput.value = value;
-        subjectLabel.textContent = text;
-        dropdown.querySelectorAll<HTMLElement>('[data-subject-option]').forEach((candidate) => {
-          candidate.dataset.selected = candidate === option ? 'true' : 'false';
-        });
-        closeDropdown();
-        dropdownSummary?.focus();
-      });
-    });
-
-    document.addEventListener('pointerdown', (event) => {
-      if (dropdown?.open && event.target instanceof Node && !dropdown.contains(event.target)) closeDropdown();
-    });
-
-    dropdown?.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && dropdown.open) {
-        event.preventDefault();
-        closeDropdown();
-        dropdownSummary?.focus();
-      }
-    });
 
     copyButton?.addEventListener('click', async () => {
       const contactEmail = copyButton.dataset.copyEmail;

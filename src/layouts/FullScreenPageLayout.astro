@@ -1,0 +1,40 @@
+---
+import AsciiSiteTree from '@/components/core/AsciiSiteTree.astro';
+import BaseHead from '@/components/core/BaseHead.astro';
+import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
+import '@/styles/ascii-mode.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const currentPath = Astro.url.pathname;
+const plainTitle = title.split('—')[0].trim();
+---
+
+<!doctype html>
+<html lang="en" data-display-mode="default" data-theme="light">
+  <head>
+    <ThemeBootstrap />
+    <BaseHead {title} {description} />
+  </head>
+  <body data-ascii-page="interior">
+    <AsciiSiteTree {currentPath} />
+
+    <div data-default-only>
+      <slot />
+    </div>
+
+    <section data-ascii-only>
+      <h1>{plainTitle}</h1>
+      <p>{description}</p>
+    </section>
+
+    <script>
+      import { initializeDisplayMode } from '@/lib/display-mode';
+      initializeDisplayMode();
+    </script>
+  </body>
+</html>

@@ -348,9 +348,12 @@ const showToast = (message: string) => {
 const updateToggle = () => {
   const enabled = isEnabled();
   document.querySelectorAll<HTMLButtonElement>('[data-sound-toggle]').forEach((toggle) => {
+    const label = enabled ? 'Disable sounds' : 'Enable sounds';
     toggle.setAttribute('aria-pressed', String(enabled));
-    toggle.setAttribute('aria-label', enabled ? 'Disable sounds' : 'Enable sounds');
-    toggle.dataset.label = enabled ? 'Disable sounds' : 'Enable sounds';
+    toggle.setAttribute('aria-label', label);
+    toggle.dataset.label = label;
+    const text = toggle.querySelector<HTMLElement>('[data-sound-toggle-text]');
+    if (text) text.textContent = label;
   });
 };
 

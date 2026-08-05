@@ -1,638 +1,282 @@
-/*
- * ASCII mode is a presentation layer, not a second site. It keeps the same
- * routes and semantic content while removing imagery, seasonal decoration,
- * rounded surfaces, shadows, and ornamental motion.
- */
 [data-ascii-only] {
   display: none !important;
 }
 
 html[data-display-mode='ascii'] {
-  --bg: #090b0a;
-  --surface: transparent;
-  --surface-strong: transparent;
-  --text: #d8ded9;
-  --muted: #8d9990;
-  --line: #344039;
-  --accent: #83d39b;
-  --accent-strong: #a5efba;
-  --accent-soft: rgb(131 211 155 / 12%);
-  --shadow: none;
-  --header-bg: var(--bg);
-  --header-text: var(--text);
-  --header-muted: var(--muted);
-  --header-line: var(--line);
-  --header-hover: transparent;
-  --header-active-text: var(--accent-strong);
-  --header-accent: var(--accent);
-  --page-noise-opacity: 0;
-  --radius-sm: 0;
-  --radius-md: 0;
-  --radius-lg: 0;
-  --radius-pill: 0;
-  background: var(--bg);
-  color-scheme: dark;
+  --header-bg: #fff;
+  background: #fff;
+  color: #000;
+  color-scheme: light;
 }
 
 html[data-display-mode='ascii'] [data-ascii-only] {
-  display: revert !important;
+  display: block !important;
 }
 
-html[data-display-mode='ascii'] body,
-html[data-display-mode='ascii'] button,
-html[data-display-mode='ascii'] input,
-html[data-display-mode='ascii'] textarea,
-html[data-display-mode='ascii'] select {
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace) !important;
-}
-
-html[data-display-mode='ascii'] body::after,
-html[data-display-mode='ascii'] .site-header::before,
-html[data-display-mode='ascii'] .seasonal-shower,
-html[data-display-mode='ascii'] .railway-passage,
-html[data-display-mode='ascii'] .site-sound-toast {
+html[data-display-mode='ascii'] [data-default-only] {
   display: none !important;
 }
 
-html[data-display-mode='ascii'] *,
-html[data-display-mode='ascii'] *::before,
-html[data-display-mode='ascii'] *::after {
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  animation: none !important;
-  transition-duration: 0s !important;
+html[data-display-mode='ascii'],
+html[data-display-mode='ascii'] body {
+  min-height: 100%;
+  background: #fff !important;
+  color: #000 !important;
 }
 
-html[data-display-mode='ascii'] h1,
-html[data-display-mode='ascii'] h2,
-html[data-display-mode='ascii'] h3,
-html[data-display-mode='ascii'] .display,
-html[data-display-mode='ascii'] .section-title,
-html[data-display-mode='ascii'] .about-prose,
-html[data-display-mode='ascii'] .project-window__title,
-html[data-display-mode='ascii'] .media-card__caption strong {
+html[data-display-mode='ascii'] body {
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  margin: 8px !important;
+  padding: 0 !important;
+  overflow: auto !important;
+  font: 16px monospace !important;
+}
+
+html[data-display-mode='ascii'] :is(
+  main,
+  main *,
+  .ascii-site-tree,
+  .ascii-site-tree *,
+  .ascii-back,
+  .ascii-back *
+) {
+  all: revert !important;
+  box-sizing: border-box !important;
   font-family: inherit !important;
-  font-weight: 400 !important;
+}
+
+/* Classic browser link colors, including text nested inside old card links. */
+html[data-display-mode='ascii'] a:link,
+html[data-display-mode='ascii'] a:link * {
+  color: #0000ee !important;
+  text-decoration: underline !important;
+}
+
+html[data-display-mode='ascii'] a:visited,
+html[data-display-mode='ascii'] a:visited * {
+  color: #551a8b !important;
+}
+
+html[data-display-mode='ascii'] a:active,
+html[data-display-mode='ascii'] a:active * {
+  color: #ee0000 !important;
+}
+
+/* Keep link hit areas limited to their visible text instead of full rows. */
+html[data-display-mode='ascii'] a {
+  display: inline !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+html[data-display-mode='ascii'] a:is(
+  .project-window,
+  .project-card,
+  .contact-link-card,
+  .media-card,
+  .chess-card,
+  .space-index nav > a,
+  .hall-grid > a
+) {
+  display: inline-block !important;
+  width: fit-content !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0.5em 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  vertical-align: top !important;
+}
+
+/* Use the ordinary text color for native list markers. */
+html[data-display-mode='ascii'] li::marker {
+  color: currentColor !important;
+}
+
+/* Match the browser/operating system's normal text-selection appearance. */
+html[data-display-mode='ascii'] ::selection {
+  background: Highlight !important;
+  color: HighlightText !important;
+}
+
+html[data-display-mode='ascii'] .ascii-site-tree div span[aria-hidden='true'] {
+  font-family: monospace !important;
+  font-variant-ligatures: none !important;
   letter-spacing: 0 !important;
-}
-
-html[data-display-mode='ascii'] .site-header {
-  position: sticky;
-  contain: none;
-  border-color: var(--line) !important;
-  background: var(--bg) !important;
-}
-
-html[data-display-mode='ascii'] .header-grid {
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-}
-
-html[data-display-mode='ascii'] .brand {
-  grid-column: 1 / 4;
-  justify-content: flex-start;
-  padding-inline: clamp(0.85rem, 2.5vw, 2rem);
-  border-right: 1px solid var(--line);
-  color: var(--accent-strong);
-  text-align: left;
-  text-decoration: none;
-}
-
-html[data-display-mode='ascii'] .brand-full::before {
-  content: '~/';
-  color: var(--muted);
-}
-
-html[data-display-mode='ascii'] .primary-nav {
-  grid-column: 4 / 13;
-  border-left: 0;
-}
-
-html[data-display-mode='ascii'] .primary-nav ul {
-  justify-content: flex-start;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-html[data-display-mode='ascii'] .primary-nav li {
-  flex: 1 0 auto;
-  border-right: 1px solid var(--line);
-}
-
-html[data-display-mode='ascii'] .primary-nav a {
-  width: 100%;
-  padding-inline: clamp(0.55rem, 1.2vw, 1.15rem);
-  color: var(--muted);
-  text-decoration: none;
-  text-transform: lowercase;
-}
-
-html[data-display-mode='ascii'] .primary-nav a::before {
-  content: '[ ';
-}
-
-html[data-display-mode='ascii'] .primary-nav a::after {
-  content: ' ]';
-}
-
-html[data-display-mode='ascii'] .primary-nav a:is(:hover, :focus-visible, [aria-current='page']) {
-  color: var(--accent-strong);
-}
-
-html[data-display-mode='ascii'] .primary-nav a[aria-current='page']::before {
-  content: '> ';
-}
-
-html[data-display-mode='ascii'] .primary-nav a[aria-current='page']::after {
-  content: '';
-}
-
-html[data-display-mode='ascii'] .command-slot,
-html[data-display-mode='ascii'] .mode-slot,
-html[data-display-mode='ascii'] .seasons-slot {
-  display: none;
+  white-space: pre !important;
 }
 
 html[data-display-mode='ascii'] main {
-  padding-inline: clamp(0.8rem, 2.5vw, 1.5rem);
+  display: block !important;
+  margin-top: 1em !important;
 }
 
-html[data-display-mode='ascii'] main::before {
-  display: block;
-  width: min(100%, 74rem);
-  margin: 1.15rem auto 0;
-  color: var(--muted);
-  content: '$ view ' attr(data-page-path);
-  font-family: var(--font-mono, monospace);
-  font-size: 0.78rem;
+html[data-display-mode='ascii'] .ascii-site-tree,
+html[data-display-mode='ascii'] .ascii-back {
+  display: block !important;
 }
 
-html[data-display-mode='ascii'] main[data-page-path='/']::before {
-  display: none;
+html[data-display-mode='ascii'] .ascii-site-tree header,
+html[data-display-mode='ascii'] .ascii-site-tree nav,
+html[data-display-mode='ascii'] .ascii-site-tree > div {
+  margin-bottom: 1em !important;
 }
 
-html[data-display-mode='ascii'] .container,
-html[data-display-mode='ascii'] .minimal-hero,
-html[data-display-mode='ascii'] .interior-page {
-  width: min(100%, 74rem);
+html[data-display-mode='ascii'] .ascii-site-tree p,
+html[data-display-mode='ascii'] .ascii-site-tree div {
+  margin: 0 !important;
 }
 
-html[data-display-mode='ascii'] .interior-page {
-  display: block;
-  margin-inline: auto;
+html[data-display-mode='ascii'] body[data-ascii-page='home'] main {
+  display: none !important;
 }
 
-html[data-display-mode='ascii'] .interior-page-heading,
-html[data-display-mode='ascii'] .interior-page-content,
-html[data-display-mode='ascii'] .interior-page-column {
-  width: 100%;
+/* Preserve obvious line breaks after visual layouts are removed. */
+html[data-display-mode='ascii'] :is(
+  .project-window,
+  .project-card,
+  .contact-link-card,
+  .resume-entry,
+  .space-index nav > a,
+  .hall-grid > a,
+  .hall-grid > article
+) {
+  margin-block: 0.5em !important;
 }
 
-html[data-display-mode='ascii'] .interior-page-heading {
-  display: block;
-  padding: clamp(2.25rem, 6vw, 4rem) 0 clamp(1.2rem, 3vw, 1.8rem);
-  border-bottom: 1px dashed var(--line);
-  text-align: left;
+html[data-display-mode='ascii'] :is(
+  .project-window__caption,
+  .project-window__caption > *,
+  .project-card__topline,
+  .project-card__topline > *,
+  .project-card__meta,
+  .project-card__meta > *,
+  .contact-link-copy,
+  .contact-link-copy > *,
+  .resume-actions,
+  .resume-actions > a,
+  .project-links > a,
+  .space-index nav > a > *,
+  .hall-grid > a > *,
+  .hall-grid > article > *
+) {
+  display: block !important;
 }
 
-html[data-display-mode='ascii'] .interior-page-heading h1 {
-  color: var(--accent-strong);
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  line-height: 1.2;
-  text-transform: uppercase;
+html[data-display-mode='ascii'] main :is(section + section, article + article) {
+  margin-top: 1.5em !important;
 }
 
-html[data-display-mode='ascii'] .interior-page-heading h1::before {
-  content: '==[ ';
-  color: var(--muted);
-}
-
-html[data-display-mode='ascii'] .interior-page-heading h1::after {
-  content: ' ]==';
-  color: var(--muted);
-}
-
-html[data-display-mode='ascii'] .interior-page-content,
-html[data-display-mode='ascii'] .interior-page-content--balanced {
-  padding-block: clamp(1.6rem, 4vw, 2.8rem);
-}
-
-html[data-display-mode='ascii'] .surface,
-html[data-display-mode='ascii'] [class*='card'],
-html[data-display-mode='ascii'] [class*='panel'],
-html[data-display-mode='ascii'] [class*='window'] {
+/* Explicitly collapse the About page's former card/grid dimensions. */
+html[data-display-mode='ascii'] :is(
+  .about-book,
+  .about-masthead,
+  .about-intro,
+  .about-prose,
+  .passion-section,
+  .passion-heading,
+  .passion-content,
+  .project-grid,
+  .project-card,
+  .project-card > *,
+  .project-card__topline,
+  .project-card__meta
+) {
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  border: 0 !important;
   background: transparent !important;
-  border-color: var(--line) !important;
-}
-
-html[data-display-mode='ascii'] .button-link,
-html[data-display-mode='ascii'] button:not(.footer-icon-link),
-html[data-display-mode='ascii'] input,
-html[data-display-mode='ascii'] textarea,
-html[data-display-mode='ascii'] select {
-  border: 1px solid var(--line) !important;
-  background: transparent !important;
-  color: var(--text) !important;
-}
-
-html[data-display-mode='ascii'] .button-link {
-  min-height: 0;
-  padding: 0.45rem 0.7rem;
-  text-decoration: none;
-}
-
-html[data-display-mode='ascii'] .button-link::before {
-  content: '[ ';
-  color: var(--muted);
-}
-
-html[data-display-mode='ascii'] .button-link::after {
-  content: ' ]';
-  color: var(--muted);
-}
-
-html[data-display-mode='ascii'] a:hover,
-html[data-display-mode='ascii'] button:hover {
-  color: var(--accent-strong) !important;
+  box-shadow: none !important;
   transform: none !important;
 }
 
-/* The house and force graph stay a separate visual experience. */
-html[data-display-mode='ascii'] .minimal-hero,
-html[data-display-mode='ascii'] .house-scene-section {
-  display: none !important;
+html[data-display-mode='ascii'] :is(
+  .about-book,
+  .about-intro,
+  .about-prose,
+  .passion-section,
+  .passion-content,
+  .project-grid
+) {
+  display: block !important;
 }
 
-.ascii-home-index {
-  width: min(100%, 58rem);
-  min-height: calc(100svh - var(--header-height));
-  margin-inline: auto;
-  padding-block: clamp(2rem, 6vw, 5rem);
-}
-
-.ascii-home-index__path {
-  margin: 0 0 1.4rem;
-  color: var(--muted);
-}
-
-.ascii-home-index__path::before {
-  content: '$ ';
-  color: var(--accent);
-}
-
-.ascii-home-index h1 {
-  margin: 0;
-  color: var(--accent-strong);
-  font-size: clamp(1.45rem, 4vw, 2.3rem);
-  line-height: 1.25;
-}
-
-.ascii-home-index__role {
-  margin: 0.55rem 0 2.3rem;
-  color: var(--muted);
-}
-
-.ascii-home-index__tree {
-  margin: 0 0 2.4rem;
-  overflow-x: auto;
-  color: var(--text);
-  font: inherit;
-  line-height: 1.75;
-  white-space: pre;
-}
-
-.ascii-home-index__nav {
-  display: grid;
-  border-top: 1px dashed var(--line);
-}
-
-.ascii-home-index__nav a {
-  display: grid;
-  grid-template-columns: 3ch minmax(0, 1fr) auto;
-  gap: 1ch;
-  padding: 0.72rem 0;
-  border-bottom: 1px dashed var(--line);
-  color: var(--text);
-  text-decoration: none;
-}
-
-.ascii-home-index__nav a::before {
-  content: '->';
-  color: var(--accent);
-}
-
-.ascii-home-index__nav small {
-  color: var(--muted);
-  text-align: right;
-}
-
-/* Projects become a readable file list instead of image windows. */
-html[data-display-mode='ascii'] .projects-content {
-  padding-block: clamp(1.6rem, 4vw, 2.8rem);
-}
-
-html[data-display-mode='ascii'] .project-window-list {
-  gap: 0;
-  border-top: 1px dashed var(--line);
-}
-
-html[data-display-mode='ascii'] .project-window {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  padding: 1rem 0;
-  border-bottom: 1px dashed var(--line);
-}
-
-html[data-display-mode='ascii'] .project-window__image {
-  min-height: 0;
-  overflow: visible;
-  aspect-ratio: auto;
-  border: 0 !important;
-}
-
-html[data-display-mode='ascii'] .project-window__image img,
-html[data-display-mode='ascii'] .project-window__image::after,
-html[data-display-mode='ascii'] .project-window__open {
-  display: none !important;
-}
-
-html[data-display-mode='ascii'] .project-window__title {
-  position: static;
-  display: block;
-  max-width: none;
-  color: var(--accent-strong);
-  font-size: 1.1rem;
-  line-height: 1.4;
-}
-
-html[data-display-mode='ascii'] .project-window__title::before {
-  content: './';
-  color: var(--muted);
-}
-
-html[data-display-mode='ascii'] .project-window__caption {
-  align-items: start;
-  padding-top: 0.35rem;
-}
-
-/* Images and embeds are omitted, but their adjacent textual captions remain. */
-html[data-display-mode='ascii'] .about-portrait-frame,
-html[data-display-mode='ascii'] .article-card__image-wrap,
-html[data-display-mode='ascii'] .video-frame,
-html[data-display-mode='ascii'] .chess-card__mark,
-html[data-display-mode='ascii'] .project-showcase__media,
-html[data-display-mode='ascii'] .project-hero__media {
-  display: none !important;
-}
-
-html[data-display-mode='ascii'] .about-drop-cap {
-  float: none;
-  margin: 0;
-  color: inherit;
-  font: inherit;
-  text-shadow: none;
-}
-
+html[data-display-mode='ascii'] .about-book > * + *,
 html[data-display-mode='ascii'] .passion-section,
-html[data-display-mode='ascii'] details,
-html[data-display-mode='ascii'] summary {
-  border-color: var(--line) !important;
+html[data-display-mode='ascii'] .project-grid {
+  margin-top: 1em !important;
 }
 
-html[data-display-mode='ascii'] .passion-heading h2::before {
-  content: '+-- ';
-  color: var(--muted);
+html[data-display-mode='ascii'] .about-prose p {
+  margin: 1em 0 !important;
 }
 
-html[data-display-mode='ascii'] .media-card,
-html[data-display-mode='ascii'] .chess-card,
 html[data-display-mode='ascii'] .project-card {
-  min-height: 0;
-  padding: 1rem 0;
-  border-width: 0 0 1px !important;
-  border-style: dashed !important;
+  display: inline-block !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  margin: 0 0 1em !important;
+  vertical-align: top !important;
 }
 
-html[data-display-mode='ascii'] .language-dot,
-html[data-display-mode='ascii'] .project-card__icon,
-html[data-display-mode='ascii'] .contact-link-icon {
+html[data-display-mode='ascii'] .project-card :is(h3, p) {
+  margin: 0.5em 0 !important;
+}
+
+html[data-display-mode='ascii'] :is(
+  .site-header,
+  .site-footer,
+  .seasonal-shower,
+  .railway-passage,
+  .site-sound-toast,
+  dialog,
+  astro-island,
+  img,
+  picture,
+  svg,
+  canvas,
+  video,
+  audio,
+  iframe,
+  figure,
+  form,
+  main button,
+  .home-network-stage,
+  .house-scene-section,
+  .stats-content,
+  .d3-page__content,
+  .collision-detection,
+  .house-room-stage,
+  .house-preview-nav,
+  .house-preview-stage,
+  .panorama-page,
+  .message-builder,
+  .copy-email,
+  .chess-card__stats,
+  .chess-card__live,
+  .chess-card__mark,
+  .project-back-link,
+  .project-footer-nav,
+  .project-window__open,
+  .contact-link-icon,
+  .contact-link-arrow,
+  .visually-hidden
+) {
   display: none !important;
-}
-
-html[data-display-mode='ascii'] .site-footer {
-  border-color: var(--line);
-  background: var(--bg);
-  font-family: var(--font-mono, monospace);
-}
-
-html[data-display-mode='ascii'] .footer-icon-link {
-  border-color: var(--line);
-  background: transparent;
-}
-
-html[data-display-mode='ascii'] .footer-service-logo--github,
-html[data-display-mode='ascii'] .footer-service-logo--linkedin,
-html[data-display-mode='ascii'] .footer-service-logo--coffee,
-html[data-display-mode='ascii'] .footer-service-logo--gmail {
-  filter: grayscale(1) brightness(1.55);
-}
-
-.footer-display-toggle[aria-pressed='true'] {
-  border-color: var(--accent) !important;
-  outline-color: color-mix(in srgb, var(--accent) 38%, transparent) !important;
-  color: var(--accent-strong) !important;
-}
-
-.site-display-toast {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  z-index: 1001;
-  width: min(88vw, 28rem);
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--line);
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-mono, monospace);
-  opacity: 0;
-  pointer-events: none;
-  text-align: center;
-  transform: translate(-50%, calc(-50% + 0.35rem));
-  transition: opacity 180ms ease, transform 180ms ease;
-}
-
-.site-display-toast::before {
-  content: '[ ';
-  color: var(--accent);
-}
-
-.site-display-toast::after {
-  content: ' ]';
-  color: var(--accent);
-}
-
-.site-display-toast[data-visible='true'] {
-  opacity: 1;
-  transform: translate(-50%, -50%);
-}
-
-@media (max-width: 68rem) {
-  html[data-display-mode='ascii'] .brand {
-    grid-column: 1 / 3;
-    padding-inline: 0.8rem;
-  }
-
-  html[data-display-mode='ascii'] .primary-nav {
-    grid-column: 3 / 13;
-  }
-
-  html[data-display-mode='ascii'] .brand-full {
-    display: none;
-  }
-
-  html[data-display-mode='ascii'] .brand-short {
-    display: inline;
-  }
-
-  html[data-display-mode='ascii'] .brand-short::before {
-    content: '~/';
-    color: var(--muted);
-  }
-}
-
-@media (max-width: 40rem) {
-  html[data-display-mode='ascii'] main {
-    padding-inline: 0.75rem;
-  }
-
-  html[data-display-mode='ascii'] .site-header {
-    position: static;
-  }
-
-  html[data-display-mode='ascii'] .header-grid {
-    display: block;
-    height: auto;
-  }
-
-  html[data-display-mode='ascii'] .brand {
-    display: flex;
-    height: 3.25rem;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  html[data-display-mode='ascii'] .primary-nav {
-    display: block;
-  }
-
-  html[data-display-mode='ascii'] .primary-nav ul {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  html[data-display-mode='ascii'] .primary-nav li {
-    min-width: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  html[data-display-mode='ascii'] .primary-nav a {
-    min-height: 2.75rem;
-    padding-inline: 0.25rem;
-    font-size: 0.72rem;
-  }
-
-  html[data-display-mode='ascii'] .ascii-home-index {
-    min-height: auto;
-  }
-
-  html[data-display-mode='ascii'] .ascii-home-index__nav a {
-    grid-template-columns: 3ch minmax(0, 1fr);
-  }
-
-  html[data-display-mode='ascii'] .ascii-home-index__nav small,
-  html[data-display-mode='ascii'] .project-window__url {
-    display: none;
-  }
-
-  html[data-display-mode='ascii'] .project-window__caption {
-    display: block;
-  }
-}
-
-/* Data-heavy pages remain useful as compact text reports. */
-html[data-display-mode='ascii'] .stats-tabs,
-html[data-display-mode='ascii'] .stats-metrics,
-html[data-display-mode='ascii'] .stats-grid,
-html[data-display-mode='ascii'] .code-summary {
-  gap: 0;
-}
-
-html[data-display-mode='ascii'] .stats-tabs {
-  border-bottom: 1px dashed var(--line);
-}
-
-html[data-display-mode='ascii'] .stats-tabs button {
-  border-width: 0 1px 0 0 !important;
-}
-
-html[data-display-mode='ascii'] .stats-metric,
-html[data-display-mode='ascii'] .stats-panel,
-html[data-display-mode='ascii'] .code-summary > div {
-  padding: 0.9rem 0;
-  border-width: 0 0 1px !important;
-  border-style: dashed !important;
-  border-color: var(--line) !important;
-}
-
-html[data-display-mode='ascii'] .visitor-map-shell,
-html[data-display-mode='ascii'] .activity-chart {
-  display: none !important;
-}
-
-html[data-display-mode='ascii'] .language-track {
-  height: 1px;
-  background: var(--line) !important;
-}
-
-html[data-display-mode='ascii'] .language-track > span {
-  background: var(--accent) !important;
-}
-
-html[data-display-mode='ascii'] .resume-entry {
-  align-items: flex-start;
-  padding-inline: 0;
-  text-align: left;
-}
-
-html[data-display-mode='ascii'] .resume-actions {
-  justify-content: flex-start;
-}
-
-html[data-display-mode='ascii'] .resume-actions a {
-  width: auto;
-  height: auto;
-  padding: 0.45rem 0.7rem;
-  background: transparent;
-}
-
-html[data-display-mode='ascii'] .resume-actions a::before {
-  content: '[ ';
-  color: var(--muted);
-}
-
-html[data-display-mode='ascii'] .resume-actions a::after {
-  content: ' ]';
-  color: var(--muted);
-}
-
-html[data-display-mode='ascii'] .contact-terminal,
-html[data-display-mode='ascii'] .contact-switchboard,
-html[data-display-mode='ascii'] .message-builder {
-  border-color: var(--line) !important;
-  background: transparent !important;
-}
-
-html[data-display-mode='ascii'] .contact-link-card {
-  border-width: 0 0 1px !important;
-  border-style: dashed !important;
 }
