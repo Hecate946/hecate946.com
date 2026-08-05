@@ -9,4 +9,7 @@ export default defineConfig({
     svelte(),
     sitemap(),
   ],
+  devToolbar: {
+    enabled: false,
+  },
 });

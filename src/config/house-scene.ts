@@ -68,7 +68,7 @@ export interface HouseSceneConfig {
  * every responsive size; the browser scales the house and overlays together.
  */
 export const houseScene = {
-  enabled: true,
+  enabled: false,
   navigationEnabled: true,
   showHint: true,
   referenceWidth: 1800,
