@@ -349,8 +349,8 @@ const updateToggle = () => {
   const enabled = isEnabled();
   document.querySelectorAll<HTMLButtonElement>('[data-sound-toggle]').forEach((toggle) => {
     toggle.setAttribute('aria-pressed', String(enabled));
-    toggle.setAttribute('aria-label', enabled ? 'Disable site sound' : 'Enable site sound');
-    toggle.dataset.label = enabled ? 'Disable sound' : 'Enable sound';
+    toggle.setAttribute('aria-label', enabled ? 'Disable sounds' : 'Enable sounds');
+    toggle.dataset.label = enabled ? 'Disable sounds' : 'Enable sounds';
   });
 };
 
@@ -399,9 +399,9 @@ const handleClick = (event: MouseEvent) => {
 
     if (enabled) {
       void playSound('click');
-      showToast('Sounds are enabled — click the sound button at the bottom again to disable.');
+      showToast('Sounds are enabled, click again to disable');
     } else {
-      showToast('Sounds are disabled.');
+      showToast('Sounds are disabled');
     }
     return;
   }
