@@ -10,6 +10,17 @@ export type ImmersiveKind = 'room' | 'hall';
 export type ImmersiveModelRole = 'shell' | 'objects';
 export type Vector3Tuple = [number, number, number];
 
+export type ImmersivePanoramaView = {
+  id: string;
+  label: string;
+  panoramaUrl: string;
+  panoramaVideoUrl?: string;
+  panoramaYaw: number;
+  cameraYaw: number;
+  cameraPitch: number;
+  cameraFov: number;
+};
+
 export type ImmersiveModelLayer = {
   id: string;
   role: ImmersiveModelRole;
@@ -27,6 +38,8 @@ export type ImmersiveSpace = {
   description: string;
   accent: string;
   panoramaUrl?: string;
+  panoramaViews?: ImmersivePanoramaView[];
+  cyclesOnly?: boolean;
   modelLayers: ImmersiveModelLayer[];
   implemented: boolean;
   cameraPosition: Vector3Tuple;
@@ -57,21 +70,48 @@ const room = (
   description: string,
   accent: string,
   windowIndex: number,
-): ImmersiveSpace => ({
-  kind: 'room',
-  slug,
-  label,
-  title,
-  description,
-  accent,
-  panoramaUrl: withBase(`/scenes/rooms/${slug}/panorama.png?v=room-v42`),
-  modelLayers: [objectsLayer(`${slug}-objects`, `/scenes/rooms/${slug}/interactive.glb?v=room-v42`)],
-  implemented: true,
-  cameraPosition: [0, 1.65, ROOM_CAMERA_Z],
-  cameraYaw: 0,
-  panoramaYaw: ROOM_PANORAMA_YAW,
-  windowIndex,
-});
+  additionalViews: ImmersivePanoramaView[] = [],
+  cyclesOnly = false,
+  defaultPanoramaVideoUrl?: string,
+  defaultPanoramaUrl?: string,
+): ImmersiveSpace => {
+  const panoramaUrl =
+    defaultPanoramaUrl ??
+    withBase(`/scenes/rooms/${slug}/panorama.png?v=room-v49`);
+  const defaultView: ImmersivePanoramaView = {
+    id: 'default',
+    label: 'Room view',
+    panoramaUrl,
+    panoramaVideoUrl: defaultPanoramaVideoUrl,
+    panoramaYaw: ROOM_PANORAMA_YAW,
+    cameraYaw: 0,
+    cameraPitch: 0,
+    cameraFov: 96,
+  };
+
+  return {
+    kind: 'room',
+    slug,
+    label,
+    title,
+    description,
+    accent,
+    panoramaUrl,
+    panoramaViews: [defaultView, ...additionalViews],
+    cyclesOnly,
+    modelLayers: [
+      objectsLayer(
+        `${slug}-objects`,
+        `/scenes/rooms/${slug}/interactive.glb?v=room-v49`,
+      ),
+    ],
+    implemented: true,
+    cameraPosition: [0, 1.65, ROOM_CAMERA_Z],
+    cameraYaw: 0,
+    panoramaYaw: ROOM_PANORAMA_YAW,
+    windowIndex,
+  };
+};
 
 const SHARED_HALL_SHELL_URL = withBase('/scenes/halls/shared/shell.glb');
 
@@ -106,9 +146,41 @@ const hall = (
 
 export const rooms = {
   red: room('red', 'Room 001', 'The Red Room', 'An immersive fixed-viewpoint red tiled room.', '#4a1f24', 0),
-  green: room('green', 'Room 002', 'The Green Room', 'An immersive fixed-viewpoint green tiled room.', '#1c3a2f', 1),
+  green: room(
+    'green',
+    'Room 002',
+    'The Green Room',
+    'A Cycles-rendered green tiled room with clickable camera views.',
+    '#1c3a2f',
+    1,
+    [
+      {
+        id: 'board',
+        label: 'Chessboard view',
+        panoramaUrl: withBase(
+          '/scenes/rooms/green/views/board.png?v=room-v49',
+        ),
+        panoramaYaw: -Math.PI / 2,
+        cameraYaw: 0,
+        cameraPitch: 0,
+        cameraFov: 68,
+      },
+    ],
+    true,
+  ),
   orange: room('orange', 'Room 003', 'The Orange Room', 'An immersive fixed-viewpoint orange tiled room.', '#5a2f18', 2),
-  blue: room('blue', 'Room 004', 'The Blue Room', 'An immersive fixed-viewpoint blue tiled room.', '#18344c', 3),
+  blue: room(
+    'blue',
+    'Room 004',
+    'The Blue Room',
+    'A Cycles-rendered blue tiled room half-filled with animated water.',
+    '#18344c',
+    3,
+    [],
+    true,
+    withBase('/scenes/rooms/blue/water.webm?v=blue-water-v1'),
+    withBase('/scenes/rooms/blue/water-poster.png?v=blue-water-v1'),
+  ),
   purple: room('purple', 'Room 005', 'The Purple Room', 'An immersive fixed-viewpoint purple tiled room.', '#35213f', 4),
 } as const satisfies Record<RoomSlug, ImmersiveSpace>;
 

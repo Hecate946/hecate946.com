@@ -8,17 +8,21 @@
     MeshBasicMaterial,
     Object3D,
     PCFSoftShadowMap,
-    Plane,
     Raycaster,
     SphereGeometry,
     SRGBColorSpace,
     Texture,
     TextureLoader,
+    VideoTexture,
     Vector2,
-    Vector3,
+    type Material,
     type PerspectiveCamera,
   } from 'three';
-  import type { ImmersiveModelLayer, ImmersiveSpace } from './catalog';
+  import type {
+    ImmersiveModelLayer,
+    ImmersivePanoramaView,
+    ImmersiveSpace,
+  } from './catalog';
   import PanoramaCamera from './PanoramaCamera.svelte';
   import ModelLayer from './ModelLayer.svelte';
   import SpaceExtras from './SpaceExtras.svelte';
@@ -26,10 +30,28 @@
   export let space: ImmersiveSpace;
   export let onReady: () => void = () => {};
   export let resetSignal = 0;
+  export let activeViewId = 'default';
+  export let onViewRequest: (viewId: string) => void = () => {};
 
   const CAMERA_POSITION = space.cameraPosition;
-  const PANORAMA_YAW_OFFSET = space.panoramaYaw;
   const MODEL_LAYERS = space.modelLayers;
+  const CYCLES_ONLY = space.cyclesOnly === true;
+  const PANORAMA_VIEWS: ImmersivePanoramaView[] =
+    space.panoramaViews ??
+    (space.panoramaUrl
+      ? [
+          {
+            id: 'default',
+            label: 'Room view',
+            panoramaUrl: space.panoramaUrl,
+            panoramaYaw: space.panoramaYaw,
+            cameraYaw: space.cameraYaw,
+            cameraPitch: 0,
+            cameraFov: 96,
+          },
+        ]
+      : []);
+
   const { renderer, scene, invalidate } = useThrelte();
 
   const previousExposure = renderer.toneMappingExposure;
@@ -41,48 +63,65 @@
 
   renderer.toneMappingExposure = 1;
   renderer.outputColorSpace = SRGBColorSpace;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = !CYCLES_ONLY;
   renderer.shadowMap.type = PCFSoftShadowMap;
   scene.background = null;
+  if (CYCLES_ONLY) scene.environment = null;
 
   const panoramaGeometry = new SphereGeometry(24, 96, 64);
   panoramaGeometry.scale(-1, 1, 1);
 
-  const panoramaMaterial = new MeshBasicMaterial({
-    depthWrite: false,
-    toneMapped: false,
+  function createPanoramaMaterial(opacity: number) {
+    return new MeshBasicMaterial({
+      depthWrite: false,
+      toneMapped: false,
+      transparent: true,
+      opacity,
+    });
+  }
+
+  const panoramaMaterials = [
+    createPanoramaMaterial(1),
+    createPanoramaMaterial(0),
+  ];
+  const panoramaMeshes = panoramaMaterials.map((material, index) => {
+    const mesh = new Mesh(panoramaGeometry, material);
+    mesh.name = `${space.kind}_${space.slug}_Cycles_Panorama_${index + 1}`;
+    mesh.position.set(...CAMERA_POSITION);
+    mesh.frustumCulled = false;
+    mesh.renderOrder = -1000 + index;
+    return mesh;
   });
 
-  const panoramaMesh = new Mesh(panoramaGeometry, panoramaMaterial);
-  panoramaMesh.name = `${space.kind}_${space.slug}_Cycles_Panorama`;
-  panoramaMesh.position.set(...CAMERA_POSITION);
-  panoramaMesh.rotation.y = PANORAMA_YAW_OFFSET;
-  panoramaMesh.frustumCulled = false;
-  panoramaMesh.renderOrder = -1000;
+  const initialView =
+    PANORAMA_VIEWS.find((view) => view.id === activeViewId) ??
+    PANORAMA_VIEWS[0];
+  if (initialView) panoramaMeshes[0].rotation.y = initialView.panoramaYaw;
 
-  let displayTexture: Texture | null = null;
-  let environmentTexture: Texture | null = null;
+  let activeView = initialView;
+  let displayedViewId = initialView?.id ?? '';
+  let previousActiveViewId = activeViewId;
+  let activeMeshIndex = 0;
+  let crossfadeFrame = 0;
   let readySent = false;
   let interactiveScene: Object3D | null = null;
-  let grabbableMeshes: Mesh[] = [];
+  let clickTargetMeshes: Mesh[] = [];
+  let clickStart:
+    | { pointerId: number; x: number; y: number }
+    | null = null;
 
+  const textures = new Map<string, Texture>();
+  const videos = new Map<string, HTMLVideoElement>();
+  let videoAnimationFrame = 0;
+  let environmentTexture: Texture | null = null;
   const requiredAssetKeys = new Set([
-    ...(space.panoramaUrl ? ['panorama'] : []),
+    ...(initialView ? [`view:${initialView.id}`] : []),
     ...MODEL_LAYERS.map((layer) => `model:${layer.id}`),
   ]);
   const readyAssetKeys = new Set<string>();
   const preparedLayerIds = new Set<string>();
-
   const raycaster = new Raycaster();
   const pointer = new Vector2();
-  const dragPlane = new Plane();
-  const dragPoint = new Vector3();
-  const dragOffset = new Vector3();
-  const worldPosition = new Vector3();
-  const cameraDirection = new Vector3();
-
-  let draggedRoot: Object3D | null = null;
-  let draggingPointerId: number | null = null;
 
   function sendReady() {
     if (readySent) return;
@@ -95,17 +134,36 @@
     if (readyAssetKeys.size >= requiredAssetKeys.size) sendReady();
   }
 
-  function findGrabRoot(object: Object3D | null) {
-    let current = object;
-    while (current) {
-      if (current.name.startsWith('Grab_')) return current;
-      current = current.parent;
+  function startVideoInvalidationLoop() {
+    if (videoAnimationFrame) return;
+
+    function animateVideoFrame() {
+      const hasPlayingVideo = [...videos.values()].some(
+        (video) => !video.paused && !video.ended,
+      );
+      if (!hasPlayingVideo) {
+        videoAnimationFrame = 0;
+        return;
+      }
+
+      invalidate();
+      videoAnimationFrame = requestAnimationFrame(animateVideoFrame);
     }
-    return null;
+
+    videoAnimationFrame = requestAnimationFrame(animateVideoFrame);
+  }
+
+  function resumePanoramaVideos() {
+    for (const video of videos.values()) {
+      if (video.paused) void video.play().catch(() => {});
+    }
+    startVideoInvalidationLoop();
   }
 
   function activeCamera() {
-    return scene.getObjectByName('PanoramaCamera') as PerspectiveCamera | undefined;
+    return scene.getObjectByName('PanoramaCamera') as
+      | PerspectiveCamera
+      | undefined;
   }
 
   function updatePointer(event: PointerEvent) {
@@ -114,111 +172,60 @@
     pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
   }
 
-  function beginObjectDrag(event: PointerEvent) {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    if (grabbableMeshes.length === 0) return;
-
-    const camera = activeCamera();
-    if (!camera) return;
-
-    updatePointer(event);
-    raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObjects(grabbableMeshes, true)[0];
-    const root = findGrabRoot(hit?.object ?? null);
-    if (!hit || !root) return;
-
-    root.getWorldPosition(worldPosition);
-    camera.getWorldDirection(cameraDirection);
-    dragPlane.setFromNormalAndCoplanarPoint(cameraDirection, worldPosition);
-
-    if (!raycaster.ray.intersectPlane(dragPlane, dragPoint)) return;
-
-    draggedRoot = root;
-    draggingPointerId = event.pointerId;
-    dragOffset.copy(dragPoint).sub(worldPosition);
-
-    const canvas = renderer.domElement;
-    canvas.dataset.grabbingObject = 'true';
-    canvas.classList.add('is-grabbing-object');
-    try {
-      canvas.setPointerCapture(event.pointerId);
-    } catch {
-      // Pointer capture is optional.
-    }
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-  }
-
-  function moveObject(event: PointerEvent) {
-    if (!draggedRoot || event.pointerId !== draggingPointerId) return;
-
-    const camera = activeCamera();
-    if (!camera) return;
-
-    updatePointer(event);
-    raycaster.setFromCamera(pointer, camera);
-    if (!raycaster.ray.intersectPlane(dragPlane, dragPoint)) return;
-
-    worldPosition.copy(dragPoint).sub(dragOffset);
-    if (draggedRoot.parent) {
-      draggedRoot.parent.worldToLocal(worldPosition);
-    }
-    draggedRoot.position.copy(worldPosition);
-    invalidate();
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-  }
-
-  function endObjectDrag(event: PointerEvent) {
-    if (event.pointerId !== draggingPointerId) return;
-
-    const canvas = renderer.domElement;
-    try {
-      if (canvas.hasPointerCapture(event.pointerId)) {
-        canvas.releasePointerCapture(event.pointerId);
+  function findViewRoot(object: Object3D | null): Object3D | null {
+    let current = object;
+    while (current) {
+      if (
+        current.userData?.interaction === 'view' &&
+        typeof current.userData?.view_id === 'string'
+      ) {
+        return current;
       }
-    } catch {
-      // The browser may already have released it.
+      current = current.parent;
     }
+    return null;
+  }
 
-    draggedRoot = null;
-    draggingPointerId = null;
-    delete canvas.dataset.grabbingObject;
-    canvas.classList.remove('is-grabbing-object');
+  function hideMaterial(material: Material | Material[]) {
+    const materials = Array.isArray(material) ? material : [material];
+    for (const entry of materials) entry.visible = false;
+  }
 
-    event.preventDefault();
-    event.stopImmediatePropagation();
+  function raycastViewTarget(event: PointerEvent) {
+    if (clickTargetMeshes.length === 0) return null;
+    const camera = activeCamera();
+    if (!camera) return null;
+
+    updatePointer(event);
+    raycaster.setFromCamera(pointer, camera);
+    const hit = raycaster.intersectObjects(clickTargetMeshes, true)[0];
+    return findViewRoot(hit?.object ?? null);
   }
 
   function prepareModelLayer(layer: ImmersiveModelLayer, sceneRoot: Object3D) {
     if (preparedLayerIds.has(layer.id)) return;
     preparedLayerIds.add(layer.id);
 
-    let generatedPanoramaYaw: number | null = null;
-
     sceneRoot.traverse((object) => {
-      const metadataYaw = object.userData?.website_panorama_yaw;
-      if (typeof metadataYaw === 'number' && Number.isFinite(metadataYaw)) {
-        generatedPanoramaYaw = metadataYaw;
+      if (object instanceof Light && CYCLES_ONLY) {
+        object.visible = false;
+        return;
       }
 
-      if (object instanceof Mesh) {
-        object.castShadow = layer.role === 'objects';
-        object.receiveShadow = true;
+      if (!(object instanceof Mesh)) return;
 
-        if (layer.role === 'objects' && findGrabRoot(object)) {
-          grabbableMeshes.push(object);
-        }
+      const viewRoot = findViewRoot(object);
+      if (viewRoot) {
+        clickTargetMeshes.push(object);
+        object.castShadow = false;
+        object.receiveShadow = false;
+        hideMaterial(object.material);
+        return;
       }
 
-      if (object instanceof Light) object.castShadow = true;
+      object.castShadow = layer.role === 'objects';
+      object.receiveShadow = true;
     });
-
-    if (layer.role === 'objects' && generatedPanoramaYaw !== null) {
-      panoramaMesh.rotation.y = generatedPanoramaYaw;
-    }
 
     if (layer.role === 'objects' && !interactiveScene) {
       interactiveScene = sceneRoot;
@@ -228,52 +235,253 @@
     markAssetReady(`model:${layer.id}`);
   }
 
+  function normalizeCrossfadeState() {
+    const firstOpacity = panoramaMaterials[0].opacity;
+    const secondOpacity = panoramaMaterials[1].opacity;
+    activeMeshIndex = firstOpacity >= secondOpacity ? 0 : 1;
+    panoramaMaterials[activeMeshIndex].opacity = 1;
+    panoramaMaterials[1 - activeMeshIndex].opacity = 0;
+  }
+
+  function transitionToView(viewId: string) {
+    const nextView = PANORAMA_VIEWS.find((view) => view.id === viewId);
+    if (!nextView) return;
+    activeView = nextView;
+
+    const texture = textures.get(nextView.id);
+    if (!texture || displayedViewId === nextView.id) {
+      invalidate();
+      return;
+    }
+
+    if (crossfadeFrame) cancelAnimationFrame(crossfadeFrame);
+    crossfadeFrame = 0;
+    normalizeCrossfadeState();
+
+    const fromIndex = activeMeshIndex;
+    const toIndex = 1 - fromIndex;
+    const fromMaterial = panoramaMaterials[fromIndex];
+    const toMaterial = panoramaMaterials[toIndex];
+    const toMesh = panoramaMeshes[toIndex];
+
+    toMaterial.map = texture;
+    toMaterial.needsUpdate = true;
+    toMaterial.opacity = 0;
+    toMesh.rotation.y = nextView.panoramaYaw;
+    toMesh.renderOrder = -999;
+    panoramaMeshes[fromIndex].renderOrder = -1000;
+
+    const duration = 700;
+    const started = performance.now();
+
+    function animate(now: number) {
+      const progress = Math.min((now - started) / duration, 1);
+      const eased = progress * progress * (3 - 2 * progress);
+      // Keep the outgoing panorama opaque and fade the new Cycles image over
+      // it. This produces a true visual crossfade without a dark midpoint.
+      fromMaterial.opacity = 1;
+      toMaterial.opacity = eased;
+      invalidate();
+
+      if (progress < 1) {
+        crossfadeFrame = requestAnimationFrame(animate);
+        return;
+      }
+
+      crossfadeFrame = 0;
+      fromMaterial.opacity = 0;
+      toMaterial.opacity = 1;
+      activeMeshIndex = toIndex;
+      displayedViewId = nextView.id;
+      invalidate();
+    }
+
+    crossfadeFrame = requestAnimationFrame(animate);
+  }
+
+  $: activeView =
+    PANORAMA_VIEWS.find((view) => view.id === activeViewId) ??
+    PANORAMA_VIEWS[0];
+
+  $: if (activeViewId !== previousActiveViewId) {
+    previousActiveViewId = activeViewId;
+    transitionToView(activeViewId);
+  }
+
   onMount(() => {
     const canvas = renderer.domElement;
 
-    canvas.addEventListener('pointerdown', beginObjectDrag, true);
-    canvas.addEventListener('pointermove', moveObject, true);
-    canvas.addEventListener('pointerup', endObjectDrag, true);
-    canvas.addEventListener('pointercancel', endObjectDrag, true);
+    function applyViewTexture(
+      view: ImmersivePanoramaView,
+      texture: Texture,
+      useAsEnvironment: boolean,
+    ) {
+      const previousTexture = textures.get(view.id);
+      if (previousTexture && previousTexture !== texture) {
+        previousTexture.dispose();
+      }
+      textures.set(view.id, texture);
 
-    if (space.panoramaUrl) {
+      if (view.id === displayedViewId) {
+        panoramaMaterials[activeMeshIndex].map = texture;
+        panoramaMaterials[activeMeshIndex].needsUpdate = true;
+      }
+
+      if (!CYCLES_ONLY && useAsEnvironment && view.id === initialView?.id) {
+        environmentTexture?.dispose();
+        environmentTexture = texture.clone();
+        environmentTexture.colorSpace = SRGBColorSpace;
+        environmentTexture.mapping = EquirectangularReflectionMapping;
+        environmentTexture.needsUpdate = true;
+        scene.environment = environmentTexture;
+      }
+
+      if (view.id === initialView?.id) markAssetReady(`view:${view.id}`);
+      if (view.id === activeViewId && view.id !== displayedViewId) {
+        transitionToView(view.id);
+      }
+      invalidate();
+    }
+
+    function loadStillPanorama(view: ImmersivePanoramaView) {
       new TextureLoader().load(
-        space.panoramaUrl,
+        view.panoramaUrl,
         (texture) => {
           texture.colorSpace = SRGBColorSpace;
-          displayTexture = texture;
-          panoramaMaterial.map = displayTexture;
-          panoramaMaterial.needsUpdate = true;
-
-          environmentTexture = texture.clone();
-          environmentTexture.colorSpace = SRGBColorSpace;
-          environmentTexture.mapping = EquirectangularReflectionMapping;
-          environmentTexture.needsUpdate = true;
-          scene.environment = environmentTexture;
-
-          invalidate();
-          markAssetReady('panorama');
+          applyViewTexture(view, texture, true);
         },
         undefined,
         () => {
-          markAssetReady('panorama');
+          if (view.id === initialView?.id) markAssetReady(`view:${view.id}`);
         },
       );
+    }
+
+    function loadVideoPanorama(view: ImmersivePanoramaView) {
+      if (!view.panoramaVideoUrl) {
+        loadStillPanorama(view);
+        return;
+      }
+
+      const video = document.createElement('video');
+      video.muted = true;
+      video.defaultMuted = true;
+      video.loop = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+      video.crossOrigin = 'anonymous';
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      videos.set(view.id, video);
+
+      let settled = false;
+      const fallBackToStill = () => {
+        if (settled) return;
+        settled = true;
+        videos.delete(view.id);
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        loadStillPanorama(view);
+      };
+
+      video.addEventListener(
+        'loadeddata',
+        () => {
+          if (settled) return;
+          settled = true;
+          const texture = new VideoTexture(video);
+          texture.colorSpace = SRGBColorSpace;
+          texture.generateMipmaps = false;
+          applyViewTexture(view, texture, false);
+          void video.play().then(startVideoInvalidationLoop).catch(() => {});
+        },
+        { once: true },
+      );
+      video.addEventListener('error', fallBackToStill, { once: true });
+      video.src = view.panoramaVideoUrl;
+      video.load();
+      void video.play().catch(() => {});
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      resumePanoramaVideos();
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      clickStart = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+      };
+    }
+
+    function handlePointerMove(event: PointerEvent) {
+      if (event.pointerType !== 'mouse' || event.buttons !== 0) return;
+      const target = activeViewId === 'default' ? raycastViewTarget(event) : null;
+      canvas.classList.toggle('is-clickable', Boolean(target));
+    }
+
+    function handlePointerUp(event: PointerEvent) {
+      const start = clickStart;
+      clickStart = null;
+      if (!start || start.pointerId !== event.pointerId) return;
+      if (activeViewId !== 'default') return;
+
+      const distance = Math.hypot(
+        event.clientX - start.x,
+        event.clientY - start.y,
+      );
+      if (distance > 7) return;
+
+      const target = raycastViewTarget(event);
+      const viewId = target?.userData?.view_id;
+      if (
+        typeof viewId === 'string' &&
+        PANORAMA_VIEWS.some((view) => view.id === viewId)
+      ) {
+        onViewRequest(viewId);
+        event.preventDefault();
+      }
+    }
+
+    function clearPointerState() {
+      clickStart = null;
+      canvas.classList.remove('is-clickable');
+    }
+
+    canvas.addEventListener('pointerdown', handlePointerDown, true);
+    canvas.addEventListener('pointermove', handlePointerMove, true);
+    canvas.addEventListener('pointerup', handlePointerUp, true);
+    canvas.addEventListener('pointercancel', clearPointerState, true);
+    canvas.addEventListener('pointerleave', clearPointerState, true);
+
+    for (const view of PANORAMA_VIEWS) {
+      loadVideoPanorama(view);
     }
 
     if (requiredAssetKeys.size === 0) sendReady();
 
     return () => {
-      canvas.removeEventListener('pointerdown', beginObjectDrag, true);
-      canvas.removeEventListener('pointermove', moveObject, true);
-      canvas.removeEventListener('pointerup', endObjectDrag, true);
-      canvas.removeEventListener('pointercancel', endObjectDrag, true);
-      delete canvas.dataset.grabbingObject;
-      canvas.classList.remove('is-grabbing-object');
+      canvas.removeEventListener('pointerdown', handlePointerDown, true);
+      canvas.removeEventListener('pointermove', handlePointerMove, true);
+      canvas.removeEventListener('pointerup', handlePointerUp, true);
+      canvas.removeEventListener('pointercancel', clearPointerState, true);
+      canvas.removeEventListener('pointerleave', clearPointerState, true);
+      canvas.classList.remove('is-clickable');
     };
   });
 
   onDestroy(() => {
+    if (crossfadeFrame) cancelAnimationFrame(crossfadeFrame);
+    if (videoAnimationFrame) cancelAnimationFrame(videoAnimationFrame);
+
+    for (const video of videos.values()) {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+    }
+    videos.clear();
+
     renderer.toneMappingExposure = previousExposure;
     renderer.outputColorSpace = previousOutputColorSpace;
     renderer.shadowMap.enabled = previousShadowEnabled;
@@ -282,23 +490,36 @@
     scene.environment = previousEnvironment;
 
     panoramaGeometry.dispose();
-    panoramaMaterial.dispose();
-    displayTexture?.dispose();
+    for (const material of panoramaMaterials) material.dispose();
+    for (const texture of textures.values()) texture.dispose();
     environmentTexture?.dispose();
   });
 </script>
 
-<PanoramaCamera
-  {resetSignal}
-  position={CAMERA_POSITION}
-  initialYaw={space.cameraYaw}
-  ariaLabel={`Drag to look around. Scroll or pinch to zoom within ${space.title}.`}
-/>
-
-{#if space.panoramaUrl}
-  <T is={panoramaMesh} />
+{#if activeView}
+  <PanoramaCamera
+    {resetSignal}
+    viewSignal={activeView.id}
+    position={CAMERA_POSITION}
+    initialYaw={activeView.cameraYaw}
+    initialPitch={activeView.cameraPitch}
+    initialFov={activeView.cameraFov}
+    ariaLabel={`Drag to look around. Scroll or pinch to zoom within ${activeView.label}.`}
+  />
 {:else}
-  <!-- GLB-only halls need dependable web lighting because glTF does not export Blender area lights. -->
+  <PanoramaCamera
+    {resetSignal}
+    position={CAMERA_POSITION}
+    initialYaw={space.cameraYaw}
+    ariaLabel={`Drag to look around. Scroll or pinch to zoom within ${space.title}.`}
+  />
+{/if}
+
+{#if PANORAMA_VIEWS.length > 0}
+  <T is={panoramaMeshes[0]} />
+  <T is={panoramaMeshes[1]} />
+{:else}
+  <!-- GLB-only halls retain web lighting. Green-room views are Cycles-only. -->
   <T.AmbientLight intensity={0.9} />
   <T.PointLight
     position={[0, 4.6, 0]}

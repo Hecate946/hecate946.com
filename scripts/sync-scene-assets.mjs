@@ -116,6 +116,31 @@ for (const slug of roomSlugs) {
     required: true,
     label: `${slug} room interactive model`,
   });
+
+  if (slug === 'blue') {
+    await copyAsset({
+      source: path.join(sourceRoot, 'blue-room-water.webm'),
+      destination: path.join(destinationRoot, 'water.webm'),
+      required: true,
+      label: 'blue room water panorama animation',
+    });
+
+    await copyAsset({
+      source: path.join(sourceRoot, 'blue-room-water-poster.png'),
+      destination: path.join(destinationRoot, 'water-poster.png'),
+      required: true,
+      label: 'blue room water panorama poster',
+    });
+  }
+
+  if (slug === 'green') {
+    await copyAsset({
+      source: path.join(sourceRoot, 'green-room-board-panorama.png'),
+      destination: path.join(destinationRoot, 'views', 'board.png'),
+      required: true,
+      label: 'green room board panorama',
+    });
+  }
 }
 
 await copyAsset({

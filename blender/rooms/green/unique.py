@@ -1,29 +1,19 @@
-"""Green-room-only Blender objects.
+"""Green-room Cycles furniture, chess set, and click-to-view metadata.
 
-The shared room builder imports this file and calls ``add_static`` and
-``add_interactive``. The coffee table is created inside the existing
-``INTERACTIVE_EXPORT`` collection, so it:
-
-- remains out of the baked Cycles panorama to avoid a duplicate overlay,
-- is exported inside ``green-room-interactive.glb``, and
-- stays aligned with the room's existing Blender/Three.js coordinate system.
-
-Other reusable objects should live once beneath ``blender/assets`` and be
-placed here with ``context.place_static_asset`` or
-``context.place_interactive_asset`` rather than copied into this file.
-
-The table is deliberately *not* named with the ``Grab_`` prefix, so the current
-website drag handler will not let visitors move the entire table. It carries
-focus and chessboard anchor nodes for the later click-to-approach interaction.
+The table and complete Staunton set are permanent scene geometry, so Cycles
+renders them with exactly the same materials, shadows, reflections, and pendant
+light as the room. The browser receives only one invisible table hitbox whose
+metadata requests the ``board`` panorama view.
 """
 
 from __future__ import annotations
 
 import math
+from pathlib import Path
 from typing import Iterable, Sequence
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 
 # =============================================================================
@@ -46,8 +36,12 @@ APRON_HEIGHT = 7.5 * INCH
 APRON_THICKNESS = 3.0 * INCH
 EDGE_BEVEL = 0.24 * INCH
 
-# Room-local placement. The front edge faces the panorama camera at negative Y.
-TABLE_LOCATION = (0.0, 0.0, 0.0)
+# The shared pendant is ROOM_DEPTH / 3 (1.90 m) behind the room center. The
+# table uses that same X/Y center so the chessboard sits directly beneath it.
+TABLE_LOCATION = (0.0, 1.90, 0.0)
+BOARD_CLEARANCE = 0.003
+BOARD_VIEW_CAMERA_LOCATION = (0.0, 0.62, 1.38)
+BOARD_VIEW_TARGET = (0.0, TABLE_LOCATION[1], TABLE_HEIGHT + 0.075)
 
 # One embedded 1K texture set is shared by the whole table mesh. The GLB remains
 # lightweight while retaining only a very subtle grain beneath the matte finish.
@@ -455,60 +449,258 @@ def _aim_local(obj: bpy.types.Object, local_target: Sequence[float]) -> None:
 
 
 def _add_coffee_table(context) -> bpy.types.Object:
-    collection = context.interactive_collection
+    collection = context.static_collection
     material = _create_matte_black_material()
 
-    root = bpy.data.objects.new("Focus_GreenCoffeeTable", None)
+    root = bpy.data.objects.new("GreenRoom_TableChess", None)
     collection.objects.link(root)
     root.location = TABLE_LOCATION
     root.empty_display_type = "CUBE"
     root.empty_display_size = 0.22
-
-    # glTF extras make the future interaction discoverable without hard-coding
-    # the dimensions or Blender coordinates in the Svelte component.
-    root["asset_id"] = "green-coffee-table"
-    root["interaction"] = "focus"
-    root["draggable"] = False
-    root["focus_anchor"] = "GreenCoffeeTable_ApproachAnchor"
-    root["focus_target"] = "GreenCoffeeTable_FocusTarget"
-    root["board_anchor"] = "GreenCoffeeTable_ChessboardAnchor"
+    root["asset_id"] = "green-table-chess"
+    root["rendered_by"] = "cycles"
 
     table = _create_table_mesh(collection, material)
     table.parent = root
-
-    chessboard_anchor = _create_empty(
-        "GreenCoffeeTable_ChessboardAnchor",
-        (0.0, 0.0, TABLE_HEIGHT + 0.0015),
-        collection,
-        root,
-        display_type="CUBE",
-        display_size=CHESSBOARD_SIZE / 2.0,
-    )
-    chessboard_anchor["board_size_m"] = CHESSBOARD_SIZE
-    chessboard_anchor["table_margin_m"] = (TABLE_WIDTH - CHESSBOARD_SIZE) / 2.0
-
-    focus_target_location = (0.0, 0.0, TABLE_HEIGHT + 0.085)
-    _create_empty(
-        "GreenCoffeeTable_FocusTarget",
-        focus_target_location,
-        collection,
-        root,
-        display_type="SPHERE",
-        display_size=0.055,
-    )
-
-    approach = _create_empty(
-        "GreenCoffeeTable_ApproachAnchor",
-        (0.0, -1.22, 1.18),
-        collection,
-        root,
-        display_type="ARROWS",
-        display_size=0.16,
-    )
-    _aim_local(approach, focus_target_location)
-    approach["recommended_fov_degrees"] = 44.0
-
     return root
+
+
+def _object_number(name: str, base: str) -> int | None:
+    if name == base:
+        return 0
+    prefix = f"{base}."
+    if not name.startswith(prefix):
+        return None
+    suffix = name[len(prefix) :]
+    return int(suffix) if suffix.isdigit() else None
+
+
+def _world_bounds(objects: Sequence[bpy.types.Object]) -> tuple[Vector, Vector]:
+    points = [
+        obj.matrix_world @ Vector(corner)
+        for obj in objects
+        for corner in obj.bound_box
+    ]
+    if not points:
+        raise RuntimeError("Cannot calculate chess-set bounds from an empty object list.")
+    return (
+        Vector(
+            (
+                min(point.x for point in points),
+                min(point.y for point in points),
+                min(point.z for point in points),
+            )
+        ),
+        Vector(
+            (
+                max(point.x for point in points),
+                max(point.y for point in points),
+                max(point.z for point in points),
+            )
+        ),
+    )
+
+
+def _main_chess_meshes(loaded_objects: Sequence[bpy.types.Object]) -> list[bpy.types.Object]:
+    meshes = [obj for obj in loaded_objects if obj and obj.type == "MESH"]
+
+    exact = []
+    for obj in meshes:
+        circle_number = _object_number(obj.name, "Circle")
+        if obj.name == "Plane" or (circle_number is not None and circle_number <= 31):
+            exact.append(obj)
+    if len(exact) >= 25:
+        return exact
+
+    if not meshes:
+        raise RuntimeError("The Staunton source file contains no mesh objects.")
+
+    def footprint(obj: bpy.types.Object) -> float:
+        points = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+        xs = [point.x for point in points]
+        ys = [point.y for point in points]
+        return (max(xs) - min(xs)) + (max(ys) - min(ys))
+
+    board = max(meshes, key=footprint)
+    board_points = [board.matrix_world @ Vector(corner) for corner in board.bound_box]
+    min_x = min(point.x for point in board_points)
+    max_x = max(point.x for point in board_points)
+    min_y = min(point.y for point in board_points)
+    max_y = max(point.y for point in board_points)
+    pad_x = max((max_x - min_x) * 0.20, 0.01)
+    pad_y = max((max_y - min_y) * 0.20, 0.01)
+
+    selected = [
+        obj
+        for obj in meshes
+        if min_x - pad_x <= obj.matrix_world.translation.x <= max_x + pad_x
+        and min_y - pad_y <= obj.matrix_world.translation.y <= max_y + pad_y
+    ]
+    if len(selected) < 20:
+        raise RuntimeError(
+            "Could not reliably identify the assembled board and pieces in chess set.blend."
+        )
+    return selected
+
+
+def _principled_material(
+    name: str,
+    color: Sequence[float],
+    *,
+    roughness: float,
+    coat: float = 0.0,
+) -> bpy.types.Material:
+    material = bpy.data.materials.get(name) or bpy.data.materials.new(name)
+    material.use_nodes = True
+    material.diffuse_color = (*color[:3], 1.0)
+
+    nodes = material.node_tree.nodes
+    links = material.node_tree.links
+    nodes.clear()
+    output = nodes.new("ShaderNodeOutputMaterial")
+    output.location = (320, 0)
+    bsdf = nodes.new("ShaderNodeBsdfPrincipled")
+    bsdf.location = (0, 0)
+    _set_socket(bsdf, "Base Color", (*color[:3], 1.0))
+    _set_socket(bsdf, "Roughness", roughness)
+    _set_socket(bsdf, ("Coat Weight", "Clearcoat"), coat)
+    _set_socket(
+        bsdf,
+        ("Coat Roughness", "Clearcoat Roughness"),
+        max(roughness * 0.65, 0.08),
+    )
+    links.new(bsdf.outputs["BSDF"], output.inputs["Surface"])
+    return material
+
+
+def _replace_chess_materials(chess_objects: Sequence[bpy.types.Object]) -> None:
+    dark_piece = _principled_material(
+        "MAT_Chess_Dark_Piece", (0.012, 0.009, 0.007), roughness=0.22, coat=0.22
+    )
+    light_piece = _principled_material(
+        "MAT_Chess_Ivory_Piece", (0.72, 0.61, 0.43), roughness=0.25, coat=0.20
+    )
+    dark_square = _principled_material(
+        "MAT_Chess_Dark_Square", (0.025, 0.018, 0.012), roughness=0.28, coat=0.16
+    )
+    light_square = _principled_material(
+        "MAT_Chess_Light_Square", (0.62, 0.50, 0.34), roughness=0.30, coat=0.14
+    )
+    edge = _principled_material(
+        "MAT_Chess_Board_Edge", (0.010, 0.007, 0.005), roughness=0.24, coat=0.20
+    )
+
+    def replacement(old_name: str) -> bpy.types.Material:
+        lowered = old_name.lower()
+        if "black chess" in lowered:
+            return dark_piece
+        if "white chess" in lowered:
+            return light_piece
+        if "white square" in lowered:
+            return light_square
+        if "red squared" in lowered or "dark square" in lowered:
+            return dark_square
+        if "green edge" in lowered or "edge" in lowered:
+            return edge
+        if "white" in lowered or "ivory" in lowered:
+            return light_piece
+        if "black" in lowered or "dark" in lowered:
+            return dark_piece
+        return edge
+
+    for obj in chess_objects:
+        if not obj.material_slots:
+            obj.data.materials.append(dark_piece)
+            continue
+        for slot in obj.material_slots:
+            old_name = slot.material.name if slot.material else ""
+            slot.material = replacement(old_name)
+
+
+def _append_chess_set(context, parent: bpy.types.Object) -> None:
+    source = (
+        Path(context.assets_root)
+        / "chess"
+        / "standard-staunton"
+        / "chess set.blend"
+    )
+    if not source.is_file():
+        raise FileNotFoundError(
+            "Missing Staunton source asset. Expected: "
+            f"{source}. Keep the original file at that exact path."
+        )
+
+    with bpy.data.libraries.load(str(source), link=False) as (data_from, data_to):
+        data_to.objects = list(data_from.objects)
+
+    loaded_objects = [obj for obj in data_to.objects if obj is not None]
+    for obj in loaded_objects:
+        if not obj.users_collection:
+            context.static_collection.objects.link(obj)
+
+    chess_objects = _main_chess_meshes(loaded_objects)
+    chess_set = set(chess_objects)
+
+    # Detach the selected meshes before deleting cameras, examples, and old
+    # helper parents from the source file. Preserve each world transform.
+    for obj in chess_objects:
+        world = obj.matrix_world.copy()
+        obj.parent = None
+        obj.matrix_world = world
+
+    for obj in loaded_objects:
+        if obj not in chess_set:
+            bpy.data.objects.remove(obj, do_unlink=True)
+
+    _replace_chess_materials(chess_objects)
+
+    minimum, maximum = _world_bounds(chess_objects)
+    footprint = max(maximum.x - minimum.x, maximum.y - minimum.y)
+    if footprint <= 1e-8:
+        raise RuntimeError("The appended chess-set footprint is zero.")
+
+    scale = CHESSBOARD_SIZE / footprint
+    center_x = (minimum.x + maximum.x) * 0.5
+    center_y = (minimum.y + maximum.y) * 0.5
+    target_bottom_z = TABLE_HEIGHT + BOARD_CLEARANCE
+    transform = (
+        Matrix.Translation((TABLE_LOCATION[0], TABLE_LOCATION[1], target_bottom_z))
+        @ Matrix.Scale(scale, 4)
+        @ Matrix.Translation((-center_x, -center_y, -minimum.z))
+    )
+
+    for obj in chess_objects:
+        obj.matrix_world = transform @ obj.matrix_world
+        world = obj.matrix_world.copy()
+        obj.parent = parent
+        obj.matrix_world = world
+        obj["object_role"] = "chess_piece_or_board"
+        obj["rendered_by"] = "cycles"
+
+
+def _add_table_click_target(context) -> bpy.types.Object:
+    hitbox_material = context.material(
+        "Browser-only table hitbox",
+        (0.0, 0.0, 0.0, 1.0),
+        roughness=1.0,
+    )
+    hitbox = context.add_box(
+        "ViewTarget_GreenTable",
+        (
+            TABLE_LOCATION[0],
+            TABLE_LOCATION[1],
+            (TABLE_HEIGHT + 0.48) / 2.0,
+        ),
+        (TABLE_WIDTH * 1.04, TABLE_DEPTH * 1.04, TABLE_HEIGHT + 0.48),
+        hitbox_material,
+        context.interactive_collection,
+        bevel=0.0,
+    )
+    hitbox["interaction"] = "view"
+    hitbox["view_id"] = "board"
+    hitbox["label"] = "View chessboard"
+    hitbox["browser_only"] = True
+    return hitbox
 
 
 # =============================================================================
@@ -517,10 +709,18 @@ def _add_coffee_table(context) -> bpy.types.Object:
 
 
 def add_static(context):
-    """No green-room-only static geometry is needed yet."""
-    del context
+    """Bake the black table and complete chess set into every Cycles view."""
+    root = _add_coffee_table(context)
+    _append_chess_set(context, root)
+    context.add_panorama_view(
+        "board",
+        camera_location=BOARD_VIEW_CAMERA_LOCATION,
+        target=BOARD_VIEW_TARGET,
+        file_name="green-room-board-panorama.png",
+        website_panorama_yaw=-math.pi / 2.0,
+    )
 
 
 def add_interactive(context):
-    """Temporarily disable the green-room table while lighting is tuned."""
-    del context
+    """Export only an invisible click target; no visible GLB furniture or light."""
+    _add_table_click_target(context)

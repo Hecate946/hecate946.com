@@ -16,3 +16,7 @@ __pycache__/
 
 # Blender automatic backup files
 *.blend1
+
+# Blender fluid caches and temporary animation frame sequences
+blender/rooms/*/cache/
+blender/rooms/*/water-frames/

@@ -20,7 +20,7 @@ import bpy
 from mathutils import Vector
 
 
-ROOM_BUILDER_VERSION = "2026-07-31-v48-shared-blend-assets"
+ROOM_BUILDER_VERSION = "2026-08-04-v49-cycles-multiview"
 
 ROOM_WIDTH = 3.99
 ROOM_DEPTH = 5.70
@@ -72,6 +72,15 @@ class RenderSettings:
     auto_render: bool
 
 
+@dataclass(frozen=True)
+class PanoramaViewDefinition:
+    view_id: str
+    file_name: str
+    camera_location: tuple[float, float, float]
+    target: tuple[float, float, float]
+    website_panorama_yaw: float
+
+
 @dataclass
 class RoomContext:
     definition: RoomDefinition
@@ -92,6 +101,7 @@ class RoomContext:
     place_asset: Callable
     place_static_asset: Callable
     place_interactive_asset: Callable
+    add_panorama_view: Callable
 
 
 def linear_hex(value: str):
@@ -1044,7 +1054,9 @@ def export_interactive_collection(
         bpy.ops.export_scene.gltf(
             filepath=str(output_file),
             export_format="GLB",
-            export_lights=True,
+            # Cycles provides every visible lighting result. The browser GLB
+            # contains interaction geometry only and must never add live lights.
+            export_lights=False,
             export_cameras=False,
             export_apply=True,
             export_extras=True,
@@ -1074,6 +1086,7 @@ def build_room(
     blend_file = output_directory / f"{definition.slug}-room.blend"
     panorama_file = output_directory / f"{definition.slug}-room-panorama.png"
     interactive_file = output_directory / f"{definition.slug}-room-interactive.glb"
+    extra_panorama_views: list[PanoramaViewDefinition] = []
 
     print(f"Room builder version: {ROOM_BUILDER_VERSION}")
     print(f"Room builder source:  {Path(__file__).resolve()}")
@@ -1347,7 +1360,9 @@ def build_room(
         bevel=0.003,
     )
 
-    add_center_pendant(static_collection, interactive_collection)
+    # The pendant and its light are both part of the Cycles scene. Nothing in
+    # the browser is allowed to relight the baked panorama.
+    add_center_pendant(static_collection, static_collection)
 
     interaction_origin = bpy.data.objects.new("Interaction_Origin", None)
     interactive_collection.objects.link(interaction_origin)
@@ -1399,6 +1414,40 @@ def build_room(
             **placement,
         )
 
+    def add_panorama_view(
+        view_id,
+        *,
+        camera_location,
+        target,
+        file_name=None,
+        website_panorama_yaw=-math.pi / 2.0,
+    ):
+        normalized_id = str(view_id).strip().lower()
+        if not normalized_id or any(
+            character not in "abcdefghijklmnopqrstuvwxyz0123456789-_"
+            for character in normalized_id
+        ):
+            raise ValueError(
+                "Panorama view IDs may contain only lowercase letters, numbers, hyphens, and underscores."
+            )
+        if normalized_id == "default" or any(
+            view.view_id == normalized_id for view in extra_panorama_views
+        ):
+            raise ValueError(f"Duplicate panorama view ID: {normalized_id}")
+
+        output_name = file_name or (
+            f"{definition.slug}-room-{normalized_id}-panorama.png"
+        )
+        extra_panorama_views.append(
+            PanoramaViewDefinition(
+                view_id=normalized_id,
+                file_name=output_name,
+                camera_location=tuple(float(value) for value in camera_location),
+                target=tuple(float(value) for value in target),
+                website_panorama_yaw=float(website_panorama_yaw),
+            )
+        )
+
     context = RoomContext(
         definition=definition,
         output_directory=output_directory,
@@ -1421,29 +1470,36 @@ def build_room(
         place_asset=place_asset,
         place_static_asset=place_static_asset,
         place_interactive_asset=place_interactive_asset,
+        add_panorama_view=add_panorama_view,
     )
 
     unique_module = load_unique_module(output_directory / "unique.py")
     call_unique_hook(unique_module, "add_static", context)
     call_unique_hook(unique_module, "add_interactive", context)
 
-    camera_data = bpy.data.cameras.new("Panorama_Camera")
-    camera = bpy.data.objects.new("Panorama_Camera", camera_data)
-    scene.collection.objects.link(camera)
-    scene.camera = camera
-    camera.location = CAMERA_LOCATION
-    camera.data.type = "PANO"
+    def create_panorama_camera(name, location):
+        camera_data = bpy.data.cameras.new(name)
+        camera_object = bpy.data.objects.new(name, camera_data)
+        scene.collection.objects.link(camera_object)
+        camera_object.location = location
+        camera_object.data.type = "PANO"
 
-    if hasattr(camera.data, "panorama_type"):
-        camera.data.panorama_type = "EQUIRECTANGULAR"
-    else:
-        cycles_camera = getattr(camera.data, "cycles", None)
-        if cycles_camera is not None and hasattr(cycles_camera, "panorama_type"):
-            cycles_camera.panorama_type = "EQUIRECTANGULAR"
+        if hasattr(camera_object.data, "panorama_type"):
+            camera_object.data.panorama_type = "EQUIRECTANGULAR"
         else:
-            raise RuntimeError(
-                "This Blender build does not expose an equirectangular panorama setting."
-            )
+            cycles_camera = getattr(camera_object.data, "cycles", None)
+            if cycles_camera is not None and hasattr(
+                cycles_camera, "panorama_type"
+            ):
+                cycles_camera.panorama_type = "EQUIRECTANGULAR"
+            else:
+                raise RuntimeError(
+                    "This Blender build does not expose an equirectangular panorama setting."
+                )
+        return camera_object
+
+    camera = create_panorama_camera("Panorama_Camera", CAMERA_LOCATION)
+    scene.camera = camera
 
     seam_corner_name, seam_corner, camera_forward_yaw, website_panorama_yaw = (
         orient_camera_seam_to_corner(camera)
@@ -1463,19 +1519,50 @@ def build_room(
     )
     print(f"Website panorama yaw: {website_panorama_yaw:.12f} radians")
 
+    extra_view_cameras = []
+    for view in extra_panorama_views:
+        view_camera = create_panorama_camera(
+            f"Panorama_Camera_{view.view_id.title()}",
+            view.camera_location,
+        )
+        aim(view_camera, Vector(view.target))
+        view_camera["panorama_view_id"] = view.view_id
+        view_camera["website_panorama_yaw"] = view.website_panorama_yaw
+        extra_view_cameras.append((view, view_camera))
+        print(
+            f"Added panorama view '{view.view_id}' at "
+            f"{tuple(round(value, 4) for value in view.camera_location)}"
+        )
+
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_file))
 
     if settings.auto_render:
-        # Keep the pendant light active, but prevent live GLB objects such as the
-        # coffee table from being baked into the panorama behind themselves.
+        # Interaction meshes are browser-only hit targets. Every visible object
+        # and every lighting contribution is rendered once by Cycles.
         previous_render_states = hide_interactive_geometry_for_panorama(
             interactive_collection
         )
         try:
+            scene.camera = camera
+            scene.render.filepath = str(panorama_file)
             bpy.ops.render.render(write_still=True)
             if not panorama_file.exists():
                 raise RuntimeError(f"Panorama render did not create {panorama_file}")
+
+            for view, view_camera in extra_view_cameras:
+                view_file = output_directory / view.file_name
+                if view_file.exists():
+                    view_file.unlink()
+                scene.camera = view_camera
+                scene.render.filepath = str(view_file)
+                bpy.ops.render.render(write_still=True)
+                if not view_file.exists():
+                    raise RuntimeError(
+                        f"Panorama view '{view.view_id}' did not create {view_file}"
+                    )
         finally:
+            scene.camera = camera
+            scene.render.filepath = str(panorama_file)
             restore_render_visibility(previous_render_states)
     else:
         print(f"Skipped panorama render for {definition.slug}.")
@@ -1490,10 +1577,19 @@ def build_room(
     public_directory.mkdir(parents=True, exist_ok=True)
     if settings.auto_render:
         shutil.copy2(panorama_file, public_directory / "panorama.png")
+        for view in extra_panorama_views:
+            public_view_directory = public_directory / "views"
+            public_view_directory.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(
+                output_directory / view.file_name,
+                public_view_directory / f"{view.view_id}.png",
+            )
     shutil.copy2(interactive_file, public_directory / "interactive.glb")
 
     print(f"Built {definition.title}")
     print(f"  Blend:       {blend_file}")
     print(f"  Panorama:    {panorama_file}")
+    for view in extra_panorama_views:
+        print(f"  View {view.view_id}: {output_directory / view.file_name}")
     print(f"  Interactive: {interactive_file}")
     print(f"  Website:     {public_directory}")

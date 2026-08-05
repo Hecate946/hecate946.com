@@ -4,17 +4,18 @@
   import { MathUtils, type PerspectiveCamera } from 'three';
 
   export let resetSignal = 0;
+  export let viewSignal = 'default';
   export let position: [number, number, number] = [0, 1.65, 3.8];
   export let initialYaw = 0;
+  export let initialPitch = 0;
+  export let initialFov = 96;
   export let ariaLabel =
     'Drag to look around. Scroll or pinch to zoom. Drag interactive objects to move them.';
 
   const { renderer, invalidate } = useThrelte();
 
-  const INITIAL_PITCH = 0;
   const MIN_FOV = 32;
   const MAX_FOV = 96;
-  const INITIAL_FOV = MAX_FOV;
   const DRAG_SENSITIVITY = 0.00225;
   const WHEEL_ZOOM_SENSITIVITY = 0.018;
   const PINCH_ZOOM_SENSITIVITY = 0.065;
@@ -23,20 +24,19 @@
   const SETTLE_EPSILON = 0.0001;
   const KEY_LOOK_STEP = 0.075;
   const KEY_ZOOM_STEP = 3;
-  const MIN_PITCH = 0;
-  const MAX_PITCH = 0;
 
   type PointerPosition = { x: number; y: number };
 
   let camera: PerspectiveCamera;
   let yaw = initialYaw;
-  let pitch = INITIAL_PITCH;
-  let fov = INITIAL_FOV;
+  let pitch = initialPitch;
+  let fov = initialFov;
   let targetYaw = initialYaw;
-  let targetPitch = INITIAL_PITCH;
-  let targetFov = INITIAL_FOV;
+  let targetPitch = initialPitch;
+  let targetFov = initialFov;
   let animationFrame = 0;
   let previousResetSignal = resetSignal;
+  let previousViewSignal = viewSignal;
   let dragPointer: number | null = null;
   let lastX = 0;
   let lastY = 0;
@@ -88,9 +88,18 @@
 
   function resetView() {
     targetYaw = initialYaw;
-    targetPitch = INITIAL_PITCH;
-    targetFov = INITIAL_FOV;
+    targetPitch = initialPitch;
+    targetFov = MathUtils.clamp(initialFov, MIN_FOV, MAX_FOV);
     requestCameraAnimation();
+  }
+
+  function jumpToView() {
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+    animationFrame = 0;
+    yaw = targetYaw = initialYaw;
+    pitch = targetPitch = initialPitch;
+    fov = targetFov = MathUtils.clamp(initialFov, MIN_FOV, MAX_FOV);
+    applyCamera();
   }
 
   function getPinchDistance() {
@@ -103,6 +112,11 @@
   }
 
   $: if (camera) applyCamera();
+
+  $: if (viewSignal !== previousViewSignal) {
+    previousViewSignal = viewSignal;
+    jumpToView();
+  }
 
   $: if (resetSignal !== previousResetSignal) {
     previousResetSignal = resetSignal;
@@ -175,7 +189,7 @@
       lastY = event.clientY;
 
       targetYaw -= deltaX * DRAG_SENSITIVITY;
-      targetPitch = 0;
+      targetPitch = initialPitch;
       requestCameraAnimation();
     }
 
@@ -269,7 +283,7 @@
   name="PanoramaCamera"
   makeDefault
   {position}
-  fov={INITIAL_FOV}
+  fov={initialFov}
   near={0.05}
   far={60}
 />

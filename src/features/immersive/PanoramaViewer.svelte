@@ -9,6 +9,9 @@
 
   let ready = false;
   let resetSignal = 0;
+  let activeViewId = space.panoramaViews?.[0]?.id ?? 'default';
+  let defaultViewId = space.panoramaViews?.[0]?.id ?? 'default';
+  let activeView = space.panoramaViews?.[0];
   let indexHref = withBase('/');
   $: indexHref = withBase(space.kind === 'room' ? '/rooms/' : '/halls/');
 
@@ -19,6 +22,16 @@
   function resetView() {
     resetSignal += 1;
   }
+
+  function navigateToView(viewId: string) {
+    if (!space.panoramaViews?.some((view) => view.id === viewId)) return;
+    activeViewId = viewId;
+  }
+
+  $: defaultViewId = space.panoramaViews?.[0]?.id ?? 'default';
+  $: activeView =
+    space.panoramaViews?.find((view) => view.id === activeViewId) ??
+    space.panoramaViews?.[0];
 </script>
 
 <div
@@ -34,7 +47,13 @@
       colorSpace={SRGBColorSpace}
       dpr={[1, 1.5]}
     >
-      <PanoramaScene {space} onReady={markReady} {resetSignal} />
+      <PanoramaScene
+        {space}
+        onReady={markReady}
+        {resetSignal}
+        {activeViewId}
+        onViewRequest={navigateToView}
+      />
     </Canvas>
   </div>
 
@@ -42,8 +61,17 @@
     <a class="immersive-exit" href={indexHref}>← Back to {space.kind === 'room' ? 'rooms' : 'halls'}</a>
 
     <div class="immersive-actions">
+      {#if activeViewId !== defaultViewId}
+        <button
+          class="immersive-control"
+          type="button"
+          onclick={() => navigateToView(defaultViewId)}
+        >
+          Return to room
+        </button>
+      {/if}
       <button class="immersive-control" type="button" onclick={resetView}>
-        Reset view
+        Reset {activeView?.label?.toLowerCase() ?? 'view'}
       </button>
     </div>
   </div>
@@ -100,9 +128,12 @@
     touch-action: none;
   }
 
-  .immersive-canvas :global(canvas.is-looking),
-  .immersive-canvas :global(canvas.is-grabbing-object) {
+  .immersive-canvas :global(canvas.is-looking) {
     cursor: grabbing;
+  }
+
+  .immersive-canvas :global(canvas.is-clickable:not(.is-looking)) {
+    cursor: pointer;
   }
 
   .immersive-canvas :global(canvas:focus-visible) {
