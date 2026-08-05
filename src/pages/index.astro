@@ -3,6 +3,8 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import ForceNetwork from '@/components/graphs/ForceNetwork.svelte';
 import HouseScene from '@/components/house/HouseScene.astro';
 import { homeNetworkLinks, homeNetworkNodes } from '@/data/home-network';
+import { headerNavigation } from '@/config/navigation';
+import { withBase } from '@/lib/paths';
 import '@/styles/home.css';
 ---
 
@@ -11,6 +13,33 @@ import '@/styles/home.css';
   description="The portfolio of Cyrus Asasi, software engineer and classical musician."
 >
   <div class="minimal-home">
+    <section
+      class="ascii-home-index"
+      data-ascii-only
+      aria-labelledby="ascii-home-title"
+    >
+      <p class="ascii-home-index__path">cat ./index.txt</p>
+      <h1 id="ascii-home-title">Cyrus Asasi</h1>
+      <p class="ascii-home-index__role">software engineer :: classical musician</p>
+
+      <pre class="ascii-home-index__tree" aria-label="Site contents">{`.
+├── about.txt
+├── resume.pdf
+├── projects/
+├── contact.txt
+└── stats.log`}</pre>
+
+      <nav class="ascii-home-index__nav" aria-label="ASCII site navigation">
+        {
+          headerNavigation.map((item) => (
+            <a href={withBase(item.href)} data-astro-prefetch>
+              <span>{item.label.toLowerCase()}</span>
+              <small>{item.href}</small>
+            </a>
+          ))
+        }
+      </nav>
+    </section>
     <section class="minimal-hero" aria-labelledby="home-title">
       <header class="minimal-intro">
         <h1 id="home-title">Cyrus Asasi</h1>

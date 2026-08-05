@@ -25,7 +25,7 @@ body:has(> .site-footer) > main {
   font-family: var(--font-sans);
 }
 
-.footer-sound {
+.footer-controls {
   display: flex;
   height: 100%;
   grid-column: 1 / span 4;
@@ -33,6 +33,7 @@ body:has(> .site-footer) > main {
   min-width: 0;
   align-items: center;
   justify-content: center;
+  gap: clamp(0.42rem, 0.75vw, 0.68rem);
   border-right: 1px solid var(--line);
 }
 
@@ -107,6 +108,15 @@ body:has(> .site-footer) > main {
   stroke: none;
 }
 
+.footer-display-icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
 .footer-icon-link::after {
   position: absolute;
   bottom: calc(100% + 0.45rem);
@@ -165,7 +175,7 @@ body:has(> .site-footer) > main {
     flex-basis: calc(var(--header-height) * 2);
   }
 
-  .footer-sound {
+  .footer-controls {
     grid-column: 1 / span 3;
     grid-row: 1;
     border-right: 1px solid var(--line);

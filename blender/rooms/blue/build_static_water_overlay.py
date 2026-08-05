@@ -188,8 +188,6 @@ def add_water_object(room_builder_module, frame_end: int):
     room_height = room_builder_module.ROOM_HEIGHT
 
     water_height = room_height * WATER_FILL_RATIO
-    inset = -WATER_EDGE_OVERSCAN
-
     bpy.ops.mesh.primitive_grid_add(
         x_subdivisions=120,
         y_subdivisions=180,
@@ -198,7 +196,19 @@ def add_water_object(room_builder_module, frame_end: int):
     )
     water = bpy.context.active_object
     water.name = "BlueRoomWaterOverlay"
-    water.scale = ((room_width - inset) / 2.0, (room_depth - inset) / 2.0, 1.0)
+
+    # primitive_grid_add(size=1.0) creates a 1 m x 1 m grid. Its scale must
+    # therefore equal the desired final dimensions, not half the dimensions.
+    # The previous /2 scaling was the real reason the water covered only the
+    # center portion of the room.
+    water.scale = (
+        room_width + WATER_EDGE_OVERSCAN * 2.0,
+        room_depth + WATER_EDGE_OVERSCAN * 2.0,
+        1.0,
+    )
+    bpy.context.view_layer.objects.active = water
+    water.select_set(True)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
     water.data.materials.clear()
     water.data.materials.append(create_water_material("BlueRoomAnimatedWater"))
@@ -359,14 +369,6 @@ def heal_overlay_seam(image_path: Path, columns: int = SEAM_FIX_COLUMNS):
                 right_i = index(width - columns + offset, y)
                 pixels[left_i : left_i + 4] = rgba
                 pixels[right_i : right_i + 4] = rgba
-
-        # Transparent areas should contain neutral RGB to avoid chroma bleed
-        # during VP9 + alpha encoding.
-        for y in range(height):
-            for x in range(width):
-                pixel_i = index(x, y)
-                if pixels[pixel_i + 3] <= 0.0001:
-                    pixels[pixel_i : pixel_i + 4] = [0.0, 0.0, 0.0, 0.0]
 
         image.pixels[:] = pixels
         image.save()

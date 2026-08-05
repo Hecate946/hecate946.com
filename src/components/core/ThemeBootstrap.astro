@@ -2,6 +2,7 @@
   (() => {
     const seasonNames = ['spring', 'summer', 'autumn', 'winter'];
     const themeNames = ['light', 'dark'];
+    const displayModeNames = ['default', 'ascii'];
     const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const automaticSeason = () => {
@@ -35,18 +36,25 @@
           ? 'dark'
           : 'light';
 
-      return { seasonPreference, season, theme };
+      const savedDisplayMode = readPreference('hecate946:display-mode');
+      const displayMode = displayModeNames.includes(savedDisplayMode)
+        ? savedDisplayMode
+        : 'default';
+
+      return { seasonPreference, season, theme, displayMode };
     };
 
     const applyPreferences = (targetDocument = document) => {
-      const { seasonPreference, season, theme } = resolvePreferences();
+      const { seasonPreference, season, theme, displayMode } =
+        resolvePreferences();
       const root = targetDocument.documentElement;
 
       root.dataset.seasonPreference = seasonPreference;
       root.dataset.season = season;
       root.dataset.theme = theme;
+      root.dataset.displayMode = displayMode;
       root.dataset.themeReady = 'true';
-      root.style.colorScheme = theme;
+      root.style.colorScheme = displayMode === 'ascii' ? 'dark' : theme;
     };
 
     const updateThemeColor = () => {

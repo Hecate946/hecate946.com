@@ -14,6 +14,7 @@ import { navigation } from '@/config/site';
 import { withBase } from '@/lib/paths';
 import { ClientRouter } from 'astro:transitions';
 import '@/styles/global.css';
+import '@/styles/ascii-mode.css';
 
 interface Props {
   title?: string;
@@ -68,6 +69,7 @@ const commandItems = Array.from(
   data-season="summer"
   data-season-preference="auto"
   data-theme="light"
+  data-display-mode="default"
 >
   <head>
     <ThemeBootstrap />
@@ -89,7 +91,7 @@ const commandItems = Array.from(
 
     <Header />
 
-    <main id="main-content">
+    <main id="main-content" data-page-path={currentPath}>
       <slot />
     </main>
 
@@ -112,12 +114,16 @@ const commandItems = Array.from(
     <CommandPalette client:idle items={commandItems} />
 
     <div class="site-sound-toast" data-site-sound-toast role="status" aria-live="polite"></div>
+    <div class="site-display-toast" data-display-mode-toast role="status" aria-live="polite"></div>
 
     <script>
+      import { initializeDisplayMode } from '@/lib/display-mode';
       import { initializeSiteSound } from '@/lib/site-sound';
 
+      initializeDisplayMode();
       initializeSiteSound();
 
+      document.addEventListener('astro:page-load', initializeDisplayMode);
       document.addEventListener('astro:page-load', initializeSiteSound);
 
       const startAnalytics = () => {

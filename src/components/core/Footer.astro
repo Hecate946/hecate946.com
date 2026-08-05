@@ -5,7 +5,7 @@ const year = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
-  <div class="footer-sound">
+  <div class="footer-controls">
     <button
       class="footer-icon-link footer-sound-toggle"
       type="button"
@@ -19,6 +19,21 @@ const year = new Date().getFullYear();
         <path class="footer-sound-wave" d="M15.25 9.1a4 4 0 0 1 0 5.8" />
         <path class="footer-sound-wave" d="M17.75 6.75a7.25 7.25 0 0 1 0 10.5" />
         <path class="footer-sound-muted-mark" d="m15.2 9.2 5.6 5.6m0-5.6-5.6 5.6" />
+      </svg>
+    </button>
+
+    <button
+      class="footer-icon-link footer-display-toggle"
+      type="button"
+      aria-label="Enable ASCII mode"
+      aria-pressed="false"
+      data-label="Enable ASCII mode"
+      data-display-mode-toggle
+    >
+      <svg class="footer-display-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 6 3.5 12 8 18" />
+        <path d="m16 6 4.5 6-4.5 6" />
+        <path d="M10.5 18h3" />
       </svg>
     </button>
   </div>

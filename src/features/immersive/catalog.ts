@@ -175,10 +175,10 @@ export const rooms = {
       3,
     ),
     panoramaOverlayUrl: withBase(
-      '/scenes/rooms/blue/water-overlay.png?v=room-v54-water-booleanclip',
+      '/scenes/rooms/blue/water-overlay.png?v=room-v55-water-full-footprint',
     ),
     panoramaOverlayVideoUrl: withBase(
-      '/scenes/rooms/blue/water-overlay.webm?v=room-v54-water-booleanclip',
+      '/scenes/rooms/blue/water-overlay.webm?v=room-v55-water-full-footprint',
     ),
   },
   purple: room('purple', 'Room 005', 'The Purple Room', 'An immersive fixed-viewpoint purple tiled room.', '#35213f', 4),

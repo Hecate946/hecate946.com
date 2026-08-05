@@ -9,6 +9,7 @@
     Object3D,
     PCFSoftShadowMap,
     Raycaster,
+    RepeatWrapping,
     SphereGeometry,
     SRGBColorSpace,
     Texture,
@@ -72,6 +73,20 @@
   panoramaGeometry.scale(-1, 1, 1);
   const overlayGeometry = new SphereGeometry(23.94, 96, 64);
   overlayGeometry.scale(-1, 1, 1);
+
+  // Avoid sampling the exact left/right edge of the transparent WebM. Some
+  // browsers expose a one-pixel VP9 chroma/alpha seam there, which appeared as
+  // the vertical green line after the panorama was rotated.
+  const overlayUv = overlayGeometry.getAttribute('uv');
+  const overlaySeamInset = 1 / 4096;
+  for (let index = 0; index < overlayUv.count; index += 1) {
+    const u = overlayUv.getX(index);
+    overlayUv.setX(
+      index,
+      overlaySeamInset + u * (1 - overlaySeamInset * 2),
+    );
+  }
+  overlayUv.needsUpdate = true;
 
   function createPanoramaMaterial(opacity: number) {
     return new MeshBasicMaterial({
@@ -148,6 +163,8 @@
   }
 
   function attachOverlayTexture(texture: Texture) {
+    texture.wrapS = RepeatWrapping;
+    texture.needsUpdate = true;
     overlayMaterial.map = texture;
     overlayMaterial.needsUpdate = true;
     invalidate();
