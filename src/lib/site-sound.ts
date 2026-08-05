@@ -1,5 +1,6 @@
-const SOUND_STORAGE_KEY = 'hecate946:sound-enabled';
-const INITIALIZED_ATTRIBUTE = 'data-site-sound-initialized';
+const SOUND_QUERY_KEY = 'sounds';
+const SOUND_QUERY_ON = 'on';
+const SOUND_QUERY_OFF = 'off';
 
 type SoundKind =
   | 'click'
@@ -29,7 +30,21 @@ const COLLISION_NOTE_SEQUENCE = [
   196, 329.63, 392,
 ] as const;
 
-const isEnabled = () => localStorage.getItem(SOUND_STORAGE_KEY) === 'true';
+type SiteSoundWindow = Window &
+  typeof globalThis & {
+    __hecateSiteSoundInstalled?: boolean;
+  };
+
+const soundModeFromUrl = (value: string | URL = window.location.href) => {
+  try {
+    const url = value instanceof URL ? value : new URL(value, window.location.href);
+    return url.searchParams.get(SOUND_QUERY_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const isEnabled = () => soundModeFromUrl() === SOUND_QUERY_ON;
 
 const getAudioContext = () => {
   if (audioContext) return audioContext;
@@ -345,8 +360,7 @@ const showToast = (message: string) => {
   }
 };
 
-const updateToggle = () => {
-  const enabled = isEnabled();
+const updateToggle = (enabled = isEnabled()) => {
   document.querySelectorAll<HTMLButtonElement>('[data-sound-toggle]').forEach((toggle) => {
     const label = enabled ? 'Disable sounds' : 'Enable sounds';
     toggle.setAttribute('aria-pressed', String(enabled));
@@ -397,8 +411,21 @@ const handleClick = (event: MouseEvent) => {
   const toggle = target.closest<HTMLButtonElement>('[data-sound-toggle]');
   if (toggle) {
     const enabled = !isEnabled();
-    localStorage.setItem(SOUND_STORAGE_KEY, String(enabled));
-    updateToggle();
+    const url = new URL(window.location.href);
+    url.searchParams.set(
+      SOUND_QUERY_KEY,
+      enabled ? SOUND_QUERY_ON : SOUND_QUERY_OFF,
+    );
+
+    // The URL is the only sound state. Replace it first, then mirror that value
+    // to the root attribute and controls in the same click task.
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+    document.documentElement.dataset.soundEnabled = String(enabled);
+    updateToggle(enabled);
 
     if (enabled) {
       void playSound('click');
@@ -432,19 +459,6 @@ const handleClick = (event: MouseEvent) => {
       const isNavbarLink = Boolean(anchor.closest('.site-header'));
       void playSound(isNavbarLink ? 'page' : 'redirect');
 
-      const shouldDelayNavigation =
-        event.button === 0 &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.shiftKey &&
-        !event.altKey &&
-        !anchor.hasAttribute('download') &&
-        (!anchor.target || anchor.target === '_self');
-
-      if (shouldDelayNavigation && !isNavbarLink) {
-        event.preventDefault();
-        window.setTimeout(() => window.location.assign(anchor.href), 170);
-      }
     }
     // Same-path/hash-only navigation is intentionally silent.
     return;
@@ -480,12 +494,21 @@ export const playNetworkCollisionNote = async () => {
   playCollisionNote(context, startTime);
 };
 
+const applySoundStateFromUrl = () => {
+  const enabled = isEnabled();
+  document.documentElement.dataset.soundEnabled = String(enabled);
+  updateToggle(enabled);
+};
+
 export const initializeSiteSound = () => {
-  updateToggle();
+  applySoundStateFromUrl();
   getPageTurnAudio().load();
 
-  if (document.documentElement.hasAttribute(INITIALIZED_ATTRIBUTE)) return;
-  document.documentElement.setAttribute(INITIALIZED_ATTRIBUTE, 'true');
+  const siteSoundWindow = window as SiteSoundWindow;
+  if (siteSoundWindow.__hecateSiteSoundInstalled) return;
+
+  siteSoundWindow.__hecateSiteSoundInstalled = true;
   document.addEventListener('click', handleClick, { capture: true });
   document.addEventListener('change', handleChange, { capture: true });
+  window.addEventListener('popstate', applySoundStateFromUrl);
 };

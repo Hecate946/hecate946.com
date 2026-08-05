@@ -681,6 +681,7 @@
           rel={relFor(node)}
           class="force-network__node"
           class:force-network__node--featured={node.featured}
+          class:force-network__node--current={node.current}
           class:force-network__node--active={activeNodeId === node.id}
           class:force-network__node--connected={activeNodeId !== null &&
             isNodeConnected(node.id)}
@@ -897,6 +898,12 @@
       fill 140ms ease,
       stroke 140ms ease,
       stroke-width 140ms ease;
+  }
+
+  .force-network__node--current .force-network__node-surface {
+    fill: color-mix(in srgb, var(--node-accent) 14%, var(--network-node-fill));
+    stroke: var(--node-accent);
+    stroke-width: 2.6;
   }
 
   .force-network__node--featured .force-network__node-surface {

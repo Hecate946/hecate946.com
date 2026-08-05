@@ -1,20 +1,27 @@
 ---
+import HtmlSiteTree from '@/components/core/HtmlSiteTree.astro';
 import BaseHead from '@/components/core/BaseHead.astro';
+import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import '@/styles/not-found.css';
+import '@/styles/html-mode.css';
 
 const videoId = '9390xDUuPuU';
 const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&playsinline=1&rel=0&enablejsapi=1`;
+const currentPath = Astro.url.pathname;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light" data-html-mode="false">
   <head>
+    <ThemeBootstrap />
     <BaseHead title="404" description="this page is not here." />
   </head>
-  <body class="error-page">
-    <div class="error-noise" aria-hidden="true"></div>
+  <body class="error-page" data-html-page="interior">
+    <HtmlSiteTree {currentPath} />
 
-    <main class="error-stage">
+    <div class="error-noise" aria-hidden="true" data-default-only></div>
+
+    <main class="error-stage" data-default-only>
       <h1 class="error-code" aria-label="error 404">404</h1>
 
       <div class="error-video-shell">
@@ -28,9 +35,21 @@ const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&m
       </div>
     </main>
 
-    <button class="error-sound" type="button" aria-pressed="false">
+    <button class="error-sound" type="button" aria-pressed="false" data-default-only>
       sound off
     </button>
+
+    <main data-html-only>
+      <h1>404</h1>
+      <p>This page is not here.</p>
+    </main>
+
+    <script>
+      import { initializeHtmlMode } from '@/lib/html-mode';
+
+      initializeHtmlMode();
+      document.addEventListener('astro:page-load', initializeHtmlMode);
+    </script>
 
     <script is:inline>
       const frame = document.querySelector('#error-video');

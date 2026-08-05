@@ -92,9 +92,10 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             </p>
           </div>
 
-          <div class="project-grid" aria-label="Featured software projects">
-            <a class="project-card" href={loomiRepoUrl} target="_blank" rel="noopener noreferrer">
-              <div class="project-card__topline">
+          <ul class="project-grid" aria-label="Featured software projects" data-default-only>
+            <li class="project-grid__item">
+              <article class="project-card">
+              <header class="project-card__topline">
                 <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     fill="currentColor"
@@ -102,23 +103,27 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
                   />
                 </svg>
                 <span class="project-card__status">Public repository</span>
-              </div>
+              </header>
 
-              <div>
+              <div class="project-card__body">
                 <h3>Loomi</h3>
                 <p>A graph-based space for exploring classical music through connected works, people, and ideas.</p>
               </div>
 
-              <div class="project-card__meta">
+              <footer class="project-card__meta">
                 <span><i class="language-dot" aria-hidden="true"></i>TypeScript</span>
-                <span class="project-card__action">View on GitHub <span aria-hidden="true">↗︎</span></span>
-              </div>
-            </a>
+                <a class="project-card__action" href={loomiRepoUrl} target="_blank" rel="noopener noreferrer">
+                  View on GitHub <span aria-hidden="true">↗︎</span>
+                </a>
+              </footer>
+              </article>
+            </li>
 
             {
               sunsetRepoUrl ? (
-                <a class="project-card" href={sunsetRepoUrl} target="_blank" rel="noopener noreferrer">
-                  <div class="project-card__topline">
+                <li class="project-grid__item">
+                  <article class="project-card">
+                  <header class="project-card__topline">
                     <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
                       <path
                         fill="currentColor"
@@ -126,21 +131,25 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
                       />
                     </svg>
                     <span class="project-card__status">Repository</span>
-                  </div>
+                  </header>
 
-                  <div>
+                  <div class="project-card__body">
                     <h3>Sunset</h3>
                     <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
                   </div>
 
-                  <div class="project-card__meta">
+                  <footer class="project-card__meta">
                     <span>Reverse engineering</span>
-                    <span class="project-card__action">View on GitHub <span aria-hidden="true">↗︎</span></span>
-                  </div>
-                </a>
+                    <a class="project-card__action" href={sunsetRepoUrl} target="_blank" rel="noopener noreferrer">
+                      View on GitHub <span aria-hidden="true">↗︎</span>
+                    </a>
+                  </footer>
+                  </article>
+                </li>
               ) : (
-                <article class="project-card project-card--private" id="sunset-project">
-                  <div class="project-card__topline">
+                <li class="project-grid__item">
+                  <article class="project-card project-card--private" id="sunset-project">
+                  <header class="project-card__topline">
                     <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
                       <path
                         fill="currentColor"
@@ -148,21 +157,40 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
                       />
                     </svg>
                     <span class="project-card__status">Private repository</span>
-                  </div>
+                  </header>
 
-                  <div>
+                  <div class="project-card__body">
                     <h3>Sunset</h3>
                     <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
                   </div>
 
-                  <div class="project-card__meta">
+                  <footer class="project-card__meta">
                     <span>Reverse engineering</span>
                     <span class="project-card__action project-card__action--muted">Source unavailable</span>
-                  </div>
-                </article>
+                  </footer>
+                  </article>
+                </li>
               )
             }
-          </div>
+          </ul>
+
+          <section data-html-only aria-labelledby="html-software-projects-heading">
+            <h3 id="html-software-projects-heading">Featured software projects</h3>
+            <ul>
+              <li>
+                <strong>Loomi</strong>
+                <p>A graph-based space for exploring classical music through connected works, people, and ideas.</p>
+                <p>TypeScript</p>
+                <p><a href={loomiRepoUrl} target="_blank" rel="noopener noreferrer">View on GitHub</a></p>
+              </li>
+              <li>
+                <strong>Sunset</strong>
+                <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
+                <p>Reverse engineering</p>
+                <p>Source unavailable</p>
+              </li>
+            </ul>
+          </section>
         </div>
       </section>
 
@@ -187,7 +215,7 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             </p>
           </div>
 
-          <figure class="media-card video-card">
+          <figure class="media-card video-card" data-default-only>
             <div class="video-frame">
               <iframe
                 src="https://www.youtube-nocookie.com/embed/EkgH4zzXoNg"
@@ -207,6 +235,10 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
               </a>
             </figcaption>
           </figure>
+
+          <p data-html-only>
+            <a href={musicVideoUrl} target="_blank" rel="noopener noreferrer">Watch the featured performance on YouTube</a>
+          </p>
         </div>
       </section>
 
@@ -229,7 +261,7 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             </p>
           </div>
 
-          <a class="media-card article-card" href={pickleballArticleUrl} target="_blank" rel="noopener noreferrer">
+          <article class="media-card article-card" data-default-only>
             <div class="article-card__image-wrap">
               <img
                 src={pickleballImage720}
@@ -247,9 +279,15 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
                 <span class="media-card__kicker">DUPR tournament recap</span>
                 <strong>UCLA captures its first California Super Regional championship</strong>
               </div>
-              <span class="media-card__link">Read the article <span aria-hidden="true">↗︎</span></span>
+              <a class="media-card__link" href={pickleballArticleUrl} target="_blank" rel="noopener noreferrer">
+                Read the article <span aria-hidden="true">↗︎</span>
+              </a>
             </div>
-          </a>
+          </article>
+
+          <p data-html-only>
+            <a href={pickleballArticleUrl} target="_blank" rel="noopener noreferrer">Read the UCLA pickleball tournament recap</a>
+          </p>
         </div>
       </section>
 
@@ -273,14 +311,7 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             </p>
           </div>
 
-          <a
-            class="chess-card"
-            href={chessProfileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-chess-card
-            aria-label="Open Cyrus2020SD's Chess.com statistics"
-          >
+          <article class="chess-card" data-chess-card data-default-only>
             <div class="chess-card__identity">
               <div class="chess-card__mark" aria-hidden="true">♞</div>
               <div>
@@ -288,7 +319,15 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
                 <h3>Cyrus2020SD</h3>
                 <span class="chess-card__live" data-chess-status>Loading live ratings…</span>
               </div>
-              <span class="chess-card__arrow" aria-hidden="true">↗︎</span>
+              <a
+                class="chess-card__arrow"
+                href={chessProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open Cyrus2020SD's Chess.com statistics"
+              >
+                <span class="chess-card__link-label">View Chess.com profile </span><span aria-hidden="true">↗︎</span>
+              </a>
             </div>
 
             <div class="chess-card__stats" aria-label="Current Chess.com ratings">
@@ -305,7 +344,11 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
                 <strong data-rating="bullet">—</strong>
               </div>
             </div>
-          </a>
+          </article>
+
+          <p data-html-only>
+            <a href={chessProfileUrl} target="_blank" rel="noopener noreferrer">View the Cyrus2020SD Chess.com profile</a>
+          </p>
         </div>
       </section>
   </article>

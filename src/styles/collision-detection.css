@@ -78,9 +78,13 @@
 }
 
 .collision-credit {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0;
   font-family: var(--font-mono);
   font-size: 0.74rem;
   line-height: 1.6;
+  list-style: none;
 }
 
 .collision-credit a {

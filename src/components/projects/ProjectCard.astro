@@ -13,25 +13,29 @@ const image = withBase(project.image);
 const displayUrl = `hecate946.com/projects/${project.slug}`;
 ---
 
-<a class="project-window" href={href} aria-label={`View the ${project.title} case study`}>
-  <span class="project-window__image">
-    <img
-      src={image}
-      alt=""
-      width="1600"
-      height="1000"
-      loading={priority ? 'eager' : 'lazy'}
-      fetchpriority={priority ? 'high' : 'auto'}
-      decoding="async"
-    />
-    <strong class="project-window__title" aria-hidden="true">{project.title}</strong>
-    <span class="project-window__open" aria-hidden="true">
-      View project <span>↗</span>
-    </span>
-  </span>
+<li class="project-window-item">
+  <article class="project-window">
+    <div class="project-window__image">
+      <img
+        src={image}
+        alt=""
+        width="1600"
+        height="1000"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchpriority={priority ? 'high' : 'auto'}
+        decoding="async"
+      />
+      <a class="project-window__link" href={href} aria-label={`View the ${project.title} case study`}>
+        <h2 class="project-window__title">{project.title}</h2>
+      </a>
+      <span class="project-window__open" aria-hidden="true">
+        View project <span>↗</span>
+      </span>
+    </div>
 
-  <span class="project-window__caption">
-    <small>{project.category} · {project.period}</small>
-    <span class="project-window__url">{displayUrl}</span>
-  </span>
-</a>
+    <footer class="project-window__caption">
+      <p><small>{project.category} · {project.period}</small></p>
+      <p><span class="project-window__url">{displayUrl}</span></p>
+    </footer>
+  </article>
+</li>

@@ -5,13 +5,13 @@ const year = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
-  <div class="footer-controls">
+  <div class="footer-tools" aria-label="Site controls">
     <button
       class="footer-icon-link footer-sound-toggle"
       type="button"
-      aria-label="Enable sounds"
+      aria-label="Enable site sound"
       aria-pressed="false"
-      data-label="Enable sounds"
+      data-label="Sounds"
       data-sound-toggle
     >
       <svg class="footer-sound-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -23,17 +23,38 @@ const year = new Date().getFullYear();
     </button>
 
     <button
-      class="footer-icon-link footer-display-toggle"
+      class="footer-icon-link footer-html-mode-toggle"
       type="button"
-      aria-label="Enable ASCII mode"
+      aria-label="HTML mode"
       aria-pressed="false"
-      data-label="Enable ASCII mode"
-      data-display-mode-toggle
+      data-label="HTML mode"
+      data-html-mode-toggle
     >
-      <svg class="footer-display-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M8 6 3.5 12 8 18" />
-        <path d="m16 6 4.5 6-4.5 6" />
-        <path d="M10.5 18h3" />
+      <svg class="footer-code-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m9 7.25-4.75 4.75L9 16.75" />
+        <path d="m15 7.25 4.75 4.75L15 16.75" />
+        <path d="m13.75 5.25-3.5 13.5" />
+      </svg>
+    </button>
+
+    <button
+      class="footer-icon-link footer-site-map-toggle"
+      type="button"
+      aria-label="Open interactive site map"
+      aria-haspopup="dialog"
+      aria-controls="site-map-dialog"
+      aria-expanded="false"
+      data-label="Site map"
+      data-site-map-toggle
+    >
+      <svg class="footer-site-map-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5.25 6.2 9.1m5.8-3.85 5.8 3.85M6.2 9.1v5.8m11.6-5.8v5.8M6.2 14.9 12 18.75m5.8-3.85L12 18.75" />
+        <circle cx="12" cy="4.4" r="2.15" />
+        <circle cx="5.25" cy="9.75" r="2.15" />
+        <circle cx="18.75" cy="9.75" r="2.15" />
+        <circle cx="5.25" cy="15.55" r="2.15" />
+        <circle cx="18.75" cy="15.55" r="2.15" />
+        <circle cx="12" cy="19.6" r="2.15" />
       </svg>
     </button>
   </div>
@@ -79,3 +100,36 @@ const year = new Date().getFullYear();
     </a>
   </nav>
 </footer>
+
+<script>
+  type SiteMapWindow = typeof window & {
+    __hecateSiteMapPending?: boolean;
+    __hecateSiteMapStateBound?: boolean;
+  };
+
+  const siteMapWindow = window as SiteMapWindow;
+
+  const initializeSiteMapButton = () => {
+    document.querySelectorAll<HTMLElement>('[data-site-map-toggle]').forEach((button) => {
+      if (button.dataset.siteMapBound === 'true') return;
+      button.dataset.siteMapBound = 'true';
+      button.addEventListener('click', () => {
+        siteMapWindow.__hecateSiteMapPending = true;
+        window.dispatchEvent(new CustomEvent('site-map:open'));
+      });
+    });
+  };
+
+  if (!siteMapWindow.__hecateSiteMapStateBound) {
+    siteMapWindow.__hecateSiteMapStateBound = true;
+    window.addEventListener('site-map:state', (event) => {
+      const open = Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open);
+      document.querySelectorAll<HTMLElement>('[data-site-map-toggle]').forEach((button) => {
+        button.setAttribute('aria-expanded', String(open));
+      });
+    });
+  }
+
+  initializeSiteMapButton();
+  document.addEventListener('astro:page-load', initializeSiteMapButton);
+</script>

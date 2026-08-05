@@ -9,15 +9,16 @@
 .project-window-list {
   display: grid;
   gap: var(--projects-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-window-item {
+  min-width: 0;
 }
 
 .project-window {
-  display: block;
-  color: var(--text);
-  text-decoration: none;
-}
-
-.project-window:hover {
   color: var(--text);
 }
 
@@ -61,26 +62,33 @@
     transform 700ms var(--ease-standard);
 }
 
-.project-window__title {
+.project-window__link {
   position: absolute;
   z-index: 2;
+  inset: 0;
+  color: #26333d;
+  text-decoration: none;
+}
+
+.project-window__title {
+  position: absolute;
   top: clamp(1rem, 3vw, 1.75rem);
   left: clamp(1rem, 3vw, 1.75rem);
   max-width: min(62%, 22rem);
-  color: #26333d;
+  margin: 0;
+  color: inherit;
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 4vw, 3.25rem);
   font-weight: 400;
   letter-spacing: -0.035em;
   line-height: 0.96;
-  pointer-events: none;
   text-wrap: balance;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .project-window__open {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   right: clamp(0.8rem, 2vw, 1.2rem);
   bottom: clamp(0.8rem, 2vw, 1.2rem);
   display: inline-flex;
@@ -95,6 +103,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   opacity: 0;
+  pointer-events: none;
   transform: translateY(0.5rem);
   transition:
     opacity var(--duration-medium) ease,
@@ -107,6 +116,10 @@
   justify-content: space-between;
   gap: 1.5rem;
   padding-top: 0.75rem;
+}
+
+.project-window__caption p {
+  margin: 0;
 }
 
 .project-window__caption small,
@@ -122,36 +135,42 @@
 }
 
 .project-window__url {
+  position: relative;
+  z-index: 4;
   overflow-wrap: anywhere;
   text-align: right;
 }
 
-.project-window:is(:hover, :focus-visible) .project-window__image {
+.project-window:hover .project-window__image,
+.project-window:focus-within .project-window__image {
   border-color: var(--accent);
   box-shadow: 0 1.35rem 3.25rem color-mix(in srgb, var(--text) 13%, transparent);
   transform: translateY(-0.18rem);
 }
 
-.project-window:is(:hover, :focus-visible) .project-window__image::after {
+.project-window:hover .project-window__image::after,
+.project-window:focus-within .project-window__image::after {
   opacity: 1;
 }
 
-.project-window:is(:hover, :focus-visible) .project-window__image img {
+.project-window:hover .project-window__image img,
+.project-window:focus-within .project-window__image img {
   filter: grayscale(0) saturate(1) contrast(1);
   opacity: 1;
   transform: scale(1.02);
 }
 
-.project-window:is(:hover, :focus-visible) .project-window__open {
+.project-window:hover .project-window__open,
+.project-window:focus-within .project-window__open {
   opacity: 1;
   transform: translateY(0);
 }
 
-.project-window:focus-visible {
+.project-window__link:focus-visible {
   outline: none;
 }
 
-.project-window:focus-visible .project-window__image {
+.project-window:focus-within .project-window__image {
   outline: 0.16rem solid var(--accent);
   outline-offset: 0.22rem;
 }

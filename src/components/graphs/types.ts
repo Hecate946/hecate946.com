@@ -22,6 +22,8 @@ export type NetworkNode = {
   radius?: number;
   anchor?: NetworkAnchor;
   featured?: boolean;
+  /** Marks the route currently being viewed. */
+  current?: boolean;
 };
 
 export type NetworkLink = {

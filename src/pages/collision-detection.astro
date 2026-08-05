@@ -27,16 +27,20 @@ import '@/styles/collision-detection.css';
 
       <CollisionDetection client:visible />
 
-      <p class="collision-credit">
-        Rigid-body physics powered by
-        <a href="https://rapier.rs/" target="_blank" rel="noopener noreferrer">Rapier</a>.
-        Original visual experiment inspired by Mike Bostock’s
-        <a
-          href="https://observablehq.com/@d3/collision-detection/2?collection=@d3/d3-force"
-          target="_blank"
-          rel="noopener noreferrer"
-        >D3 collision example</a>.
-      </p>
+      <ul class="collision-credit" aria-label="Experiment credits">
+        <li>
+          Rigid-body physics powered by
+          <a href="https://rapier.rs/" target="_blank" rel="noopener noreferrer">Rapier</a>.
+        </li>
+        <li>
+          Original visual experiment inspired by Mike Bostock’s
+          <a
+            href="https://observablehq.com/@d3/collision-detection/2?collection=@d3/d3-force"
+            target="_blank"
+            rel="noopener noreferrer"
+          >D3 collision example</a>.
+        </li>
+      </ul>
     </div>
   </section>
 </BaseLayout>

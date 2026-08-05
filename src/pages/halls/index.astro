@@ -11,21 +11,30 @@ import { withBase } from '@/lib/paths';
       <h1>Halls</h1>
     </header>
 
-    <div class="hall-grid">
-      {hallCatalog.map((hall) => hall.implemented ? (
-        <a href={withBase(`/halls/${hall.slug}/`)} style={`--space-color: ${hall.accent}`}>
-          <span>{hall.label}</span>
-          <strong>{hall.title}</strong>
-          <small>Enter hall</small>
-        </a>
-      ) : (
-        <article class="planned" style={`--space-color: ${hall.accent}`}>
-          <span>{hall.label}</span>
-          <strong>{hall.title}</strong>
-          <small>In development</small>
-        </article>
-      ))}
-    </div>
+    <ul class="hall-grid" role="list">
+      {
+        hallCatalog.map((hall) => (
+          <li
+            class:list={['hall-card', { planned: !hall.implemented }]}
+            style={`--space-color: ${hall.accent}`}
+          >
+            {hall.implemented ? (
+              <a class="hall-card__link" href={withBase(`/halls/${hall.slug}/`)}>
+                <span>{hall.label}</span>
+                <strong>{hall.title}</strong>
+                <small>Enter hall</small>
+              </a>
+            ) : (
+              <article class="hall-card__content">
+                <span>{hall.label}</span>
+                <strong>{hall.title}</strong>
+                <small>In development</small>
+              </article>
+            )}
+          </li>
+        ))
+      }
+    </ul>
   </section>
 </BaseLayout>
 
@@ -37,7 +46,9 @@ import { withBase } from '@/lib/paths';
   }
 
   header p,
-  header h1 { margin: 0; }
+  header h1 {
+    margin: 0;
+  }
 
   header p,
   span,
@@ -63,38 +74,82 @@ import { withBase } from '@/lib/paths';
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
-    margin-top: clamp(2rem, 5vw, 4rem);
+    padding: 0;
+    margin: clamp(2rem, 5vw, 4rem) 0 0;
+    list-style: none;
   }
 
-  a,
-  article {
-    display: flex;
+  .hall-card {
+    position: relative;
+    min-width: 0;
     min-height: 18rem;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 1rem;
+    overflow: hidden;
     background: color-mix(in srgb, var(--space-color), black 18%);
     border: 1px solid color-mix(in srgb, var(--space-color), white 26%);
     color: #fff;
+    contain: paint;
+    isolation: isolate;
   }
 
-  a {
+  .hall-card__link,
+  .hall-card__content {
+    position: relative;
+    inset: auto;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem;
+    color: #fff;
+  }
+
+  .hall-card__link {
     text-decoration: none;
-    transition: transform 180ms ease, filter 180ms ease;
+    transition: filter 180ms ease, transform 180ms ease;
   }
 
-  a:hover {
+  .hall-card__link:hover,
+  .hall-card__link:focus-visible {
+    color: #fff;
     filter: brightness(1.15);
     transform: translateY(-0.25rem);
   }
 
-  .planned { filter: saturate(0.35); opacity: 0.72; }
-  span { font-size: 0.68rem; letter-spacing: 0.12em; }
-  strong { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 4rem); font-weight: 400; }
-  small { font-size: 0.65rem; letter-spacing: 0.1em; }
+  .hall-card__link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -0.3rem;
+  }
+
+  .planned {
+    filter: saturate(0.35);
+    opacity: 0.72;
+  }
+
+  span {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+  }
+
+  strong {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 4rem);
+    font-weight: 400;
+  }
+
+  small {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
 
   @media (max-width: 700px) {
-    .hall-grid { grid-template-columns: 1fr; }
-    a, article { min-height: 12rem; }
+    .hall-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hall-card {
+      min-height: 12rem;
+    }
   }
 </style>

@@ -15,13 +15,13 @@ import '@/styles/projects-index.css';
     </header>
 
     <div class="projects-content interior-page-content">
-      <div class="project-window-list" aria-label="Selected projects">
+      <ul class="project-window-list" aria-label="Selected projects">
         {
           projects.map((project, index) => (
             <ProjectCard project={project} priority={index === 0} />
           ))
         }
-      </div>
+      </ul>
     </div>
   </section>
 </BaseLayout>

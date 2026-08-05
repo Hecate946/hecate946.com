@@ -32,16 +32,20 @@ const resolveLink = (href: string) => href.startsWith('/') ? withBase(href) : hr
 
       {
         projectLinks.length > 0 && (
-          <nav class="project-links" aria-label={`${project.title} links`}>
-            {projectLinks.map((link) => (
-              <a
-                href={resolveLink(link.href)}
-                target={link.href.startsWith('http') ? '_blank' : undefined}
-                rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-              >
-                {link.label} <span aria-hidden="true">↗</span>
-              </a>
-            ))}
+          <nav aria-label={`${project.title} links`}>
+            <ul class="project-links">
+              {projectLinks.map((link) => (
+                <li>
+                  <a
+                    href={resolveLink(link.href)}
+                    target={link.href.startsWith('http') ? '_blank' : undefined}
+                    rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  >
+                    {link.label} <span aria-hidden="true">↗</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </nav>
         )
       }

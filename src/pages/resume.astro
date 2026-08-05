@@ -28,26 +28,32 @@ const resumes = [
       <h1 id="resume-title">Resume</h1>
     </header>
 
-    <div class="resume-list interior-page-content">
+    <ul class="resume-list interior-page-content">
       {
         resumes.map((resume) => (
-          <article class="resume-entry">
-            <div class="resume-copy">
-              <h2>{resume.title}</h2>
-              <p>{resume.description}</p>
-            </div>
+          <li class="resume-list__item">
+            <article class="resume-entry">
+              <div class="resume-copy">
+                <h2>{resume.title}</h2>
+                <p>{resume.description}</p>
+              </div>
 
-            <div class="resume-actions" aria-label={`${resume.title} actions`}>
-              <a href={resume.href} target="_blank" rel="noopener noreferrer">
-                View PDF
-              </a>
-              <a href={resume.href} download={resume.downloadName}>
-                Download
-              </a>
-            </div>
-          </article>
+              <ul class="resume-actions" aria-label={`${resume.title} actions`}>
+                <li>
+                  <a href={resume.href} target="_blank" rel="noopener noreferrer">
+                    View PDF
+                  </a>
+                </li>
+                <li>
+                  <a href={resume.href} download={resume.downloadName}>
+                    Download
+                  </a>
+                </li>
+              </ul>
+            </article>
+          </li>
         ))
       }
-    </div>
+    </ul>
   </section>
 </BaseLayout>

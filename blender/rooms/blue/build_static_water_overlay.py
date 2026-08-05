@@ -35,22 +35,23 @@ RENDER_QUALITY = "PREVIEW"
 
 USE_GPU = True
 FRAME_START = 1
-FRAME_END = 12
-FRAME_RATE = 6
+FRAME_END = 36
+FRAME_RATE = 12
 KEEP_RENDERED_FRAMES = False
 
 # Water tuning: lower fill, clearer water, calmer motion, and wall-to-wall coverage.
 WATER_FILL_RATIO = 0.30
-WATER_SURFACE_PRIMARY_SLOSH = 0.018
-WATER_SURFACE_SECONDARY_SLOSH = 0.010
-WATER_RIPPLE_A_STRENGTH = 0.0022
-WATER_RIPPLE_B_STRENGTH = 0.0011
+WATER_SURFACE_PRIMARY_SLOSH = 0.045
+WATER_SURFACE_SECONDARY_SLOSH = 0.028
+WATER_RIPPLE_A_STRENGTH = 0.008
+WATER_RIPPLE_B_STRENGTH = 0.0045
 WATER_EDGE_OVERSCAN = 0.22
 SEAM_FIX_COLUMNS = 6
 WATER_WALL_OVERLAP = 0.18
+WATER_RIPPLE_C_STRENGTH = 0.003
 
 QUALITY_PRESETS = {
-    "PREVIEW": {"width": 1280, "height": 640, "samples": 12},
+    "PREVIEW": {"width": 1600, "height": 800, "samples": 18},
     "FAST": {"width": 2048, "height": 1024, "samples": 32},
     "LIT": {"width": 4096, "height": 2048, "samples": 64},
 }
@@ -114,7 +115,17 @@ def set_socket(node, names, value) -> None:
             return
 
 
-def create_water_material(name: str, preview_mode: bool = False):
+def animate_socket_ping_pong(socket, start_value: float, peak_value: float, end_frame: int):
+    mid_frame = max(2, end_frame // 2)
+    socket.default_value = start_value
+    socket.keyframe_insert(data_path="default_value", frame=1)
+    socket.default_value = peak_value
+    socket.keyframe_insert(data_path="default_value", frame=mid_frame)
+    socket.default_value = start_value
+    socket.keyframe_insert(data_path="default_value", frame=end_frame)
+
+
+def create_water_material(name: str, preview_mode: bool = False, frame_end: int = FRAME_END):
     mat = bpy.data.materials.new(name)
     node_tree = mat.node_tree
     if node_tree is None:
@@ -127,43 +138,71 @@ def create_water_material(name: str, preview_mode: bool = False):
     if bsdf is None or material_output is None:
         raise RuntimeError("Principled BSDF or Material Output is unavailable.")
 
-    # Overlay-only water material: the base room remains visible underneath.
-    # This material renders only subtle tint, highlights, reflections, and
-    # ripple shading, instead of a second refracted copy of the whole room.
-    set_socket(bsdf, "Base Color", (0.78, 0.91, 1.0, 1.0))
-    set_socket(bsdf, "Roughness", 0.028 if preview_mode else 0.018)
+    # More realistic swimming-pool water: bluer tint, more reflective highlights,
+    # and far less milky opacity so the tiled floor remains visible below.
+    set_socket(bsdf, "Roughness", 0.02 if preview_mode else 0.014)
     set_socket(bsdf, "IOR", 1.333)
-    set_socket(bsdf, "Specular IOR Level", 0.22 if preview_mode else 0.32)
+    set_socket(bsdf, "Specular IOR Level", 0.32 if preview_mode else 0.42)
     set_socket(bsdf, "Transmission Weight", 0.0)
     set_socket(bsdf, "Transmission", 0.0)
 
     noise_a = nodes.new("ShaderNodeTexNoise")
-    noise_a.inputs["Scale"].default_value = 11.0
-    noise_a.inputs["Detail"].default_value = 6.5
-    noise_a.inputs["Roughness"].default_value = 0.42
+    noise_a.noise_dimensions = "4D"
+    noise_a.inputs["Scale"].default_value = 9.5
+    noise_a.inputs["Detail"].default_value = 7.5
+    noise_a.inputs["Roughness"].default_value = 0.46
 
     noise_b = nodes.new("ShaderNodeTexNoise")
-    noise_b.inputs["Scale"].default_value = 4.0
-    noise_b.inputs["Detail"].default_value = 5.0
-    noise_b.inputs["Roughness"].default_value = 0.36
+    noise_b.noise_dimensions = "4D"
+    noise_b.inputs["Scale"].default_value = 3.6
+    noise_b.inputs["Detail"].default_value = 5.4
+    noise_b.inputs["Roughness"].default_value = 0.34
+
+    noise_caustic = nodes.new("ShaderNodeTexNoise")
+    noise_caustic.noise_dimensions = "4D"
+    noise_caustic.inputs["Scale"].default_value = 23.0
+    noise_caustic.inputs["Detail"].default_value = 2.2
+    noise_caustic.inputs["Roughness"].default_value = 0.28
+
+    # Animate the procedural surface itself so every frame has visible motion.
+    animate_socket_ping_pong(noise_a.inputs["W"], 0.0, 0.7, frame_end)
+    animate_socket_ping_pong(noise_b.inputs["W"], 0.25, 1.0, frame_end)
+    animate_socket_ping_pong(noise_caustic.inputs["W"], 0.14, 1.25, frame_end)
 
     bump_mix = nodes.new("ShaderNodeMixRGB")
     bump_mix.blend_type = "ADD"
-    bump_mix.inputs["Fac"].default_value = 0.08
+    bump_mix.inputs["Fac"].default_value = 0.12
 
     bump = nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value = 0.0014 if preview_mode else 0.002
+    bump.inputs["Strength"].default_value = 0.010 if preview_mode else 0.0135
     bump.inputs["Distance"].default_value = 1.0
+
+    deep_blue = nodes.new("ShaderNodeRGB")
+    deep_blue.outputs[0].default_value = (0.18, 0.58, 0.9, 1.0)
+    shallow_blue = nodes.new("ShaderNodeRGB")
+    shallow_blue.outputs[0].default_value = (0.54, 0.88, 1.0, 1.0)
+    tint_mix = nodes.new("ShaderNodeMixRGB")
+    tint_mix.blend_type = "MIX"
+    tint_mix.inputs["Fac"].default_value = 0.35
+
+    caustic_ramp = nodes.new("ShaderNodeValToRGB")
+    caustic_ramp.color_ramp.elements[0].position = 0.62
+    caustic_ramp.color_ramp.elements[0].color = (0.0, 0.0, 0.0, 1.0)
+    caustic_ramp.color_ramp.elements[1].position = 0.95
+    caustic_ramp.color_ramp.elements[1].color = (0.75, 0.95, 1.0, 1.0)
+    caustic_screen = nodes.new("ShaderNodeMixRGB")
+    caustic_screen.blend_type = "SCREEN"
+    caustic_screen.inputs["Fac"].default_value = 0.18 if preview_mode else 0.22
 
     transparent = nodes.new("ShaderNodeBsdfTransparent")
     fresnel = nodes.new("ShaderNodeFresnel")
     fresnel.inputs["IOR"].default_value = 1.333
     visibility_scale = nodes.new("ShaderNodeMath")
     visibility_scale.operation = "MULTIPLY"
-    visibility_scale.inputs[1].default_value = 0.55 if preview_mode else 0.7
+    visibility_scale.inputs[1].default_value = 0.38 if preview_mode else 0.46
     visibility_bias = nodes.new("ShaderNodeMath")
     visibility_bias.operation = "ADD"
-    visibility_bias.inputs[1].default_value = 0.05 if preview_mode else 0.08
+    visibility_bias.inputs[1].default_value = 0.02 if preview_mode else 0.03
     clamp = nodes.new("ShaderNodeClamp")
     mix_shader = nodes.new("ShaderNodeMixShader")
 
@@ -171,6 +210,13 @@ def create_water_material(name: str, preview_mode: bool = False):
     links.new(noise_b.outputs["Fac"], bump_mix.inputs[2])
     links.new(bump_mix.outputs["Color"], bump.inputs["Height"])
     links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+
+    links.new(deep_blue.outputs["Color"], tint_mix.inputs[1])
+    links.new(shallow_blue.outputs["Color"], tint_mix.inputs[2])
+    links.new(noise_caustic.outputs["Fac"], caustic_ramp.inputs["Fac"])
+    links.new(tint_mix.outputs["Color"], caustic_screen.inputs[1])
+    links.new(caustic_ramp.outputs["Color"], caustic_screen.inputs[2])
+    links.new(caustic_screen.outputs["Color"], bsdf.inputs["Base Color"])
 
     links.new(fresnel.outputs["Fac"], visibility_scale.inputs[0])
     links.new(visibility_scale.outputs["Value"], visibility_bias.inputs[0])
@@ -189,6 +235,12 @@ def add_motion_driver_empty(name: str, location=(0.0, 0.0, 0.0)):
     empty.location = location
     bpy.context.scene.collection.objects.link(empty)
     return empty
+
+
+def animate_empty_loop(empty, waypoints):
+    for frame, location in waypoints:
+        empty.location = location
+        empty.keyframe_insert(data_path="location", frame=frame)
 
 
 def add_water_clip_box(room_width: float, room_depth: float, water_height: float):
@@ -213,8 +265,8 @@ def add_water_object(room_builder_module, frame_end: int, preview_mode: bool = F
     room_height = room_builder_module.ROOM_HEIGHT
 
     water_height = room_height * WATER_FILL_RATIO
-    grid_x = 48 if preview_mode else 120
-    grid_y = 72 if preview_mode else 180
+    grid_x = 64 if preview_mode else 120
+    grid_y = 96 if preview_mode else 180
 
     bpy.ops.mesh.primitive_grid_add(
         x_subdivisions=grid_x,
@@ -239,45 +291,79 @@ def add_water_object(room_builder_module, frame_end: int, preview_mode: bool = F
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
     water.data.materials.clear()
-    water.data.materials.append(create_water_material("BlueRoomAnimatedWater", preview_mode=preview_mode))
+    water.data.materials.append(
+        create_water_material(
+            "BlueRoomAnimatedWater",
+            preview_mode=preview_mode,
+            frame_end=frame_end,
+        )
+    )
 
-    # Large slow slosh travelling across the pool.
+    # Broad, gentle slosh across the pool. These waves stay subtle so the
+    # motion feels like calm water in a room rather than stormy water.
     wave_x = water.modifiers.new("WaterSloshX", "WAVE")
     wave_x.use_x = True
     wave_x.use_y = False
     wave_x.height = WATER_SURFACE_PRIMARY_SLOSH
-    wave_x.width = 2.8
-    wave_x.narrowness = 0.8
-    wave_x.speed = 0.14
-    wave_x.start_position_x = -room_width * 0.55
+    wave_x.width = 2.3
+    wave_x.narrowness = 0.95
+    wave_x.speed = 0.34
+    wave_x.start_position_x = -room_width * 0.62
 
     wave_y = water.modifiers.new("WaterSloshY", "WAVE")
     wave_y.use_x = False
     wave_y.use_y = True
     wave_y.height = WATER_SURFACE_SECONDARY_SLOSH
-    wave_y.width = 2.5
-    wave_y.narrowness = 0.72
-    wave_y.speed = 0.11
-    wave_y.start_position_y = room_depth * 0.38
+    wave_y.width = 1.9
+    wave_y.narrowness = 0.82
+    wave_y.speed = 0.27
+    wave_y.start_position_y = room_depth * 0.46
 
-    # Finer surface motion on top of the large slosh.
+    # Layer several very weak moving displacement fields on top of the broad
+    # slosh to create realistic, gentle ripple interference.
     ripple_empty_a = add_motion_driver_empty("WaterRippleDriverA")
     ripple_empty_b = add_motion_driver_empty("WaterRippleDriverB")
+    ripple_empty_c = add_motion_driver_empty("WaterRippleDriverC")
 
-    ripple_empty_a.location = (-0.2, -0.5, 0.0)
-    ripple_empty_a.keyframe_insert(data_path="location", frame=1)
-    ripple_empty_a.location = (0.5, 0.75, 0.0)
-    ripple_empty_a.keyframe_insert(data_path="location", frame=frame_end)
+    quarter = max(frame_end // 4, 2)
+    half = max(frame_end // 2, 3)
+    three_quarter = max((frame_end * 3) // 4, 4)
 
-    ripple_empty_b.location = (0.4, 0.25, 0.0)
-    ripple_empty_b.keyframe_insert(data_path="location", frame=1)
-    ripple_empty_b.location = (-0.55, -0.65, 0.0)
-    ripple_empty_b.keyframe_insert(data_path="location", frame=frame_end)
+    animate_empty_loop(
+        ripple_empty_a,
+        [
+            (1, (-0.65, -0.24, 0.0)),
+            (quarter, (-0.1, 0.42, 0.0)),
+            (half, (0.56, 0.12, 0.0)),
+            (three_quarter, (0.08, -0.48, 0.0)),
+            (frame_end, (-0.65, -0.24, 0.0)),
+        ],
+    )
+    animate_empty_loop(
+        ripple_empty_b,
+        [
+            (1, (0.58, -0.44, 0.0)),
+            (quarter, (0.16, -0.02, 0.0)),
+            (half, (-0.42, 0.54, 0.0)),
+            (three_quarter, (-0.18, 0.05, 0.0)),
+            (frame_end, (0.58, -0.44, 0.0)),
+        ],
+    )
+    animate_empty_loop(
+        ripple_empty_c,
+        [
+            (1, (0.0, 0.58, 0.0)),
+            (quarter, (0.42, 0.08, 0.0)),
+            (half, (0.0, -0.55, 0.0)),
+            (three_quarter, (-0.46, -0.12, 0.0)),
+            (frame_end, (0.0, 0.58, 0.0)),
+        ],
+    )
 
     ripple_texture_a = bpy.data.textures.new("BlueWaterRippleA", "CLOUDS")
-    ripple_texture_a.noise_scale = 0.18
+    ripple_texture_a.noise_scale = 0.16
     ripple_texture_a.noise_depth = 3
-    ripple_texture_a.contrast = 1.25
+    ripple_texture_a.contrast = 1.05
     ripple_texture_a.intensity = 1.0
 
     ripple_displace_a = water.modifiers.new("WaterRippleA", "DISPLACE")
@@ -288,8 +374,8 @@ def add_water_object(room_builder_module, frame_end: int, preview_mode: bool = F
     ripple_displace_a.mid_level = 0.5
 
     ripple_texture_b = bpy.data.textures.new("BlueWaterRippleB", "MUSGRAVE")
-    ripple_texture_b.noise_scale = 0.08
-    ripple_texture_b.intensity = 0.9
+    ripple_texture_b.noise_scale = 0.075
+    ripple_texture_b.intensity = 0.82
 
     ripple_displace_b = water.modifiers.new("WaterRippleB", "DISPLACE")
     ripple_displace_b.texture = ripple_texture_b
@@ -297,6 +383,33 @@ def add_water_object(room_builder_module, frame_end: int, preview_mode: bool = F
     ripple_displace_b.texture_coords_object = ripple_empty_b
     ripple_displace_b.strength = WATER_RIPPLE_B_STRENGTH
     ripple_displace_b.mid_level = 0.5
+
+    ripple_texture_c = bpy.data.textures.new("BlueWaterRippleC", "DISTORTED_NOISE")
+    ripple_texture_c.noise_scale = 0.055
+    ripple_texture_c.distortion = 0.8
+
+    ripple_displace_c = water.modifiers.new("WaterRippleC", "DISPLACE")
+    ripple_displace_c.texture = ripple_texture_c
+    ripple_displace_c.texture_coords = "OBJECT"
+    ripple_displace_c.texture_coords_object = ripple_empty_c
+    ripple_displace_c.strength = WATER_RIPPLE_C_STRENGTH
+    ripple_displace_c.mid_level = 0.5
+
+    # Make the overall waterline visibly breathe and rock. This is deliberately
+    # stronger than the previous pass, but still below rough/stormy motion.
+    half = max(2, frame_end // 2)
+    water.location.z = water_height
+    water.rotation_euler = (0.0, 0.0, 0.0)
+    water.keyframe_insert(data_path="location", frame=1)
+    water.keyframe_insert(data_path="rotation_euler", frame=1)
+    water.location.z = water_height + 0.018
+    water.rotation_euler = (0.018, -0.014, 0.0)
+    water.keyframe_insert(data_path="location", frame=half)
+    water.keyframe_insert(data_path="rotation_euler", frame=half)
+    water.location.z = water_height
+    water.rotation_euler = (0.0, 0.0, 0.0)
+    water.keyframe_insert(data_path="location", frame=frame_end)
+    water.keyframe_insert(data_path="rotation_euler", frame=frame_end)
 
     solidify = water.modifiers.new("WaterBody", "SOLIDIFY")
     solidify.thickness = water_height

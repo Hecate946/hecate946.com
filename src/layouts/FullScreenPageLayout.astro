@@ -1,8 +1,8 @@
 ---
-import AsciiSiteTree from '@/components/core/AsciiSiteTree.astro';
+import HtmlSiteTree from '@/components/core/HtmlSiteTree.astro';
 import BaseHead from '@/components/core/BaseHead.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
-import '@/styles/ascii-mode.css';
+import '@/styles/html-mode.css';
 
 interface Props {
   title: string;
@@ -15,26 +15,26 @@ const plainTitle = title.split('—')[0].trim();
 ---
 
 <!doctype html>
-<html lang="en" data-display-mode="default" data-theme="light">
+<html lang="en" data-html-mode="false" data-theme="light">
   <head>
     <ThemeBootstrap />
     <BaseHead {title} {description} />
   </head>
-  <body data-ascii-page="interior">
-    <AsciiSiteTree {currentPath} />
+  <body data-html-page="interior">
+    <HtmlSiteTree {currentPath} />
 
     <div data-default-only>
       <slot />
     </div>
 
-    <section data-ascii-only>
+    <section data-html-only>
       <h1>{plainTitle}</h1>
       <p>{description}</p>
     </section>
 
     <script>
-      import { initializeDisplayMode } from '@/lib/display-mode';
-      initializeDisplayMode();
+      import { initializeHtmlMode } from '@/lib/html-mode';
+      initializeHtmlMode();
     </script>
   </body>
 </html>

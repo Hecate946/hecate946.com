@@ -216,6 +216,13 @@
   z-index: 1;
   display: grid;
   gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-links__item {
+  min-width: 0;
 }
 
 .contact-link-card {
@@ -228,14 +235,14 @@
   padding: 1.2rem;
   border-radius: 1.2rem;
   color: var(--text);
-  text-decoration: none;
   transition:
     border-color var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease,
     transform var(--duration-fast) ease;
 }
 
-.contact-link-card:hover {
+.contact-link-card:hover,
+.contact-link-card:focus-within {
   border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
   box-shadow: 0 1.35rem 3rem color-mix(in srgb, var(--shadow) 48%, transparent);
   transform: translateX(0.35rem);
@@ -295,8 +302,12 @@
   min-width: 0;
 }
 
-.contact-link-copy strong {
+.contact-link-copy h2,
+.contact-link-copy p {
   margin: 0;
+}
+
+.contact-link-copy h2 {
   overflow: visible;
   font-family: var(--font-display);
   font-size: 1.08rem;
@@ -304,13 +315,28 @@
   line-height: 1.2;
 }
 
+.contact-link-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.contact-link-card__link::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+}
+
+.contact-link-card__link:focus-visible {
+  outline: none;
+}
+
 /* Avoid the display font's malformed ff ligature in “coffee.” */
-.contact-link-card--coffee .contact-link-copy strong {
+.contact-link-card--coffee .contact-link-copy h2 {
   font-variant-ligatures: none;
   font-feature-settings: 'liga' 0, 'clig' 0;
 }
 
-.contact-link-copy small {
+.contact-link-copy p {
   color: var(--muted);
   font-size: 0.76rem;
 }
@@ -324,7 +350,8 @@
     transform var(--duration-fast) ease;
 }
 
-.contact-link-card:hover .contact-link-arrow {
+.contact-link-card:hover .contact-link-arrow,
+.contact-link-card:focus-within .contact-link-arrow {
   color: var(--accent-strong);
   transform: translate(0.12rem, -0.12rem);
 }

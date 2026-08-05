@@ -42,9 +42,9 @@ const housePreviewPages = [
 {
   isHome ? (
     <section
-      class="ascii-site-tree"
-      data-ascii-only
-      aria-label="Text mode site index"
+      class="html-site-tree"
+      data-html-only
+      aria-label="HTML mode site index"
     >
       <header>
         <p><strong>hecate946.com</strong></p>
@@ -208,7 +208,8 @@ const housePreviewPages = [
             data-label="Enable sounds"
             data-sound-toggle
           >
-            <span data-sound-toggle-text>Enable sounds</span>
+            <span data-sound-label="enable">Enable sounds</span>
+            <span data-sound-label="disable">Disable sounds</span>
           </button>
         </div>
         <div>
@@ -218,15 +219,15 @@ const housePreviewPages = [
             aria-label="Return to standard site"
             aria-pressed="true"
             data-label="Return to standard site"
-            data-display-mode-toggle
+            data-html-mode-toggle
           >
-            <span data-display-mode-text>Return to standard site</span>
+            <span data-html-mode-text>Return to standard site</span>
           </button>
         </div>
       </div>
     </section>
   ) : (
-    <nav class="ascii-back" data-ascii-only aria-label="Text mode controls">
+    <nav class="html-back" data-html-only aria-label="HTML mode controls">
       <a href={withBase('/')} data-astro-prefetch>&lt;- back</a>
       <span aria-hidden="true"> | </span>
       <button
@@ -234,9 +235,9 @@ const housePreviewPages = [
         aria-label="Return to standard site"
         aria-pressed="true"
         data-label="Return to standard site"
-        data-display-mode-toggle
+        data-html-mode-toggle
       >
-        <span data-display-mode-text>Return to standard site</span>
+        <span data-html-mode-text>Return to standard site</span>
       </button>
     </nav>
   )

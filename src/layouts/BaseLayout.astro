@@ -1,5 +1,5 @@
 ---
-import AsciiSiteTree from '@/components/core/AsciiSiteTree.astro';
+import HtmlSiteTree from '@/components/core/HtmlSiteTree.astro';
 import BaseHead from '@/components/core/BaseHead.astro';
 import Footer from '@/components/core/Footer.astro';
 import Header from '@/components/core/Header.astro';
@@ -8,14 +8,18 @@ import SkipLink from '@/components/core/SkipLink.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import SeasonalShower from '@/components/islands/SeasonalShower.svelte';
 import CommandPalette from '@/components/islands/CommandPalette.svelte';
+import SiteMapOverlay from '@/components/islands/SiteMapOverlay.svelte';
 import { headerNavigation } from '@/config/navigation';
 import { railwayConfig } from '@/config/railway';
 import { shouldShowSeasonalShower } from '@/config/seasonal-shower';
+import { projects } from '@/data/projects';
+import { hallCatalog, secondStoryRooms } from '@/features/immersive/catalog';
 import { navigation } from '@/config/site';
+import { buildSiteMapGraph, normalizeSitePath } from '@/lib/site-map';
 import { withBase } from '@/lib/paths';
 import { ClientRouter } from 'astro:transitions';
 import '@/styles/global.css';
-import '@/styles/ascii-mode.css';
+import '@/styles/html-mode.css';
 
 interface Props {
   title?: string;
@@ -36,7 +40,6 @@ const normalizePath = (value: string) => {
 };
 
 const currentPath = normalizePath(Astro.url.pathname);
-const isHomePage = currentPath === normalizePath(withBase('/'));
 const showSeasonalShower = shouldShowSeasonalShower(Astro.url.pathname);
 
 const currentRailwayStop =
@@ -51,6 +54,43 @@ const currentRailwayStop =
             .replace(/\s+$/, '') || 'Current Page',
       });
 
+const pageFiles = Object.keys(import.meta.glob('/src/pages/**/*.astro'));
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+const siteMapCurrentPath = normalizeSitePath(
+  basePath && Astro.url.pathname.startsWith(basePath)
+    ? Astro.url.pathname.slice(basePath.length) || '/'
+    : Astro.url.pathname,
+);
+const htmlPage = siteMapCurrentPath === '/' ? 'home' : 'interior';
+
+const dynamicSiteMapRoutes = [
+  ...projects.map((project) => ({
+    href: `/projects/${project.slug}/`,
+    label: project.title,
+    description: project.tagline,
+    category: 'projects' as const,
+  })),
+  ...secondStoryRooms.map((room) => ({
+    href: `/rooms/${room.slug}/`,
+    label: room.title,
+    description: room.description,
+    category: 'spaces' as const,
+  })),
+  ...hallCatalog.map((hall) => ({
+    href: `/halls/${hall.slug}/`,
+    label: hall.title,
+    description: hall.description,
+    category: 'spaces' as const,
+  })),
+];
+
+const siteMapGraph = buildSiteMapGraph({
+  pageFiles,
+  dynamicRoutes: dynamicSiteMapRoutes,
+  currentPath: siteMapCurrentPath,
+  resolveHref: withBase,
+});
+
 const commandItems = Array.from(
   new Map(
     [...headerNavigation, ...navigation].map((item) => [
@@ -62,6 +102,7 @@ const commandItems = Array.from(
     ]),
   ).values(),
 );
+
 ---
 
 <!doctype html>
@@ -71,7 +112,7 @@ const commandItems = Array.from(
   data-season="summer"
   data-season-preference="auto"
   data-theme="light"
-  data-display-mode="default"
+  data-html-mode="false"
 >
   <head>
     <ThemeBootstrap />
@@ -79,14 +120,14 @@ const commandItems = Array.from(
     <ClientRouter fallback="swap" />
   </head>
 
-  <body data-ascii-page={isHomePage ? 'home' : 'interior'}>
+  <body data-html-page={htmlPage}>
+    <HtmlSiteTree currentPath={Astro.url.pathname} />
     <SkipLink />
-    <AsciiSiteTree {currentPath} />
 
     {
       showSeasonalShower && (
         <SeasonalShower
-          client:visible
+          client:idle
           transition:persist="seasonal-shower"
         />
       )
@@ -94,7 +135,7 @@ const commandItems = Array.from(
 
     <Header />
 
-    <main id="main-content" data-page-path={currentPath}>
+    <main id="main-content">
       <slot />
     </main>
 
@@ -114,19 +155,27 @@ const commandItems = Array.from(
     }
 
     <Footer />
+    <SiteMapOverlay
+      client:idle
+      nodes={siteMapGraph.nodes}
+      links={siteMapGraph.links}
+    />
     <CommandPalette client:idle items={commandItems} />
 
     <div class="site-sound-toast" data-site-sound-toast role="status" aria-live="polite"></div>
 
     <script>
-      import { initializeDisplayMode } from '@/lib/display-mode';
+      import { initializeHtmlMode } from '@/lib/html-mode';
       import { initializeSiteSound } from '@/lib/site-sound';
 
-      initializeDisplayMode();
-      initializeSiteSound();
+      const initializePersistentControls = () => {
+        initializeHtmlMode();
+        initializeSiteSound();
+      };
 
-      document.addEventListener('astro:page-load', initializeDisplayMode);
-      document.addEventListener('astro:page-load', initializeSiteSound);
+      initializePersistentControls();
+
+      document.addEventListener('astro:page-load', initializePersistentControls);
 
       const startAnalytics = () => {
         void import('@/lib/analytics').then(({ initAnalytics }) => {

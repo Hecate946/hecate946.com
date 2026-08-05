@@ -25,7 +25,7 @@ body:has(> .site-footer) > main {
   font-family: var(--font-sans);
 }
 
-.footer-controls {
+.footer-tools {
   display: flex;
   height: 100%;
   grid-column: 1 / span 4;
@@ -33,7 +33,7 @@ body:has(> .site-footer) > main {
   min-width: 0;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.42rem, 0.75vw, 0.68rem);
+  gap: clamp(0.45rem, 0.8vw, 0.72rem);
   border-right: 1px solid var(--line);
 }
 
@@ -96,6 +96,49 @@ body:has(> .site-footer) > main {
   overflow: visible;
 }
 
+.footer-code-icon {
+  display: block;
+  width: 1.58rem !important;
+  height: 1.58rem !important;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.footer-html-mode-toggle[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--header-accent) 82%, currentColor);
+  outline-color: color-mix(in srgb, var(--header-accent) 52%, transparent);
+}
+
+.footer-site-map-icon {
+  fill: var(--bg);
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.35;
+}
+
+.footer-site-map-icon circle {
+  fill: var(--bg);
+}
+
+.footer-site-map-toggle:hover .footer-site-map-icon circle,
+.footer-site-map-toggle:focus-visible .footer-site-map-icon circle {
+  fill: color-mix(in srgb, var(--accent) 13%, var(--bg));
+}
+
+.footer-site-map-toggle[aria-expanded='true'] {
+  border-color: color-mix(in srgb, var(--header-accent) 82%, currentColor);
+  outline-color: color-mix(in srgb, var(--header-accent) 52%, transparent);
+}
+
+.footer-site-map-toggle[aria-expanded='true'] .footer-site-map-icon circle {
+  fill: color-mix(in srgb, var(--accent) 18%, var(--bg));
+}
+
 .footer-sound-icon {
   fill: currentColor;
   stroke: currentColor;
@@ -107,15 +150,6 @@ body:has(> .site-footer) > main {
 .footer-sound-icon path:first-child {
   stroke: none;
 }
-
-.footer-display-icon {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 
 .footer-icon-link::after {
   position: absolute;
@@ -175,9 +209,10 @@ body:has(> .site-footer) > main {
     flex-basis: calc(var(--header-height) * 2);
   }
 
-  .footer-controls {
+  .footer-tools {
     grid-column: 1 / span 3;
     grid-row: 1;
+    gap: 0.38rem;
     border-right: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
   }
@@ -260,17 +295,18 @@ html[data-theme='dark'] .footer-service-logo--coffee {
   stroke: currentColor;
 }
 
-.footer-sound-toggle[aria-pressed='true'] .footer-sound-wave {
+/* The root attribute is set before first paint and changes synchronously on
+   click, so the icon never waits for module hydration or an Astro page swap. */
+.footer-sound-toggle {
+  transition: none;
+}
+
+html[data-sound-enabled='true'] .footer-sound-toggle .footer-sound-wave {
   display: none;
 }
 
-.footer-sound-toggle[aria-pressed='true'] .footer-sound-muted-mark {
+html[data-sound-enabled='true'] .footer-sound-toggle .footer-sound-muted-mark {
   display: block;
-}
-
-.footer-sound-toggle[aria-pressed='true'] {
-  border-color: color-mix(in srgb, var(--accent) 80%, var(--text));
-  outline-color: color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 .site-sound-toast {
@@ -305,4 +341,15 @@ html[data-theme='dark'] .footer-service-logo--coffee {
   .site-sound-toast {
     transition: none;
   }
+}
+
+/* HTML mode and site-map selection use the footer's normal foreground color. */
+.footer-html-mode-toggle[aria-pressed='true'],
+.footer-site-map-toggle[aria-expanded='true'],
+.footer-html-mode-toggle[aria-pressed='true']:hover,
+.footer-html-mode-toggle[aria-pressed='true']:focus-visible,
+.footer-site-map-toggle[aria-expanded='true']:hover,
+.footer-site-map-toggle[aria-expanded='true']:focus-visible {
+  border-color: currentColor;
+  outline-color: color-mix(in srgb, currentColor 30%, transparent);
 }

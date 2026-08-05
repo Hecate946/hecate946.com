@@ -132,6 +132,18 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-grid__item {
+  min-width: 0;
+  margin: 0;
+}
+
+.project-grid__item > .project-card {
+  height: 100%;
 }
 
 .project-card {
@@ -196,6 +208,10 @@
   line-height: 1.58;
 }
 
+.project-card__body {
+  display: block;
+}
+
 .project-card__meta {
   color: var(--muted);
   font-size: 0.77rem;
@@ -216,7 +232,12 @@
 
 .project-card__action {
   color: var(--text);
+  text-decoration: none;
   white-space: nowrap;
+}
+
+.project-card__action:hover {
+  color: var(--accent-strong);
 }
 
 .project-card__action--muted {
@@ -288,8 +309,6 @@
 
 .article-card {
   display: block;
-  color: inherit;
-  text-decoration: none;
 }
 
 .article-card:hover,
@@ -385,6 +404,17 @@
 .chess-card__arrow {
   color: var(--accent-strong);
   font-size: 1.1rem;
+  text-decoration: none;
+}
+
+.chess-card__link-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .chess-card__stats {
