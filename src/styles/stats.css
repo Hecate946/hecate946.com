@@ -397,6 +397,7 @@
   .stats-dashboard {
     grid-column: 1 / -1;
     width: min(calc(100% - 2rem), 76rem);
+    margin-inline: auto;
   }
 
   .stats-metrics {
