@@ -28,6 +28,13 @@
   import ModelLayer from './ModelLayer.svelte';
   import SpaceExtras from './SpaceExtras.svelte';
 
+  type VideoElementWithFrameCallback = HTMLVideoElement & {
+    requestVideoFrameCallback?: (
+      callback: (now: number, metadata: unknown) => void,
+    ) => number;
+    cancelVideoFrameCallback?: (handle: number) => void;
+  };
+
   export let space: ImmersiveSpace;
   export let onReady: () => void = () => {};
   export let resetSignal = 0;
@@ -141,6 +148,8 @@
   let overlayTexture: Texture | null = null;
   let overlayVideoTexture: VideoTexture | null = null;
   let overlayVideoElement: HTMLVideoElement | null = null;
+  let overlayVideoFrameRequest = 0;
+  let overlayVideoAnimationFrame = 0;
   let environmentTexture: Texture | null = null;
   const requiredAssetKeys = new Set([
     ...(initialView ? [`view:${initialView.id}`] : []),
@@ -168,6 +177,42 @@
     overlayMaterial.map = texture;
     overlayMaterial.needsUpdate = true;
     invalidate();
+  }
+
+  function stopOverlayVideoRenderLoop() {
+    const video = overlayVideoElement as VideoElementWithFrameCallback | null;
+    if (video && overlayVideoFrameRequest) {
+      video.cancelVideoFrameCallback?.(overlayVideoFrameRequest);
+    }
+    overlayVideoFrameRequest = 0;
+
+    if (overlayVideoAnimationFrame) {
+      cancelAnimationFrame(overlayVideoAnimationFrame);
+    }
+    overlayVideoAnimationFrame = 0;
+  }
+
+  function startOverlayVideoRenderLoop(videoElement: HTMLVideoElement) {
+    stopOverlayVideoRenderLoop();
+    const video = videoElement as VideoElementWithFrameCallback;
+
+    if (video.requestVideoFrameCallback) {
+      const redrawOnVideoFrame = () => {
+        invalidate();
+        overlayVideoFrameRequest =
+          video.requestVideoFrameCallback?.(redrawOnVideoFrame) ?? 0;
+      };
+      overlayVideoFrameRequest = video.requestVideoFrameCallback(
+        redrawOnVideoFrame,
+      );
+      return;
+    }
+
+    const redrawWhilePlaying = () => {
+      if (!video.paused && !video.ended) invalidate();
+      overlayVideoAnimationFrame = requestAnimationFrame(redrawWhilePlaying);
+    };
+    overlayVideoAnimationFrame = requestAnimationFrame(redrawWhilePlaying);
   }
 
   function activeCamera() {
@@ -439,9 +484,15 @@
         overlayVideoTexture = new VideoTexture(video);
         overlayVideoTexture.colorSpace = SRGBColorSpace;
         attachOverlayTexture(overlayVideoTexture);
-        void video.play().catch(() => {
-          /* keep poster fallback */
-        });
+
+        void video
+          .play()
+          .then(() => {
+            startOverlayVideoRenderLoop(video);
+          })
+          .catch(() => {
+            /* keep poster fallback if autoplay is blocked */
+          });
       };
 
       video.addEventListener('canplay', handleCanPlay, { once: true });
@@ -475,6 +526,7 @@
     for (const material of panoramaMaterials) material.dispose();
     overlayMaterial.dispose();
     for (const texture of textures.values()) texture.dispose();
+    stopOverlayVideoRenderLoop();
     overlayVideoElement?.pause();
     if (overlayVideoElement) {
       overlayVideoElement.removeAttribute('src');
