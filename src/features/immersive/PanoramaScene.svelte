@@ -14,6 +14,7 @@
     Texture,
     TextureLoader,
     Vector2,
+    VideoTexture,
     type Material,
     type PerspectiveCamera,
   } from 'three';
@@ -123,6 +124,8 @@
 
   const textures = new Map<string, Texture>();
   let overlayTexture: Texture | null = null;
+  let overlayVideoTexture: VideoTexture | null = null;
+  let overlayVideoElement: HTMLVideoElement | null = null;
   let environmentTexture: Texture | null = null;
   const requiredAssetKeys = new Set([
     ...(initialView ? [`view:${initialView.id}`] : []),
@@ -142,6 +145,12 @@
   function markAssetReady(key: string) {
     readyAssetKeys.add(key);
     if (readyAssetKeys.size >= requiredAssetKeys.size) sendReady();
+  }
+
+  function attachOverlayTexture(texture: Texture) {
+    overlayMaterial.map = texture;
+    overlayMaterial.needsUpdate = true;
+    invalidate();
   }
 
   function activeCamera() {
@@ -386,9 +395,7 @@
           texture.colorSpace = SRGBColorSpace;
           overlayTexture?.dispose();
           overlayTexture = texture;
-          overlayMaterial.map = texture;
-          overlayMaterial.needsUpdate = true;
-          invalidate();
+          attachOverlayTexture(texture);
         },
         undefined,
         () => {
@@ -397,6 +404,31 @@
           invalidate();
         },
       );
+    }
+
+    if (space.panoramaOverlayVideoUrl) {
+      const video = document.createElement('video');
+      overlayVideoElement = video;
+      video.src = space.panoramaOverlayVideoUrl;
+      video.crossOrigin = 'anonymous';
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.autoplay = true;
+      video.preload = 'auto';
+
+      const handleCanPlay = () => {
+        overlayVideoTexture?.dispose();
+        overlayVideoTexture = new VideoTexture(video);
+        overlayVideoTexture.colorSpace = SRGBColorSpace;
+        attachOverlayTexture(overlayVideoTexture);
+        void video.play().catch(() => {
+          /* keep poster fallback */
+        });
+      };
+
+      video.addEventListener('canplay', handleCanPlay, { once: true });
+      video.load();
     }
 
     if (requiredAssetKeys.size === 0) sendReady();
@@ -426,6 +458,12 @@
     for (const material of panoramaMaterials) material.dispose();
     overlayMaterial.dispose();
     for (const texture of textures.values()) texture.dispose();
+    overlayVideoElement?.pause();
+    if (overlayVideoElement) {
+      overlayVideoElement.removeAttribute('src');
+      overlayVideoElement.load();
+    }
+    overlayVideoTexture?.dispose();
     overlayTexture?.dispose();
     environmentTexture?.dispose();
   });

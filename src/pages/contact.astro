@@ -176,6 +176,7 @@ const links = [
     const DROPDOWN_DURATION_MS = 960;
     const DROPDOWN_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
     let dropdownAnimation: Animation | null = null;
+    let dropdownOptionsAnimation: Animation | null = null;
     let dropdownClosing = false;
 
     const finishDropdownClosed = () => {
@@ -188,6 +189,7 @@ const links = [
       dropdownOptions.style.opacity = '';
       dropdownOptions.style.transform = '';
       dropdownAnimation = null;
+      dropdownOptionsAnimation = null;
     };
 
     const finishDropdownOpen = () => {
@@ -199,11 +201,28 @@ const links = [
       dropdownOptions.style.opacity = '';
       dropdownOptions.style.transform = '';
       dropdownAnimation = null;
+      dropdownOptionsAnimation = null;
+    };
+
+
+    const freezeCurrentDropdownFrame = () => {
+      if (!dropdown || !dropdownOptions) return;
+
+      const height = dropdown.getBoundingClientRect().height;
+      const optionsStyle = getComputedStyle(dropdownOptions);
+      dropdownAnimation?.cancel();
+      dropdownOptionsAnimation?.cancel();
+      dropdown.style.height = `${height}px`;
+      dropdown.style.overflow = 'hidden';
+      dropdownOptions.style.opacity = optionsStyle.opacity;
+      dropdownOptions.style.transform = optionsStyle.transform === 'none' ? 'translateY(0)' : optionsStyle.transform;
+      dropdownAnimation = null;
+      dropdownOptionsAnimation = null;
     };
 
     const closeDropdown = () => {
-      if (!dropdown || !dropdownSummary || !dropdownOptions || !dropdown.open || dropdownClosing) return;
-      dropdownAnimation?.cancel();
+      if (!dropdown || !dropdownSummary || !dropdownOptions || !dropdown.open) return;
+      freezeCurrentDropdownFrame();
 
       if (prefersReducedMotion.matches) {
         finishDropdownClosed();
@@ -224,30 +243,28 @@ const links = [
         [{ height: `${startHeight}px` }, { height: `${endHeight}px` }],
         { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING },
       );
-      dropdownOptions.animate(
+      dropdownOptionsAnimation = dropdownOptions.animate(
         [
-          { opacity: 1, transform: 'translateY(0)' },
+          { opacity: dropdownOptions.style.opacity || '1', transform: dropdownOptions.style.transform || 'translateY(0)' },
           { opacity: 0, transform: 'translateY(-0.45rem)' },
         ],
         { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING, fill: 'forwards' },
       );
       dropdownAnimation.onfinish = finishDropdownClosed;
-      dropdownAnimation.oncancel = () => {
-        dropdown?.removeAttribute('data-closing');
-        dropdownClosing = false;
-      };
+      dropdownAnimation.oncancel = () => {};
     };
 
     const openDropdown = () => {
-      if (!dropdown || !dropdownSummary || !dropdownOptions || dropdown.open) return;
-      dropdownAnimation?.cancel();
+      if (!dropdown || !dropdownSummary || !dropdownOptions || (dropdown.open && !dropdownClosing)) return;
+      const wasClosing = dropdownClosing;
+      if (wasClosing) freezeCurrentDropdownFrame();
 
       if (prefersReducedMotion.matches) {
         dropdown.open = true;
         return;
       }
 
-      const startHeight = dropdown.offsetHeight;
+      const startHeight = dropdown.getBoundingClientRect().height;
       dropdown.open = true;
       dropdownClosing = false;
       dropdown.removeAttribute('data-closing');
@@ -259,9 +276,12 @@ const links = [
         [{ height: `${startHeight}px` }, { height: `${endHeight}px` }],
         { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING },
       );
-      dropdownOptions.animate(
+      dropdownOptionsAnimation = dropdownOptions.animate(
         [
-          { opacity: 0, transform: 'translateY(-0.55rem)' },
+          {
+            opacity: wasClosing ? dropdownOptions.style.opacity || '0' : '0',
+            transform: wasClosing ? dropdownOptions.style.transform || 'translateY(-0.55rem)' : 'translateY(-0.55rem)',
+          },
           { opacity: 1, transform: 'translateY(0)' },
         ],
         { duration: DROPDOWN_DURATION_MS, easing: DROPDOWN_EASING, fill: 'both' },

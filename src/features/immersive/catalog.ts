@@ -38,6 +38,7 @@ export type ImmersiveSpace = {
   accent: string;
   panoramaUrl?: string;
   panoramaOverlayUrl?: string;
+  panoramaOverlayVideoUrl?: string;
   panoramaViews?: ImmersivePanoramaView[];
   cyclesOnly?: boolean;
   modelLayers: ImmersiveModelLayer[];
@@ -169,12 +170,15 @@ export const rooms = {
       'blue',
       'Room 004',
       'The Blue Room',
-      'An immersive fixed-viewpoint blue tiled room with a static half-filled water overlay.',
+      'An immersive fixed-viewpoint blue tiled room with a clear, half-filled animated water overlay.',
       '#18344c',
       3,
     ),
     panoramaOverlayUrl: withBase(
-      '/scenes/rooms/blue/water-overlay.png?v=room-v50-water-static',
+      '/scenes/rooms/blue/water-overlay.png?v=room-v54-water-booleanclip',
+    ),
+    panoramaOverlayVideoUrl: withBase(
+      '/scenes/rooms/blue/water-overlay.webm?v=room-v54-water-booleanclip',
     ),
   },
   purple: room('purple', 'Room 005', 'The Purple Room', 'An immersive fixed-viewpoint purple tiled room.', '#35213f', 4),

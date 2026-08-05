@@ -12,6 +12,7 @@ import { railwayConfig } from '@/config/railway';
 import { shouldShowSeasonalShower } from '@/config/seasonal-shower';
 import { navigation } from '@/config/site';
 import { withBase } from '@/lib/paths';
+import { ClientRouter } from 'astro:transitions';
 import '@/styles/global.css';
 
 interface Props {
@@ -63,6 +64,7 @@ const commandItems = Array.from(
 <!doctype html>
 <html
   lang="en"
+  transition:animate="none"
   data-season="summer"
   data-season-preference="auto"
   data-theme="light"
@@ -70,6 +72,7 @@ const commandItems = Array.from(
   <head>
     <ThemeBootstrap />
     <BaseHead {title} {description} {image} />
+    <ClientRouter fallback="swap" />
   </head>
 
   <body>

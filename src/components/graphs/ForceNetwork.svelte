@@ -11,6 +11,7 @@
     type SimulationLinkDatum,
     type SimulationNodeDatum,
   } from 'd3-force';
+  import { playNetworkCollisionNote, unlockSiteSound } from '@/lib/site-sound';
   import type { ForceNetworkSettings, NetworkLink, NetworkNode } from './types';
 
   type SimulationNode = NetworkNode &
@@ -96,6 +97,8 @@
   let mounted = false;
   let lastSignature = '';
   let dataSignature = '';
+  let activeCollisionPairs = new Set<string>();
+  let collisionSoundsArmed = false;
 
   $: config = { ...defaults, ...settings };
   $: dataSignature = JSON.stringify({ nodes, links, centerNodeId, settings });
@@ -213,6 +216,47 @@
     }));
   }
 
+  const collisionPairKey = (firstId: string, secondId: string) =>
+    firstId < secondId ? `${firstId}:${secondId}` : `${secondId}:${firstId}`;
+
+  function detectNodeCollisions() {
+    const nextCollisionPairs = new Set<string>();
+
+    for (let firstIndex = 0; firstIndex < simulationNodes.length; firstIndex += 1) {
+      const firstNode = simulationNodes[firstIndex];
+      const firstX = firstNode.x ?? firstNode.anchorX;
+      const firstY = firstNode.y ?? firstNode.anchorY;
+
+      for (
+        let secondIndex = firstIndex + 1;
+        secondIndex < simulationNodes.length;
+        secondIndex += 1
+      ) {
+        const secondNode = simulationNodes[secondIndex];
+        const secondX = secondNode.x ?? secondNode.anchorX;
+        const secondY = secondNode.y ?? secondNode.anchorY;
+        const collisionDistance =
+          firstNode.radius +
+          secondNode.radius +
+          config.collisionPadding * 2;
+        const distance = Math.hypot(secondX - firstX, secondY - firstY);
+        const pairKey = collisionPairKey(firstNode.id, secondNode.id);
+        const wasColliding = activeCollisionPairs.has(pairKey);
+        const separationTolerance = wasColliding ? 9 : 1.5;
+
+        if (distance > collisionDistance + separationTolerance) continue;
+
+        nextCollisionPairs.add(pairKey);
+
+        if (collisionSoundsArmed && !wasColliding) {
+          void playNetworkCollisionNote();
+        }
+      }
+    }
+
+    activeCollisionPairs = nextCollisionPairs;
+  }
+
   function configureForces() {
     if (!simulation) return;
 
@@ -264,12 +308,15 @@
       .force('y', yForce)
       .on('tick', () => {
         keepNodesInBounds();
+        detectNodeCollisions();
         syncRenderedState();
       });
   }
 
   function rebuildSimulation(animateEntrance = false) {
     simulation?.stop();
+    activeCollisionPairs = new Set();
+    collisionSoundsArmed = false;
     createSimulationNodes(animateEntrance);
     simulation = forceSimulation<SimulationNode, SimulationLink>(
       simulationNodes,
@@ -347,6 +394,8 @@
 
   function startDrag(event: PointerEvent, node: SimulationNode) {
     if (event.button !== 0) return;
+    collisionSoundsArmed = true;
+    unlockSiteSound();
     dragState = {
       nodeId: node.id,
       pointerId: event.pointerId,
@@ -564,6 +613,7 @@
     mounted = false;
     simulation?.stop();
     resizeObserver?.disconnect();
+    activeCollisionPairs.clear();
     if (suppressTimer) clearTimeout(suppressTimer);
   });
 </script>

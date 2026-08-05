@@ -130,7 +130,13 @@ for (const slug of roomSlugs) {
     await copyAsset({
       source: path.join(sourceRoot, 'blue-room-water-overlay.png'),
       destination: path.join(destinationRoot, 'water-overlay.png'),
-      label: 'blue room water overlay',
+      label: 'blue room water overlay poster',
+    });
+
+    await copyAsset({
+      source: path.join(sourceRoot, 'blue-room-water-overlay.webm'),
+      destination: path.join(destinationRoot, 'water-overlay.webm'),
+      label: 'blue room water overlay animation',
     });
   }
 }
