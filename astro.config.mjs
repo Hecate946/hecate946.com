@@ -9,7 +9,7 @@ export default defineConfig({
     svelte(),
     sitemap({
       filter: (page) =>
-        !page.endsWith('/navigation/') && !page.endsWith('/pdf/'),
+        !page.endsWith('/navigation/') && !page.endsWith('/pdfs/'),
     }),
   ],
   devToolbar: {
