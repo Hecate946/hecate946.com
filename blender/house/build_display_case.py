@@ -55,24 +55,35 @@ CAMERA_ORTHO_SCALE = 16.65
 
 # The current house is about 14 units wide and 8 units tall. These dimensions
 # leave a quiet margin without making the vitrine look like a literal jar.
-CASE_WIDTH = 16.25
-CASE_DEPTH = 5.20
-CASE_HEIGHT = 10.25
-CASE_BOTTOM_Z = -0.34
+CASE_WIDTH = 15.95
+CASE_DEPTH = 4.85
+CASE_HEIGHT = 9.95
+CASE_BOTTOM_Z = -0.26
 CASE_TOP_Z = CASE_BOTTOM_Z + CASE_HEIGHT
 CASE_FRONT_Y = -3.15
 CASE_BACK_Y = CASE_FRONT_Y + CASE_DEPTH
 CASE_CENTER_Y = (CASE_FRONT_Y + CASE_BACK_Y) / 2.0
 CASE_CENTER_Z = CASE_BOTTOM_Z + CASE_HEIGHT / 2.0
 
-TOP_CORNER_RADIUS = 1.16
-BOTTOM_CORNER_RADIUS = 0.42
+TOP_CORNER_RADIUS = 1.04
+BOTTOM_CORNER_RADIUS = 0.34
 
-# The base is intentionally shallow and almost disappears into the page.
-BASE_RADIUS_X = 7.55
-BASE_RADIUS_Y = 2.52
-BASE_TOP_Z = -0.27
-BASE_THICKNESS = 0.16
+# The base is intentionally shallow and quiet. The house then sits inside a
+# small landscaped world rather than on a glossy turntable.
+BASE_RADIUS_X = 7.10
+BASE_RADIUS_Y = 2.16
+BASE_TOP_Z = -0.25
+BASE_THICKNESS = 0.075
+
+GROUND_RADIUS_X = 5.95
+GROUND_RADIUS_Y = 1.56
+GROUND_TOP_Z = -0.105
+GROUND_THICKNESS = 0.12
+GROUND_CENTER_Y = 0.20
+
+PATH_TOP_Z = GROUND_TOP_Z + 0.022
+PATH_SEGMENT_DEPTH = 0.33
+PATH_SEGMENT_HEIGHT = 0.038
 
 
 # -----------------------------------------------------------------------------
@@ -421,15 +432,15 @@ def build_glass(
         (CASE_WIDTH, CASE_DEPTH, CASE_HEIGHT),
         shell_material,
         glass_collection,
-        bevel=0.72,
-        bevel_segments=14,
+        bevel=0.58,
+        bevel_segments=12,
     )
 
     front_outline = rounded_front_outline_points(
         width=CASE_WIDTH,
         bottom_z=CASE_BOTTOM_Z,
         top_z=CASE_TOP_Z,
-        y=CASE_FRONT_Y - 0.035,
+        y=CASE_FRONT_Y - 0.030,
         top_radius=TOP_CORNER_RADIUS,
         bottom_radius=BOTTOM_CORNER_RADIUS,
     )
@@ -438,93 +449,85 @@ def build_glass(
         front_outline,
         material=edge_material,
         collection=glass_collection,
-        bevel_depth=0.018,
+        bevel_depth=0.012,
         cyclic=True,
-        bevel_resolution=5,
+        bevel_resolution=4,
     )
 
-    # A second, slightly inset line makes the glass feel thick without turning
-    # it into a heavy frame.
     inset_outline = rounded_front_outline_points(
-        width=CASE_WIDTH - 0.18,
-        bottom_z=CASE_BOTTOM_Z + 0.06,
-        top_z=CASE_TOP_Z - 0.07,
-        y=CASE_FRONT_Y - 0.052,
-        top_radius=TOP_CORNER_RADIUS - 0.08,
-        bottom_radius=BOTTOM_CORNER_RADIUS - 0.04,
+        width=CASE_WIDTH - 0.14,
+        bottom_z=CASE_BOTTOM_Z + 0.045,
+        top_z=CASE_TOP_Z - 0.05,
+        y=CASE_FRONT_Y - 0.045,
+        top_radius=TOP_CORNER_RADIUS - 0.05,
+        bottom_radius=BOTTOM_CORNER_RADIUS - 0.03,
     )
     add_curve(
         "Inset glass thickness highlight",
         inset_outline,
         material=reflection_material,
         collection=glass_collection,
-        bevel_depth=0.010,
+        bevel_depth=0.006,
         cyclic=True,
         bevel_resolution=4,
     )
 
-    # A restrained bowed reflection across the upper face.
     top_reflection: list[tuple[float, float, float]] = []
-    reflection_half_width = CASE_WIDTH * 0.42
-    for index in range(65):
-        ratio = index / 64.0
+    reflection_half_width = CASE_WIDTH * 0.33
+    for index in range(49):
+        ratio = index / 48.0
         x = -reflection_half_width + ratio * reflection_half_width * 2.0
         normalized_x = x / reflection_half_width
-        z = CASE_TOP_Z - 0.34 - 0.15 * (1.0 - normalized_x * normalized_x)
-        top_reflection.append((x, CASE_FRONT_Y - 0.070, z))
+        z = CASE_TOP_Z - 0.43 - 0.10 * (1.0 - normalized_x * normalized_x)
+        top_reflection.append((x, CASE_FRONT_Y - 0.064, z))
     add_curve(
         "Upper bowed glass reflection",
         top_reflection,
         material=reflection_material,
         collection=glass_collection,
-        bevel_depth=0.012,
+        bevel_depth=0.007,
         bevel_resolution=4,
     )
 
-    # Side reflections are intentionally asymmetric; perfectly mirrored
-    # highlights make the case look synthetic and diagrammatic.
     left_streak = [
-        (-CASE_WIDTH * 0.405, CASE_FRONT_Y - 0.078, CASE_BOTTOM_Z + 1.10),
-        (-CASE_WIDTH * 0.422, CASE_FRONT_Y - 0.081, CASE_BOTTOM_Z + 3.30),
-        (-CASE_WIDTH * 0.408, CASE_FRONT_Y - 0.078, CASE_TOP_Z - 2.20),
+        (-CASE_WIDTH * 0.442, CASE_FRONT_Y - 0.060, CASE_BOTTOM_Z + 2.2),
+        (-CASE_WIDTH * 0.448, CASE_FRONT_Y - 0.064, CASE_TOP_Z - 1.6),
     ]
     right_streak = [
-        (CASE_WIDTH * 0.414, CASE_FRONT_Y - 0.079, CASE_BOTTOM_Z + 1.30),
-        (CASE_WIDTH * 0.425, CASE_FRONT_Y - 0.082, CASE_BOTTOM_Z + 4.00),
-        (CASE_WIDTH * 0.397, CASE_FRONT_Y - 0.079, CASE_TOP_Z - 2.65),
+        (CASE_WIDTH * 0.444, CASE_FRONT_Y - 0.060, CASE_BOTTOM_Z + 2.35),
+        (CASE_WIDTH * 0.450, CASE_FRONT_Y - 0.065, CASE_TOP_Z - 1.75),
     ]
     add_curve(
         "Left vertical glass reflection",
         left_streak,
         material=reflection_material,
         collection=glass_collection,
-        bevel_depth=0.016,
-        bevel_resolution=5,
+        bevel_depth=0.008,
+        bevel_resolution=4,
     )
     add_curve(
         "Right vertical glass reflection",
         right_streak,
         material=reflection_material,
         collection=glass_collection,
-        bevel_depth=0.010,
-        bevel_resolution=5,
+        bevel_depth=0.007,
+        bevel_resolution=4,
     )
 
-    # A quiet lower seam visually seats the glass on the pedestal.
     lower_seam: list[tuple[float, float, float]] = []
-    seam_half_width = CASE_WIDTH * 0.44
-    for index in range(65):
-        ratio = index / 64.0
+    seam_half_width = CASE_WIDTH * 0.34
+    for index in range(41):
+        ratio = index / 40.0
         x = -seam_half_width + ratio * seam_half_width * 2.0
         normalized_x = x / seam_half_width
-        z = CASE_BOTTOM_Z + 0.055 + 0.035 * (1.0 - normalized_x * normalized_x)
-        lower_seam.append((x, CASE_FRONT_Y - 0.084, z))
+        z = CASE_BOTTOM_Z + 0.040 + 0.020 * (1.0 - normalized_x * normalized_x)
+        lower_seam.append((x, CASE_FRONT_Y - 0.068, z))
     add_curve(
         "Lower glass seating seam",
         lower_seam,
         material=reflection_material,
         collection=glass_collection,
-        bevel_depth=0.009,
+        bevel_depth=0.005,
         bevel_resolution=4,
     )
 
@@ -533,39 +536,79 @@ def build_base(
     base_collection: bpy.types.Collection,
     pedestal_material: bpy.types.Material,
     pedestal_edge_material: bpy.types.Material,
+    ground_material: bpy.types.Material,
+    grass_edge_material: bpy.types.Material,
+    path_material: bpy.types.Material,
     shadow_material: bpy.types.Material,
 ) -> None:
     add_ellipse_cylinder(
-        "Quiet elliptical pedestal",
-        location=(0.0, -0.10, BASE_TOP_Z - BASE_THICKNESS / 2.0),
+        "Quiet stone pedestal",
+        location=(0.0, -0.05, BASE_TOP_Z - BASE_THICKNESS / 2.0),
         radius_x=BASE_RADIUS_X,
         radius_y=BASE_RADIUS_Y,
         depth=BASE_THICKNESS,
         material=pedestal_material,
         collection=base_collection,
-        bevel=0.055,
+        bevel=0.032,
     )
 
     add_ellipse_torus(
         "Pedestal upper rim",
-        location=(0.0, -0.10, BASE_TOP_Z + 0.005),
-        radius_x=BASE_RADIUS_X * 0.985,
-        radius_y=BASE_RADIUS_Y * 0.985,
-        tube_radius=0.013,
+        location=(0.0, -0.05, BASE_TOP_Z + 0.002),
+        radius_x=BASE_RADIUS_X * 0.986,
+        radius_y=BASE_RADIUS_Y * 0.986,
+        tube_radius=0.008,
         material=pedestal_edge_material,
         collection=base_collection,
     )
 
-    # A second, wider transparent ellipse acts as the restrained contact shadow.
+    add_ellipse_cylinder(
+        "Grass island",
+        location=(0.0, GROUND_CENTER_Y, GROUND_TOP_Z - GROUND_THICKNESS / 2.0),
+        radius_x=GROUND_RADIUS_X,
+        radius_y=GROUND_RADIUS_Y,
+        depth=GROUND_THICKNESS,
+        material=ground_material,
+        collection=base_collection,
+        bevel=0.05,
+    )
+
+    add_ellipse_torus(
+        "Grass edge highlight",
+        location=(0.0, GROUND_CENTER_Y, GROUND_TOP_Z + 0.003),
+        radius_x=GROUND_RADIUS_X * 0.986,
+        radius_y=GROUND_RADIUS_Y * 0.986,
+        tube_radius=0.010,
+        material=grass_edge_material,
+        collection=base_collection,
+    )
+
+    path_segments = [
+        (0.78, 0.56),
+        (0.34, 0.74),
+        (-0.12, 0.96),
+        (-0.62, 1.22),
+    ]
+    for index, (center_y, width) in enumerate(path_segments, start=1):
+        add_beveled_cube(
+            f"Golden pathway stone {index}",
+            (0.0, center_y, PATH_TOP_Z + PATH_SEGMENT_HEIGHT / 2.0),
+            (width, PATH_SEGMENT_DEPTH, PATH_SEGMENT_HEIGHT),
+            path_material,
+            base_collection,
+            bevel=0.030,
+            bevel_segments=6,
+        )
+
     add_ellipse_cylinder(
         "Soft contact shadow",
-        location=(0.0, 0.06, BASE_TOP_Z - 0.105),
-        radius_x=BASE_RADIUS_X * 0.86,
-        radius_y=BASE_RADIUS_Y * 0.82,
-        depth=0.018,
+        location=(0.0, -0.03, BASE_TOP_Z - 0.060),
+        radius_x=BASE_RADIUS_X * 0.82,
+        radius_y=BASE_RADIUS_Y * 0.76,
+        depth=0.014,
         material=shadow_material,
         collection=base_collection,
-        bevel=0.045,
+        bevel=0.032,
     )
 
 
@@ -588,7 +631,7 @@ def setup_lighting(lighting_collection: bpy.types.Collection) -> None:
         "Left glass strip",
         location=(-8.8, -8.0, 5.3),
         target=(-7.4, CASE_FRONT_Y, 5.1),
-        energy=520.0,
+        energy=300.0,
         size=7.0,
         size_y=0.42,
         color=(0.70, 0.84, 0.94),
@@ -598,7 +641,7 @@ def setup_lighting(lighting_collection: bpy.types.Collection) -> None:
         "Right glass strip",
         location=(8.9, -7.2, 5.8),
         target=(7.45, CASE_FRONT_Y, 5.0),
-        energy=430.0,
+        energy=245.0,
         size=6.5,
         size_y=0.32,
         color=(0.78, 0.88, 0.96),
@@ -608,7 +651,7 @@ def setup_lighting(lighting_collection: bpy.types.Collection) -> None:
         "Top glass ribbon",
         location=(0.0, -4.0, 12.7),
         target=(0.0, CASE_FRONT_Y, CASE_TOP_Z - 0.4),
-        energy=760.0,
+        energy=350.0,
         size=13.0,
         size_y=1.0,
         color=(0.82, 0.91, 1.0),
@@ -618,7 +661,7 @@ def setup_lighting(lighting_collection: bpy.types.Collection) -> None:
         "Soft frontal reflection",
         location=(-2.2, -10.5, 7.2),
         target=(-1.0, CASE_FRONT_Y, 4.7),
-        energy=260.0,
+        energy=120.0,
         size=5.5,
         color=(0.84, 0.91, 0.98),
         collection=lighting_collection,
@@ -628,7 +671,7 @@ def setup_lighting(lighting_collection: bpy.types.Collection) -> None:
         "Pedestal top light",
         location=(0.0, -5.0, 2.2),
         target=(0.0, 0.0, BASE_TOP_Z),
-        energy=360.0,
+        energy=180.0,
         size=8.0,
         color=(0.72, 0.82, 0.90),
         collection=lighting_collection,
@@ -702,57 +745,87 @@ def build_display_case() -> None:
 
     shell_material = make_principled_material(
         "Near-invisible museum glass",
-        (0.20, 0.34, 0.42, 0.032),
-        roughness=0.075,
+        (0.20, 0.34, 0.42, 0.018),
+        roughness=0.11,
         transmission=1.0,
         ior=1.445,
-        coat=0.38,
-        coat_roughness=0.055,
+        coat=0.20,
+        coat_roughness=0.08,
     )
     edge_material = make_principled_material(
         "Cool glass edge highlight",
-        (0.62, 0.77, 0.87, 0.43),
-        roughness=0.16,
-        transmission=0.15,
-        coat=0.25,
-        coat_roughness=0.08,
-        emission_strength=0.08,
+        (0.60, 0.76, 0.86, 0.22),
+        roughness=0.22,
+        transmission=0.10,
+        coat=0.16,
+        coat_roughness=0.10,
+        emission_strength=0.018,
     )
     reflection_material = make_principled_material(
         "Restrained glass reflections",
-        (0.72, 0.84, 0.92, 0.18),
-        roughness=0.20,
-        transmission=0.08,
-        coat=0.20,
-        coat_roughness=0.10,
-        emission_strength=0.035,
+        (0.72, 0.84, 0.92, 0.08),
+        roughness=0.28,
+        transmission=0.04,
+        coat=0.10,
+        coat_roughness=0.12,
+        emission_strength=0.008,
     )
     pedestal_material = make_principled_material(
-        "Smoked display pedestal",
-        (0.055, 0.075, 0.087, 0.64),
-        roughness=0.24,
-        metallic=0.10,
-        transmission=0.05,
-        coat=0.46,
-        coat_roughness=0.12,
+        "Quiet stone pedestal",
+        (0.084, 0.095, 0.100, 0.88),
+        roughness=0.68,
+        metallic=0.02,
+        transmission=0.0,
+        coat=0.04,
+        coat_roughness=0.24,
     )
     pedestal_edge_material = make_principled_material(
         "Pedestal rim highlight",
-        (0.43, 0.57, 0.65, 0.44),
-        roughness=0.18,
-        metallic=0.08,
-        coat=0.30,
-        coat_roughness=0.10,
-        emission_strength=0.025,
+        (0.34, 0.42, 0.46, 0.26),
+        roughness=0.50,
+        metallic=0.02,
+        coat=0.08,
+        coat_roughness=0.16,
+        emission_strength=0.0,
+    )
+    ground_material = make_principled_material(
+        "Museum lawn",
+        (0.225, 0.330, 0.180, 0.98),
+        roughness=0.88,
+        metallic=0.0,
+        coat=0.0,
+    )
+    grass_edge_material = make_principled_material(
+        "Grass edge highlight",
+        (0.315, 0.425, 0.235, 0.92),
+        roughness=0.82,
+        metallic=0.0,
+        coat=0.0,
+    )
+    path_material = make_principled_material(
+        "Golden pathway stone",
+        (0.635, 0.515, 0.255, 0.98),
+        roughness=0.72,
+        metallic=0.02,
+        coat=0.04,
+        coat_roughness=0.22,
     )
     shadow_material = make_principled_material(
         "Transparent contact shadow",
-        (0.004, 0.008, 0.011, 0.17),
+        (0.004, 0.008, 0.011, 0.12),
         roughness=1.0,
     )
 
     build_glass(glass_collection, shell_material, edge_material, reflection_material)
-    build_base(base_collection, pedestal_material, pedestal_edge_material, shadow_material)
+    build_base(
+        base_collection,
+        pedestal_material,
+        pedestal_edge_material,
+        ground_material,
+        grass_edge_material,
+        path_material,
+        shadow_material,
+    )
     setup_camera()
     setup_lighting(lighting_collection)
     scene = configure_render()

@@ -17,8 +17,6 @@
     SimulationNodeDatum & {
       radius: number;
       labelSize: number;
-      labelHalfWidth: number;
-      labelHeight: number;
       labelPriority: 0 | 1 | 2 | 3;
       degree: number;
       depth: number;
@@ -78,15 +76,16 @@
   const MIN_ZOOM = 0.12;
   const MAX_ZOOM = 8;
   const CAMERA_EASE = 12;
-  const HOVER_EASE = 1.45;
-  const FIT_SIDE_PADDING = 38;
+  const HOVER_EASE = 1.65;
+  const FIT_SIDE_PADDING = 44;
   const FIT_TOP_PADDING = 68;
-  const FIT_BOTTOM_PADDING = 34;
+  const FIT_BOTTOM_PADDING = 38;
   const LABEL_BASE_GAP = 3;
   const LABEL_HOVER_DROP = 12;
-  const COLLISION_PADDING = 2.5;
-  const DRAG_COLLISION_PADDING = 5;
-  const DRAG_COLLISION_PASSES = 12;
+  const NODE_COLLISION_GAP = 2;
+  const DRAG_ALPHA_TARGET = 0.085;
+  const DRAG_LOOKAHEAD_MAX = 34;
+  const DRAG_COLLISION_PASSES = 2;
 
   let hostElement!: HTMLDivElement;
   let ready = false;
@@ -116,6 +115,13 @@
   let dragStartX = 0;
   let dragStartY = 0;
   let dragMoved = false;
+  let dragTargetX = 0;
+  let dragTargetY = 0;
+  let dragProcessedX = 0;
+  let dragProcessedY = 0;
+  let dragVelocityX = 0;
+  let dragVelocityY = 0;
+  let dragLastInputTime = 0;
   let pinchState: { distance: number; scale: number; worldX: number; worldY: number } | null = null;
   const touchPointers = new Map<number, { x: number; y: number }>();
   let colors: ThemeColors = {
@@ -204,9 +210,9 @@
       text: read('--text', dark ? '#f1f3f4' : '#202124'),
       // Obsidian-like neutral graph colors stay gray; only hover uses the
       // current theme accent.
-      muted: dark ? '#aeb5bc' : '#6f7780',
-      line: dark ? '#c6cdd4' : '#4a535d',
-      lineAlpha: dark ? 0.3 : 0.46,
+      muted: dark ? '#a7afb8' : '#737b84',
+      line: dark ? '#b8c0c8' : '#46515c',
+      lineAlpha: dark ? 0.28 : 0.44,
       accent: read('--accent', '#2aaea0'),
     };
   }
@@ -217,10 +223,8 @@
   }
 
   function makeGraphData() {
-    // Keep semantic anchors close together. Collision—not oversized link
-    // lengths—provides the minimum safe spacing between rendered content.
-    const width = 520;
-    const height = 390;
+    const width = 760;
+    const height = 540;
 
     adjacency = new Map(nodes.map((node) => [node.id, new Set<string>()]));
     for (const link of links) {
@@ -243,8 +247,6 @@
         ...node,
         radius,
         labelSize: nodeLabelSize(radius, priority),
-        labelHalfWidth: 0,
-        labelHeight: 0,
         labelPriority: priority,
         degree,
         depth,
@@ -263,64 +265,102 @@
   }
 
   function interactionRadius(node: GraphNode) {
+    // Keep Pixi hit areas disjoint as well as the visible circles. This means
+    // pointer hover can only belong to one node at a time.
     return Math.max(node.radius + 5, 10);
   }
 
-  function compoundBounds(node: GraphNode) {
-    const hitRadius = interactionRadius(node);
-    const labelHalfWidth = Math.max(
-      node.labelHalfWidth || node.label.length * node.labelSize * 0.28,
-      node.radius,
-    );
-    const labelHeight = node.labelHeight || node.labelSize * 1.2;
-    const top = -hitRadius;
-    const bottom =
-      node.radius + LABEL_BASE_GAP + LABEL_HOVER_DROP + labelHeight + 3;
+  function setNodeInteractionLocked(locked: boolean) {
+    for (const node of graphNodes) {
+      const container = node.view?.container;
+      if (!container) continue;
+      container.eventMode = locked && node !== draggedNode ? 'none' : 'static';
+    }
+  }
 
+  function closestPointOnSegment(
+    pointX: number,
+    pointY: number,
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+  ) {
+    const segmentX = endX - startX;
+    const segmentY = endY - startY;
+    const lengthSquared = segmentX * segmentX + segmentY * segmentY;
+    if (lengthSquared < 0.000001) return { x: endX, y: endY };
+    const amount = clamp(
+      ((pointX - startX) * segmentX + (pointY - startY) * segmentY) / lengthSquared,
+      0,
+      1,
+    );
     return {
-      halfWidth: Math.max(hitRadius, labelHalfWidth + 3),
-      halfHeight: (bottom - top) / 2,
-      centerYOffset: (top + bottom) / 2,
+      x: startX + segmentX * amount,
+      y: startY + segmentY * amount,
     };
   }
 
-  function separateInitialOverlaps() {
-    for (let pass = 0; pass < 28; pass += 1) {
+  function removeInwardVelocity(node: GraphNode, outwardX: number, outwardY: number) {
+    const velocityX = node.vx ?? 0;
+    const velocityY = node.vy ?? 0;
+    const inwardAmount = velocityX * outwardX + velocityY * outwardY;
+    if (inwardAmount >= 0) return;
+    node.vx = velocityX - outwardX * inwardAmount;
+    node.vy = velocityY - outwardY * inwardAmount;
+  }
+
+  function resolveCircularOverlaps(fixedNode: GraphNode | null, passes = 1) {
+    for (let pass = 0; pass < passes; pass += 1) {
       let moved = false;
 
       for (let index = 0; index < graphNodes.length; index += 1) {
         const first = graphNodes[index];
-        const firstBounds = compoundBounds(first);
-
         for (let nextIndex = index + 1; nextIndex < graphNodes.length; nextIndex += 1) {
           const second = graphNodes[nextIndex];
-          const secondBounds = compoundBounds(second);
-          const deltaX = (second.x ?? 0) - (first.x ?? 0);
-          const deltaY =
-            (second.y ?? 0) + secondBounds.centerYOffset -
-            ((first.y ?? 0) + firstBounds.centerYOffset);
-          const overlapX =
-            firstBounds.halfWidth + secondBounds.halfWidth + 2 - Math.abs(deltaX);
-          const overlapY =
-            firstBounds.halfHeight + secondBounds.halfHeight + 2 - Math.abs(deltaY);
-          if (overlapX <= 0 || overlapY <= 0) continue;
+          const firstX = first === fixedNode ? (first.fx ?? first.x ?? 0) : (first.x ?? 0);
+          const firstY = first === fixedNode ? (first.fy ?? first.y ?? 0) : (first.y ?? 0);
+          const secondX = second === fixedNode ? (second.fx ?? second.x ?? 0) : (second.x ?? 0);
+          const secondY = second === fixedNode ? (second.fy ?? second.y ?? 0) : (second.y ?? 0);
+          let deltaX = secondX - firstX;
+          let deltaY = secondY - firstY;
+          let distance = Math.hypot(deltaX, deltaY);
+          const minimumDistance =
+            interactionRadius(first) + interactionRadius(second) + NODE_COLLISION_GAP;
+
+          if (distance >= minimumDistance) continue;
+          if (distance < 0.001) {
+            const angle = (index * 31 + nextIndex * 17 + 1) * 2.399963229728653;
+            deltaX = Math.cos(angle);
+            deltaY = Math.sin(angle);
+            distance = 1;
+          }
+
+          const normalX = deltaX / distance;
+          const normalY = deltaY / distance;
+          const overlap = minimumDistance - distance;
+          const firstFixed = first === fixedNode;
+          const secondFixed = second === fixedNode;
+
+          if (firstFixed && !secondFixed) {
+            second.x = secondX + normalX * overlap;
+            second.y = secondY + normalY * overlap;
+            removeInwardVelocity(second, normalX, normalY);
+          } else if (!firstFixed && secondFixed) {
+            first.x = firstX - normalX * overlap;
+            first.y = firstY - normalY * overlap;
+            removeInwardVelocity(first, -normalX, -normalY);
+          } else {
+            const half = overlap / 2;
+            first.x = firstX - normalX * half;
+            first.y = firstY - normalY * half;
+            second.x = secondX + normalX * half;
+            second.y = secondY + normalY * half;
+            removeInwardVelocity(first, -normalX, -normalY);
+            removeInwardVelocity(second, normalX, normalY);
+          }
 
           moved = true;
-          if (overlapX < overlapY) {
-            const direction = deltaX === 0
-              ? (index + nextIndex) % 2 === 0 ? 1 : -1
-              : Math.sign(deltaX);
-            const shift = overlapX / 2 + 0.75;
-            first.x = (first.x ?? 0) - direction * shift;
-            second.x = (second.x ?? 0) + direction * shift;
-          } else {
-            const direction = deltaY === 0
-              ? (index + nextIndex) % 2 === 0 ? 1 : -1
-              : Math.sign(deltaY);
-            const shift = overlapY / 2 + 0.75;
-            first.y = (first.y ?? 0) - direction * shift;
-            second.y = (second.y ?? 0) + direction * shift;
-          }
         }
       }
 
@@ -328,76 +368,144 @@
     }
   }
 
-  function createCompoundCollisionForce() {
+  function pushNodesOutOfDragPath(node: GraphNode, startX: number, startY: number, endX: number, endY: number) {
+    const speed = Math.hypot(dragVelocityX, dragVelocityY);
+    const movementX = endX - startX;
+    const movementY = endY - startY;
+    const movementDistance = Math.hypot(movementX, movementY);
+    const directionX = movementDistance > 0.001 ? movementX / movementDistance : 0;
+    const directionY = movementDistance > 0.001 ? movementY / movementDistance : 0;
+    const lookahead = clamp(speed * 0.018, 0, DRAG_LOOKAHEAD_MAX);
+    const pathEndX = endX + directionX * lookahead;
+    const pathEndY = endY + directionY * lookahead;
+    const dynamicGap = clamp(speed * 0.0035, 0, 7);
+
+    for (const other of graphNodes) {
+      if (other === node) continue;
+      const otherX = other.x ?? 0;
+      const otherY = other.y ?? 0;
+      const closest = closestPointOnSegment(
+        otherX,
+        otherY,
+        startX,
+        startY,
+        pathEndX,
+        pathEndY,
+      );
+      let deltaX = otherX - closest.x;
+      let deltaY = otherY - closest.y;
+      let distance = Math.hypot(deltaX, deltaY);
+      const minimumDistance =
+        interactionRadius(node) + interactionRadius(other) + NODE_COLLISION_GAP + dynamicGap;
+
+      if (distance >= minimumDistance) continue;
+      if (distance < 0.001) {
+        // Choose a stable side of the drag path when the centers are exactly aligned.
+        deltaX = -directionY || 1;
+        deltaY = directionX;
+        distance = Math.hypot(deltaX, deltaY);
+      }
+
+      const normalX = deltaX / distance;
+      const normalY = deltaY / distance;
+      const overlap = minimumDistance - distance;
+      const displacement = overlap * (speed > 320 ? 1 : 0.82);
+      other.x = otherX + normalX * displacement;
+      other.y = otherY + normalY * displacement;
+
+      // A short-lived local impulse creates the Obsidian-like "move out of the way"
+      // response without increasing resting charge or making the graph stiffer.
+      const impulse = Math.min(5.5, 0.45 + speed * 0.0035 + overlap * 0.055);
+      other.vx = (other.vx ?? 0) + normalX * impulse + directionX * Math.min(1.4, speed * 0.0012);
+      other.vy = (other.vy ?? 0) + normalY * impulse + directionY * Math.min(1.4, speed * 0.0012);
+    }
+  }
+
+  function updateDraggedNode(deltaSeconds: number) {
+    const node = draggedNode;
+    if (!node) return;
+
+    const startX = dragProcessedX;
+    const startY = dragProcessedY;
+    const endX = dragTargetX;
+    const endY = dragTargetY;
+
+    pushNodesOutOfDragPath(node, startX, startY, endX, endY);
+    node.fx = endX;
+    node.fy = endY;
+    node.x = endX;
+    node.y = endY;
+    node.vx = 0;
+    node.vy = 0;
+    dragProcessedX = endX;
+    dragProcessedY = endY;
+
+    // One frame-based circular projection prevents tunneling at any pointer speed.
+    // It runs only while dragging and never moves the pointer-controlled node.
+    resolveCircularOverlaps(node, DRAG_COLLISION_PASSES);
+
+    // Velocity is only a short-lived predictor. It fades rapidly when the pointer
+    // pauses so the resting graph never inherits extra repulsion.
+    const velocityDecay = Math.exp(-15 * deltaSeconds);
+    dragVelocityX *= velocityDecay;
+    dragVelocityY *= velocityDecay;
+  }
+
+  function createLabelCollisionForce() {
     let forceNodes: GraphNode[] = [];
 
-    const force: any = (_alpha: number) => {
-      for (let iteration = 0; iteration < 8; iteration += 1) {
+    const force: any = (alpha: number) => {
+      for (let iteration = 0; iteration < 2; iteration += 1) {
         for (let index = 0; index < forceNodes.length; index += 1) {
           const first = forceNodes[index];
-          const firstBounds = compoundBounds(first);
+          const firstX = first.x ?? 0;
+          const firstY = first.y ?? 0;
+          const firstHalfWidth = Math.max(
+            first.radius + 5,
+            first.label.length * first.labelSize * (first.labelPriority >= 2 ? 0.27 : 0.235) + 5,
+          );
+          const firstTop = -first.radius - 3;
+          const firstBottom = first.radius + 9 + first.labelSize * 1.18;
+          const firstHalfHeight = (firstBottom - firstTop) / 2;
+          const firstCenterY = firstY + (firstTop + firstBottom) / 2;
 
           for (let nextIndex = index + 1; nextIndex < forceNodes.length; nextIndex += 1) {
             const second = forceNodes[nextIndex];
-            const secondBounds = compoundBounds(second);
-            const deltaX = (second.x ?? 0) - (first.x ?? 0);
-            const deltaY =
-              (second.y ?? 0) + secondBounds.centerYOffset -
-              ((first.y ?? 0) + firstBounds.centerYOffset);
-            const overlapX =
-              firstBounds.halfWidth + secondBounds.halfWidth + COLLISION_PADDING - Math.abs(deltaX);
-            const overlapY =
-              firstBounds.halfHeight + secondBounds.halfHeight + COLLISION_PADDING - Math.abs(deltaY);
+            const secondX = second.x ?? 0;
+            const secondY = second.y ?? 0;
+            const secondHalfWidth = Math.max(
+              second.radius + 5,
+              second.label.length * second.labelSize * (second.labelPriority >= 2 ? 0.27 : 0.235) + 5,
+            );
+            const secondTop = -second.radius - 3;
+            const secondBottom = second.radius + 9 + second.labelSize * 1.18;
+            const secondHalfHeight = (secondBottom - secondTop) / 2;
+            const secondCenterY = secondY + (secondTop + secondBottom) / 2;
+
+            const deltaX = secondX - firstX;
+            const deltaY = secondCenterY - firstCenterY;
+            const overlapX = firstHalfWidth + secondHalfWidth - Math.abs(deltaX);
+            const overlapY = firstHalfHeight + secondHalfHeight - Math.abs(deltaY);
             if (overlapX <= 0 || overlapY <= 0) continue;
 
             if (overlapX < overlapY) {
               const direction = deltaX === 0
-                ? (index + nextIndex) % 2 === 0 ? 1 : -1
+                ? (index + nextIndex) % 2 === 0
+                  ? 1
+                  : -1
                 : Math.sign(deltaX);
-              const firstFixed = first.fx != null;
-              const secondFixed = second.fx != null;
-              const correction = overlapX + 0.75;
-
-              if (firstFixed && !secondFixed) {
-                second.x = (second.x ?? 0) + direction * correction;
-              } else if (!firstFixed && secondFixed) {
-                first.x = (first.x ?? 0) - direction * correction;
-              } else if (!firstFixed && !secondFixed) {
-                first.x = (first.x ?? 0) - direction * correction / 2;
-                second.x = (second.x ?? 0) + direction * correction / 2;
-              }
-
-              if (direction > 0) {
-                first.vx = Math.min(first.vx ?? 0, 0);
-                second.vx = Math.max(second.vx ?? 0, 0);
-              } else {
-                first.vx = Math.max(first.vx ?? 0, 0);
-                second.vx = Math.min(second.vx ?? 0, 0);
-              }
+              const push = overlapX * 0.22 * alpha;
+              first.vx = (first.vx ?? 0) - direction * push;
+              second.vx = (second.vx ?? 0) + direction * push;
             } else {
               const direction = deltaY === 0
-                ? (index + nextIndex) % 2 === 0 ? 1 : -1
+                ? (index + nextIndex) % 2 === 0
+                  ? 1
+                  : -1
                 : Math.sign(deltaY);
-              const firstFixed = first.fy != null;
-              const secondFixed = second.fy != null;
-              const correction = overlapY + 0.75;
-
-              if (firstFixed && !secondFixed) {
-                second.y = (second.y ?? 0) + direction * correction;
-              } else if (!firstFixed && secondFixed) {
-                first.y = (first.y ?? 0) - direction * correction;
-              } else if (!firstFixed && !secondFixed) {
-                first.y = (first.y ?? 0) - direction * correction / 2;
-                second.y = (second.y ?? 0) + direction * correction / 2;
-              }
-
-              if (direction > 0) {
-                first.vy = Math.min(first.vy ?? 0, 0);
-                second.vy = Math.max(second.vy ?? 0, 0);
-              } else {
-                first.vy = Math.max(first.vy ?? 0, 0);
-                second.vy = Math.min(second.vy ?? 0, 0);
-              }
+              const push = overlapY * 0.3 * alpha;
+              first.vy = (first.vy ?? 0) - direction * push;
+              second.vy = (second.vy ?? 0) + direction * push;
             }
           }
         }
@@ -417,42 +525,34 @@
         'link',
         forceLink<GraphNode, GraphLink>(graphLinks)
           .id((node) => node.id)
-          .distance((link) => link.kind === 'secondary' ? 72 : 94)
-          .strength((link) => link.kind === 'secondary' ? 0.24 : 0.18),
+          .distance((link) => link.kind === 'secondary' ? 96 : 132)
+          .strength((link) => link.kind === 'secondary' ? 0.2 : 0.145),
       )
       .force(
         'charge',
         forceManyBody<GraphNode>()
-          .strength((node) =>
-            node.id === '/'
-              ? -430
-              : node.degree >= 3
-                ? -330
-                : node.depth === 1
-                  ? -235
-                  : -165,
-          )
-          .distanceMin(22)
-          .theta(0.76),
+          .strength((node) => node.id === '/' ? -245 : node.degree >= 3 ? -175 : -112)
+          .distanceMin(14)
+          .theta(0.86),
       )
+      .force('labelCollision', createLabelCollisionForce())
       .force(
         'x',
-        forceX<GraphNode>((node) => node.anchorX).strength((node) => node.depth > 1 ? 0.06 : 0.035),
+        forceX<GraphNode>((node) => node.anchorX).strength((node) => node.depth > 1 ? 0.052 : 0.024),
       )
       .force(
         'y',
-        forceY<GraphNode>((node) => node.anchorY).strength((node) => node.depth > 1 ? 0.06 : 0.035),
+        forceY<GraphNode>((node) => node.anchorY).strength((node) => node.depth > 1 ? 0.052 : 0.024),
       )
       .force(
         'collision',
         forceCollide<GraphNode>()
-          .radius((node) => interactionRadius(node) + 3)
+          .radius((node) => interactionRadius(node) + NODE_COLLISION_GAP / 2)
           .strength(1)
-          .iterations(10),
+          .iterations(4),
       )
-      .force('compoundCollision', createCompoundCollisionForce())
-      .velocityDecay(0.42)
-      .alphaDecay(0.018);
+      .velocityDecay(0.34)
+      .alphaDecay(0.023);
   }
 
   function createNodeView(node: GraphNode, PIXI: any) {
@@ -480,23 +580,25 @@
         fill: colors.text,
         align: 'center',
       },
-      resolution: Math.min(Math.max((window.devicePixelRatio || 1) * 4, 5), 8),
+      resolution: Math.min((window.devicePixelRatio || 1) * 3, 6),
     });
     label.anchor.set(0.5, 0);
-    label.position.set(0, node.radius + LABEL_BASE_GAP);
-    // High-resolution text textures stay sharp through camera scaling.
-    // Subpixel positioning avoids the stair-step motion caused by pixel snapping.
     label.roundPixels = false;
-    node.labelHalfWidth = label.width / 2;
-    node.labelHeight = label.height;
+    label.position.set(0, node.radius + LABEL_BASE_GAP);
 
     container.addChild(base, highlight, label);
     nodeLayer.addChild(container);
     node.view = { container, base, highlight, label };
 
-    container.on('pointerover', () => setActiveNode(node));
+    container.on('pointerover', () => {
+      if (draggedNode) {
+        setActiveNode(draggedNode);
+        return;
+      }
+      setActiveNode(node);
+    });
     container.on('pointerout', () => {
-      if (draggedNode !== node) setActiveNode(null);
+      if (!draggedNode) setActiveNode(null);
     });
     container.on('pointerdown', (event: any) => beginNodeDrag(node, event));
   }
@@ -668,81 +770,6 @@
     window.removeEventListener('pointercancel', finishNodeDrag);
   }
 
-  function separateDraggedNodeImmediately(node: GraphNode) {
-    for (let pass = 0; pass < DRAG_COLLISION_PASSES; pass += 1) {
-      let moved = false;
-
-      for (let index = 0; index < graphNodes.length; index += 1) {
-        const first = graphNodes[index];
-        const firstBounds = compoundBounds(first);
-
-        for (let nextIndex = index + 1; nextIndex < graphNodes.length; nextIndex += 1) {
-          const second = graphNodes[nextIndex];
-          const secondBounds = compoundBounds(second);
-          const firstX = first === node ? (node.fx ?? node.x ?? 0) : (first.x ?? 0);
-          const firstY = first === node ? (node.fy ?? node.y ?? 0) : (first.y ?? 0);
-          const secondX = second === node ? (node.fx ?? node.x ?? 0) : (second.x ?? 0);
-          const secondY = second === node ? (node.fy ?? node.y ?? 0) : (second.y ?? 0);
-          const deltaX = secondX - firstX;
-          const deltaY =
-            secondY + secondBounds.centerYOffset -
-            (firstY + firstBounds.centerYOffset);
-          const overlapX =
-            firstBounds.halfWidth + secondBounds.halfWidth + DRAG_COLLISION_PADDING -
-            Math.abs(deltaX);
-          const overlapY =
-            firstBounds.halfHeight + secondBounds.halfHeight + DRAG_COLLISION_PADDING -
-            Math.abs(deltaY);
-          if (overlapX <= 0 || overlapY <= 0) continue;
-
-          moved = true;
-          const firstFixed = first === node;
-          const secondFixed = second === node;
-
-          if (overlapX < overlapY) {
-            const direction = deltaX === 0
-              ? (index + nextIndex) % 2 === 0 ? 1 : -1
-              : Math.sign(deltaX);
-            const correction = overlapX + 1;
-
-            if (firstFixed && !secondFixed) {
-              second.x = secondX + direction * correction;
-              second.vx = direction * Math.max(Math.abs(second.vx ?? 0), 2.4);
-            } else if (!firstFixed && secondFixed) {
-              first.x = firstX - direction * correction;
-              first.vx = -direction * Math.max(Math.abs(first.vx ?? 0), 2.4);
-            } else if (!firstFixed && !secondFixed) {
-              first.x = firstX - direction * correction / 2;
-              second.x = secondX + direction * correction / 2;
-              first.vx = -direction * Math.max(Math.abs(first.vx ?? 0), 1.2);
-              second.vx = direction * Math.max(Math.abs(second.vx ?? 0), 1.2);
-            }
-          } else {
-            const direction = deltaY === 0
-              ? (index + nextIndex) % 2 === 0 ? 1 : -1
-              : Math.sign(deltaY);
-            const correction = overlapY + 1;
-
-            if (firstFixed && !secondFixed) {
-              second.y = secondY + direction * correction;
-              second.vy = direction * Math.max(Math.abs(second.vy ?? 0), 2.4);
-            } else if (!firstFixed && secondFixed) {
-              first.y = firstY - direction * correction;
-              first.vy = -direction * Math.max(Math.abs(first.vy ?? 0), 2.4);
-            } else if (!firstFixed && !secondFixed) {
-              first.y = firstY - direction * correction / 2;
-              second.y = secondY + direction * correction / 2;
-              first.vy = -direction * Math.max(Math.abs(first.vy ?? 0), 1.2);
-              second.vy = direction * Math.max(Math.abs(second.vy ?? 0), 1.2);
-            }
-          }
-        }
-      }
-
-      if (!moved) break;
-    }
-  }
-
   function beginNodeDrag(node: GraphNode, event: any) {
     event.stopPropagation();
     setActiveNode(node);
@@ -751,31 +778,47 @@
     dragStartX = event.global.x;
     dragStartY = event.global.y;
     dragMoved = false;
-    node.fx = node.x;
-    node.fy = node.y;
-    simulation?.alpha(0.5).alphaTarget(0.34).restart();
+    dragTargetX = node.x ?? 0;
+    dragTargetY = node.y ?? 0;
+    dragProcessedX = dragTargetX;
+    dragProcessedY = dragTargetY;
+    dragVelocityX = 0;
+    dragVelocityY = 0;
+    dragLastInputTime = performance.now();
+    node.fx = dragTargetX;
+    node.fy = dragTargetY;
+    setNodeInteractionLocked(true);
+    simulation?.alpha(Math.max(simulation.alpha(), 0.24)).alphaTarget(DRAG_ALPHA_TARGET).restart();
     addWindowDragListeners();
   }
 
   function handleNodeDrag(event: PointerEvent) {
     if (!draggedNode || draggedPointerId !== event.pointerId || !app) return;
     event.preventDefault();
-    const pointer = clientToCanvas(event.clientX, event.clientY);
+
+    const samples = typeof event.getCoalescedEvents === 'function'
+      ? event.getCoalescedEvents()
+      : [event];
+    const sample = samples.length ? samples[samples.length - 1] : event;
+    const pointer = clientToCanvas(sample.clientX, sample.clientY);
     const worldPoint = screenToWorld(pointer.x, pointer.y);
     const radius = draggedNode.radius;
     const minX = (0 - camera.x) / camera.scale + radius;
     const maxX = (app.screen.width - camera.x) / camera.scale - radius;
     const minY = (0 - camera.y) / camera.scale + radius;
     const maxY = (app.screen.height - camera.y) / camera.scale - radius;
-
-    draggedNode.fx = clamp(worldPoint.x, Math.min(minX, maxX), Math.max(minX, maxX));
-    draggedNode.fy = clamp(worldPoint.y, Math.min(minY, maxY), Math.max(minY, maxY));
-    draggedNode.x = draggedNode.fx;
-    draggedNode.y = draggedNode.fy;
-    draggedNode.vx = 0;
-    draggedNode.vy = 0;
-    separateDraggedNodeImmediately(draggedNode);
-    simulation?.alpha(Math.max(simulation.alpha(), 0.42)).alphaTarget(0.34).restart();
+    const nextX = clamp(worldPoint.x, Math.min(minX, maxX), Math.max(minX, maxX));
+    const nextY = clamp(worldPoint.y, Math.min(minY, maxY), Math.max(minY, maxY));
+    const now = performance.now();
+    const elapsed = clamp((now - dragLastInputTime) / 1000, 1 / 240, 0.08);
+    const instantaneousX = (nextX - dragTargetX) / elapsed;
+    const instantaneousY = (nextY - dragTargetY) / elapsed;
+    const velocityBlend = 0.72;
+    dragVelocityX += (instantaneousX - dragVelocityX) * velocityBlend;
+    dragVelocityY += (instantaneousY - dragVelocityY) * velocityBlend;
+    dragTargetX = nextX;
+    dragTargetY = nextY;
+    dragLastInputTime = now;
     dragMoved ||= Math.hypot(pointer.x - dragStartX, pointer.y - dragStartY) > 4;
   }
 
@@ -784,11 +827,15 @@
     const node = draggedNode;
     const shouldNavigate = !dragMoved && Boolean(node.href);
 
+    updateDraggedNode(1 / 60);
+    node.x = dragTargetX;
+    node.y = dragTargetY;
     node.fx = null;
     node.fy = null;
     simulation?.alphaTarget(0);
     draggedNode = null;
     draggedPointerId = null;
+    setNodeInteractionLocked(false);
     removeWindowDragListeners();
 
     if (shouldNavigate && node.href && typeof window !== 'undefined') {
@@ -801,13 +848,15 @@
     if (!graphNodes.length) return { minX: -1, minY: -1, maxX: 1, maxY: 1 };
     return graphNodes.reduce(
       (bounds, node) => {
-        const nodeBounds = compoundBounds(node);
         const x = node.x ?? 0;
-        const centerY = (node.y ?? 0) + nodeBounds.centerYOffset;
-        bounds.minX = Math.min(bounds.minX, x - nodeBounds.halfWidth);
-        bounds.maxX = Math.max(bounds.maxX, x + nodeBounds.halfWidth);
-        bounds.minY = Math.min(bounds.minY, centerY - nodeBounds.halfHeight);
-        bounds.maxY = Math.max(bounds.maxY, centerY + nodeBounds.halfHeight);
+        const y = node.y ?? 0;
+        const labelWidth = node.labelPriority >= 2
+          ? Math.max(0, node.label.length * node.labelSize * 0.27)
+          : 0;
+        bounds.minX = Math.min(bounds.minX, x - Math.max(node.radius, labelWidth));
+        bounds.maxX = Math.max(bounds.maxX, x + Math.max(node.radius, labelWidth));
+        bounds.minY = Math.min(bounds.minY, y - node.radius);
+        bounds.maxY = Math.max(bounds.maxY, y + node.radius + node.labelSize + 8);
         return bounds;
       },
       { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
@@ -832,8 +881,6 @@
     camera.zooming = false;
     camera.targetScale = scale;
     camera.targetX = app.screen.width / 2 - centerX * scale;
-    // Align the top of the fitted graph with the Center button instead of
-    // vertically centering it in a large empty field.
     camera.targetY = FIT_TOP_PADDING - bounds.minY * scale;
 
     if (immediate) {
@@ -853,7 +900,7 @@
     if (!edgeLayer || !activeEdgeLayer) return;
     edgeLayer.clear();
     activeEdgeLayer.clear();
-    const lineWidth = 1.15 / Math.max(camera.scale, Number.EPSILON);
+    const lineWidth = 1.08 / Math.max(camera.scale, Number.EPSILON);
     const edgeProgress = edgeFocusNode ? clamp(edgeFocusNode.hover, 0, 1) : 0;
 
     for (const link of graphLinks) {
@@ -941,6 +988,7 @@
   function updateFrame(ticker: any) {
     const deltaSeconds = Math.min(0.05, ticker.deltaMS / 1000);
     updateCamera(deltaSeconds);
+    updateDraggedNode(deltaSeconds);
     updateNodeViews(deltaSeconds);
     redrawEdges();
   }
@@ -1006,7 +1054,7 @@
       height,
       antialias: true,
       autoDensity: true,
-      resolution: Math.min((window.devicePixelRatio || 1) * 2, 4),
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
       backgroundAlpha: 0,
       preference: 'webgl',
     });
@@ -1036,10 +1084,6 @@
     app.stage.on('pointerupoutside', finishPan);
 
     for (const node of graphNodes) createNodeView(node, PIXI);
-    separateInitialOverlaps();
-    for (const node of graphNodes) {
-      node.view?.container.position.set(node.x ?? 0, node.y ?? 0);
-    }
     // Start the force layout only after the canvas exists so reloading shows the
     // graph naturally arranging itself instead of revealing a pre-settled layout.
     buildSimulation();
