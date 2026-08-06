@@ -163,8 +163,8 @@
       const x = node.x ?? 0;
       const y = node.y ?? 0;
       const horizontal = Math.max(node.collisionRadius, 24);
-      const verticalTop = node.radius + 10;
-      const verticalBottom = node.radius + 26;
+      const verticalTop = node.radius + 26;
+      const verticalBottom = node.radius + 10;
       minX = Math.min(minX, x - horizontal);
       maxX = Math.max(maxX, x + horizontal);
       minY = Math.min(minY, y - verticalTop);
@@ -393,6 +393,7 @@
             {#if source && target}
               <line
                 class:pixi-website-graph__edge--active={isConnected(link, hoveredNodeId)}
+                class:pixi-website-graph__edge--muted={hoveredNodeId !== null && !isConnected(link, hoveredNodeId)}
                 x1={source.x ?? 0}
                 y1={source.y ?? 0}
                 x2={target.x ?? 0}
@@ -418,11 +419,11 @@
               on:click={() => activateNode(node)}
               on:keydown={(event) => handleNodeKeydown(event, node)}
             >
-              <circle class="pixi-website-graph__hit-area" r={Math.max(13, node.radius + 8)}></circle>
+              <circle class="pixi-website-graph__hit-area" r={node.radius}></circle>
               <circle class="pixi-website-graph__dot" r={node.radius}></circle>
               <text
                 class="pixi-website-graph__label"
-                y={node.radius + 15}
+                y={-(node.radius + 13)}
                 text-anchor="middle"
                 dominant-baseline="middle"
               >{node.label}</text>
@@ -442,8 +443,8 @@
     min-width: 0;
     min-height: 0;
     overflow: hidden;
-    background: var(--bg);
-    color: var(--text);
+    background: var(--graph-bg, var(--bg));
+    color: var(--graph-text, var(--text));
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
@@ -463,69 +464,101 @@
   }
 
   .pixi-website-graph__background {
-    fill: var(--bg);
+    fill: var(--graph-bg, var(--bg));
   }
 
   .pixi-website-graph__edges line {
-    stroke: color-mix(in srgb, var(--text) 24%, transparent);
+    opacity: 0.72;
+    stroke: var(--graph-edge, color-mix(in srgb, var(--text) 24%, transparent));
     stroke-width: 1;
     vector-effect: non-scaling-stroke;
     transition:
-      stroke 120ms ease,
-      opacity 120ms ease;
+      stroke 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .pixi-website-graph__edges line.pixi-website-graph__edge--active {
-    stroke: color-mix(in srgb, var(--text) 64%, transparent);
+    opacity: 1;
+    stroke: var(--graph-hover, #0b6f69);
+  }
+
+  .pixi-website-graph__edges line.pixi-website-graph__edge--muted {
+    opacity: 0.13;
   }
 
   .pixi-website-graph__node {
-    color: color-mix(in srgb, var(--text) 68%, var(--bg));
+    color: var(--graph-node, color-mix(in srgb, var(--text) 68%, var(--bg)));
     cursor: pointer;
+    opacity: 1;
     outline: none;
+    transition: color 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .pixi-website-graph__hit-area {
     fill: transparent;
     stroke: none;
+    pointer-events: all;
   }
 
   .pixi-website-graph__dot {
+    pointer-events: none;
     fill: currentColor;
-    stroke: var(--bg);
+    stroke: var(--graph-node-ring, var(--graph-bg, var(--bg)));
     stroke-width: 1.25;
     vector-effect: non-scaling-stroke;
+    transform-box: fill-box;
+    transform-origin: center;
     transition:
-      fill 120ms ease,
-      color 120ms ease;
+      fill 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      stroke 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .pixi-website-graph__node--current .pixi-website-graph__dot {
+    fill: var(--graph-node-current, var(--graph-node, currentColor));
   }
 
   .pixi-website-graph__label {
-    fill: color-mix(in srgb, var(--text) 72%, var(--bg));
-    stroke: var(--bg);
-    stroke-width: 3px;
-    paint-order: stroke fill;
+    opacity: 0;
+    fill: var(--graph-label, var(--graph-text, var(--text)));
+    stroke: none;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu,
       Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
-    font-size: 11.5px;
-    font-weight: 450;
-    letter-spacing: 0;
+    font-size: 12px;
+    font-weight: 600;
+    font-kerning: normal;
+    font-synthesis: none;
+    letter-spacing: -0.005em;
+    text-rendering: geometricPrecision;
+    -webkit-font-smoothing: antialiased;
     pointer-events: none;
-    transition: fill 120ms ease;
+    transform: translateY(-2px);
+    transform-box: fill-box;
+    transform-origin: center;
+    transition:
+      opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      fill 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .pixi-website-graph__node--active,
   .pixi-website-graph__node:focus-visible {
-    color: var(--accent);
+    color: var(--graph-hover, #0b6f69);
+    opacity: 1;
+  }
+
+  .pixi-website-graph__node--active .pixi-website-graph__dot,
+  .pixi-website-graph__node:focus-visible .pixi-website-graph__dot {
+    fill: var(--graph-hover, #0b6f69);
+    stroke: var(--graph-hover-ring, var(--graph-bg, var(--bg)));
+    transform: scale(1.28);
   }
 
   .pixi-website-graph__node--active .pixi-website-graph__label,
   .pixi-website-graph__node:focus-visible .pixi-website-graph__label {
-    fill: var(--text);
-  }
-
-  .pixi-website-graph__node--current .pixi-website-graph__dot {
-    fill: var(--accent);
+    opacity: 1;
+    fill: var(--graph-label-active, var(--graph-text, var(--text)));
+    transform: translateY(0);
   }
 
   .pixi-website-graph__fallback {
@@ -535,13 +568,14 @@
     place-items: center;
     margin: 0;
     padding: 2rem;
-    color: var(--muted);
+    color: var(--graph-muted, var(--muted));
     font-size: 0.88rem;
     text-align: center;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .pixi-website-graph__edges line,
+    .pixi-website-graph__node,
     .pixi-website-graph__dot,
     .pixi-website-graph__label {
       transition: none;
