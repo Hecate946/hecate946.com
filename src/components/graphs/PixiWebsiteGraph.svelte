@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import {
-    forceCollide,
     forceLink,
     forceManyBody,
     forceSimulation,
@@ -16,10 +15,7 @@
   type GraphNode = NetworkNode &
     SimulationNodeDatum & {
       radius: number;
-      labelSize: number;
-      hover: number;
-      hoverTarget: number;
-      view?: NodeView;
+      collisionRadius: number;
     };
 
   type GraphLink = Omit<NetworkLink, 'source' | 'target'> &
@@ -28,140 +24,67 @@
       target: string | GraphNode;
     };
 
-  type NodeView = {
-    container: any;
-    base: any;
-    highlight: any;
-    label: any;
+  type DragState = {
+    pointerId: number;
+    node: GraphNode;
+    startClientX: number;
+    startClientY: number;
+    moved: boolean;
   };
 
-  type ThemeColors = {
-    background: string;
-    text: string;
-    muted: string;
-    line: string;
-    accent: string;
-  };
-
-  type Camera = {
-    scale: number;
-    x: number;
-    y: number;
-    targetScale: number;
-    targetX: number;
-    targetY: number;
-    zooming: boolean;
-    anchorScreenX: number;
-    anchorScreenY: number;
-    anchorWorldX: number;
-    anchorWorldY: number;
+  type PanState = {
+    pointerId: number;
+    lastClientX: number;
+    lastClientY: number;
   };
 
   export let nodes: NetworkNode[] = [];
   export let links: NetworkLink[] = [];
   export let ariaLabel = 'Interactive website graph';
 
-  const PIXI_URL = 'https://cdn.jsdelivr.net/npm/pixi.js@8.19.0/+esm';
-  const MIN_ZOOM = 0.12;
-  const MAX_ZOOM = 8;
-  const CAMERA_EASE = 13;
-  const HOVER_EASE = 9;
-  const LABEL_FADE_START = 8;
-  const LABEL_FADE_END = 11;
-  const FIT_PADDING = 72;
+  const MIN_ZOOM = 0.18;
+  const MAX_ZOOM = 5;
+  const FIT_PADDING = 64;
 
   let hostElement!: HTMLDivElement;
-  let canvasElement: HTMLCanvasElement | null = null;
-  let app: any = null;
-  let world: any = null;
-  let edgeLayer: any = null;
-  let activeEdgeLayer: any = null;
-  let nodeLayer: any = null;
-  let simulation: Simulation<GraphNode, GraphLink> | null = null;
+  let svgElement!: SVGSVGElement;
+  let width = 800;
+  let height = 560;
   let graphNodes: GraphNode[] = [];
   let graphLinks: GraphLink[] = [];
+  let simulation: Simulation<GraphNode, GraphLink> | null = null;
   let resizeObserver: ResizeObserver | null = null;
-  let themeObserver: MutationObserver | null = null;
-  let destroyed = false;
+  let mounted = false;
   let failed = false;
-  let activeNodeId: string | null = null;
-  let activeNode: GraphNode | null = null;
-  let edgeFocusNode: GraphNode | null = null;
-  let panPointerId: number | null = null;
-  let panLastX = 0;
-  let panLastY = 0;
-  let draggedNode: GraphNode | null = null;
-  let draggedPointerId: number | null = null;
-  let dragStartX = 0;
-  let dragStartY = 0;
-  let dragMoved = false;
-  let pinchState: { distance: number; scale: number; worldX: number; worldY: number } | null = null;
-  const touchPointers = new Map<number, { x: number; y: number }>();
-  let colors: ThemeColors = {
-    background: '#ffffff',
-    text: '#202124',
-    muted: '#8b9098',
-    line: '#b7bbc2',
-    accent: '#2aaea0',
-  };
+  let hoveredNodeId: string | null = null;
+  let dragState: DragState | null = null;
+  let panState: PanState | null = null;
+  let suppressClickNodeId: string | null = null;
+  let viewScale = 1;
+  let viewX = width / 2;
+  let viewY = height / 2;
+  let userMovedView = false;
+  let lastSignature = '';
 
-  const camera: Camera = {
-    scale: 1,
-    x: 0,
-    y: 0,
-    targetScale: 1,
-    targetX: 0,
-    targetY: 0,
-    zooming: false,
-    anchorScreenX: 0,
-    anchorScreenY: 0,
-    anchorWorldX: 0,
-    anchorWorldY: 0,
-  };
+  $: dataSignature = JSON.stringify({ nodes, links });
+  $: if (mounted && dataSignature !== lastSignature) {
+    lastSignature = dataSignature;
+    rebuildGraph();
+  }
 
   const clamp = (value: number, minimum: number, maximum: number) =>
     Math.min(maximum, Math.max(minimum, value));
 
-  const smoothstep = (minimum: number, maximum: number, value: number) => {
-    const normalized = clamp((value - minimum) / (maximum - minimum), 0, 1);
-    return normalized * normalized * (3 - 2 * normalized);
-  };
-
   function nodeRadius(node: NetworkNode) {
-    if (node.current) return 7;
-    if (node.featured) return 6;
+    if (node.current) return 6.5;
+    if (node.featured) return 5.75;
     if ((node.radius ?? 0) >= 34) return 5;
-    if ((node.radius ?? 0) <= 22) return 3.5;
-    return 4.25;
+    if ((node.radius ?? 0) <= 22) return 3.75;
+    return 4.4;
   }
 
-  function nodeLabelSize(radius: number) {
-    return Math.round(11.5 + radius * 0.45);
-  }
-
-  function readThemeColors(): ThemeColors {
-    const styles = getComputedStyle(document.documentElement);
-    const read = (name: string, fallback: string) =>
-      styles.getPropertyValue(name).trim() || fallback;
-    const background = read('--bg', '#ffffff');
-    const hex = background.match(/^#([0-9a-f]{6})$/i)?.[1];
-    const luminance = hex
-      ? (Number.parseInt(hex.slice(0, 2), 16) * 0.2126 +
-          Number.parseInt(hex.slice(2, 4), 16) * 0.7152 +
-          Number.parseInt(hex.slice(4, 6), 16) * 0.0722) /
-        255
-      : 1;
-    const dark = luminance < 0.48;
-
-    return {
-      background,
-      text: read('--text', dark ? '#f1f3f4' : '#202124'),
-      // Obsidian-like neutral graph colors stay gray; only hover uses the
-      // current theme accent.
-      muted: dark ? '#a9adb3' : '#858a91',
-      line: dark ? 'rgba(190, 194, 201, 0.42)' : 'rgba(92, 98, 107, 0.32)',
-      accent: read('--accent', '#2aaea0'),
-    };
+  function labelWidth(label: string) {
+    return Math.min(74, Math.max(18, label.length * 3.15));
   }
 
   function resolveNode(value: string | GraphNode) {
@@ -170,557 +93,345 @@
   }
 
   function makeGraphData() {
-    const width = 780;
-    const height = 560;
-
-    graphNodes = nodes.map((node, index) => {
+    // Match the official D3 force-directed graph demo: pass nodes without
+    // explicit positions so d3-force initializes them with its deterministic
+    // phyllotaxis layout. The extra visual fields do not affect physics.
+    graphNodes = nodes.map((node) => {
       const radius = nodeRadius(node);
-      const angle = (index / Math.max(1, nodes.length)) * Math.PI * 2;
-      const anchorX = node.anchor?.x ?? 0.5 + Math.cos(angle) * 0.28;
-      const anchorY = node.anchor?.y ?? 0.5 + Math.sin(angle) * 0.28;
 
       return {
         ...node,
         radius,
-        labelSize: nodeLabelSize(radius),
-        hover: 0,
-        hoverTarget: 0,
-        x: (anchorX - 0.5) * width,
-        y: (anchorY - 0.5) * height,
+        collisionRadius: Math.max(radius + 8, labelWidth(node.label)),
       };
     });
 
+    // The link force mutates links, so keep the component inputs untouched.
     graphLinks = links.map((link) => ({ ...link }));
   }
 
   function buildSimulation() {
     simulation?.stop();
 
-    // Use D3's native degree-based link strength, default many-body charge,
-    // velocity decay, and alpha decay. A very weak x/y force is the only
-    // containment added: unlike forceCenter, it prevents disconnected site
-    // sections from drifting so far apart that the fitted graph becomes tiny.
-    const linkForce = forceLink<GraphNode, GraphLink>(graphLinks)
-      .id((node) => node.id)
-      .distance((link) => link.distance ?? (link.kind === 'secondary' ? 78 : 108))
-      .iterations(2);
-
+    // Match the disjoint force-directed graph demo embedded on d3js.org/d3-force:
+    // default link and charge forces, plus default x/y positioning forces.
+    // Do not add custom distance, strength, iterations, decay, collision,
+    // or centering forces here.
     simulation = forceSimulation<GraphNode, GraphLink>(graphNodes)
-      .force('link', linkForce)
-      .force('charge', forceManyBody<GraphNode>())
       .force(
-        'collision',
-        forceCollide<GraphNode>()
-          .radius((node) => node.radius + 5)
-          .iterations(1),
+        'link',
+        forceLink<GraphNode, GraphLink>(graphLinks).id((node) => node.id),
       )
-      .force('x', forceX<GraphNode>(0).strength(0.018))
-      .force('y', forceY<GraphNode>(0).strength(0.018))
-      .stop();
-
-    simulation.tick(260);
+      .force('charge', forceManyBody<GraphNode>())
+      .force('x', forceX<GraphNode>())
+      .force('y', forceY<GraphNode>())
+      .on('tick', () => {
+        graphNodes = graphNodes;
+        graphLinks = graphLinks;
+      })
+      .on('end', () => {
+        if (!userMovedView) fitGraph();
+      });
   }
 
-  function createNodeView(node: GraphNode, PIXI: any) {
-    const container = new PIXI.Container();
-    container.position.set(node.x ?? 0, node.y ?? 0);
-    container.eventMode = 'static';
-    container.cursor = node.href ? 'pointer' : 'grab';
-    container.hitArea = new PIXI.Circle(0, 0, Math.max(node.radius + 6, 12));
+  function rebuildGraph() {
+    failed = false;
 
-    const base = new PIXI.Graphics()
-      .circle(0, 0, node.radius)
-      .fill({ color: colors.muted });
+    try {
+      makeGraphData();
+      buildSimulation();
 
-    const highlight = new PIXI.Graphics()
-      .circle(0, 0, node.radius)
-      .fill({ color: colors.accent });
-    highlight.alpha = 0;
-
-    const label = new PIXI.Text({
-      text: node.label,
-      style: {
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, Roboto, "Noto Sans", sans-serif',
-        fontSize: node.labelSize,
-        fontWeight: node.current || node.featured ? '500' : '400',
-        fill: colors.text,
-        align: 'center',
-      },
-      resolution: Math.min((window.devicePixelRatio || 1) * 2, 4),
-    });
-    label.anchor.set(0.5, 0);
-    label.position.set(0, node.radius + 7);
-    label.roundPixels = true;
-
-    container.addChild(base, highlight, label);
-    nodeLayer.addChild(container);
-    node.view = { container, base, highlight, label };
-
-    container.on('pointerover', () => setActiveNode(node));
-    container.on('pointerout', () => {
-      if (draggedNode !== node) setActiveNode(null);
-    });
-    container.on('pointerdown', (event: any) => beginNodeDrag(node, event));
+      // The official demo starts the simulation immediately with D3's default
+      // alpha, alpha decay, and velocity decay. Fit only the camera; do not
+      // advance or otherwise modify the simulation.
+      fitGraph();
+    } catch (error) {
+      console.error('Website graph failed to initialize.', error);
+      failed = true;
+    }
   }
 
-  function rebuildNodeColors() {
+  function fitGraph() {
+    if (!graphNodes.length || width <= 0 || height <= 0) return;
+
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
     for (const node of graphNodes) {
-      const view = node.view;
-      if (!view) continue;
-      view.base.clear().circle(0, 0, node.radius).fill({ color: colors.muted });
-      view.highlight.clear().circle(0, 0, node.radius).fill({ color: colors.accent });
-      view.label.style.fill = colors.text;
+      const x = node.x ?? 0;
+      const y = node.y ?? 0;
+      const horizontal = Math.max(node.collisionRadius, 24);
+      const verticalTop = node.radius + 10;
+      const verticalBottom = node.radius + 26;
+      minX = Math.min(minX, x - horizontal);
+      maxX = Math.max(maxX, x + horizontal);
+      minY = Math.min(minY, y - verticalTop);
+      maxY = Math.max(maxY, y + verticalBottom);
     }
-  }
 
-  function setActiveNode(node: GraphNode | null) {
-    activeNode = node;
-    activeNodeId = node?.id ?? null;
-    if (node) edgeFocusNode = node;
-    for (const item of graphNodes) item.hoverTarget = item === node ? 1 : 0;
-  }
-
-  function updateCameraTransform() {
-    if (!world) return;
-    world.scale.set(camera.scale);
-    world.position.set(camera.x, camera.y);
-  }
-
-  function screenToWorld(screenX: number, screenY: number) {
-    return {
-      x: (screenX - camera.x) / camera.scale,
-      y: (screenY - camera.y) / camera.scale,
-    };
-  }
-
-  function clientToCanvas(clientX: number, clientY: number) {
-    const rect = canvasElement?.getBoundingClientRect();
-    if (!rect) return { x: clientX, y: clientY };
-    return { x: clientX - rect.left, y: clientY - rect.top };
-  }
-
-  function stopLayoutForNavigation() {
-    simulation?.stop();
-    simulation?.alphaTarget(0);
-  }
-
-  function handleWheel(event: WheelEvent) {
-    if (!canvasElement) return;
-    event.preventDefault();
-    stopLayoutForNavigation();
-
-    const pointer = clientToCanvas(event.clientX, event.clientY);
-    const worldPoint = screenToWorld(pointer.x, pointer.y);
-    const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
-    const factor = Math.exp(-delta * 0.00135);
-
-    camera.anchorScreenX = pointer.x;
-    camera.anchorScreenY = pointer.y;
-    camera.anchorWorldX = worldPoint.x;
-    camera.anchorWorldY = worldPoint.y;
-    camera.targetScale = clamp(camera.targetScale * factor, MIN_ZOOM, MAX_ZOOM);
-    camera.zooming = true;
-  }
-
-  function touchDistance() {
-    const points = Array.from(touchPointers.values());
-    if (points.length < 2) return 0;
-    return Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
-  }
-
-  function touchCenter() {
-    const points = Array.from(touchPointers.values());
-    return {
-      x: (points[0].x + points[1].x) / 2,
-      y: (points[0].y + points[1].y) / 2,
-    };
-  }
-
-  function handleTouchPointerDown(event: PointerEvent) {
-    if (event.pointerType !== 'touch') return;
-    const point = clientToCanvas(event.clientX, event.clientY);
-    touchPointers.set(event.pointerId, point);
-    if (touchPointers.size === 2) {
-      stopLayoutForNavigation();
-      panPointerId = null;
-      const center = touchCenter();
-      const worldPoint = screenToWorld(center.x, center.y);
-      pinchState = {
-        distance: Math.max(1, touchDistance()),
-        scale: camera.scale,
-        worldX: worldPoint.x,
-        worldY: worldPoint.y,
-      };
-    }
-  }
-
-  function handleTouchPointerMove(event: PointerEvent) {
-    if (event.pointerType !== 'touch' || !touchPointers.has(event.pointerId)) return;
-    touchPointers.set(event.pointerId, clientToCanvas(event.clientX, event.clientY));
-    if (!pinchState || touchPointers.size < 2) return;
-    event.preventDefault();
-    const center = touchCenter();
+    const graphWidth = Math.max(1, maxX - minX);
+    const graphHeight = Math.max(1, maxY - minY);
+    const availableWidth = Math.max(1, width - FIT_PADDING * 2);
+    const availableHeight = Math.max(1, height - FIT_PADDING * 2);
     const scale = clamp(
-      pinchState.scale * (touchDistance() / pinchState.distance),
+      Math.min(availableWidth / graphWidth, availableHeight / graphHeight),
       MIN_ZOOM,
-      MAX_ZOOM,
+      2.25,
     );
-    camera.zooming = false;
-    camera.scale = scale;
-    camera.targetScale = scale;
-    camera.x = center.x - pinchState.worldX * scale;
-    camera.y = center.y - pinchState.worldY * scale;
-    camera.targetX = camera.x;
-    camera.targetY = camera.y;
-    updateCameraTransform();
-  }
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
 
-  function handleTouchPointerUp(event: PointerEvent) {
-    if (event.pointerType !== 'touch') return;
-    touchPointers.delete(event.pointerId);
-    if (touchPointers.size < 2) pinchState = null;
-  }
-
-  function beginPan(event: any) {
-    if (event.target !== app.stage || draggedNode || touchPointers.size > 1) return;
-    stopLayoutForNavigation();
-    panPointerId = event.pointerId;
-    panLastX = event.global.x;
-    panLastY = event.global.y;
-    camera.zooming = false;
-    camera.targetScale = camera.scale;
-    camera.targetX = camera.x;
-    camera.targetY = camera.y;
-    canvasElement?.setPointerCapture?.(event.pointerId);
-  }
-
-  function continuePan(event: any) {
-    if (panPointerId !== event.pointerId || draggedNode) return;
-    const nextX = event.global.x;
-    const nextY = event.global.y;
-    camera.x += nextX - panLastX;
-    camera.y += nextY - panLastY;
-    camera.targetX = camera.x;
-    camera.targetY = camera.y;
-    panLastX = nextX;
-    panLastY = nextY;
-    updateCameraTransform();
-  }
-
-  function finishPan(event: any) {
-    if (panPointerId !== event.pointerId) return;
-    panPointerId = null;
-    canvasElement?.releasePointerCapture?.(event.pointerId);
-  }
-
-  function addWindowDragListeners() {
-    if (typeof window === 'undefined') return;
-    window.addEventListener('pointermove', handleNodeDrag, { passive: false });
-    window.addEventListener('pointerup', finishNodeDrag, { passive: false });
-    window.addEventListener('pointercancel', finishNodeDrag, { passive: false });
-  }
-
-  function removeWindowDragListeners() {
-    if (typeof window === 'undefined') return;
-    window.removeEventListener('pointermove', handleNodeDrag);
-    window.removeEventListener('pointerup', finishNodeDrag);
-    window.removeEventListener('pointercancel', finishNodeDrag);
-  }
-
-  function beginNodeDrag(node: GraphNode, event: any) {
-    event.stopPropagation();
-    setActiveNode(node);
-    draggedNode = node;
-    draggedPointerId = event.pointerId;
-    dragStartX = event.global.x;
-    dragStartY = event.global.y;
-    dragMoved = false;
-    node.fx = node.x;
-    node.fy = node.y;
-    simulation?.alpha(0.24).alphaTarget(0.16).restart();
-    addWindowDragListeners();
-  }
-
-  function handleNodeDrag(event: PointerEvent) {
-    if (!draggedNode || draggedPointerId !== event.pointerId || !app) return;
-    event.preventDefault();
-    const pointer = clientToCanvas(event.clientX, event.clientY);
-    const worldPoint = screenToWorld(pointer.x, pointer.y);
-    const radius = draggedNode.radius;
-    const minX = (0 - camera.x) / camera.scale + radius;
-    const maxX = (app.screen.width - camera.x) / camera.scale - radius;
-    const minY = (0 - camera.y) / camera.scale + radius;
-    const maxY = (app.screen.height - camera.y) / camera.scale - radius;
-
-    draggedNode.fx = clamp(worldPoint.x, Math.min(minX, maxX), Math.max(minX, maxX));
-    draggedNode.fy = clamp(worldPoint.y, Math.min(minY, maxY), Math.max(minY, maxY));
-    dragMoved ||= Math.hypot(pointer.x - dragStartX, pointer.y - dragStartY) > 4;
-  }
-
-  function finishNodeDrag(event: PointerEvent) {
-    if (!draggedNode || draggedPointerId !== event.pointerId) return;
-    const node = draggedNode;
-    const shouldNavigate = !dragMoved && Boolean(node.href);
-
-    node.fx = null;
-    node.fy = null;
-    simulation?.alphaTarget(0);
-    draggedNode = null;
-    draggedPointerId = null;
-    removeWindowDragListeners();
-
-    if (shouldNavigate && node.href && typeof window !== 'undefined') {
-      if (node.external) window.open(node.href, '_blank', 'noopener,noreferrer');
-      else window.location.assign(node.href);
-    }
-  }
-
-  function graphBounds() {
-    if (!graphNodes.length) return { minX: -1, minY: -1, maxX: 1, maxY: 1 };
-    return graphNodes.reduce(
-      (bounds, node) => {
-        const x = node.x ?? 0;
-        const y = node.y ?? 0;
-        const labelWidth = Math.max(0, node.label.length * node.labelSize * 0.28);
-        bounds.minX = Math.min(bounds.minX, x - Math.max(node.radius, labelWidth));
-        bounds.maxX = Math.max(bounds.maxX, x + Math.max(node.radius, labelWidth));
-        bounds.minY = Math.min(bounds.minY, y - node.radius);
-        bounds.maxY = Math.max(bounds.maxY, y + node.radius + node.labelSize + 8);
-        return bounds;
-      },
-      { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
-    );
-  }
-
-  function centerGraph(immediate = false) {
-    if (!app || !world) return;
-    const bounds = graphBounds();
-    const graphWidth = Math.max(1, bounds.maxX - bounds.minX);
-    const graphHeight = Math.max(1, bounds.maxY - bounds.minY);
-    const scale = clamp(
-      Math.min(
-        (app.screen.width - FIT_PADDING * 2) / graphWidth,
-        (app.screen.height - FIT_PADDING * 2) / graphHeight,
-      ),
-      MIN_ZOOM,
-      2.1,
-    );
-    const centerX = (bounds.minX + bounds.maxX) / 2;
-    const centerY = (bounds.minY + bounds.maxY) / 2;
-
-    camera.zooming = false;
-    camera.targetScale = scale;
-    camera.targetX = app.screen.width / 2 - centerX * scale;
-    camera.targetY = app.screen.height / 2 - centerY * scale;
-
-    if (immediate) {
-      camera.scale = camera.targetScale;
-      camera.x = camera.targetX;
-      camera.y = camera.targetY;
-      updateCameraTransform();
-    }
+    viewScale = scale;
+    viewX = width / 2 - centerX * scale;
+    viewY = height / 2 - centerY * scale;
+    userMovedView = false;
   }
 
   export function resetView() {
-    stopLayoutForNavigation();
-    centerGraph(false);
+    fitGraph();
   }
 
-  function redrawEdges() {
-    if (!edgeLayer || !activeEdgeLayer) return;
-    edgeLayer.clear();
-    activeEdgeLayer.clear();
-    const lineWidth = 1.35 / Math.max(camera.scale, Number.EPSILON);
+  function updateSize() {
+    const rect = hostElement.getBoundingClientRect();
+    const nextWidth = Math.max(320, Math.round(rect.width || hostElement.clientWidth || 800));
+    const nextHeight = Math.max(260, Math.round(rect.height || hostElement.clientHeight || 560));
 
-    for (const link of graphLinks) {
-      const source = resolveNode(link.source);
-      const target = resolveNode(link.target);
-      if (!source || !target) continue;
-      edgeLayer
-        .moveTo(source.x ?? 0, source.y ?? 0)
-        .lineTo(target.x ?? 0, target.y ?? 0)
-        .stroke({ color: colors.line, width: lineWidth, alpha: 0.78 });
+    if (nextWidth === width && nextHeight === height) return;
 
-      if (edgeFocusNode && (source.id === edgeFocusNode.id || target.id === edgeFocusNode.id)) {
-        activeEdgeLayer
-          .moveTo(source.x ?? 0, source.y ?? 0)
-          .lineTo(target.x ?? 0, target.y ?? 0)
-          .stroke({
-            color: colors.accent,
-            width: lineWidth,
-            alpha: 0.92 * edgeFocusNode.hover,
-          });
+    const oldWidth = width;
+    const oldHeight = height;
+    width = nextWidth;
+    height = nextHeight;
+
+    if (!userMovedView) {
+      fitGraph();
+    } else {
+      viewX += (width - oldWidth) / 2;
+      viewY += (height - oldHeight) / 2;
+    }
+  }
+
+  function screenPoint(event: PointerEvent | WheelEvent) {
+    const rect = svgElement.getBoundingClientRect();
+    return {
+      x: ((event.clientX - rect.left) / Math.max(1, rect.width)) * width,
+      y: ((event.clientY - rect.top) / Math.max(1, rect.height)) * height,
+    };
+  }
+
+  function worldPoint(event: PointerEvent) {
+    const point = screenPoint(event);
+    return {
+      x: (point.x - viewX) / viewScale,
+      y: (point.y - viewY) / viewScale,
+    };
+  }
+
+  function handleWheel(event: WheelEvent) {
+    event.preventDefault();
+    const point = screenPoint(event);
+    const worldX = (point.x - viewX) / viewScale;
+    const worldY = (point.y - viewY) / viewScale;
+    const zoomFactor = Math.exp(-event.deltaY * 0.0014);
+    const nextScale = clamp(viewScale * zoomFactor, MIN_ZOOM, MAX_ZOOM);
+
+    viewScale = nextScale;
+    viewX = point.x - worldX * nextScale;
+    viewY = point.y - worldY * nextScale;
+    userMovedView = true;
+  }
+
+  function startPan(event: PointerEvent) {
+    if (event.button !== 0 || dragState) return;
+    panState = {
+      pointerId: event.pointerId,
+      lastClientX: event.clientX,
+      lastClientY: event.clientY,
+    };
+    svgElement.setPointerCapture(event.pointerId);
+  }
+
+  function startNodeDrag(event: PointerEvent, node: GraphNode) {
+    if (event.button !== 0) return;
+    event.stopPropagation();
+    const point = worldPoint(event);
+    node.fx = point.x;
+    node.fy = point.y;
+    dragState = {
+      pointerId: event.pointerId,
+      node,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      moved: false,
+    };
+    svgElement.setPointerCapture(event.pointerId);
+    simulation?.alphaTarget(0.3).restart();
+  }
+
+  function handlePointerMove(event: PointerEvent) {
+    if (dragState?.pointerId === event.pointerId) {
+      const point = worldPoint(event);
+      dragState.node.fx = point.x;
+      dragState.node.fy = point.y;
+      if (
+        Math.hypot(
+          event.clientX - dragState.startClientX,
+          event.clientY - dragState.startClientY,
+        ) > 4
+      ) {
+        dragState.moved = true;
       }
-    }
-  }
-
-  function updateNodeViews(deltaSeconds: number) {
-    const transition = 1 - Math.exp(-HOVER_EASE * deltaSeconds);
-
-    for (const node of graphNodes) {
-      const view = node.view;
-      if (!view) continue;
-      node.hover += (node.hoverTarget - node.hover) * transition;
-      view.container.position.set(node.x ?? 0, node.y ?? 0);
-      view.highlight.alpha = node.hover;
-      view.label.y = node.radius + 7;
-
-      const screenFontSize = node.labelSize * camera.scale;
-      const visibility = smoothstep(LABEL_FADE_START, LABEL_FADE_END, screenFontSize);
-      view.label.alpha = Math.max(visibility * 0.82, node.hover);
-    }
-
-    if (edgeFocusNode && edgeFocusNode.hover < 0.002 && activeNodeId !== edgeFocusNode.id) {
-      edgeFocusNode = null;
-    }
-  }
-
-  function updateCamera(deltaSeconds: number) {
-    const transition = 1 - Math.exp(-CAMERA_EASE * deltaSeconds);
-
-    if (camera.zooming) {
-      camera.scale += (camera.targetScale - camera.scale) * transition;
-      // Recompute the camera origin from the same world point every frame. This
-      // keeps the exact graph location under the cursor throughout the easing.
-      camera.x = camera.anchorScreenX - camera.anchorWorldX * camera.scale;
-      camera.y = camera.anchorScreenY - camera.anchorWorldY * camera.scale;
-
-      if (Math.abs(camera.targetScale - camera.scale) < 0.0003) {
-        camera.scale = camera.targetScale;
-        camera.x = camera.anchorScreenX - camera.anchorWorldX * camera.scale;
-        camera.y = camera.anchorScreenY - camera.anchorWorldY * camera.scale;
-        camera.targetX = camera.x;
-        camera.targetY = camera.y;
-        camera.zooming = false;
-      }
-    } else if (panPointerId === null) {
-      camera.scale += (camera.targetScale - camera.scale) * transition;
-      camera.x += (camera.targetX - camera.x) * transition;
-      camera.y += (camera.targetY - camera.y) * transition;
-    }
-
-    updateCameraTransform();
-  }
-
-  function updateFrame(ticker: any) {
-    const deltaSeconds = Math.min(0.05, ticker.deltaMS / 1000);
-    updateCamera(deltaSeconds);
-    updateNodeViews(deltaSeconds);
-    redrawEdges();
-
-    if (simulation && simulation.alpha() < 0.012 && draggedNode === null) {
-      simulation.stop();
-    }
-  }
-
-  function handleResize(PIXI: any) {
-    if (!app) return;
-    app.stage.hitArea = new PIXI.Rectangle(0, 0, app.screen.width, app.screen.height);
-  }
-
-  async function initialize() {
-    const PIXI = (await import(/* @vite-ignore */ PIXI_URL)) as any;
-    if (destroyed) return;
-
-    colors = readThemeColors();
-    makeGraphData();
-    buildSimulation();
-
-    app = new PIXI.Application();
-    await app.init({
-      resizeTo: hostElement,
-      antialias: true,
-      autoDensity: true,
-      resolution: Math.min((window.devicePixelRatio || 1) * 2, 4),
-      backgroundAlpha: 0,
-      preference: 'webgl',
-    });
-    if (destroyed) {
-      app.destroy(true);
       return;
     }
 
-    canvasElement = app.canvas;
-    canvasElement.className = 'pixi-website-graph__canvas';
-    canvasElement.setAttribute('aria-label', ariaLabel);
-    canvasElement.setAttribute('role', 'img');
-    hostElement.appendChild(canvasElement);
+    if (panState?.pointerId === event.pointerId) {
+      const rect = svgElement.getBoundingClientRect();
+      viewX += ((event.clientX - panState.lastClientX) / Math.max(1, rect.width)) * width;
+      viewY += ((event.clientY - panState.lastClientY) / Math.max(1, rect.height)) * height;
+      panState.lastClientX = event.clientX;
+      panState.lastClientY = event.clientY;
+      userMovedView = true;
+    }
+  }
 
-    world = new PIXI.Container();
-    edgeLayer = new PIXI.Graphics();
-    activeEdgeLayer = new PIXI.Graphics();
-    nodeLayer = new PIXI.Container();
-    world.addChild(edgeLayer, activeEdgeLayer, nodeLayer);
-    app.stage.addChild(world);
+  function endPointer(event: PointerEvent) {
+    if (dragState?.pointerId === event.pointerId) {
+      const { node, moved } = dragState;
+      node.fx = null;
+      node.fy = null;
+      if (moved) {
+        suppressClickNodeId = node.id;
+        window.setTimeout(() => {
+          if (suppressClickNodeId === node.id) suppressClickNodeId = null;
+        }, 0);
+      }
+      dragState = null;
+      simulation?.alphaTarget(0);
+    }
 
-    app.stage.eventMode = 'static';
-    app.stage.hitArea = new PIXI.Rectangle(0, 0, app.screen.width, app.screen.height);
-    app.stage.on('pointerdown', beginPan);
-    app.stage.on('globalpointermove', continuePan);
-    app.stage.on('pointerup', finishPan);
-    app.stage.on('pointerupoutside', finishPan);
+    if (panState?.pointerId === event.pointerId) {
+      panState = null;
+    }
 
-    for (const node of graphNodes) createNodeView(node, PIXI);
+    if (svgElement.hasPointerCapture(event.pointerId)) {
+      svgElement.releasePointerCapture(event.pointerId);
+    }
+  }
 
-    canvasElement.addEventListener('wheel', handleWheel, { passive: false });
-    canvasElement.addEventListener('pointerdown', handleTouchPointerDown);
-    canvasElement.addEventListener('pointermove', handleTouchPointerMove, { passive: false });
-    canvasElement.addEventListener('pointerup', handleTouchPointerUp);
-    canvasElement.addEventListener('pointercancel', handleTouchPointerUp);
-    app.ticker.add(updateFrame);
-    centerGraph(true);
-    redrawEdges();
-    updateNodeViews(1);
+  function activateNode(node: GraphNode) {
+    if (suppressClickNodeId === node.id || !node.href) return;
+    if (node.external) {
+      window.open(node.href, '_blank', 'noopener,noreferrer');
+    } else {
+      window.location.assign(node.href);
+    }
+  }
 
-    resizeObserver = new ResizeObserver(() => handleResize(PIXI));
-    resizeObserver.observe(hostElement);
+  function handleNodeKeydown(event: KeyboardEvent, node: GraphNode) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    activateNode(node);
+  }
 
-    themeObserver = new MutationObserver(() => {
-      colors = readThemeColors();
-      rebuildNodeColors();
-      redrawEdges();
-    });
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class', 'data-theme', 'data-season', 'style'],
-    });
+  function isConnected(link: GraphLink, nodeId: string | null) {
+    if (!nodeId) return false;
+    const source = resolveNode(link.source);
+    const target = resolveNode(link.target);
+    return source?.id === nodeId || target?.id === nodeId;
   }
 
   onMount(() => {
-    initialize().catch((error) => {
-      console.error('Unable to initialize Website Graph renderer.', error);
-      failed = true;
-    });
+    mounted = true;
+    lastSignature = dataSignature;
+    updateSize();
+    rebuildGraph();
+
+    resizeObserver = new ResizeObserver(() => updateSize());
+    resizeObserver.observe(hostElement);
   });
 
   onDestroy(() => {
-    destroyed = true;
+    mounted = false;
     simulation?.stop();
+    simulation = null;
     resizeObserver?.disconnect();
-    themeObserver?.disconnect();
-    canvasElement?.removeEventListener('wheel', handleWheel);
-    canvasElement?.removeEventListener('pointerdown', handleTouchPointerDown);
-    canvasElement?.removeEventListener('pointermove', handleTouchPointerMove);
-    canvasElement?.removeEventListener('pointerup', handleTouchPointerUp);
-    canvasElement?.removeEventListener('pointercancel', handleTouchPointerUp);
-    removeWindowDragListeners();
-    app?.destroy(true);
-    app = null;
+    resizeObserver = null;
   });
 </script>
 
-<div class:failed class="pixi-website-graph" bind:this={hostElement}>
-  <p class="pixi-website-graph__fallback">
-    The website graph requires WebGL and JavaScript.
-  </p>
+<div class="pixi-website-graph" bind:this={hostElement}>
+  {#if failed}
+    <p class="pixi-website-graph__fallback" role="status">
+      The website graph could not be loaded.
+    </p>
+  {:else if graphNodes.length === 0}
+    <p class="pixi-website-graph__fallback" role="status">
+      No graph destinations were found.
+    </p>
+  {:else}
+    <svg
+      bind:this={svgElement}
+      class="pixi-website-graph__svg"
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label={ariaLabel}
+      on:wheel={handleWheel}
+      on:pointerdown={startPan}
+      on:pointermove={handlePointerMove}
+      on:pointerup={endPointer}
+      on:pointercancel={endPointer}
+    >
+      <rect class="pixi-website-graph__background" width={width} height={height}></rect>
 
-  <nav class="pixi-website-graph__links" aria-label="Website graph links">
-    {#each nodes as node}
-      {#if node.href}
-        <a href={node.href}>{node.label}</a>
-      {/if}
-    {/each}
-  </nav>
+      <g transform={`translate(${viewX} ${viewY}) scale(${viewScale})`}>
+        <g class="pixi-website-graph__edges" aria-hidden="true">
+          {#each graphLinks as link}
+            {@const source = resolveNode(link.source)}
+            {@const target = resolveNode(link.target)}
+            {#if source && target}
+              <line
+                class:pixi-website-graph__edge--active={isConnected(link, hoveredNodeId)}
+                x1={source.x ?? 0}
+                y1={source.y ?? 0}
+                x2={target.x ?? 0}
+                y2={target.y ?? 0}
+              ></line>
+            {/if}
+          {/each}
+        </g>
+
+        <g class="pixi-website-graph__nodes">
+          {#each graphNodes as node (node.id)}
+            <g
+              class="pixi-website-graph__node"
+              class:pixi-website-graph__node--active={hoveredNodeId === node.id}
+              class:pixi-website-graph__node--current={node.current}
+              transform={`translate(${node.x ?? 0} ${node.y ?? 0})`}
+              role={node.href ? 'link' : 'group'}
+              tabindex={node.href ? 0 : undefined}
+              aria-label={node.description ? `${node.label}. ${node.description}` : node.label}
+              on:pointerdown={(event) => startNodeDrag(event, node)}
+              on:pointerenter={() => (hoveredNodeId = node.id)}
+              on:pointerleave={() => (hoveredNodeId = null)}
+              on:click={() => activateNode(node)}
+              on:keydown={(event) => handleNodeKeydown(event, node)}
+            >
+              <circle class="pixi-website-graph__hit-area" r={Math.max(13, node.radius + 8)}></circle>
+              <circle class="pixi-website-graph__dot" r={node.radius}></circle>
+              <text
+                class="pixi-website-graph__label"
+                y={node.radius + 15}
+                text-anchor="middle"
+                dominant-baseline="middle"
+              >{node.label}</text>
+            </g>
+          {/each}
+        </g>
+      </g>
+    </svg>
+  {/if}
 </div>
 
 <style>
@@ -732,52 +443,108 @@
     min-height: 0;
     overflow: hidden;
     background: var(--bg);
-    cursor: grab;
+    color: var(--text);
     touch-action: none;
     user-select: none;
-    overscroll-behavior: none;
+    -webkit-user-select: none;
   }
 
-  .pixi-website-graph:active {
-    cursor: grabbing;
-  }
-
-  .pixi-website-graph :global(.pixi-website-graph__canvas) {
+  .pixi-website-graph__svg {
     display: block;
     width: 100%;
     height: 100%;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .pixi-website-graph__svg:active {
+    cursor: grabbing;
+  }
+
+  .pixi-website-graph__background {
+    fill: var(--bg);
+  }
+
+  .pixi-website-graph__edges line {
+    stroke: color-mix(in srgb, var(--text) 24%, transparent);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    transition:
+      stroke 120ms ease,
+      opacity 120ms ease;
+  }
+
+  .pixi-website-graph__edges line.pixi-website-graph__edge--active {
+    stroke: color-mix(in srgb, var(--text) 64%, transparent);
+  }
+
+  .pixi-website-graph__node {
+    color: color-mix(in srgb, var(--text) 68%, var(--bg));
+    cursor: pointer;
     outline: none;
   }
 
-  .pixi-website-graph__fallback,
-  .pixi-website-graph__links {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-    border: 0;
+  .pixi-website-graph__hit-area {
+    fill: transparent;
+    stroke: none;
+  }
+
+  .pixi-website-graph__dot {
+    fill: currentColor;
+    stroke: var(--bg);
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+    transition:
+      fill 120ms ease,
+      color 120ms ease;
+  }
+
+  .pixi-website-graph__label {
+    fill: color-mix(in srgb, var(--text) 72%, var(--bg));
+    stroke: var(--bg);
+    stroke-width: 3px;
+    paint-order: stroke fill;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu,
+      Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    font-size: 11.5px;
+    font-weight: 450;
+    letter-spacing: 0;
+    pointer-events: none;
+    transition: fill 120ms ease;
+  }
+
+  .pixi-website-graph__node--active,
+  .pixi-website-graph__node:focus-visible {
+    color: var(--accent);
+  }
+
+  .pixi-website-graph__node--active .pixi-website-graph__label,
+  .pixi-website-graph__node:focus-visible .pixi-website-graph__label {
+    fill: var(--text);
+  }
+
+  .pixi-website-graph__node--current .pixi-website-graph__dot {
+    fill: var(--accent);
   }
 
   .pixi-website-graph__fallback {
-    display: none;
-  }
-
-  .pixi-website-graph.failed .pixi-website-graph__fallback {
+    position: absolute;
     inset: 0;
     display: grid;
-    width: auto;
-    height: auto;
     place-items: center;
-    padding: 2rem;
     margin: 0;
-    overflow: visible;
-    clip: auto;
+    padding: 2rem;
     color: var(--muted);
-    white-space: normal;
+    font-size: 0.88rem;
     text-align: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pixi-website-graph__edges line,
+    .pixi-website-graph__dot,
+    .pixi-website-graph__label {
+      transition: none;
+    }
   }
 </style>

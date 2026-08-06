@@ -6,9 +6,8 @@
   export let links: NetworkLink[] = [];
   let graph: { resetView: () => void } | null = null;
 
-  // Keep the graph data untouched. PixiWebsiteGraph uses D3's standard
-  // degree-based link strength and reads only the optional resting distance.
-  const graphLinks = links.map((link) => ({ ...link }));
+  // Pass the graph data through unchanged. The renderer clones links before
+  // giving them to d3-force because the official link force mutates them.
 </script>
 
 <section class="website-graph" aria-labelledby="website-graph-title" data-site-sound-silent>
@@ -40,7 +39,7 @@
     <PixiWebsiteGraph
       bind:this={graph}
       nodes={nodes}
-      links={graphLinks}
+      {links}
       ariaLabel="Zoomable force graph of every destination on the site"
     />
   </div>
