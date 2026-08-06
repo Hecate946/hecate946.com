@@ -35,6 +35,20 @@
     cancelVideoFrameCallback?: (handle: number) => void;
   };
 
+  type OverlayLayer = {
+    key: string;
+    material: MeshBasicMaterial;
+    mesh: Mesh;
+    geometry: SphereGeometry;
+    posterUrl?: string;
+    videoUrl?: string;
+    posterTexture: Texture | null;
+    videoTexture: VideoTexture | null;
+    videoElement: HTMLVideoElement | null;
+    videoFrameRequest: number;
+    videoAnimationFrame: number;
+  };
+
   export let space: ImmersiveSpace;
   export let onReady: () => void = () => {};
   export let resetSignal = 0;
@@ -78,22 +92,19 @@
 
   const panoramaGeometry = new SphereGeometry(24, 96, 64);
   panoramaGeometry.scale(-1, 1, 1);
-  const overlayGeometry = new SphereGeometry(23.94, 96, 64);
-  overlayGeometry.scale(-1, 1, 1);
 
-  // Avoid sampling the exact left/right edge of the transparent WebM. Some
-  // browsers expose a one-pixel VP9 chroma/alpha seam there, which appeared as
-  // the vertical green line after the panorama was rotated.
-  const overlayUv = overlayGeometry.getAttribute('uv');
-  const overlaySeamInset = 1 / 4096;
-  for (let index = 0; index < overlayUv.count; index += 1) {
-    const u = overlayUv.getX(index);
-    overlayUv.setX(
-      index,
-      overlaySeamInset + u * (1 - overlaySeamInset * 2),
-    );
+  function createOverlayGeometry(radius: number) {
+    const geometry = new SphereGeometry(radius, 96, 64);
+    geometry.scale(-1, 1, 1);
+    const uv = geometry.getAttribute('uv');
+    const overlaySeamInset = 1 / 4096;
+    for (let index = 0; index < uv.count; index += 1) {
+      const u = uv.getX(index);
+      uv.setX(index, overlaySeamInset + u * (1 - overlaySeamInset * 2));
+    }
+    uv.needsUpdate = true;
+    return geometry;
   }
-  overlayUv.needsUpdate = true;
 
   function createPanoramaMaterial(opacity: number) {
     return new MeshBasicMaterial({
@@ -104,11 +115,39 @@
     });
   }
 
+  function createOverlayLayer(
+    key: string,
+    radius: number,
+    renderOrder: number,
+    posterUrl?: string,
+    videoUrl?: string,
+  ): OverlayLayer {
+    const geometry = createOverlayGeometry(radius);
+    const material = createPanoramaMaterial(1);
+    const mesh = new Mesh(geometry, material);
+    mesh.name = `${space.kind}_${space.slug}_Overlay_${key}`;
+    mesh.position.set(...CAMERA_POSITION);
+    mesh.frustumCulled = false;
+    mesh.renderOrder = renderOrder;
+    return {
+      key,
+      material,
+      mesh,
+      geometry,
+      posterUrl,
+      videoUrl,
+      posterTexture: null,
+      videoTexture: null,
+      videoElement: null,
+      videoFrameRequest: 0,
+      videoAnimationFrame: 0,
+    };
+  }
+
   const panoramaMaterials = [
     createPanoramaMaterial(1),
     createPanoramaMaterial(0),
   ];
-  const overlayMaterial = createPanoramaMaterial(1);
   const panoramaMeshes = panoramaMaterials.map((material, index) => {
     const mesh = new Mesh(panoramaGeometry, material);
     mesh.name = `${space.kind}_${space.slug}_Cycles_Panorama_${index + 1}`;
@@ -118,18 +157,35 @@
     return mesh;
   });
 
-  const overlayMesh = new Mesh(overlayGeometry, overlayMaterial);
-  overlayMesh.name = `${space.kind}_${space.slug}_Panorama_Overlay`;
-  overlayMesh.position.set(...CAMERA_POSITION);
-  overlayMesh.frustumCulled = false;
-  overlayMesh.renderOrder = -998;
+  const overlayLayers = [
+    createOverlayLayer(
+      'underwater',
+      23.88,
+      -996,
+      space.panoramaUnderwaterOverlayUrl,
+    ),
+    createOverlayLayer(
+      'caustics',
+      23.91,
+      -995,
+      space.panoramaCausticsOverlayUrl,
+      space.panoramaCausticsOverlayVideoUrl,
+    ),
+    createOverlayLayer(
+      'surface',
+      23.94,
+      -994,
+      space.panoramaOverlayUrl,
+      space.panoramaOverlayVideoUrl,
+    ),
+  ].filter((layer) => Boolean(layer.posterUrl || layer.videoUrl));
 
   const initialView =
     PANORAMA_VIEWS.find((view) => view.id === activeViewId) ??
     PANORAMA_VIEWS[0];
   if (initialView) {
     panoramaMeshes[0].rotation.y = initialView.panoramaYaw;
-    overlayMesh.rotation.y = initialView.panoramaYaw;
+    for (const layer of overlayLayers) layer.mesh.rotation.y = initialView.panoramaYaw;
   }
 
   let activeView = initialView;
@@ -145,11 +201,6 @@
     | null = null;
 
   const textures = new Map<string, Texture>();
-  let overlayTexture: Texture | null = null;
-  let overlayVideoTexture: VideoTexture | null = null;
-  let overlayVideoElement: HTMLVideoElement | null = null;
-  let overlayVideoFrameRequest = 0;
-  let overlayVideoAnimationFrame = 0;
   let environmentTexture: Texture | null = null;
   const requiredAssetKeys = new Set([
     ...(initialView ? [`view:${initialView.id}`] : []),
@@ -171,48 +222,44 @@
     if (readyAssetKeys.size >= requiredAssetKeys.size) sendReady();
   }
 
-  function attachOverlayTexture(texture: Texture) {
+  function attachOverlayTexture(layer: OverlayLayer, texture: Texture) {
     texture.wrapS = RepeatWrapping;
     texture.needsUpdate = true;
-    overlayMaterial.map = texture;
-    overlayMaterial.needsUpdate = true;
+    layer.material.map = texture;
+    layer.material.needsUpdate = true;
     invalidate();
   }
 
-  function stopOverlayVideoRenderLoop() {
-    const video = overlayVideoElement as VideoElementWithFrameCallback | null;
-    if (video && overlayVideoFrameRequest) {
-      video.cancelVideoFrameCallback?.(overlayVideoFrameRequest);
+  function stopOverlayVideoRenderLoop(layer: OverlayLayer) {
+    const video = layer.videoElement as VideoElementWithFrameCallback | null;
+    if (video && layer.videoFrameRequest) {
+      video.cancelVideoFrameCallback?.(layer.videoFrameRequest);
     }
-    overlayVideoFrameRequest = 0;
+    layer.videoFrameRequest = 0;
 
-    if (overlayVideoAnimationFrame) {
-      cancelAnimationFrame(overlayVideoAnimationFrame);
-    }
-    overlayVideoAnimationFrame = 0;
+    if (layer.videoAnimationFrame) cancelAnimationFrame(layer.videoAnimationFrame);
+    layer.videoAnimationFrame = 0;
   }
 
-  function startOverlayVideoRenderLoop(videoElement: HTMLVideoElement) {
-    stopOverlayVideoRenderLoop();
+  function startOverlayVideoRenderLoop(layer: OverlayLayer, videoElement: HTMLVideoElement) {
+    stopOverlayVideoRenderLoop(layer);
     const video = videoElement as VideoElementWithFrameCallback;
 
     if (video.requestVideoFrameCallback) {
       const redrawOnVideoFrame = () => {
         invalidate();
-        overlayVideoFrameRequest =
+        layer.videoFrameRequest =
           video.requestVideoFrameCallback?.(redrawOnVideoFrame) ?? 0;
       };
-      overlayVideoFrameRequest = video.requestVideoFrameCallback(
-        redrawOnVideoFrame,
-      );
+      layer.videoFrameRequest = video.requestVideoFrameCallback(redrawOnVideoFrame);
       return;
     }
 
     const redrawWhilePlaying = () => {
       if (!video.paused && !video.ended) invalidate();
-      overlayVideoAnimationFrame = requestAnimationFrame(redrawWhilePlaying);
+      layer.videoAnimationFrame = requestAnimationFrame(redrawWhilePlaying);
     };
-    overlayVideoAnimationFrame = requestAnimationFrame(redrawWhilePlaying);
+    layer.videoAnimationFrame = requestAnimationFrame(redrawWhilePlaying);
   }
 
   function activeCamera() {
@@ -323,7 +370,7 @@
     toMaterial.needsUpdate = true;
     toMaterial.opacity = 0;
     toMesh.rotation.y = nextView.panoramaYaw;
-    overlayMesh.rotation.y = nextView.panoramaYaw;
+    for (const layer of overlayLayers) layer.mesh.rotation.y = nextView.panoramaYaw;
     toMesh.renderOrder = -999;
     panoramaMeshes[fromIndex].renderOrder = -1000;
 
@@ -333,8 +380,6 @@
     function animate(now: number) {
       const progress = Math.min((now - started) / duration, 1);
       const eased = progress * progress * (3 - 2 * progress);
-      // Keep the outgoing panorama opaque and fade the new Cycles image over
-      // it. This produces a true visual crossfade without a dark midpoint.
       fromMaterial.opacity = 1;
       toMaterial.opacity = eased;
       invalidate();
@@ -450,53 +495,55 @@
       );
     }
 
-    if (space.panoramaOverlayUrl) {
-      new TextureLoader().load(
-        space.panoramaOverlayUrl,
-        (texture) => {
-          texture.colorSpace = SRGBColorSpace;
-          overlayTexture?.dispose();
-          overlayTexture = texture;
-          attachOverlayTexture(texture);
-        },
-        undefined,
-        () => {
-          overlayMaterial.map = null;
-          overlayMaterial.needsUpdate = true;
-          invalidate();
-        },
-      );
-    }
+    for (const layer of overlayLayers) {
+      if (layer.posterUrl) {
+        new TextureLoader().load(
+          layer.posterUrl,
+          (texture) => {
+            texture.colorSpace = SRGBColorSpace;
+            layer.posterTexture?.dispose();
+            layer.posterTexture = texture;
+            attachOverlayTexture(layer, texture);
+          },
+          undefined,
+          () => {
+            layer.material.map = null;
+            layer.material.needsUpdate = true;
+            invalidate();
+          },
+        );
+      }
 
-    if (space.panoramaOverlayVideoUrl) {
-      const video = document.createElement('video');
-      overlayVideoElement = video;
-      video.src = space.panoramaOverlayVideoUrl;
-      video.crossOrigin = 'anonymous';
-      video.loop = true;
-      video.muted = true;
-      video.playsInline = true;
-      video.autoplay = true;
-      video.preload = 'auto';
+      if (layer.videoUrl) {
+        const video = document.createElement('video');
+        layer.videoElement = video;
+        video.src = layer.videoUrl;
+        video.crossOrigin = 'anonymous';
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.autoplay = true;
+        video.preload = 'auto';
 
-      const handleCanPlay = () => {
-        overlayVideoTexture?.dispose();
-        overlayVideoTexture = new VideoTexture(video);
-        overlayVideoTexture.colorSpace = SRGBColorSpace;
-        attachOverlayTexture(overlayVideoTexture);
+        const handleCanPlay = () => {
+          layer.videoTexture?.dispose();
+          layer.videoTexture = new VideoTexture(video);
+          layer.videoTexture.colorSpace = SRGBColorSpace;
+          attachOverlayTexture(layer, layer.videoTexture);
 
-        void video
-          .play()
-          .then(() => {
-            startOverlayVideoRenderLoop(video);
-          })
-          .catch(() => {
-            /* keep poster fallback if autoplay is blocked */
-          });
-      };
+          void video
+            .play()
+            .then(() => {
+              startOverlayVideoRenderLoop(layer, video);
+            })
+            .catch(() => {
+              /* poster fallback remains active if autoplay is blocked */
+            });
+        };
 
-      video.addEventListener('canplay', handleCanPlay, { once: true });
-      video.load();
+        video.addEventListener('canplay', handleCanPlay, { once: true });
+        video.load();
+      }
     }
 
     if (requiredAssetKeys.size === 0) sendReady();
@@ -522,18 +569,20 @@
     scene.environment = previousEnvironment;
 
     panoramaGeometry.dispose();
-    overlayGeometry.dispose();
     for (const material of panoramaMaterials) material.dispose();
-    overlayMaterial.dispose();
     for (const texture of textures.values()) texture.dispose();
-    stopOverlayVideoRenderLoop();
-    overlayVideoElement?.pause();
-    if (overlayVideoElement) {
-      overlayVideoElement.removeAttribute('src');
-      overlayVideoElement.load();
+    for (const layer of overlayLayers) {
+      stopOverlayVideoRenderLoop(layer);
+      layer.videoElement?.pause();
+      if (layer.videoElement) {
+        layer.videoElement.removeAttribute('src');
+        layer.videoElement.load();
+      }
+      layer.videoTexture?.dispose();
+      layer.posterTexture?.dispose();
+      layer.material.dispose();
+      layer.geometry.dispose();
     }
-    overlayVideoTexture?.dispose();
-    overlayTexture?.dispose();
     environmentTexture?.dispose();
   });
 </script>
@@ -560,11 +609,10 @@
 {#if PANORAMA_VIEWS.length > 0}
   <T is={panoramaMeshes[0]} />
   <T is={panoramaMeshes[1]} />
-  {#if space.panoramaOverlayUrl}
-    <T is={overlayMesh} />
-  {/if}
+  {#each overlayLayers as layer (layer.key)}
+    <T is={layer.mesh} />
+  {/each}
 {:else}
-  <!-- GLB-only halls retain web lighting. Green-room views are Cycles-only. -->
   <T.AmbientLight intensity={0.9} />
   <T.PointLight
     position={[0, 4.6, 0]}

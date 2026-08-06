@@ -128,15 +128,29 @@ for (const slug of roomSlugs) {
 
   if (slug === 'blue') {
     await copyAsset({
-      source: path.join(sourceRoot, 'blue-room-water-overlay.png'),
-      destination: path.join(destinationRoot, 'water-overlay.png'),
-      label: 'blue room water overlay poster',
+      source: path.join(sourceRoot, 'blue-room-underwater-grade.png'),
+      destination: path.join(destinationRoot, 'underwater-grade.png'),
+      label: 'blue room underwater grade',
     });
-
     await copyAsset({
-      source: path.join(sourceRoot, 'blue-room-water-overlay.webm'),
-      destination: path.join(destinationRoot, 'water-overlay.webm'),
-      label: 'blue room water overlay animation',
+      source: path.join(sourceRoot, 'blue-room-water-caustics.png'),
+      destination: path.join(destinationRoot, 'water-caustics.png'),
+      label: 'blue room caustics poster',
+    });
+    await copyAsset({
+      source: path.join(sourceRoot, 'blue-room-water-caustics.webm'),
+      destination: path.join(destinationRoot, 'water-caustics.webm'),
+      label: 'blue room caustics video',
+    });
+    await copyAsset({
+      source: path.join(sourceRoot, 'blue-room-water-surface.png'),
+      destination: path.join(destinationRoot, 'water-surface.png'),
+      label: 'blue room surface poster',
+    });
+    await copyAsset({
+      source: path.join(sourceRoot, 'blue-room-water-surface.webm'),
+      destination: path.join(destinationRoot, 'water-surface.webm'),
+      label: 'blue room surface video',
     });
   }
 }

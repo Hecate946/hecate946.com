@@ -407,6 +407,7 @@ const isPageChangeLink = (anchor: HTMLAnchorElement) => {
 const handleClick = (event: MouseEvent) => {
   const target = event.target;
   if (!(target instanceof Element)) return;
+  if (target.closest('[data-site-sound-silent]')) return;
 
   const toggle = target.closest<HTMLButtonElement>('[data-sound-toggle]');
   if (toggle) {
@@ -472,6 +473,8 @@ const handleClick = (event: MouseEvent) => {
 const handleChange = (event: Event) => {
   if (!isEnabled()) return;
   const target = event.target;
+  if (!(target instanceof Element)) return;
+  if (target.closest('[data-site-sound-silent]')) return;
   if (target instanceof HTMLSelectElement) void playSound('dropdown-close');
 };
 

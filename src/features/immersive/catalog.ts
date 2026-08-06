@@ -37,6 +37,9 @@ export type ImmersiveSpace = {
   description: string;
   accent: string;
   panoramaUrl?: string;
+  panoramaUnderwaterOverlayUrl?: string;
+  panoramaCausticsOverlayUrl?: string;
+  panoramaCausticsOverlayVideoUrl?: string;
   panoramaOverlayUrl?: string;
   panoramaOverlayVideoUrl?: string;
   panoramaViews?: ImmersivePanoramaView[];
@@ -170,15 +173,24 @@ export const rooms = {
       'blue',
       'Room 004',
       'The Blue Room',
-      'An immersive fixed-viewpoint blue tiled room with a clear, half-filled animated water overlay.',
+      'An immersive fixed-viewpoint blue tiled room with layered realistic pool-water overlays rendered in Blender.',
       '#18344c',
       3,
     ),
+    panoramaUnderwaterOverlayUrl: withBase(
+      '/scenes/rooms/blue/underwater-grade.png?v=room-v61-water-multipass',
+    ),
+    panoramaCausticsOverlayUrl: withBase(
+      '/scenes/rooms/blue/water-caustics.png?v=room-v61-water-multipass',
+    ),
+    panoramaCausticsOverlayVideoUrl: withBase(
+      '/scenes/rooms/blue/water-caustics.webm?v=room-v61-water-multipass',
+    ),
     panoramaOverlayUrl: withBase(
-      '/scenes/rooms/blue/water-overlay.png?v=room-v60-water-pool-realistic',
+      '/scenes/rooms/blue/water-surface.png?v=room-v61-water-multipass',
     ),
     panoramaOverlayVideoUrl: withBase(
-      '/scenes/rooms/blue/water-overlay.webm?v=room-v60-water-pool-realistic',
+      '/scenes/rooms/blue/water-surface.webm?v=room-v61-water-multipass',
     ),
   },
   purple: room('purple', 'Room 005', 'The Purple Room', 'An immersive fixed-viewpoint purple tiled room.', '#35213f', 4),
