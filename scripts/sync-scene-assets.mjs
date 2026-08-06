@@ -99,6 +99,20 @@ await copyAsset({
   label: 'house shell model',
 });
 
+await copyAsset({
+  source: path.join(projectRoot, 'blender', 'house', 'display-case-glass.png'),
+  destination: path.join(publicRoot, 'house', 'display-case-glass.png'),
+  required: true,
+  label: 'homepage display-case glass render',
+});
+
+await copyAsset({
+  source: path.join(projectRoot, 'blender', 'house', 'display-case-base.png'),
+  destination: path.join(publicRoot, 'house', 'display-case-base.png'),
+  required: true,
+  label: 'homepage display-case base render',
+});
+
 for (const slug of roomSlugs) {
   const sourceRoot = path.join(projectRoot, 'blender', 'rooms', slug);
   const destinationRoot = path.join(publicRoot, 'rooms', slug);

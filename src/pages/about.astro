@@ -94,57 +94,65 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
 
           <ul class="project-grid" aria-label="Featured software projects" data-default-only>
             <li class="project-grid__item">
-              <article class="project-card">
-              <header class="project-card__topline">
-                <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    fill="currentColor"
-                    d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
-                  />
-                </svg>
-                <span class="project-card__status">Public repository</span>
-              </header>
+              <a
+                class="project-card"
+                href={loomiRepoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open Loomi on GitHub"
+              >
+                <header class="project-card__topline">
+                  <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
+                    />
+                  </svg>
+                  <span class="project-card__status">Public repository</span>
+                </header>
 
-              <div class="project-card__body">
-                <h3>Loomi</h3>
-                <p>A graph-based space for exploring classical music through connected works, people, and ideas.</p>
-              </div>
+                <div class="project-card__body">
+                  <h3>Loomi</h3>
+                  <p>A graph-based space for exploring classical music through connected works, people, and ideas.</p>
+                </div>
 
-              <footer class="project-card__meta">
-                <span><i class="language-dot" aria-hidden="true"></i>TypeScript</span>
-                <a class="project-card__action" href={loomiRepoUrl} target="_blank" rel="noopener noreferrer">
-                  View on GitHub <span aria-hidden="true">↗︎</span>
-                </a>
-              </footer>
-              </article>
+                <footer class="project-card__meta">
+                  <span><i class="language-dot" aria-hidden="true"></i>TypeScript</span>
+                  <span class="project-card__action">View on GitHub <span aria-hidden="true">↗︎</span></span>
+                </footer>
+              </a>
             </li>
 
             {
               sunsetRepoUrl ? (
                 <li class="project-grid__item">
-                  <article class="project-card">
-                  <header class="project-card__topline">
-                    <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        fill="currentColor"
-                        d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
-                      />
-                    </svg>
-                    <span class="project-card__status">Repository</span>
-                  </header>
+                  <a
+                    class="project-card"
+                    href={sunsetRepoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open Sunset on GitHub"
+                  >
+                    <header class="project-card__topline">
+                      <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          fill="currentColor"
+                          d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
+                        />
+                      </svg>
+                      <span class="project-card__status">Repository</span>
+                    </header>
 
-                  <div class="project-card__body">
-                    <h3>Sunset</h3>
-                    <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
-                  </div>
+                    <div class="project-card__body">
+                      <h3>Sunset</h3>
+                      <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
+                    </div>
 
-                  <footer class="project-card__meta">
-                    <span>Reverse engineering</span>
-                    <a class="project-card__action" href={sunsetRepoUrl} target="_blank" rel="noopener noreferrer">
-                      View on GitHub <span aria-hidden="true">↗︎</span>
-                    </a>
-                  </footer>
-                  </article>
+                    <footer class="project-card__meta">
+                      <span>Reverse engineering</span>
+                      <span class="project-card__action">View on GitHub <span aria-hidden="true">↗︎</span></span>
+                    </footer>
+                  </a>
                 </li>
               ) : (
                 <li class="project-grid__item">
@@ -261,7 +269,14 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             </p>
           </div>
 
-          <article class="media-card article-card" data-default-only>
+          <a
+            class="media-card article-card"
+            href={pickleballArticleUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Read the UCLA pickleball tournament recap"
+            data-default-only
+          >
             <div class="article-card__image-wrap">
               <img
                 src={pickleballImage720}
@@ -279,11 +294,9 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
                 <span class="media-card__kicker">DUPR tournament recap</span>
                 <strong>UCLA captures its first California Super Regional championship</strong>
               </div>
-              <a class="media-card__link" href={pickleballArticleUrl} target="_blank" rel="noopener noreferrer">
-                Read the article <span aria-hidden="true">↗︎</span>
-              </a>
+              <span class="media-card__link">Read the article <span aria-hidden="true">↗︎</span></span>
             </div>
-          </article>
+          </a>
 
           <p data-html-only>
             <a href={pickleballArticleUrl} target="_blank" rel="noopener noreferrer">Read the UCLA pickleball tournament recap</a>
@@ -311,7 +324,15 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             </p>
           </div>
 
-          <article class="chess-card" data-chess-card data-default-only>
+          <a
+            class="chess-card"
+            href={chessProfileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Cyrus2020SD's Chess.com statistics"
+            data-chess-card
+            data-default-only
+          >
             <div class="chess-card__identity">
               <div class="chess-card__mark" aria-hidden="true">♞</div>
               <div>
@@ -319,15 +340,7 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
                 <h3>Cyrus2020SD</h3>
                 <span class="chess-card__live" data-chess-status>Loading live ratings…</span>
               </div>
-              <a
-                class="chess-card__arrow"
-                href={chessProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open Cyrus2020SD's Chess.com statistics"
-              >
-                <span class="chess-card__link-label">View Chess.com profile </span><span aria-hidden="true">↗︎</span>
-              </a>
+              <span class="chess-card__arrow" aria-hidden="true">↗︎</span>
             </div>
 
             <div class="chess-card__stats" aria-label="Current Chess.com ratings">
@@ -344,7 +357,7 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
                 <strong data-rating="bullet">—</strong>
               </div>
             </div>
-          </article>
+          </a>
 
           <p data-html-only>
             <a href={chessProfileUrl} target="_blank" rel="noopener noreferrer">View the Cyrus2020SD Chess.com profile</a>
@@ -355,35 +368,152 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
 </BaseLayout>
 
 <script>
-  const chessCard = document.querySelector('[data-chess-card]');
-
-  if (chessCard) {
-    const ratingKeys = {
-      rapid: 'chess_rapid',
-      blitz: 'chess_blitz',
-      bullet: 'chess_bullet',
-    };
-
-    fetch('https://api.chess.com/pub/player/Cyrus2020SD/stats')
-      .then((response) => {
-        if (!response.ok) throw new Error(`Chess.com returned ${response.status}`);
-        return response.json();
-      })
-      .then((stats) => {
-        Object.entries(ratingKeys).forEach(([label, key]) => {
-          const value = stats[key]?.last?.rating ?? stats[key]?.best?.rating;
-          const target = chessCard.querySelector(`[data-rating="${label}"]`);
-          if (target && typeof value === 'number') target.textContent = value.toLocaleString();
-        });
-
-        const status = chessCard.querySelector('[data-chess-status]');
-        if (status) status.textContent = 'Live ratings';
-        chessCard.setAttribute('data-loaded', 'true');
-      })
-      .catch(() => {
-        const status = chessCard.querySelector('[data-chess-status]');
-        if (status) status.textContent = 'View full stats';
-        chessCard.setAttribute('data-loaded', 'error');
-      });
+  interface AboutPageWindow extends Window {
+    __aboutChessController?: AbortController;
   }
+
+  type ChessStatsPayload = Record<
+    string,
+    {
+      last?: { rating?: number };
+      best?: { rating?: number };
+    }
+  >;
+
+  type CachedChessRatings = {
+    rapid?: number;
+    blitz?: number;
+    bullet?: number;
+    savedAt: number;
+  };
+
+  const CHESS_STATS_URL = 'https://api.chess.com/pub/player/Cyrus2020SD/stats';
+  const CHESS_CACHE_KEY = 'about:chess-ratings:v1';
+  const CHESS_CACHE_MAX_AGE = 1000 * 60 * 60 * 24;
+  const ratingKeys = {
+    rapid: 'chess_rapid',
+    blitz: 'chess_blitz',
+    bullet: 'chess_bullet',
+  } as const;
+
+  function readCachedRatings(): CachedChessRatings | null {
+    try {
+      const raw = sessionStorage.getItem(CHESS_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as CachedChessRatings;
+      if (!parsed.savedAt || Date.now() - parsed.savedAt > CHESS_CACHE_MAX_AGE) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeCachedRatings(ratings: CachedChessRatings) {
+    try {
+      sessionStorage.setItem(CHESS_CACHE_KEY, JSON.stringify(ratings));
+    } catch {
+      // Storage can be unavailable in privacy modes; live data still works.
+    }
+  }
+
+  function applyRatings(card: HTMLElement, ratings: CachedChessRatings) {
+    let applied = 0;
+
+    (Object.keys(ratingKeys) as Array<keyof typeof ratingKeys>).forEach((label) => {
+      const value = ratings[label];
+      const target = card.querySelector<HTMLElement>(`[data-rating="${label}"]`);
+      if (target && typeof value === 'number') {
+        target.textContent = value.toLocaleString();
+        applied += 1;
+      }
+    });
+
+    return applied;
+  }
+
+  function ratingsFromPayload(stats: ChessStatsPayload): CachedChessRatings {
+    const ratings: CachedChessRatings = { savedAt: Date.now() };
+
+    (Object.entries(ratingKeys) as Array<[keyof typeof ratingKeys, string]>).forEach(
+      ([label, key]) => {
+        const value = stats[key]?.last?.rating ?? stats[key]?.best?.rating;
+        if (typeof value === 'number') ratings[label] = value;
+      },
+    );
+
+    return ratings;
+  }
+
+  async function fetchChessStats(signal: AbortSignal) {
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const requestController = new AbortController();
+      const abortRequest = () => requestController.abort();
+      const timeout = window.setTimeout(() => requestController.abort(), 7000);
+      signal.addEventListener('abort', abortRequest, { once: true });
+
+      try {
+        const response = await fetch(CHESS_STATS_URL, {
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+          signal: requestController.signal,
+        });
+        if (!response.ok) throw new Error(`Chess.com returned ${response.status}`);
+        return (await response.json()) as ChessStatsPayload;
+      } catch (error) {
+        lastError = error;
+        if (signal.aborted) throw error;
+        if (attempt === 0) await new Promise((resolve) => window.setTimeout(resolve, 450));
+      } finally {
+        window.clearTimeout(timeout);
+        signal.removeEventListener('abort', abortRequest);
+      }
+    }
+
+    throw lastError;
+  }
+
+  async function connectChessRatings() {
+    const pageWindow = window as AboutPageWindow;
+    pageWindow.__aboutChessController?.abort();
+
+    const chessCard = document.querySelector<HTMLElement>('[data-chess-card]');
+    if (!chessCard) return;
+
+    const controller = new AbortController();
+    pageWindow.__aboutChessController = controller;
+    const status = chessCard.querySelector<HTMLElement>('[data-chess-status]');
+    const cached = readCachedRatings();
+    const cachedCount = cached ? applyRatings(chessCard, cached) : 0;
+
+    if (cachedCount > 0) {
+      chessCard.dataset.loaded = 'cached';
+      if (status) status.textContent = 'Refreshing live ratings…';
+    } else {
+      chessCard.dataset.loaded = 'loading';
+      if (status) status.textContent = 'Loading live ratings…';
+    }
+
+    try {
+      const stats = await fetchChessStats(controller.signal);
+      if (controller.signal.aborted || pageWindow.__aboutChessController !== controller) return;
+
+      const ratings = ratingsFromPayload(stats);
+      if (applyRatings(chessCard, ratings) === 0) throw new Error('Chess.com returned no ratings');
+
+      writeCachedRatings(ratings);
+      chessCard.dataset.loaded = 'true';
+      if (status) status.textContent = 'Live ratings';
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      chessCard.dataset.loaded = cachedCount > 0 ? 'cached' : 'error';
+      if (status) {
+        status.textContent = cachedCount > 0 ? 'Showing recently loaded ratings' : 'Open Chess.com for live ratings';
+      }
+    }
+  }
+
+  connectChessRatings();
+  document.addEventListener('astro:page-load', connectChessRatings);
 </script>

@@ -115,7 +115,7 @@ html:not([data-theme-ready='true']) .site-header * {
 
 .brand,
 .primary-nav a {
-  color: var(--header-text);
+  color: var(--header-text) !important;
   font-family: inherit;
   font-size: var(--nav-font-size);
   font-weight: var(--nav-font-weight);
@@ -125,9 +125,7 @@ html:not([data-theme-ready='true']) .site-header * {
   text-decoration-color: transparent;
   text-decoration-thickness: 0.1em;
   text-underline-offset: 0.34em;
-  transition:
-    color 140ms ease,
-    text-decoration-color 140ms ease;
+  transition: text-decoration-color 140ms ease;
 }
 
 .brand {
@@ -144,7 +142,7 @@ html:not([data-theme-ready='true']) .site-header * {
 .primary-nav a:focus-visible,
 .primary-nav a[aria-current='page'] {
   background: transparent !important;
-  color: var(--header-text);
+  color: var(--header-text) !important;
   text-decoration-color: var(--nav-underline-color);
 }
 

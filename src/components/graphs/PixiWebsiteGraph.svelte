@@ -17,8 +17,17 @@
     SimulationNodeDatum & {
       radius: number;
       labelSize: number;
+      labelHalfWidth: number;
+      labelHeight: number;
+      labelPriority: 0 | 1 | 2 | 3;
+      degree: number;
+      depth: number;
+      anchorX: number;
+      anchorY: number;
       hover: number;
       hoverTarget: number;
+      focus: number;
+      focusTarget: number;
       view?: NodeView;
     };
 
@@ -40,6 +49,7 @@
     text: string;
     muted: string;
     line: string;
+    lineAlpha: number;
     accent: string;
   };
 
@@ -61,16 +71,28 @@
   export let links: NetworkLink[] = [];
   export let ariaLabel = 'Interactive website graph';
 
-  const PIXI_URL = 'https://cdn.jsdelivr.net/npm/pixi.js@8.19.0/+esm';
+  const PIXI_URLS = [
+    'https://cdn.jsdelivr.net/npm/pixi.js@8.19.0/dist/pixi.min.mjs',
+    'https://cdn.jsdelivr.net/npm/pixi.js@8.19.0/+esm',
+  ] as const;
   const MIN_ZOOM = 0.12;
   const MAX_ZOOM = 8;
-  const CAMERA_EASE = 13;
-  const HOVER_EASE = 9;
-  const LABEL_FADE_START = 8;
-  const LABEL_FADE_END = 11;
-  const FIT_PADDING = 72;
+  const CAMERA_EASE = 12;
+  const HOVER_EASE = 1.45;
+  const FIT_SIDE_PADDING = 38;
+  const FIT_TOP_PADDING = 68;
+  const FIT_BOTTOM_PADDING = 34;
+  const LABEL_BASE_GAP = 3;
+  const LABEL_HOVER_DROP = 12;
+  const COLLISION_PADDING = 2.5;
+  const DRAG_COLLISION_PADDING = 5;
+  const DRAG_COLLISION_PASSES = 12;
 
   let hostElement!: HTMLDivElement;
+  let ready = false;
+  let failed = false;
+  let failureMessage = 'The website graph could not start.';
+  let hasCompletedInitialFit = false;
   let canvasElement: HTMLCanvasElement | null = null;
   let app: any = null;
   let world: any = null;
@@ -80,10 +102,10 @@
   let simulation: Simulation<GraphNode, GraphLink> | null = null;
   let graphNodes: GraphNode[] = [];
   let graphLinks: GraphLink[] = [];
+  let adjacency = new Map<string, Set<string>>();
   let resizeObserver: ResizeObserver | null = null;
   let themeObserver: MutationObserver | null = null;
   let destroyed = false;
-  let activeNodeId: string | null = null;
   let activeNode: GraphNode | null = null;
   let edgeFocusNode: GraphNode | null = null;
   let panPointerId: number | null = null;
@@ -100,7 +122,8 @@
     background: '#ffffff',
     text: '#202124',
     muted: '#8b9098',
-    line: '#b7bbc2',
+    line: '#59636e',
+    lineAlpha: 0.42,
     accent: '#2aaea0',
   };
 
@@ -126,16 +149,40 @@
     return normalized * normalized * (3 - 2 * normalized);
   };
 
-  function nodeRadius(node: NetworkNode) {
-    if (node.current) return 7;
-    if (node.featured) return 6;
-    if ((node.radius ?? 0) >= 34) return 5;
-    if ((node.radius ?? 0) <= 22) return 3.5;
-    return 4.25;
+  function routeDepth(id: string) {
+    return id === '/' ? 0 : id.split('/').filter(Boolean).length;
   }
 
-  function nodeLabelSize(radius: number) {
-    return Math.round(10.5 + radius * 1.2);
+  function nodeRadius(node: NetworkNode, degree: number, depth: number) {
+    if (node.id === '/') return 8.5;
+    if ((node.radius ?? 0) >= 34 || degree >= 3) return 6.25;
+    if (depth === 1) return 4.35;
+    return 3.35;
+  }
+
+  function nodeLabelPriority(node: NetworkNode, degree: number, depth: number): 0 | 1 | 2 | 3 {
+    if (node.id === '/') return 3;
+    if ((node.radius ?? 0) >= 34 || degree >= 3) return 2;
+    if (depth === 1) return 1;
+    return 0;
+  }
+
+  function nodeLabelSize(radius: number, priority: 0 | 1 | 2 | 3) {
+    const base = priority === 3 ? 15.5 : priority === 2 ? 13.5 : priority === 1 ? 11.75 : 10.75;
+    return Math.round((base + radius * 0.18) * 2) / 2;
+  }
+
+  function labelVisibility(node: GraphNode) {
+    const screenFontSize = node.labelSize * camera.scale;
+    const thresholds =
+      node.labelPriority === 3
+        ? [4.5, 6.5]
+        : node.labelPriority === 2
+          ? [7.5, 10]
+          : node.labelPriority === 1
+            ? [10.5, 13]
+            : [12.5, 15.5];
+    return smoothstep(thresholds[0], thresholds[1], screenFontSize);
   }
 
   function readThemeColors(): ThemeColors {
@@ -157,8 +204,9 @@
       text: read('--text', dark ? '#f1f3f4' : '#202124'),
       // Obsidian-like neutral graph colors stay gray; only hover uses the
       // current theme accent.
-      muted: dark ? '#a9adb3' : '#858a91',
-      line: dark ? 'rgba(190, 194, 201, 0.42)' : 'rgba(92, 98, 107, 0.32)',
+      muted: dark ? '#aeb5bc' : '#6f7780',
+      line: dark ? '#c6cdd4' : '#4a535d',
+      lineAlpha: dark ? 0.3 : 0.46,
       accent: read('--accent', '#2aaea0'),
     };
   }
@@ -169,51 +217,242 @@
   }
 
   function makeGraphData() {
-    const width = 780;
-    const height = 560;
+    // Keep semantic anchors close together. Collision—not oversized link
+    // lengths—provides the minimum safe spacing between rendered content.
+    const width = 520;
+    const height = 390;
+
+    adjacency = new Map(nodes.map((node) => [node.id, new Set<string>()]));
+    for (const link of links) {
+      adjacency.get(link.source)?.add(link.target);
+      adjacency.get(link.target)?.add(link.source);
+    }
 
     graphNodes = nodes.map((node, index) => {
-      const radius = nodeRadius(node);
+      const depth = routeDepth(node.id);
+      const degree = adjacency.get(node.id)?.size ?? 0;
+      const radius = nodeRadius(node, degree, depth);
+      const priority = nodeLabelPriority(node, degree, depth);
       const angle = (index / Math.max(1, nodes.length)) * Math.PI * 2;
       const anchorX = node.anchor?.x ?? 0.5 + Math.cos(angle) * 0.28;
       const anchorY = node.anchor?.y ?? 0.5 + Math.sin(angle) * 0.28;
+      const worldAnchorX = (anchorX - 0.5) * width;
+      const worldAnchorY = (anchorY - 0.5) * height;
 
       return {
         ...node,
         radius,
-        labelSize: nodeLabelSize(radius),
+        labelSize: nodeLabelSize(radius, priority),
+        labelHalfWidth: 0,
+        labelHeight: 0,
+        labelPriority: priority,
+        degree,
+        depth,
+        anchorX: worldAnchorX,
+        anchorY: worldAnchorY,
         hover: 0,
         hoverTarget: 0,
-        x: (anchorX - 0.5) * width,
-        y: (anchorY - 0.5) * height,
+        focus: 1,
+        focusTarget: 1,
+        x: worldAnchorX,
+        y: worldAnchorY,
       };
     });
 
     graphLinks = links.map((link) => ({ ...link }));
   }
 
-  function buildSimulation() {
-    simulation?.stop();
+  function interactionRadius(node: GraphNode) {
+    return Math.max(node.radius + 5, 10);
+  }
 
+  function compoundBounds(node: GraphNode) {
+    const hitRadius = interactionRadius(node);
+    const labelHalfWidth = Math.max(
+      node.labelHalfWidth || node.label.length * node.labelSize * 0.28,
+      node.radius,
+    );
+    const labelHeight = node.labelHeight || node.labelSize * 1.2;
+    const top = -hitRadius;
+    const bottom =
+      node.radius + LABEL_BASE_GAP + LABEL_HOVER_DROP + labelHeight + 3;
+
+    return {
+      halfWidth: Math.max(hitRadius, labelHalfWidth + 3),
+      halfHeight: (bottom - top) / 2,
+      centerYOffset: (top + bottom) / 2,
+    };
+  }
+
+  function separateInitialOverlaps() {
+    for (let pass = 0; pass < 28; pass += 1) {
+      let moved = false;
+
+      for (let index = 0; index < graphNodes.length; index += 1) {
+        const first = graphNodes[index];
+        const firstBounds = compoundBounds(first);
+
+        for (let nextIndex = index + 1; nextIndex < graphNodes.length; nextIndex += 1) {
+          const second = graphNodes[nextIndex];
+          const secondBounds = compoundBounds(second);
+          const deltaX = (second.x ?? 0) - (first.x ?? 0);
+          const deltaY =
+            (second.y ?? 0) + secondBounds.centerYOffset -
+            ((first.y ?? 0) + firstBounds.centerYOffset);
+          const overlapX =
+            firstBounds.halfWidth + secondBounds.halfWidth + 2 - Math.abs(deltaX);
+          const overlapY =
+            firstBounds.halfHeight + secondBounds.halfHeight + 2 - Math.abs(deltaY);
+          if (overlapX <= 0 || overlapY <= 0) continue;
+
+          moved = true;
+          if (overlapX < overlapY) {
+            const direction = deltaX === 0
+              ? (index + nextIndex) % 2 === 0 ? 1 : -1
+              : Math.sign(deltaX);
+            const shift = overlapX / 2 + 0.75;
+            first.x = (first.x ?? 0) - direction * shift;
+            second.x = (second.x ?? 0) + direction * shift;
+          } else {
+            const direction = deltaY === 0
+              ? (index + nextIndex) % 2 === 0 ? 1 : -1
+              : Math.sign(deltaY);
+            const shift = overlapY / 2 + 0.75;
+            first.y = (first.y ?? 0) - direction * shift;
+            second.y = (second.y ?? 0) + direction * shift;
+          }
+        }
+      }
+
+      if (!moved) break;
+    }
+  }
+
+  function createCompoundCollisionForce() {
+    let forceNodes: GraphNode[] = [];
+
+    const force: any = (_alpha: number) => {
+      for (let iteration = 0; iteration < 8; iteration += 1) {
+        for (let index = 0; index < forceNodes.length; index += 1) {
+          const first = forceNodes[index];
+          const firstBounds = compoundBounds(first);
+
+          for (let nextIndex = index + 1; nextIndex < forceNodes.length; nextIndex += 1) {
+            const second = forceNodes[nextIndex];
+            const secondBounds = compoundBounds(second);
+            const deltaX = (second.x ?? 0) - (first.x ?? 0);
+            const deltaY =
+              (second.y ?? 0) + secondBounds.centerYOffset -
+              ((first.y ?? 0) + firstBounds.centerYOffset);
+            const overlapX =
+              firstBounds.halfWidth + secondBounds.halfWidth + COLLISION_PADDING - Math.abs(deltaX);
+            const overlapY =
+              firstBounds.halfHeight + secondBounds.halfHeight + COLLISION_PADDING - Math.abs(deltaY);
+            if (overlapX <= 0 || overlapY <= 0) continue;
+
+            if (overlapX < overlapY) {
+              const direction = deltaX === 0
+                ? (index + nextIndex) % 2 === 0 ? 1 : -1
+                : Math.sign(deltaX);
+              const firstFixed = first.fx != null;
+              const secondFixed = second.fx != null;
+              const correction = overlapX + 0.75;
+
+              if (firstFixed && !secondFixed) {
+                second.x = (second.x ?? 0) + direction * correction;
+              } else if (!firstFixed && secondFixed) {
+                first.x = (first.x ?? 0) - direction * correction;
+              } else if (!firstFixed && !secondFixed) {
+                first.x = (first.x ?? 0) - direction * correction / 2;
+                second.x = (second.x ?? 0) + direction * correction / 2;
+              }
+
+              if (direction > 0) {
+                first.vx = Math.min(first.vx ?? 0, 0);
+                second.vx = Math.max(second.vx ?? 0, 0);
+              } else {
+                first.vx = Math.max(first.vx ?? 0, 0);
+                second.vx = Math.min(second.vx ?? 0, 0);
+              }
+            } else {
+              const direction = deltaY === 0
+                ? (index + nextIndex) % 2 === 0 ? 1 : -1
+                : Math.sign(deltaY);
+              const firstFixed = first.fy != null;
+              const secondFixed = second.fy != null;
+              const correction = overlapY + 0.75;
+
+              if (firstFixed && !secondFixed) {
+                second.y = (second.y ?? 0) + direction * correction;
+              } else if (!firstFixed && secondFixed) {
+                first.y = (first.y ?? 0) - direction * correction;
+              } else if (!firstFixed && !secondFixed) {
+                first.y = (first.y ?? 0) - direction * correction / 2;
+                second.y = (second.y ?? 0) + direction * correction / 2;
+              }
+
+              if (direction > 0) {
+                first.vy = Math.min(first.vy ?? 0, 0);
+                second.vy = Math.max(second.vy ?? 0, 0);
+              } else {
+                first.vy = Math.max(first.vy ?? 0, 0);
+                second.vy = Math.min(second.vy ?? 0, 0);
+              }
+            }
+          }
+        }
+      }
+    };
+
+    force.initialize = (nextNodes: GraphNode[]) => {
+      forceNodes = nextNodes;
+    };
+
+    return force;
+  }
+
+  function buildSimulation() {
     simulation = forceSimulation<GraphNode, GraphLink>(graphNodes)
       .force(
         'link',
         forceLink<GraphNode, GraphLink>(graphLinks)
           .id((node) => node.id)
-          .distance((link) => link.distance ?? (link.kind === 'secondary' ? 78 : 108))
-          .strength((link) => link.strength ?? (link.kind === 'secondary' ? 0.19 : 0.16)),
+          .distance((link) => link.kind === 'secondary' ? 72 : 94)
+          .strength((link) => link.kind === 'secondary' ? 0.24 : 0.18),
       )
-      .force('charge', forceManyBody<GraphNode>().strength(-92).theta(0.82))
-      .force('collision', forceCollide<GraphNode>().radius((node) => node.radius + 5).strength(0.82).iterations(2))
-      .force('x', forceX<GraphNode>(0).strength(0.018))
-      .force('y', forceY<GraphNode>(0).strength(0.018))
-      .velocityDecay(0.36)
-      .alphaDecay(0.026)
-      .stop();
-
-    // A deterministic pre-layout avoids the distracting load-time wobble and
-    // leaves D3 responsible only for the graph physics, not the rendering.
-    simulation.tick(260);
+      .force(
+        'charge',
+        forceManyBody<GraphNode>()
+          .strength((node) =>
+            node.id === '/'
+              ? -430
+              : node.degree >= 3
+                ? -330
+                : node.depth === 1
+                  ? -235
+                  : -165,
+          )
+          .distanceMin(22)
+          .theta(0.76),
+      )
+      .force(
+        'x',
+        forceX<GraphNode>((node) => node.anchorX).strength((node) => node.depth > 1 ? 0.06 : 0.035),
+      )
+      .force(
+        'y',
+        forceY<GraphNode>((node) => node.anchorY).strength((node) => node.depth > 1 ? 0.06 : 0.035),
+      )
+      .force(
+        'collision',
+        forceCollide<GraphNode>()
+          .radius((node) => interactionRadius(node) + 3)
+          .strength(1)
+          .iterations(10),
+      )
+      .force('compoundCollision', createCompoundCollisionForce())
+      .velocityDecay(0.42)
+      .alphaDecay(0.018);
   }
 
   function createNodeView(node: GraphNode, PIXI: any) {
@@ -221,7 +460,7 @@
     container.position.set(node.x ?? 0, node.y ?? 0);
     container.eventMode = 'static';
     container.cursor = node.href ? 'pointer' : 'grab';
-    container.hitArea = new PIXI.Circle(0, 0, Math.max(node.radius + 6, 12));
+    container.hitArea = new PIXI.Circle(0, 0, interactionRadius(node));
 
     const base = new PIXI.Graphics()
       .circle(0, 0, node.radius)
@@ -241,11 +480,15 @@
         fill: colors.text,
         align: 'center',
       },
-      resolution: Math.min((window.devicePixelRatio || 1) * 2, 4),
+      resolution: Math.min(Math.max((window.devicePixelRatio || 1) * 4, 5), 8),
     });
     label.anchor.set(0.5, 0);
-    label.position.set(0, node.radius + 6);
-    label.roundPixels = true;
+    label.position.set(0, node.radius + LABEL_BASE_GAP);
+    // High-resolution text textures stay sharp through camera scaling.
+    // Subpixel positioning avoids the stair-step motion caused by pixel snapping.
+    label.roundPixels = false;
+    node.labelHalfWidth = label.width / 2;
+    node.labelHeight = label.height;
 
     container.addChild(base, highlight, label);
     nodeLayer.addChild(container);
@@ -270,9 +513,13 @@
 
   function setActiveNode(node: GraphNode | null) {
     activeNode = node;
-    activeNodeId = node?.id ?? null;
-    if (node) edgeFocusNode = node;
-    for (const item of graphNodes) item.hoverTarget = item === node ? 1 : 0;
+    edgeFocusNode = node;
+    const neighbors = node ? adjacency.get(node.id) : null;
+
+    for (const item of graphNodes) {
+      item.hoverTarget = item === node ? 1 : 0;
+      item.focusTarget = !node || item === node || Boolean(neighbors?.has(item.id)) ? 1 : 0.24;
+    }
   }
 
   function updateCameraTransform() {
@@ -294,15 +541,14 @@
     return { x: clientX - rect.left, y: clientY - rect.top };
   }
 
-  function stopLayoutForNavigation() {
-    simulation?.stop();
+  function coolLayoutForNavigation() {
     simulation?.alphaTarget(0);
   }
 
   function handleWheel(event: WheelEvent) {
     if (!canvasElement) return;
     event.preventDefault();
-    stopLayoutForNavigation();
+    coolLayoutForNavigation();
 
     const pointer = clientToCanvas(event.clientX, event.clientY);
     const worldPoint = screenToWorld(pointer.x, pointer.y);
@@ -336,7 +582,7 @@
     const point = clientToCanvas(event.clientX, event.clientY);
     touchPointers.set(event.pointerId, point);
     if (touchPointers.size === 2) {
-      stopLayoutForNavigation();
+      coolLayoutForNavigation();
       panPointerId = null;
       const center = touchCenter();
       const worldPoint = screenToWorld(center.x, center.y);
@@ -378,7 +624,7 @@
 
   function beginPan(event: any) {
     if (event.target !== app.stage || draggedNode || touchPointers.size > 1) return;
-    stopLayoutForNavigation();
+    coolLayoutForNavigation();
     panPointerId = event.pointerId;
     panLastX = event.global.x;
     panLastY = event.global.y;
@@ -422,6 +668,81 @@
     window.removeEventListener('pointercancel', finishNodeDrag);
   }
 
+  function separateDraggedNodeImmediately(node: GraphNode) {
+    for (let pass = 0; pass < DRAG_COLLISION_PASSES; pass += 1) {
+      let moved = false;
+
+      for (let index = 0; index < graphNodes.length; index += 1) {
+        const first = graphNodes[index];
+        const firstBounds = compoundBounds(first);
+
+        for (let nextIndex = index + 1; nextIndex < graphNodes.length; nextIndex += 1) {
+          const second = graphNodes[nextIndex];
+          const secondBounds = compoundBounds(second);
+          const firstX = first === node ? (node.fx ?? node.x ?? 0) : (first.x ?? 0);
+          const firstY = first === node ? (node.fy ?? node.y ?? 0) : (first.y ?? 0);
+          const secondX = second === node ? (node.fx ?? node.x ?? 0) : (second.x ?? 0);
+          const secondY = second === node ? (node.fy ?? node.y ?? 0) : (second.y ?? 0);
+          const deltaX = secondX - firstX;
+          const deltaY =
+            secondY + secondBounds.centerYOffset -
+            (firstY + firstBounds.centerYOffset);
+          const overlapX =
+            firstBounds.halfWidth + secondBounds.halfWidth + DRAG_COLLISION_PADDING -
+            Math.abs(deltaX);
+          const overlapY =
+            firstBounds.halfHeight + secondBounds.halfHeight + DRAG_COLLISION_PADDING -
+            Math.abs(deltaY);
+          if (overlapX <= 0 || overlapY <= 0) continue;
+
+          moved = true;
+          const firstFixed = first === node;
+          const secondFixed = second === node;
+
+          if (overlapX < overlapY) {
+            const direction = deltaX === 0
+              ? (index + nextIndex) % 2 === 0 ? 1 : -1
+              : Math.sign(deltaX);
+            const correction = overlapX + 1;
+
+            if (firstFixed && !secondFixed) {
+              second.x = secondX + direction * correction;
+              second.vx = direction * Math.max(Math.abs(second.vx ?? 0), 2.4);
+            } else if (!firstFixed && secondFixed) {
+              first.x = firstX - direction * correction;
+              first.vx = -direction * Math.max(Math.abs(first.vx ?? 0), 2.4);
+            } else if (!firstFixed && !secondFixed) {
+              first.x = firstX - direction * correction / 2;
+              second.x = secondX + direction * correction / 2;
+              first.vx = -direction * Math.max(Math.abs(first.vx ?? 0), 1.2);
+              second.vx = direction * Math.max(Math.abs(second.vx ?? 0), 1.2);
+            }
+          } else {
+            const direction = deltaY === 0
+              ? (index + nextIndex) % 2 === 0 ? 1 : -1
+              : Math.sign(deltaY);
+            const correction = overlapY + 1;
+
+            if (firstFixed && !secondFixed) {
+              second.y = secondY + direction * correction;
+              second.vy = direction * Math.max(Math.abs(second.vy ?? 0), 2.4);
+            } else if (!firstFixed && secondFixed) {
+              first.y = firstY - direction * correction;
+              first.vy = -direction * Math.max(Math.abs(first.vy ?? 0), 2.4);
+            } else if (!firstFixed && !secondFixed) {
+              first.y = firstY - direction * correction / 2;
+              second.y = secondY + direction * correction / 2;
+              first.vy = -direction * Math.max(Math.abs(first.vy ?? 0), 1.2);
+              second.vy = direction * Math.max(Math.abs(second.vy ?? 0), 1.2);
+            }
+          }
+        }
+      }
+
+      if (!moved) break;
+    }
+  }
+
   function beginNodeDrag(node: GraphNode, event: any) {
     event.stopPropagation();
     setActiveNode(node);
@@ -432,7 +753,7 @@
     dragMoved = false;
     node.fx = node.x;
     node.fy = node.y;
-    simulation?.alpha(0.24).alphaTarget(0.16).restart();
+    simulation?.alpha(0.5).alphaTarget(0.34).restart();
     addWindowDragListeners();
   }
 
@@ -449,6 +770,12 @@
 
     draggedNode.fx = clamp(worldPoint.x, Math.min(minX, maxX), Math.max(minX, maxX));
     draggedNode.fy = clamp(worldPoint.y, Math.min(minY, maxY), Math.max(minY, maxY));
+    draggedNode.x = draggedNode.fx;
+    draggedNode.y = draggedNode.fy;
+    draggedNode.vx = 0;
+    draggedNode.vy = 0;
+    separateDraggedNodeImmediately(draggedNode);
+    simulation?.alpha(Math.max(simulation.alpha(), 0.42)).alphaTarget(0.34).restart();
     dragMoved ||= Math.hypot(pointer.x - dragStartX, pointer.y - dragStartY) > 4;
   }
 
@@ -474,13 +801,13 @@
     if (!graphNodes.length) return { minX: -1, minY: -1, maxX: 1, maxY: 1 };
     return graphNodes.reduce(
       (bounds, node) => {
+        const nodeBounds = compoundBounds(node);
         const x = node.x ?? 0;
-        const y = node.y ?? 0;
-        const labelWidth = Math.max(0, node.label.length * node.labelSize * 0.28);
-        bounds.minX = Math.min(bounds.minX, x - Math.max(node.radius, labelWidth));
-        bounds.maxX = Math.max(bounds.maxX, x + Math.max(node.radius, labelWidth));
-        bounds.minY = Math.min(bounds.minY, y - node.radius);
-        bounds.maxY = Math.max(bounds.maxY, y + node.radius + node.labelSize + 8);
+        const centerY = (node.y ?? 0) + nodeBounds.centerYOffset;
+        bounds.minX = Math.min(bounds.minX, x - nodeBounds.halfWidth);
+        bounds.maxX = Math.max(bounds.maxX, x + nodeBounds.halfWidth);
+        bounds.minY = Math.min(bounds.minY, centerY - nodeBounds.halfHeight);
+        bounds.maxY = Math.max(bounds.maxY, centerY + nodeBounds.halfHeight);
         return bounds;
       },
       { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
@@ -494,19 +821,20 @@
     const graphHeight = Math.max(1, bounds.maxY - bounds.minY);
     const scale = clamp(
       Math.min(
-        (app.screen.width - FIT_PADDING * 2) / graphWidth,
-        (app.screen.height - FIT_PADDING * 2) / graphHeight,
+        (app.screen.width - FIT_SIDE_PADDING * 2) / graphWidth,
+        (app.screen.height - FIT_TOP_PADDING - FIT_BOTTOM_PADDING) / graphHeight,
       ),
       MIN_ZOOM,
       2.1,
     );
     const centerX = (bounds.minX + bounds.maxX) / 2;
-    const centerY = (bounds.minY + bounds.maxY) / 2;
 
     camera.zooming = false;
     camera.targetScale = scale;
     camera.targetX = app.screen.width / 2 - centerX * scale;
-    camera.targetY = app.screen.height / 2 - centerY * scale;
+    // Align the top of the fitted graph with the Center button instead of
+    // vertically centering it in a large empty field.
+    camera.targetY = FIT_TOP_PADDING - bounds.minY * scale;
 
     if (immediate) {
       camera.scale = camera.targetScale;
@@ -517,7 +845,7 @@
   }
 
   export function resetView() {
-    stopLayoutForNavigation();
+    coolLayoutForNavigation();
     centerGraph(false);
   }
 
@@ -525,25 +853,34 @@
     if (!edgeLayer || !activeEdgeLayer) return;
     edgeLayer.clear();
     activeEdgeLayer.clear();
-    const lineWidth = 1.35 / Math.max(camera.scale, Number.EPSILON);
+    const lineWidth = 1.15 / Math.max(camera.scale, Number.EPSILON);
+    const edgeProgress = edgeFocusNode ? clamp(edgeFocusNode.hover, 0, 1) : 0;
 
     for (const link of graphLinks) {
       const source = resolveNode(link.source);
       const target = resolveNode(link.target);
       if (!source || !target) continue;
+      const connected = Boolean(
+        edgeFocusNode && (source.id === edgeFocusNode.id || target.id === edgeFocusNode.id),
+      );
+      const focusedAlpha = connected ? colors.lineAlpha * 0.72 : colors.lineAlpha * 0.16;
+      const baseAlpha = edgeFocusNode
+        ? colors.lineAlpha + (focusedAlpha - colors.lineAlpha) * edgeProgress
+        : colors.lineAlpha;
+
       edgeLayer
         .moveTo(source.x ?? 0, source.y ?? 0)
         .lineTo(target.x ?? 0, target.y ?? 0)
-        .stroke({ color: colors.line, width: lineWidth, alpha: 0.78 });
+        .stroke({ color: colors.line, width: lineWidth, alpha: baseAlpha });
 
-      if (edgeFocusNode && (source.id === edgeFocusNode.id || target.id === edgeFocusNode.id)) {
+      if (connected && edgeFocusNode && edgeProgress > 0.001) {
         activeEdgeLayer
           .moveTo(source.x ?? 0, source.y ?? 0)
           .lineTo(target.x ?? 0, target.y ?? 0)
           .stroke({
             color: colors.accent,
             width: lineWidth,
-            alpha: 0.92 * edgeFocusNode.hover,
+            alpha: 0.95 * edgeProgress,
           });
       }
     }
@@ -551,23 +888,27 @@
 
   function updateNodeViews(deltaSeconds: number) {
     const transition = 1 - Math.exp(-HOVER_EASE * deltaSeconds);
+    const activeNeighbors = activeNode ? adjacency.get(activeNode.id) : null;
 
     for (const node of graphNodes) {
       const view = node.view;
       if (!view) continue;
       node.hover += (node.hoverTarget - node.hover) * transition;
+      node.focus += (node.focusTarget - node.focus) * transition;
       view.container.position.set(node.x ?? 0, node.y ?? 0);
+      view.base.alpha = node.focus;
       view.highlight.alpha = node.hover;
-      view.label.y = node.radius + 6 + node.hover * 4;
+      view.label.y = node.radius + LABEL_BASE_GAP + node.hover * LABEL_HOVER_DROP;
 
-      const screenFontSize = node.labelSize * camera.scale;
-      const visibility = smoothstep(LABEL_FADE_START, LABEL_FADE_END, screenFontSize);
-      view.label.alpha = Math.max(visibility, node.hover);
+      const isNeighbor = Boolean(activeNeighbors?.has(node.id));
+      const baseVisibility = labelVisibility(node);
+      const contextualVisibility = node === activeNode ? 1 : isNeighbor ? 0.92 : baseVisibility;
+      const dimmedVisibility = activeNode && node !== activeNode && !isNeighbor
+        ? contextualVisibility * 0.16
+        : contextualVisibility;
+      view.label.alpha += (Math.max(dimmedVisibility, node.hover) - view.label.alpha) * transition;
     }
 
-    if (edgeFocusNode && edgeFocusNode.hover < 0.002 && activeNodeId !== edgeFocusNode.id) {
-      edgeFocusNode = null;
-    }
   }
 
   function updateCamera(deltaSeconds: number) {
@@ -602,28 +943,67 @@
     updateCamera(deltaSeconds);
     updateNodeViews(deltaSeconds);
     redrawEdges();
+  }
 
-    if (simulation && simulation.alpha() < 0.012 && draggedNode === null) {
-      simulation.stop();
+  function hostSize() {
+    const rect = hostElement.getBoundingClientRect();
+    return {
+      width: Math.max(1, Math.round(rect.width)),
+      height: Math.max(1, Math.round(rect.height)),
+    };
+  }
+
+  async function waitForHostSize() {
+    for (let frame = 0; frame < 12; frame += 1) {
+      const size = hostSize();
+      if (size.width > 1 && size.height > 1) return size;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
+    return hostSize();
+  }
+
+  async function loadPixi() {
+    let lastError: unknown = null;
+
+    for (const url of PIXI_URLS) {
+      try {
+        return (await import(/* @vite-ignore */ url)) as any;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('PixiJS could not be loaded.');
+  }
+
+  function handleResize(PIXI: any, initial = false) {
+    if (!app || destroyed) return;
+    const { width, height } = hostSize();
+    app.renderer.resize(width, height);
+    app.stage.hitArea = new PIXI.Rectangle(0, 0, width, height);
+
+    if (initial || !hasCompletedInitialFit) {
+      centerGraph(true);
+      hasCompletedInitialFit = true;
     }
   }
 
-  function handleResize(PIXI: any) {
-    if (!app) return;
-    app.stage.hitArea = new PIXI.Rectangle(0, 0, app.screen.width, app.screen.height);
-  }
-
   async function initialize() {
-    const PIXI = (await import(/* @vite-ignore */ PIXI_URL)) as any;
+    failed = false;
+    ready = false;
+    const { width, height } = await waitForHostSize();
+    const PIXI = await loadPixi();
     if (destroyed) return;
 
     colors = readThemeColors();
     makeGraphData();
-    buildSimulation();
 
     app = new PIXI.Application();
     await app.init({
-      resizeTo: hostElement,
+      width,
+      height,
       antialias: true,
       autoDensity: true,
       resolution: Math.min((window.devicePixelRatio || 1) * 2, 4),
@@ -656,6 +1036,13 @@
     app.stage.on('pointerupoutside', finishPan);
 
     for (const node of graphNodes) createNodeView(node, PIXI);
+    separateInitialOverlaps();
+    for (const node of graphNodes) {
+      node.view?.container.position.set(node.x ?? 0, node.y ?? 0);
+    }
+    // Start the force layout only after the canvas exists so reloading shows the
+    // graph naturally arranging itself instead of revealing a pre-settled layout.
+    buildSimulation();
 
     canvasElement.addEventListener('wheel', handleWheel, { passive: false });
     canvasElement.addEventListener('pointerdown', handleTouchPointerDown);
@@ -663,9 +1050,10 @@
     canvasElement.addEventListener('pointerup', handleTouchPointerUp);
     canvasElement.addEventListener('pointercancel', handleTouchPointerUp);
     app.ticker.add(updateFrame);
-    centerGraph(true);
+    handleResize(PIXI, true);
     redrawEdges();
     updateNodeViews(1);
+    ready = true;
 
     resizeObserver = new ResizeObserver(() => handleResize(PIXI));
     resizeObserver.observe(hostElement);
@@ -684,13 +1072,18 @@
   onMount(() => {
     initialize().catch((error) => {
       console.error('Unable to initialize Website Graph renderer.', error);
-      hostElement.dataset.failed = 'true';
+      failureMessage =
+        error instanceof Error && error.message
+          ? `The website graph could not start: ${error.message}`
+          : 'The website graph could not start in this browser.';
+      failed = true;
+      ready = false;
     });
   });
 
   onDestroy(() => {
     destroyed = true;
-    simulation?.stop();
+    simulation?.alpha(0);
     resizeObserver?.disconnect();
     themeObserver?.disconnect();
     canvasElement?.removeEventListener('wheel', handleWheel);
@@ -704,10 +1097,14 @@
   });
 </script>
 
-<div class="pixi-website-graph" bind:this={hostElement}>
-  <p class="pixi-website-graph__fallback">
-    The website graph requires WebGL and JavaScript.
-  </p>
+<div class="pixi-website-graph" bind:this={hostElement} aria-busy={!ready && !failed}>
+  {#if !ready && !failed}
+    <p class="pixi-website-graph__status" role="status">Loading graph…</p>
+  {:else if failed}
+    <p class="pixi-website-graph__status pixi-website-graph__status--failed" role="alert">
+      {failureMessage}
+    </p>
+  {/if}
 
   <nav class="pixi-website-graph__links" aria-label="Website graph links">
     {#each nodes as node}
@@ -744,7 +1141,23 @@
     outline: none;
   }
 
-  .pixi-website-graph__fallback,
+  .pixi-website-graph__status {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    padding: 2rem;
+    margin: 0;
+    color: var(--muted);
+    pointer-events: none;
+    text-align: center;
+  }
+
+  .pixi-website-graph__status--failed {
+    pointer-events: auto;
+  }
+
   .pixi-website-graph__links {
     position: absolute;
     width: 1px;
@@ -755,24 +1168,5 @@
     clip: rect(0 0 0 0);
     white-space: nowrap;
     border: 0;
-  }
-
-  .pixi-website-graph:not([data-failed='true']) .pixi-website-graph__fallback {
-    display: none;
-  }
-
-  .pixi-website-graph[data-failed='true'] .pixi-website-graph__fallback {
-    inset: 0;
-    display: grid;
-    width: auto;
-    height: auto;
-    place-items: center;
-    padding: 2rem;
-    margin: 0;
-    overflow: visible;
-    clip: auto;
-    color: var(--muted);
-    white-space: normal;
-    text-align: center;
   }
 </style>
