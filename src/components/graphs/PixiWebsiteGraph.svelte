@@ -78,10 +78,15 @@
   const MIN_ZOOM = 0.12;
   const MAX_ZOOM = 8;
   const CAMERA_EASE = 12;
-  const HOVER_EASE = 3.2;
-  const FIT_PADDING = 54;
+  const HOVER_EASE = 1.45;
+  const FIT_SIDE_PADDING = 38;
+  const FIT_TOP_PADDING = 68;
+  const FIT_BOTTOM_PADDING = 34;
   const LABEL_BASE_GAP = 3;
   const LABEL_HOVER_DROP = 12;
+  const COLLISION_PADDING = 2.5;
+  const DRAG_COLLISION_PADDING = 5;
+  const DRAG_COLLISION_PASSES = 12;
 
   let hostElement!: HTMLDivElement;
   let ready = false;
@@ -212,8 +217,10 @@
   }
 
   function makeGraphData() {
-    const width = 900;
-    const height = 660;
+    // Keep semantic anchors close together. Collision—not oversized link
+    // lengths—provides the minimum safe spacing between rendered content.
+    const width = 520;
+    const height = 390;
 
     adjacency = new Map(nodes.map((node) => [node.id, new Set<string>()]));
     for (const link of links) {
@@ -268,10 +275,10 @@
     const labelHeight = node.labelHeight || node.labelSize * 1.2;
     const top = -hitRadius;
     const bottom =
-      node.radius + LABEL_BASE_GAP + LABEL_HOVER_DROP + labelHeight + 4;
+      node.radius + LABEL_BASE_GAP + LABEL_HOVER_DROP + labelHeight + 3;
 
     return {
-      halfWidth: Math.max(hitRadius, labelHalfWidth + 5),
+      halfWidth: Math.max(hitRadius, labelHalfWidth + 3),
       halfHeight: (bottom - top) / 2,
       centerYOffset: (top + bottom) / 2,
     };
@@ -325,7 +332,7 @@
     let forceNodes: GraphNode[] = [];
 
     const force: any = (_alpha: number) => {
-      for (let iteration = 0; iteration < 5; iteration += 1) {
+      for (let iteration = 0; iteration < 8; iteration += 1) {
         for (let index = 0; index < forceNodes.length; index += 1) {
           const first = forceNodes[index];
           const firstBounds = compoundBounds(first);
@@ -338,9 +345,9 @@
               (second.y ?? 0) + secondBounds.centerYOffset -
               ((first.y ?? 0) + firstBounds.centerYOffset);
             const overlapX =
-              firstBounds.halfWidth + secondBounds.halfWidth + 3 - Math.abs(deltaX);
+              firstBounds.halfWidth + secondBounds.halfWidth + COLLISION_PADDING - Math.abs(deltaX);
             const overlapY =
-              firstBounds.halfHeight + secondBounds.halfHeight + 3 - Math.abs(deltaY);
+              firstBounds.halfHeight + secondBounds.halfHeight + COLLISION_PADDING - Math.abs(deltaY);
             if (overlapX <= 0 || overlapY <= 0) continue;
 
             if (overlapX < overlapY) {
@@ -410,38 +417,38 @@
         'link',
         forceLink<GraphNode, GraphLink>(graphLinks)
           .id((node) => node.id)
-          .distance((link) => link.kind === 'secondary' ? 138 : 176)
-          .strength((link) => link.kind === 'secondary' ? 0.17 : 0.12),
+          .distance((link) => link.kind === 'secondary' ? 72 : 94)
+          .strength((link) => link.kind === 'secondary' ? 0.24 : 0.18),
       )
       .force(
         'charge',
         forceManyBody<GraphNode>()
           .strength((node) =>
             node.id === '/'
-              ? -760
+              ? -430
               : node.degree >= 3
-                ? -540
+                ? -330
                 : node.depth === 1
-                  ? -390
-                  : -285,
+                  ? -235
+                  : -165,
           )
-          .distanceMin(24)
-          .theta(0.82),
+          .distanceMin(22)
+          .theta(0.76),
       )
       .force(
         'x',
-        forceX<GraphNode>((node) => node.anchorX).strength((node) => node.depth > 1 ? 0.024 : 0.012),
+        forceX<GraphNode>((node) => node.anchorX).strength((node) => node.depth > 1 ? 0.06 : 0.035),
       )
       .force(
         'y',
-        forceY<GraphNode>((node) => node.anchorY).strength((node) => node.depth > 1 ? 0.024 : 0.012),
+        forceY<GraphNode>((node) => node.anchorY).strength((node) => node.depth > 1 ? 0.06 : 0.035),
       )
       .force(
         'collision',
         forceCollide<GraphNode>()
-          .radius((node) => interactionRadius(node) + 7)
+          .radius((node) => interactionRadius(node) + 3)
           .strength(1)
-          .iterations(6),
+          .iterations(10),
       )
       .force('compoundCollision', createCompoundCollisionForce())
       .velocityDecay(0.42)
@@ -473,11 +480,13 @@
         fill: colors.text,
         align: 'center',
       },
-      resolution: Math.min((window.devicePixelRatio || 1) * 2, 4),
+      resolution: Math.min(Math.max((window.devicePixelRatio || 1) * 4, 5), 8),
     });
     label.anchor.set(0.5, 0);
     label.position.set(0, node.radius + LABEL_BASE_GAP);
-    label.roundPixels = true;
+    // High-resolution text textures stay sharp through camera scaling.
+    // Subpixel positioning avoids the stair-step motion caused by pixel snapping.
+    label.roundPixels = false;
     node.labelHalfWidth = label.width / 2;
     node.labelHeight = label.height;
 
@@ -659,6 +668,81 @@
     window.removeEventListener('pointercancel', finishNodeDrag);
   }
 
+  function separateDraggedNodeImmediately(node: GraphNode) {
+    for (let pass = 0; pass < DRAG_COLLISION_PASSES; pass += 1) {
+      let moved = false;
+
+      for (let index = 0; index < graphNodes.length; index += 1) {
+        const first = graphNodes[index];
+        const firstBounds = compoundBounds(first);
+
+        for (let nextIndex = index + 1; nextIndex < graphNodes.length; nextIndex += 1) {
+          const second = graphNodes[nextIndex];
+          const secondBounds = compoundBounds(second);
+          const firstX = first === node ? (node.fx ?? node.x ?? 0) : (first.x ?? 0);
+          const firstY = first === node ? (node.fy ?? node.y ?? 0) : (first.y ?? 0);
+          const secondX = second === node ? (node.fx ?? node.x ?? 0) : (second.x ?? 0);
+          const secondY = second === node ? (node.fy ?? node.y ?? 0) : (second.y ?? 0);
+          const deltaX = secondX - firstX;
+          const deltaY =
+            secondY + secondBounds.centerYOffset -
+            (firstY + firstBounds.centerYOffset);
+          const overlapX =
+            firstBounds.halfWidth + secondBounds.halfWidth + DRAG_COLLISION_PADDING -
+            Math.abs(deltaX);
+          const overlapY =
+            firstBounds.halfHeight + secondBounds.halfHeight + DRAG_COLLISION_PADDING -
+            Math.abs(deltaY);
+          if (overlapX <= 0 || overlapY <= 0) continue;
+
+          moved = true;
+          const firstFixed = first === node;
+          const secondFixed = second === node;
+
+          if (overlapX < overlapY) {
+            const direction = deltaX === 0
+              ? (index + nextIndex) % 2 === 0 ? 1 : -1
+              : Math.sign(deltaX);
+            const correction = overlapX + 1;
+
+            if (firstFixed && !secondFixed) {
+              second.x = secondX + direction * correction;
+              second.vx = direction * Math.max(Math.abs(second.vx ?? 0), 2.4);
+            } else if (!firstFixed && secondFixed) {
+              first.x = firstX - direction * correction;
+              first.vx = -direction * Math.max(Math.abs(first.vx ?? 0), 2.4);
+            } else if (!firstFixed && !secondFixed) {
+              first.x = firstX - direction * correction / 2;
+              second.x = secondX + direction * correction / 2;
+              first.vx = -direction * Math.max(Math.abs(first.vx ?? 0), 1.2);
+              second.vx = direction * Math.max(Math.abs(second.vx ?? 0), 1.2);
+            }
+          } else {
+            const direction = deltaY === 0
+              ? (index + nextIndex) % 2 === 0 ? 1 : -1
+              : Math.sign(deltaY);
+            const correction = overlapY + 1;
+
+            if (firstFixed && !secondFixed) {
+              second.y = secondY + direction * correction;
+              second.vy = direction * Math.max(Math.abs(second.vy ?? 0), 2.4);
+            } else if (!firstFixed && secondFixed) {
+              first.y = firstY - direction * correction;
+              first.vy = -direction * Math.max(Math.abs(first.vy ?? 0), 2.4);
+            } else if (!firstFixed && !secondFixed) {
+              first.y = firstY - direction * correction / 2;
+              second.y = secondY + direction * correction / 2;
+              first.vy = -direction * Math.max(Math.abs(first.vy ?? 0), 1.2);
+              second.vy = direction * Math.max(Math.abs(second.vy ?? 0), 1.2);
+            }
+          }
+        }
+      }
+
+      if (!moved) break;
+    }
+  }
+
   function beginNodeDrag(node: GraphNode, event: any) {
     event.stopPropagation();
     setActiveNode(node);
@@ -669,7 +753,7 @@
     dragMoved = false;
     node.fx = node.x;
     node.fy = node.y;
-    simulation?.alpha(0.24).alphaTarget(0.16).restart();
+    simulation?.alpha(0.5).alphaTarget(0.34).restart();
     addWindowDragListeners();
   }
 
@@ -686,6 +770,12 @@
 
     draggedNode.fx = clamp(worldPoint.x, Math.min(minX, maxX), Math.max(minX, maxX));
     draggedNode.fy = clamp(worldPoint.y, Math.min(minY, maxY), Math.max(minY, maxY));
+    draggedNode.x = draggedNode.fx;
+    draggedNode.y = draggedNode.fy;
+    draggedNode.vx = 0;
+    draggedNode.vy = 0;
+    separateDraggedNodeImmediately(draggedNode);
+    simulation?.alpha(Math.max(simulation.alpha(), 0.42)).alphaTarget(0.34).restart();
     dragMoved ||= Math.hypot(pointer.x - dragStartX, pointer.y - dragStartY) > 4;
   }
 
@@ -731,19 +821,20 @@
     const graphHeight = Math.max(1, bounds.maxY - bounds.minY);
     const scale = clamp(
       Math.min(
-        (app.screen.width - FIT_PADDING * 2) / graphWidth,
-        (app.screen.height - FIT_PADDING * 2) / graphHeight,
+        (app.screen.width - FIT_SIDE_PADDING * 2) / graphWidth,
+        (app.screen.height - FIT_TOP_PADDING - FIT_BOTTOM_PADDING) / graphHeight,
       ),
       MIN_ZOOM,
       2.1,
     );
     const centerX = (bounds.minX + bounds.maxX) / 2;
-    const centerY = (bounds.minY + bounds.maxY) / 2;
 
     camera.zooming = false;
     camera.targetScale = scale;
     camera.targetX = app.screen.width / 2 - centerX * scale;
-    camera.targetY = app.screen.height / 2 - centerY * scale;
+    // Align the top of the fitted graph with the Center button instead of
+    // vertically centering it in a large empty field.
+    camera.targetY = FIT_TOP_PADDING - bounds.minY * scale;
 
     if (immediate) {
       camera.scale = camera.targetScale;
@@ -763,6 +854,7 @@
     edgeLayer.clear();
     activeEdgeLayer.clear();
     const lineWidth = 1.15 / Math.max(camera.scale, Number.EPSILON);
+    const edgeProgress = edgeFocusNode ? clamp(edgeFocusNode.hover, 0, 1) : 0;
 
     for (const link of graphLinks) {
       const source = resolveNode(link.source);
@@ -771,10 +863,9 @@
       const connected = Boolean(
         edgeFocusNode && (source.id === edgeFocusNode.id || target.id === edgeFocusNode.id),
       );
+      const focusedAlpha = connected ? colors.lineAlpha * 0.72 : colors.lineAlpha * 0.16;
       const baseAlpha = edgeFocusNode
-        ? connected
-          ? colors.lineAlpha * 0.72
-          : colors.lineAlpha * 0.16
+        ? colors.lineAlpha + (focusedAlpha - colors.lineAlpha) * edgeProgress
         : colors.lineAlpha;
 
       edgeLayer
@@ -782,14 +873,14 @@
         .lineTo(target.x ?? 0, target.y ?? 0)
         .stroke({ color: colors.line, width: lineWidth, alpha: baseAlpha });
 
-      if (connected && edgeFocusNode) {
+      if (connected && edgeFocusNode && edgeProgress > 0.001) {
         activeEdgeLayer
           .moveTo(source.x ?? 0, source.y ?? 0)
           .lineTo(target.x ?? 0, target.y ?? 0)
           .stroke({
             color: colors.accent,
             width: lineWidth,
-            alpha: 0.95,
+            alpha: 0.95 * edgeProgress,
           });
       }
     }
