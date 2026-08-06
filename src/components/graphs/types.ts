@@ -49,6 +49,18 @@ export type ForceNetworkSettings = {
   collisionPadding?: number;
   linkDistance?: number;
   linkStrength?: number;
+  /** Minimum linked-node separation as a fraction of the link's resting distance. */
+  linkCompressionRatio?: number;
+  /** Strength of the one-way spring that resists links becoming too short. */
+  linkCompressionStrength?: number;
+  /** Constraint passes per simulation tick for compressed links. */
+  linkCompressionIterations?: number;
+  /** Maximum linked-node separation as a fraction of the resting distance. */
+  linkStretchRatio?: number;
+  /** Strength of the one-way spring that resists links becoming too long. */
+  linkStretchStrength?: number;
+  /** Constraint passes per simulation tick for stretched links. */
+  linkStretchIterations?: number;
   velocityDecay?: number;
   alphaDecay?: number;
   dragAlphaTarget?: number;

@@ -18,7 +18,7 @@
   const graphLinks = links.map((link) => ({
     ...link,
     distance: link.kind === 'secondary' ? 78 : 108,
-    strength: link.kind === 'secondary' ? 0.19 : 0.16,
+    strength: link.kind === 'secondary' ? 0.4 : 0.36,
     curve: 0,
   }));
 
@@ -149,7 +149,13 @@
             centerAnchorStrength: 0.018,
             collisionPadding: 5,
             linkDistance: 102,
-            linkStrength: 0.17,
+            linkStrength: 0.36,
+            linkCompressionRatio: 0.97,
+            linkCompressionStrength: 0.94,
+            linkCompressionIterations: 8,
+            linkStretchRatio: 1.03,
+            linkStretchStrength: 0.94,
+            linkStretchIterations: 8,
             velocityDecay: 0.36,
             alphaDecay: 0.026,
             dragAlphaTarget: 0.18,

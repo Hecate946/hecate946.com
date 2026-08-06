@@ -7,6 +7,7 @@
     forceSimulation,
     forceX,
     forceY,
+    type Force,
     type Simulation,
     type SimulationLinkDatum,
     type SimulationNodeDatum,
@@ -91,6 +92,12 @@
     collisionPadding: 20,
     linkDistance: 175,
     linkStrength: 0.12,
+    linkCompressionRatio: 0,
+    linkCompressionStrength: 0,
+    linkCompressionIterations: 1,
+    linkStretchRatio: 0,
+    linkStretchStrength: 0,
+    linkStretchIterations: 1,
     velocityDecay: 0.34,
     alphaDecay: 0.045,
     dragAlphaTarget: 0.24,
@@ -380,19 +387,166 @@
     activeCollisionPairs = nextCollisionPairs;
   }
 
+  function linkRestDistance(link: SimulationLink) {
+    if (link.distance !== undefined) return link.distance * linkScale();
+    if (config.layout === 'radial') {
+      return Math.min(width, heightPixels) * config.radialRadius;
+    }
+    return config.linkDistance * linkScale();
+  }
+
+  function createLinkLengthConstraintForce(): Force<
+    SimulationNode,
+    SimulationLink
+  > {
+    let nodesById = new Map<string, SimulationNode>();
+
+    const force: Force<SimulationNode, SimulationLink> = () => {
+      const minimumRatio = Math.max(
+        0,
+        Math.min(1, config.linkCompressionRatio),
+      );
+      const maximumRatio =
+        config.linkStretchRatio > 1 ? config.linkStretchRatio : 0;
+      const compressionEnabled =
+        minimumRatio > 0 && config.linkCompressionStrength > 0;
+      const stretchEnabled =
+        maximumRatio > 1 && config.linkStretchStrength > 0;
+      if (!compressionEnabled && !stretchEnabled) return;
+
+      const iterations = Math.max(
+        compressionEnabled
+          ? Math.max(1, Math.round(config.linkCompressionIterations))
+          : 1,
+        stretchEnabled
+          ? Math.max(1, Math.round(config.linkStretchIterations))
+          : 1,
+      );
+      // Project out-of-range links directly back into their permitted length
+      // band. A velocity-only spring can visibly lag behind a quickly dragged
+      // node, which makes the edge feel elastic. Positional projection keeps
+      // connected nodes moving together while the ratio band still provides a
+      // small, intentional amount of give.
+      const compressionStrength = clamp(
+        config.linkCompressionStrength,
+        0,
+        0.98,
+      );
+      const stretchStrength = clamp(config.linkStretchStrength, 0, 0.98);
+
+      for (let iteration = 0; iteration < iterations; iteration += 1) {
+        for (const link of simulationLinks) {
+          const source =
+            typeof link.source === 'string'
+              ? nodesById.get(link.source)
+              : link.source;
+          const target =
+            typeof link.target === 'string'
+              ? nodesById.get(link.target)
+              : link.target;
+          if (!source || !target) continue;
+
+          let deltaX =
+            (target.x ?? target.anchorX) + (target.vx ?? 0) -
+            ((source.x ?? source.anchorX) + (source.vx ?? 0));
+          let deltaY =
+            (target.y ?? target.anchorY) + (target.vy ?? 0) -
+            ((source.y ?? source.anchorY) + (source.vy ?? 0));
+          let distance = Math.hypot(deltaX, deltaY);
+
+          if (distance < 0.0001) {
+            const angle = ((link.order + 1) * 2.399963229728653) % (Math.PI * 2);
+            deltaX = Math.cos(angle) * 0.0001;
+            deltaY = Math.sin(angle) * 0.0001;
+            distance = 0.0001;
+          }
+
+          const restingDistance = linkRestDistance(link);
+          const minimumDistance = restingDistance * minimumRatio;
+          const maximumDistance = restingDistance * maximumRatio;
+          let correction = 0;
+
+          if (compressionEnabled && distance < minimumDistance) {
+            correction =
+              (minimumDistance - distance) * compressionStrength;
+          } else if (stretchEnabled && distance > maximumDistance) {
+            // A negative correction pulls both endpoints back toward each other.
+            correction = (maximumDistance - distance) * stretchStrength;
+          } else {
+            continue;
+          }
+
+          const unitX = deltaX / distance;
+          const unitY = deltaY / distance;
+          const correctionX = unitX * correction;
+          const correctionY = unitY * correction;
+          const sourceFixed =
+            (source.fx !== null && source.fx !== undefined) ||
+            (source.fy !== null && source.fy !== undefined);
+          const targetFixed =
+            (target.fx !== null && target.fx !== undefined) ||
+            (target.fy !== null && target.fy !== undefined);
+
+          if (!sourceFixed && !targetFixed) {
+            source.x = (source.x ?? source.anchorX) - correctionX * 0.5;
+            source.y = (source.y ?? source.anchorY) - correctionY * 0.5;
+            target.x = (target.x ?? target.anchorX) + correctionX * 0.5;
+            target.y = (target.y ?? target.anchorY) + correctionY * 0.5;
+          } else if (sourceFixed && !targetFixed) {
+            target.x = (target.x ?? target.anchorX) + correctionX;
+            target.y = (target.y ?? target.anchorY) + correctionY;
+          } else if (!sourceFixed && targetFixed) {
+            source.x = (source.x ?? source.anchorX) - correctionX;
+            source.y = (source.y ?? source.anchorY) - correctionY;
+          }
+
+          // Remove most of the relative velocity along the edge once it reaches
+          // the constraint boundary. Tangential movement remains untouched, so
+          // the graph can still flow smoothly instead of behaving like a rigid
+          // welded structure.
+          const relativeVelocity =
+            ((target.vx ?? 0) - (source.vx ?? 0)) * unitX +
+            ((target.vy ?? 0) - (source.vy ?? 0)) * unitY;
+          const radialDamping = relativeVelocity * 0.72;
+          const dampingX = unitX * radialDamping;
+          const dampingY = unitY * radialDamping;
+
+          if (!sourceFixed && !targetFixed) {
+            source.vx = (source.vx ?? 0) + dampingX * 0.5;
+            source.vy = (source.vy ?? 0) + dampingY * 0.5;
+            target.vx = (target.vx ?? 0) - dampingX * 0.5;
+            target.vy = (target.vy ?? 0) - dampingY * 0.5;
+          } else if (sourceFixed && !targetFixed) {
+            target.vx = (target.vx ?? 0) - dampingX;
+            target.vy = (target.vy ?? 0) - dampingY;
+          } else if (!sourceFixed && targetFixed) {
+            source.vx = (source.vx ?? 0) + dampingX;
+            source.vy = (source.vy ?? 0) + dampingY;
+          }
+        }
+      }
+    };
+
+    force.initialize = (nodes) => {
+      nodesById = new Map(nodes.map((node) => [node.id, node]));
+    };
+
+    return force;
+  }
+
   function configureForces() {
     if (!simulation) return;
 
     const linkForce = forceLink<SimulationNode, SimulationLink>(simulationLinks)
       .id((node) => node.id)
-      .distance((link) => {
-        if (link.distance !== undefined) return link.distance * linkScale();
-        if (config.layout === 'radial') {
-          return Math.min(width, heightPixels) * config.radialRadius;
-        }
-        return config.linkDistance * linkScale();
-      })
+      .distance(linkRestDistance)
       .strength((link) => link.strength ?? config.linkStrength);
+
+    const linkLengthConstraintForce =
+      (config.linkCompressionRatio > 0 && config.linkCompressionStrength > 0) ||
+      (config.linkStretchRatio > 1 && config.linkStretchStrength > 0)
+        ? createLinkLengthConstraintForce()
+        : null;
 
     const chargeForce = forceManyBody<SimulationNode>().strength((node) =>
       node.id === centerNodeId
@@ -428,6 +582,7 @@
       .velocityDecay(config.velocityDecay)
       .alphaDecay(config.alphaDecay)
       .force('link', linkForce)
+      .force('linkLengthConstraint', linkLengthConstraintForce)
       .force('charge', chargeForce)
       .force(
         'collision',
