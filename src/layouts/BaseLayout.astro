@@ -26,6 +26,7 @@ interface Props {
   mainClass?: string;
   bodyClass?: string;
   soundSilent?: boolean;
+  noindex?: boolean;
 }
 
 const {
@@ -37,6 +38,7 @@ const {
   mainClass,
   bodyClass,
   soundSilent = false,
+  noindex = false,
 } = Astro.props;
 
 const railwayStops = railwayConfig.stops.map((stop) => ({
@@ -92,7 +94,7 @@ const commandItems = Array.from(
 >
   <head>
     <ThemeBootstrap />
-    <BaseHead {title} {description} {image} />
+    <BaseHead {title} {description} {image} {noindex} />
     <ClientRouter fallback="swap" />
   </head>
 

@@ -1,0 +1,103 @@
+---
+import type { Dirent } from 'node:fs';
+import { readdir } from 'node:fs/promises';
+import path from 'node:path';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { withBase } from '@/lib/paths';
+import '@/styles/pdf-index.css';
+
+interface PdfEntry {
+  filename: string;
+  relativePath: string;
+  href: string;
+}
+
+const pdfRoot = path.join(process.cwd(), 'public', 'pdfs');
+
+async function collectPdfs(
+  directory: string,
+  relativeDirectory = '',
+): Promise<PdfEntry[]> {
+  let entries: Dirent[];
+
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw error;
+  }
+
+  const pdfs: PdfEntry[] = [];
+
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue;
+
+    const absolutePath = path.join(directory, entry.name);
+    const relativePath = path.join(relativeDirectory, entry.name);
+
+    if (entry.isDirectory()) {
+      pdfs.push(...(await collectPdfs(absolutePath, relativePath)));
+      continue;
+    }
+
+    if (!entry.isFile() || path.extname(entry.name).toLowerCase() !== '.pdf') {
+      continue;
+    }
+
+    const urlPath = relativePath
+      .split(path.sep)
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+
+    pdfs.push({
+      filename: entry.name,
+      relativePath: relativePath.split(path.sep).join('/'),
+      href: withBase(`/pdfs/${urlPath}`),
+    });
+  }
+
+  return pdfs;
+}
+
+const pdfs = (await collectPdfs(pdfRoot)).sort((left, right) =>
+  left.relativePath.localeCompare(right.relativePath, undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  }),
+);
+---
+
+<BaseLayout
+  title="PDFs"
+  description="Unlisted document index."
+  noindex
+  suppressSeasonalShower
+>
+  <section class="pdf-index interior-page interior-page--six" aria-labelledby="pdf-index-title">
+    <header class="pdf-index__heading interior-page-heading">
+      <h1 id="pdf-index-title">PDFs</h1>
+      <p>{pdfs.length} {pdfs.length === 1 ? 'file' : 'files'}</p>
+    </header>
+
+    {
+      pdfs.length > 0 ? (
+        <ul class="pdf-index__list interior-page-content">
+          {pdfs.map((pdf) => (
+            <li>
+              <a href={pdf.href} target="_blank" rel="noopener noreferrer">
+                <span>{pdf.filename}</span>
+                {pdf.relativePath !== pdf.filename && (
+                  <small>{pdf.relativePath}</small>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="pdf-index__empty interior-page-content">
+          Place PDF files in <code>public/pdfs</code>, then rebuild the site.
+        </p>
+      )
+    }
+  </section>
+</BaseLayout>

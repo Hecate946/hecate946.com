@@ -8,7 +8,8 @@ export default defineConfig({
   integrations: [
     svelte(),
     sitemap({
-      filter: (page) => !page.endsWith('/navigation/'),
+      filter: (page) =>
+        !page.endsWith('/navigation/') && !page.endsWith('/pdf/'),
     }),
   ],
   devToolbar: {
