@@ -357,3 +357,16 @@ html[data-sound-enabled='true'] .footer-sound-toggle .footer-sound-muted-mark {
   border-color: currentColor;
   outline-color: color-mix(in srgb, currentColor 30%, transparent);
 }
+
+/* The Graph control keeps the same neutral hover treatment as its icon. */
+.footer-graph-link:hover,
+.footer-graph-link:focus-visible {
+  border-color: color-mix(in srgb, var(--text) 42%, transparent);
+  outline-color: color-mix(in srgb, var(--text) 18%, transparent);
+  color: var(--header-text);
+}
+
+.footer-graph-link:hover .footer-graph-icon circle,
+.footer-graph-link:focus-visible .footer-graph-icon circle {
+  fill: var(--bg);
+}

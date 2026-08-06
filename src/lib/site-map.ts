@@ -35,7 +35,7 @@ const PAGE_METADATA: Record<
     description: 'The center of the site',
     category: 'core',
   },
-  '/Graph/': {
+  '/graph/': {
     label: 'Graph',
     description: 'Interactive map of every site destination',
     category: 'core',

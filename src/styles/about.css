@@ -158,13 +158,26 @@
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   box-shadow: 0 0.8rem 2.2rem color-mix(in srgb, var(--shadow) 38%, transparent);
   color: var(--text);
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
   text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    outline-color 180ms ease,
+    transform 180ms ease;
 }
 
-.project-card:not(.project-card--private):hover {
+.project-card:not(.project-card--private):is(:hover, :focus-visible) {
   border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
   box-shadow: 0 1rem 2.6rem color-mix(in srgb, var(--shadow) 52%, transparent);
+  color: var(--text);
   transform: translateY(-2px);
+}
+
+.project-card:focus-visible {
+  outline-color: color-mix(in srgb, var(--accent) 72%, transparent);
 }
 
 .project-card--private {
@@ -236,7 +249,7 @@
   white-space: nowrap;
 }
 
-.project-card__action:hover {
+.project-card:not(.project-card--private):is(:hover, :focus-visible) .project-card__action {
   color: var(--accent-strong);
 }
 
@@ -250,8 +263,17 @@
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 1.2rem;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
   background: color-mix(in srgb, var(--surface) 90%, transparent);
   box-shadow: 0 0.9rem 2.5rem color-mix(in srgb, var(--shadow) 42%, transparent);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    outline-color 180ms ease,
+    transform 180ms ease;
 }
 
 .video-card {
@@ -309,13 +331,20 @@
 
 .article-card {
   display: block;
+  cursor: pointer;
 }
 
-.article-card:hover,
-.chess-card:hover {
+.article-card:is(:hover, :focus-visible),
+.chess-card:is(:hover, :focus-visible) {
   border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
   box-shadow: 0 1.05rem 2.8rem color-mix(in srgb, var(--shadow) 54%, transparent);
+  color: var(--text);
   transform: translateY(-2px);
+}
+
+.article-card:focus-visible,
+.chess-card:focus-visible {
+  outline-color: color-mix(in srgb, var(--accent) 72%, transparent);
 }
 
 .article-card__image-wrap {
@@ -333,15 +362,14 @@
   transition: transform 420ms ease;
 }
 
-.article-card:hover .article-card__image-wrap img {
+.article-card:is(:hover, :focus-visible) .article-card__image-wrap img {
   transform: scale(1.015);
 }
 
 .chess-card {
   display: block;
   padding: clamp(1.3rem, 2.8vw, 1.85rem);
-  color: var(--text);
-  text-decoration: none;
+  cursor: pointer;
 }
 
 .chess-card__identity {
@@ -390,7 +418,7 @@
   font-size: 0.75rem;
 }
 
-.chess-card[data-loaded='true'] .chess-card__live::before {
+.chess-card:is([data-loaded='true'], [data-loaded='cached']) .chess-card__live::before {
   display: inline-block;
   width: 0.42rem;
   height: 0.42rem;
@@ -405,16 +433,6 @@
   color: var(--accent-strong);
   font-size: 1.1rem;
   text-decoration: none;
-}
-
-.chess-card__link-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
 }
 
 .chess-card__stats {

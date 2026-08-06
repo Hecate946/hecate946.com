@@ -1,39 +1,13 @@
 ---
+import HomeDisplay from '@/components/home/HomeDisplay.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import HouseScene from '@/components/house/HouseScene.astro';
 import '@/styles/home.css';
 ---
 
 <BaseLayout
   title="Cyrus Asasi — Software Engineer & Classical Musician"
   description="The portfolio of Cyrus Asasi, software engineer and classical musician."
+  suppressSeasonalShower
 >
-  <div class="minimal-home">
-    <section class="minimal-hero" aria-labelledby="home-title">
-      <header class="minimal-intro">
-        <h1 id="home-title">Cyrus Asasi</h1>
-        <p>Software engineer and classical musician</p>
-      </header>
-
-      <div class="home-terrarium" aria-label="Explore the house inside a glass terrarium">
-        <div class="home-terrarium__glass" aria-hidden="true">
-          <span class="home-terrarium__reflection home-terrarium__reflection--wide"></span>
-          <span class="home-terrarium__reflection home-terrarium__reflection--narrow"></span>
-        </div>
-
-        <div class="home-terrarium__habitat" aria-hidden="true">
-          <span class="home-terrarium__soil"></span>
-          <span class="home-terrarium__moss"></span>
-          <span class="home-terrarium__plant home-terrarium__plant--left"></span>
-          <span class="home-terrarium__plant home-terrarium__plant--right"></span>
-        </div>
-
-        <HouseScene class="home-terrarium__house" />
-
-        <div class="home-terrarium__base" aria-hidden="true">
-          <span></span>
-        </div>
-      </div>
-    </section>
-  </div>
+  <HomeDisplay />
 </BaseLayout>
