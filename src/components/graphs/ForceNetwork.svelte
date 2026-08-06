@@ -77,6 +77,7 @@
   export let appearance: 'default' | 'obsidian' = 'default';
   export let collisionSounds = false;
   export let zoomable = false;
+  export let showResetControl = true;
   export let settings: ForceNetworkSettings = {};
 
   const defaults: Required<ForceNetworkSettings> = {
@@ -96,6 +97,23 @@
     entranceRadius: 36,
   };
 
+  // Fit the settled graph to the full canvas for Reset view, while allowing a
+  // substantially wider overview-to-detail range around that fitted state.
+  const ABSOLUTE_MIN_ZOOM = 0.08;
+  const FIT_ZOOM_FLOOR = 0.48;
+  const FIT_ZOOM_CEILING = 2.2;
+  const MIN_ZOOM_FACTOR = 0.24;
+  const MAX_ZOOM = 12;
+  const FIT_PADDING = 56;
+  const PAN_EDGE_PADDING = 0;
+  const LABEL_GAP = 8;
+  const LABEL_VISIBILITY_RATIO = 0.38;
+  const LABEL_VISIBILITY_HYSTERESIS = 0.045;
+
+  // Labels live in graph space with their nodes, so one SVG transform moves and
+  // scales both together. Font sizes never change during zoom; only visibility
+  // is committed after zoom motion settles. This removes the screen-space
+  // coordinate rounding and repeated font-size writes that caused text jitter.
   let config = { ...defaults, ...settings };
   let containerElement!: HTMLDivElement;
   let svgElement!: SVGSVGElement;
@@ -129,6 +147,14 @@
   let viewportAnimationFrame: number | null = null;
   let panState: PanState | null = null;
   let pinchState: PinchState | null = null;
+  let labelsVisible = true;
+  let labelZoomOpacity = 1;
+  let minimumZoomScale = 1;
+  let fitZoomScale = 1;
+  let viewportHasBeenFitted = false;
+  let viewportWasTouched = false;
+  let fitViewportTimer: ReturnType<typeof setTimeout> | null = null;
+  let labelVisibilityNeedsCommit = false;
   const viewportPointers = new Map<number, { x: number; y: number }>();
 
   $: config = { ...defaults, ...settings };
@@ -140,13 +166,53 @@
     appearance,
     zoomable,
   });
+  $: labelZoomOpacity =
+    appearance === 'obsidian' && zoomable ? (labelsVisible ? 1 : 0) : 1;
   $: if (mounted && dataSignature !== lastSignature) {
     lastSignature = dataSignature;
     queueMicrotask(() => rebuildSimulation(true));
   }
 
-  const clamp = (value: number, minimum: number, maximum: number) =>
-    Math.min(maximum, Math.max(minimum, value));
+  function clamp(value: number, minimum: number, maximum: number) {
+    return Math.min(maximum, Math.max(minimum, value));
+  }
+
+  function syncLabelVisibility(scale: number, force = false) {
+    if (!(appearance === 'obsidian' && zoomable)) {
+      labelsVisible = true;
+      return;
+    }
+
+    const ratio = scale / Math.max(fitZoomScale, Number.EPSILON);
+    if (force) {
+      labelsVisible = ratio >= LABEL_VISIBILITY_RATIO;
+      return;
+    }
+
+    if (
+      labelsVisible &&
+      ratio < LABEL_VISIBILITY_RATIO - LABEL_VISIBILITY_HYSTERESIS
+    ) {
+      labelsVisible = false;
+    } else if (
+      !labelsVisible &&
+      ratio > LABEL_VISIBILITY_RATIO + LABEL_VISIBILITY_HYSTERESIS
+    ) {
+      labelsVisible = true;
+    }
+  }
+
+  function commitLabelVisibility(scale = zoomScale, force = false) {
+    if (!force && !labelVisibilityNeedsCommit) return;
+    syncLabelVisibility(scale, force);
+    labelVisibilityNeedsCommit = false;
+  }
+
+  // Larger graph nodes always receive larger labels. The size is fixed in graph
+  // units, so zoom scales the node and its text by the same exact factor.
+  function nodeLabelFontSize(node: SimulationNode) {
+    return Math.round(clamp(10.5 + node.baseRadius * 1.25, 15, 20));
+  }
 
   const safeId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '-');
 
@@ -378,11 +444,23 @@
         if (!(appearance === 'obsidian' && zoomable)) keepNodesInBounds();
         detectNodeCollisions();
         syncRenderedState();
+      })
+      .on('end', () => {
+        if (!(appearance === 'obsidian' && zoomable)) return;
+        refreshMinimumZoomScale();
+        if (!viewportWasTouched) {
+          viewportHasBeenFitted = true;
+          resetViewport(true);
+        }
       });
   }
 
   function rebuildSimulation(animateEntrance = false) {
     simulation?.stop();
+    if (fitViewportTimer) clearTimeout(fitViewportTimer);
+    labelVisibilityNeedsCommit = false;
+    viewportHasBeenFitted = false;
+    viewportWasTouched = false;
     activeCollisionPairs = new Set();
     collisionSoundsArmed = false;
     createSimulationNodes(animateEntrance);
@@ -395,12 +473,23 @@
     if (reducedMotion) {
       simulation.stop();
       for (let index = 0; index < 220; index += 1) simulation.tick();
-      keepNodesInBounds();
+      if (!(appearance === 'obsidian' && zoomable)) keepNodesInBounds();
       syncRenderedState();
+      if (appearance === 'obsidian' && zoomable) resetViewport(false);
       return;
     }
 
     simulation.alpha(0.7).restart();
+
+    if (appearance === 'obsidian' && zoomable) {
+      fitViewportTimer = setTimeout(() => {
+        refreshMinimumZoomScale();
+        if (!viewportWasTouched && !viewportHasBeenFitted) {
+          viewportHasBeenFitted = true;
+          resetViewport(false);
+        }
+      }, 720);
+    }
   }
 
   function keepNodesInBounds() {
@@ -456,6 +545,30 @@
     updateAnchors();
     configureForces();
 
+    if (zoomable) {
+      refreshMinimumZoomScale();
+      if (!viewportWasTouched) {
+        resetViewport(false);
+      } else {
+        zoomScale = clamp(zoomScale, minimumZoomScale, MAX_ZOOM);
+        zoomTargetScale = clamp(
+          zoomTargetScale,
+          minimumZoomScale,
+          MAX_ZOOM,
+        );
+        const current = constrainPan(zoomScale, panX, panY);
+        const target = constrainPan(
+          zoomTargetScale,
+          panTargetX,
+          panTargetY,
+        );
+        panX = current.x;
+        panY = current.y;
+        panTargetX = target.x;
+        panTargetY = target.y;
+      }
+    }
+
     if (reducedMotion) {
       simulation?.stop();
       for (let index = 0; index < 100; index += 1) simulation?.tick();
@@ -481,6 +594,14 @@
     };
   }
 
+  function freezeSimulationForViewport() {
+    // Viewport navigation must never alter the graph configuration. Freezing the
+    // force simulation at the first zoom or pan input prevents a still-cooling
+    // simulation from moving nodes underneath a stationary cursor.
+    simulation?.alphaTarget(0);
+    simulation?.stop();
+  }
+
   function stopViewportAnimation() {
     if (viewportAnimationFrame !== null) {
       cancelAnimationFrame(viewportAnimationFrame);
@@ -490,11 +611,24 @@
     zoomTargetScale = zoomScale;
     panTargetX = panX;
     panTargetY = panY;
+    commitLabelVisibility();
   }
 
-  function setTargetZoom(nextScale: number, anchorX: number, anchorY: number) {
-    const graphX = (anchorX - panTargetX) / zoomTargetScale;
-    const graphY = (anchorY - panTargetY) / zoomTargetScale;
+  function setTargetZoom(
+    nextScale: number,
+    anchorX: number,
+    anchorY: number,
+    useCurrentViewport = false,
+  ) {
+    // A new wheel event is anchored to the transform that is actually visible,
+    // not a future target left over from prior inertia. This keeps the exact graph
+    // point beneath the cursor fixed for the complete zoom animation.
+    const sourceScale = useCurrentViewport ? zoomScale : zoomTargetScale;
+    const sourcePanX = useCurrentViewport ? panX : panTargetX;
+    const sourcePanY = useCurrentViewport ? panY : panTargetY;
+    const graphX = (anchorX - sourcePanX) / sourceScale;
+    const graphY = (anchorY - sourcePanY) / sourceScale;
+
     zoomTargetScale = nextScale;
     panTargetX = anchorX - graphX * nextScale;
     panTargetY = anchorY - graphY * nextScale;
@@ -506,8 +640,8 @@
     if (Math.abs(zoomVelocity) > 0.00004) {
       const nextScale = clamp(
         zoomTargetScale * Math.exp(zoomVelocity),
-        0.42,
-        3.4,
+        minimumZoomScale,
+        MAX_ZOOM,
       );
 
       if (nextScale !== zoomTargetScale) {
@@ -516,12 +650,16 @@
         zoomVelocity = 0;
       }
 
-      zoomVelocity *= 0.865;
+      zoomVelocity *= 0.925;
     } else {
       zoomVelocity = 0;
     }
 
-    const easing = 0.205;
+    const easing = 0.105;
+
+    // Scale and translation use the same easing step. Because the target
+    // translation was derived from the cursor anchor, this affine interpolation
+    // preserves that anchor exactly instead of introducing a drifting recenter.
     zoomScale += (zoomTargetScale - zoomScale) * easing;
     panX += (panTargetX - panX) * easing;
     panY += (panTargetY - panY) * easing;
@@ -536,6 +674,7 @@
       zoomScale = zoomTargetScale;
       panX = panTargetX;
       panY = panTargetY;
+      commitLabelVisibility();
       return;
     }
 
@@ -548,6 +687,7 @@
       zoomScale = zoomTargetScale;
       panX = panTargetX;
       panY = panTargetY;
+      commitLabelVisibility();
       return;
     }
 
@@ -556,29 +696,133 @@
     }
   }
 
+  function graphBounds() {
+    const positionedNodes = simulationNodes.filter(
+      (node) => typeof node.x === 'number' && typeof node.y === 'number',
+    );
+
+    if (positionedNodes.length === 0) {
+      return {
+        minX: 0,
+        maxX: width,
+        minY: 0,
+        maxY: heightPixels,
+      };
+    }
+
+    return positionedNodes.reduce(
+      (result, node) => {
+        const x = node.x ?? node.anchorX;
+        const y = node.y ?? node.anchorY;
+        const radius = node.radius + (appearance === 'obsidian' ? 0 : 10);
+        return {
+          minX: Math.min(result.minX, x - radius),
+          maxX: Math.max(result.maxX, x + radius),
+          minY: Math.min(result.minY, y - radius),
+          maxY: Math.max(result.maxY, y + radius),
+        };
+      },
+      {
+        minX: Number.POSITIVE_INFINITY,
+        maxX: Number.NEGATIVE_INFINITY,
+        minY: Number.POSITIVE_INFINITY,
+        maxY: Number.NEGATIVE_INFINITY,
+      },
+    );
+  }
+
+  function refreshMinimumZoomScale() {
+    const bounds = graphBounds();
+    const graphWidth = Math.max(1, bounds.maxX - bounds.minX);
+    const graphHeight = Math.max(1, bounds.maxY - bounds.minY);
+    const availableWidth = Math.max(1, width - FIT_PADDING * 2);
+    const availableHeight = Math.max(1, heightPixels - FIT_PADDING * 2);
+
+    fitZoomScale = clamp(
+      Math.min(availableWidth / graphWidth, availableHeight / graphHeight),
+      FIT_ZOOM_FLOOR,
+      FIT_ZOOM_CEILING,
+    );
+    minimumZoomScale = clamp(
+      fitZoomScale * MIN_ZOOM_FACTOR,
+      ABSOLUTE_MIN_ZOOM,
+      fitZoomScale,
+    );
+  }
+
+  function graphCenter() {
+    const bounds = graphBounds();
+    return {
+      x: (bounds.minX + bounds.maxX) / 2,
+      y: (bounds.minY + bounds.maxY) / 2,
+    };
+  }
+
+  function constrainPan(scale: number, desiredX: number, desiredY: number) {
+    const bounds = graphBounds();
+
+    // Keep the graph inside the live viewport without ever forcing it back to
+    // the center. When the graph is smaller than the viewport it may rest
+    // anywhere inside it; when larger, the viewport remains covered edge to
+    // edge. Zooming around the pointer therefore preserves its visual anchor.
+    const leftAlignedX = PAN_EDGE_PADDING - bounds.minX * scale;
+    const rightAlignedX =
+      width - PAN_EDGE_PADDING - bounds.maxX * scale;
+    const topAlignedY = PAN_EDGE_PADDING - bounds.minY * scale;
+    const bottomAlignedY =
+      heightPixels - PAN_EDGE_PADDING - bounds.maxY * scale;
+
+    return {
+      x: clamp(
+        desiredX,
+        Math.min(leftAlignedX, rightAlignedX),
+        Math.max(leftAlignedX, rightAlignedX),
+      ),
+      y: clamp(
+        desiredY,
+        Math.min(topAlignedY, bottomAlignedY),
+        Math.max(topAlignedY, bottomAlignedY),
+      ),
+    };
+  }
+
   function resetViewport(animate = true) {
+    labelVisibilityNeedsCommit = false;
+    refreshMinimumZoomScale();
+    const center = graphCenter();
     zoomVelocity = 0;
-    zoomTargetScale = 1;
-    panTargetX = 0;
-    panTargetY = 0;
+    zoomTargetScale = fitZoomScale;
+    const constrained = constrainPan(
+      zoomTargetScale,
+      width / 2 - center.x * zoomTargetScale,
+      heightPixels / 2 - center.y * zoomTargetScale,
+    );
+    panTargetX = constrained.x;
+    panTargetY = constrained.y;
 
     if (!animate || reducedMotion) {
-      stopViewportAnimation();
-      zoomScale = 1;
-      panX = 0;
-      panY = 0;
-      zoomTargetScale = 1;
-      panTargetX = 0;
-      panTargetY = 0;
+      if (viewportAnimationFrame !== null) {
+        cancelAnimationFrame(viewportAnimationFrame);
+        viewportAnimationFrame = null;
+      }
+      zoomScale = zoomTargetScale;
+      panX = panTargetX;
+      panY = panTargetY;
+      commitLabelVisibility(zoomScale, true);
       return;
     }
 
+    // Keep label visibility stable throughout the reset animation and commit
+    // the fitted visibility once, after the viewport has fully settled.
+    labelVisibilityNeedsCommit = true;
     requestViewportAnimation();
   }
 
   function handleWheel(event: WheelEvent) {
     if (!zoomable) return;
     event.preventDefault();
+    viewportWasTouched = true;
+    freezeSimulationForViewport();
 
     const point = viewportPosition(event);
     const normalizedDelta =
@@ -590,10 +834,24 @@
 
     zoomAnchorX = point.x;
     zoomAnchorY = point.y;
+
+    // Each wheel/trackpad event advances the target around the graph point
+    // currently under the cursor. Label visibility commits only after motion
+    // settles; label geometry itself never changes.
+    const nextTargetScale = clamp(
+      zoomTargetScale * Math.exp(-normalizedDelta * 0.00112),
+      minimumZoomScale,
+      MAX_ZOOM,
+    );
+    setTargetZoom(nextTargetScale, zoomAnchorX, zoomAnchorY, true);
+    labelVisibilityNeedsCommit = true;
+
+    // Preserve a restrained inertial tail for the graph itself without
+    // continuously recalculating label geometry.
     zoomVelocity = clamp(
-      zoomVelocity - normalizedDelta * 0.000235,
-      -0.082,
-      0.082,
+      zoomVelocity - normalizedDelta * 0.000035,
+      -0.018,
+      0.018,
     );
     requestViewportAnimation();
   }
@@ -602,6 +860,8 @@
     if (!zoomable || event.button !== 0) return;
     const target = event.target as Element | null;
     if (target?.closest('.force-network__node')) return;
+    viewportWasTouched = true;
+    freezeSimulationForViewport();
 
     stopViewportAnimation();
     const point = viewportPosition(event);
@@ -652,8 +912,8 @@
       );
       const nextScale = clamp(
         pinchState.startScale * (distance / pinchState.startDistance),
-        0.42,
-        3.4,
+        minimumZoomScale,
+        MAX_ZOOM,
       );
 
       panX = centerX - pinchState.graphCenterX * nextScale;
@@ -666,14 +926,20 @@
     }
 
     if (!panState || panState.pointerId !== event.pointerId) return;
-    panX = panState.startPanX + point.x - panState.startX;
-    panY = panState.startPanY + point.y - panState.startY;
+    const constrained = constrainPan(
+      zoomScale,
+      panState.startPanX + point.x - panState.startX,
+      panState.startPanY + point.y - panState.startY,
+    );
+    panX = constrained.x;
+    panY = constrained.y;
     panTargetX = panX;
     panTargetY = panY;
   }
 
   function finishPan(event: PointerEvent) {
     if (!viewportPointers.has(event.pointerId)) return;
+    const wasPinching = pinchState !== null;
     viewportPointers.delete(event.pointerId);
 
     if (svgElement.hasPointerCapture(event.pointerId)) {
@@ -694,6 +960,10 @@
       };
     } else {
       panState = null;
+      if (wasPinching) {
+        labelVisibilityNeedsCommit = true;
+        commitLabelVisibility();
+      }
     }
   }
 
@@ -702,6 +972,21 @@
     const target = event.target as Element | null;
     if (target?.closest('.force-network__node')) return;
     resetViewport();
+  }
+
+  function visibleNodeDragBounds(node: SimulationNode) {
+    const safeScale = Math.max(zoomScale, Number.EPSILON);
+    const left = -panX / safeScale + node.radius;
+    const right = (width - panX) / safeScale - node.radius;
+    const top = -panY / safeScale + node.radius;
+    const bottom = (heightPixels - panY) / safeScale - node.radius;
+
+    return {
+      minX: Math.min(left, right),
+      maxX: Math.max(left, right),
+      minY: Math.min(top, bottom),
+      maxY: Math.max(top, bottom),
+    };
   }
 
   function startDrag(event: PointerEvent, node: SimulationNode) {
@@ -740,12 +1025,20 @@
     if (distance > 5) dragState.moved = true;
 
     const point = pointerPosition(event);
-    const edgePadding = appearance === 'obsidian' ? 18 : 12;
+
+    if (appearance === 'obsidian' && zoomable) {
+      // Drag bounds are derived from the currently visible viewport in graph
+      // coordinates. A node can touch each viewport edge exactly, regardless
+      // of zoom or pan, but can never be dragged beyond the canvas.
+      const bounds = visibleNodeDragBounds(node);
+      node.fx = clamp(point.x, bounds.minX, bounds.maxX);
+      node.fy = clamp(point.y, bounds.minY, bounds.maxY);
+      return;
+    }
+
+    const edgePadding = 12;
     const xPadding = node.radius + edgePadding;
-    const bottomPadding =
-      appearance === 'obsidian'
-        ? node.radius + 22
-        : node.radius + (node.description ? 58 : 40);
+    const bottomPadding = node.radius + (node.description ? 58 : 40);
     node.fx = clamp(point.x, xPadding, width - xPadding);
     node.fy = clamp(
       point.y,
@@ -883,7 +1176,7 @@
   }
 
   function labelY(node: SimulationNode) {
-    return node.radius + (appearance === 'obsidian' ? 12 : 24);
+    return node.radius + (appearance === 'obsidian' ? LABEL_GAP : 24);
   }
 
   function descriptionY(node: SimulationNode) {
@@ -902,6 +1195,10 @@
 
   function relFor(node: SimulationNode) {
     return node.external ? 'noreferrer' : undefined;
+  }
+
+  export function resetView() {
+    resetViewport(true);
   }
 
   onMount(() => {
@@ -940,6 +1237,7 @@
     activeCollisionPairs.clear();
     viewportPointers.clear();
     if (suppressTimer) clearTimeout(suppressTimer);
+    if (fitViewportTimer) clearTimeout(fitViewportTimer);
   });
 </script>
 
@@ -949,7 +1247,7 @@
   class:force-network--zoomable={zoomable}
   class:force-network--panning={panState !== null || pinchState !== null}
   bind:this={containerElement}
-  style={`--network-height: ${height};`}
+  style={`--network-height: ${height}; --network-label-zoom-opacity: ${labelZoomOpacity};`}
   data-active={activeNodeId ?? undefined}
 >
   <svg
@@ -967,17 +1265,6 @@
     on:dblclick={handleCanvasDoubleClick}
   >
     <defs>
-      {#if zoomable}
-        <pattern
-          id={`${idPrefix}-grid`}
-          width="32"
-          height="32"
-          patternUnits="userSpaceOnUse"
-        >
-          <path d="M 32 0 L 0 0 0 32" class="force-network__grid-line" />
-        </pattern>
-      {/if}
-
       {#each simulationNodes.filter((node) => appearance !== 'obsidian' && node.imageSrc) as node (node.id)}
         <clipPath id={`${idPrefix}-${safeId(node.id)}-clip`}>
           <circle r={Math.max(1, node.radius - 3)} />
@@ -1003,36 +1290,38 @@
       {/each}
     </defs>
 
-    {#if zoomable}
-      <rect
-        class="force-network__grid-surface"
-        x="0"
-        y="0"
-        width={width}
-        height={heightPixels}
-        fill={`url(#${idPrefix}-grid)`}
-        aria-hidden="true"
-      />
-    {/if}
-
     <g
       class="force-network__viewport"
       transform={`translate(${panX} ${panY}) scale(${zoomScale})`}
     >
     <g class="force-network__links" aria-hidden="true">
       {#each renderedLinks as link (link.key)}
-        <path
-          d={link.d}
-          class:force-network__link--primary={link.kind === 'primary'}
-          class:force-network__link--secondary={link.kind === 'secondary'}
-          class:force-network__link--active={isLinkActive(link)}
-          class:force-network__link--muted={activeNodeId !== null &&
-            !isLinkActive(link)}
-          class="force-network__link"
-          style={appearance === 'obsidian'
-            ? `--link-accent: ${link.accent};`
-            : `--link-accent: ${link.accent}; stroke: url(#${idPrefix}-${safeId(link.key)}-gradient);`}
-        />
+        {#if appearance === 'obsidian'}
+          <line
+            x1={link.x1}
+            y1={link.y1}
+            x2={link.x2}
+            y2={link.y2}
+            class:force-network__link--primary={link.kind === 'primary'}
+            class:force-network__link--secondary={link.kind === 'secondary'}
+            class:force-network__link--active={isLinkActive(link)}
+            class:force-network__link--muted={activeNodeId !== null &&
+              !isLinkActive(link)}
+            class="force-network__link"
+            style={`--link-accent: ${link.accent};`}
+          />
+        {:else}
+          <path
+            d={link.d}
+            class:force-network__link--primary={link.kind === 'primary'}
+            class:force-network__link--secondary={link.kind === 'secondary'}
+            class:force-network__link--active={isLinkActive(link)}
+            class:force-network__link--muted={activeNodeId !== null &&
+              !isLinkActive(link)}
+            class="force-network__link"
+            style={`--link-accent: ${link.accent}; stroke: url(#${idPrefix}-${safeId(link.key)}-gradient);`}
+          />
+        {/if}
       {/each}
     </g>
 
@@ -1110,8 +1399,19 @@
             </svg>
           {/if}
 
-          <text class="force-network__label" y={labelY(node)}>{node.label}</text
-          >
+          {#if appearance === 'obsidian'}
+            <text
+              class="force-network__label force-network__label--graph"
+              class:force-network__label--active={activeNodeId === node.id}
+              y={labelY(node)}
+              dominant-baseline="hanging"
+              style={`--node-label-font-size: ${nodeLabelFontSize(node)}px;`}
+            >{node.label}</text
+            >
+          {:else}
+            <text class="force-network__label" y={labelY(node)}>{node.label}</text
+            >
+          {/if}
           {#if appearance !== 'obsidian' && node.description}
             <text
               class="force-network__description"
@@ -1126,7 +1426,24 @@
       {/each}
     </g>
     </g>
+
   </svg>
+
+  {#if zoomable && appearance === 'obsidian' && showResetControl}
+    <button
+      type="button"
+      class="force-network__reset-view"
+      aria-label="Reset graph view"
+      title="Reset view"
+      on:click|stopPropagation={() => resetViewport()}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" />
+        <circle cx="12" cy="12" r="2.25" />
+      </svg>
+      <span class="force-network__visually-hidden">Reset view</span>
+    </button>
+  {/if}
 
   {#if showHint}
     <p class="force-network__hint">Drag the nodes · select one to explore</p>
@@ -1206,6 +1523,8 @@
   }
 
   .force-network__canvas {
+    position: relative;
+    z-index: 1;
     display: block;
     width: 100%;
     height: 100%;
@@ -1221,25 +1540,12 @@
     cursor: grabbing;
   }
 
-  .force-network__grid-surface {
-    pointer-events: all;
-  }
-
-  .force-network__grid-line {
-    fill: none;
-    stroke: var(--network-grid);
-    stroke-width: 1;
-    vector-effect: non-scaling-stroke;
-    shape-rendering: crispEdges;
-  }
-
   .force-network__link {
     fill: none;
     stroke-linecap: round;
     vector-effect: non-scaling-stroke;
-    transition:
-      opacity 140ms ease,
-      stroke-width 140ms ease;
+    shape-rendering: geometricPrecision;
+    transition: opacity 140ms ease;
   }
 
   .force-network__link--primary {
@@ -1371,16 +1677,20 @@
   }
 
   .force-network--obsidian {
-    --network-edge-start: #c7ccd1;
-    --network-node-dot: #d7dade;
-    --network-highlight: #135e5f;
-    --network-highlight-ring: #135e5f;
-    --network-obsidian-label: #d4d6d9;
-    --network-obsidian-label-connected: #747a80;
-    --network-obsidian-label-strong: #25292d;
+    --network-canvas: var(--bg);
+    --network-edge-start: color-mix(in srgb, var(--text) 34%, transparent);
+    --network-edge-primary-opacity: 0.82;
+    --network-edge-secondary-opacity: 0.64;
+    --network-node-dot: color-mix(in srgb, var(--text) 62%, var(--bg));
+    --network-highlight: var(--accent);
+    --network-highlight-ring: var(--accent-strong);
+    --network-obsidian-label: var(--muted);
+    --network-obsidian-label-strong: var(--text);
     --network-obsidian-font: system-ui, -apple-system, BlinkMacSystemFont,
       "Segoe UI", Ubuntu, Roboto, "Noto Sans", "Helvetica Neue", Arial,
       sans-serif;
+    --network-motion-duration: 520ms;
+    --network-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
     min-height: 0;
     border: 0;
@@ -1389,65 +1699,36 @@
     background-image: none;
   }
 
-  :global([data-theme='dark']) .force-network--obsidian,
-  :global([data-color-scheme='dark']) .force-network--obsidian,
-  :global(.dark) .force-network--obsidian {
-    --network-edge-start: #394047;
-    --network-node-dot: #b8c0c8;
-    --network-highlight: #105354;
-    --network-highlight-ring: #7ee8ea;
-    --network-obsidian-label: #7d858a;
-    --network-obsidian-label-connected: #899196;
-    --network-obsidian-label-strong: #f1f4f5;
-  }
-
-  :global([data-theme='light']) .force-network--obsidian,
-  :global([data-color-scheme='light']) .force-network--obsidian,
-  :global(.light) .force-network--obsidian {
-    --network-edge-start: #c7ccd1;
-    --network-node-dot: #d7dade;
-    --network-highlight: #135e5f;
-    --network-highlight-ring: #135e5f;
-    --network-obsidian-label: #d4d6d9;
-    --network-obsidian-label-connected: #747a80;
-    --network-obsidian-label-strong: #25292d;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :global(
-        html:not([data-theme='light']):not([data-color-scheme='light']):not(
-            .light
-          )
-      )
-      .force-network--obsidian {
-      --network-edge-start: #394047;
-      --network-node-dot: #b8c0c8;
-      --network-highlight: #105354;
-      --network-highlight-ring: #7ee8ea;
-      --network-obsidian-label: #7d858a;
-      --network-obsidian-label-connected: #899196;
-      --network-obsidian-label-strong: #f1f4f5;
-    }
-  }
-
   .force-network--obsidian .force-network__link {
     stroke: var(--network-edge-start);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+    shape-rendering: geometricPrecision;
+    transition:
+      opacity var(--network-motion-duration) var(--network-motion-ease),
+      stroke var(--network-motion-duration) var(--network-motion-ease);
   }
 
-  .force-network--obsidian .force-network__link--primary,
+  .force-network--obsidian .force-network__link--primary {
+    opacity: var(--network-edge-primary-opacity);
+  }
+
   .force-network--obsidian .force-network__link--secondary {
-    stroke-width: 1.08;
-    opacity: 0.46;
+    opacity: var(--network-edge-secondary-opacity);
   }
 
   .force-network--obsidian .force-network__link--active {
     stroke: var(--network-highlight);
-    stroke-width: 1.34;
-    opacity: 0.94;
+    opacity: 0.96;
   }
 
   .force-network--obsidian .force-network__link--muted {
-    opacity: 0.13;
+    opacity: 0.16;
+  }
+
+  .force-network--obsidian .force-network__node {
+    transition: opacity var(--network-motion-duration) var(--network-motion-ease);
   }
 
   .force-network--obsidian .force-network__node-hit-area {
@@ -1459,10 +1740,10 @@
     fill: var(--network-node-dot);
     stroke: none;
     transition:
-      fill 135ms ease,
-      stroke 135ms ease,
-      stroke-width 135ms ease,
-      opacity 135ms ease;
+      fill var(--network-motion-duration) var(--network-motion-ease),
+      stroke var(--network-motion-duration) var(--network-motion-ease),
+      stroke-width var(--network-motion-duration) var(--network-motion-ease),
+      opacity var(--network-motion-duration) var(--network-motion-ease);
   }
 
   .force-network--obsidian
@@ -1489,31 +1770,80 @@
   .force-network--obsidian .force-network__label {
     fill: var(--network-obsidian-label);
     font-family: var(--network-obsidian-font);
-    font-size: 0.66rem;
+    font-size: var(--node-label-font-size, 15px);
+    font-synthesis: none;
     font-weight: 400;
     letter-spacing: 0;
+    opacity: var(--network-label-zoom-opacity, 1);
     stroke: none;
+    paint-order: normal;
+    pointer-events: none;
+    text-rendering: geometricPrecision;
     transform: translateY(0);
+    transform-box: fill-box;
+    transform-origin: center top;
     transition:
-      fill 135ms ease,
-      opacity 135ms ease,
-      transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      fill var(--network-motion-duration) var(--network-motion-ease),
+      opacity var(--network-motion-duration) var(--network-motion-ease),
+      transform var(--network-motion-duration) var(--network-motion-ease);
   }
 
-  .force-network--obsidian
-    .force-network__node:hover
-    .force-network__label,
-  .force-network--obsidian
-    .force-network__node:focus-visible
-    .force-network__label,
-  .force-network--obsidian
-    .force-network__node--active
-    .force-network__label,
-  .force-network--obsidian
-    .force-network__node--dragging
-    .force-network__label {
+  .force-network--obsidian .force-network__label--active {
     fill: var(--network-obsidian-label-strong);
-    transform: translateY(2.5px);
+    opacity: 1;
+    transform: translateY(4px);
+  }
+
+  .force-network__reset-view {
+    position: absolute;
+    z-index: 2;
+    right: 0.8rem;
+    bottom: 0.8rem;
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    place-items: center;
+    color: var(--network-obsidian-label);
+    border: 1px solid color-mix(in srgb, var(--network-edge-start) 72%, transparent);
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--network-canvas) 88%, transparent);
+    cursor: pointer;
+    opacity: 0.56;
+    transition:
+      color var(--network-motion-duration) var(--network-motion-ease),
+      border-color var(--network-motion-duration) var(--network-motion-ease),
+      background-color var(--network-motion-duration) var(--network-motion-ease),
+      opacity var(--network-motion-duration) var(--network-motion-ease);
+  }
+
+  .force-network__reset-view:hover,
+  .force-network__reset-view:focus-visible {
+    color: var(--network-obsidian-label-strong);
+    border-color: var(--network-edge-start);
+    background: var(--network-canvas);
+    opacity: 0.94;
+  }
+
+  .force-network__reset-view svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.55;
+  }
+
+  .force-network__visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   @media (max-width: 640px) {
@@ -1533,7 +1863,7 @@
     }
 
     .force-network--obsidian .force-network__label {
-      font-size: 0.54rem;
+      font-size: var(--node-label-font-size, 14px);
     }
     .force-network__description {
       display: none;

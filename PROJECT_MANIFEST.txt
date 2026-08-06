@@ -1,28 +1,26 @@
 HECATE946 SOURCE PACKAGE
-Generated: 2026-08-05T17:23:58.249Z
+Generated: 2026-08-06T01:37:15.463Z
 Mode: lean source
 Git branch: main
-Git commit: f5e703dec18a0f304371692bdc42fc600b01ced8
+Git commit: 460793f5089c74a8aec8688dc6cad95600769ae2
 
 GIT STATUS
-M blender/rooms/blue/blue-room-interactive.glb
- M blender/rooms/blue/blue-room-water-overlay.png
- M blender/rooms/blue/blue-room-water-overlay.webm
- M blender/rooms/blue/blue-room.blend
- M blender/rooms/blue/build_static_water_overlay.py
- M public/scenes/rooms/blue/interactive.glb
- M public/scenes/rooms/blue/water-overlay.png
- M public/scenes/rooms/blue/water-overlay.webm
- M src/components/core/Footer.astro
+M astro.config.mjs
+ M src/components/core/HtmlSiteTree.astro
  M src/components/graphs/ForceNetwork.svelte
- M src/components/graphs/types.ts
- M src/features/immersive/catalog.ts
+ M src/components/islands/SiteMapOverlay.svelte
+ D src/data/home-network.ts
  M src/layouts/BaseLayout.astro
- M src/styles/footer.css
-?? src/components/islands/SiteMapOverlay.svelte
-?? src/lib/site-map.ts
+ M src/lib/site-sound.ts
+ M src/pages/index.astro
+ M src/styles/home.css
+ M src/styles/html-mode.css
+?? blender/terrarium/
+?? src/data/navigation-network.ts
+?? src/pages/navigation.astro
+?? src/styles/navigation.css
 
-INCLUDED FILES (227)
+INCLUDED FILES (239)
          118  .env.example
         1007  .github/workflows/deploy.yml
          359  .github/workflows/quality.yml
@@ -30,8 +28,8 @@ INCLUDED FILES (227)
            3  .nvmrc
           46  .prettierignore
          297  .prettierrc.mjs
-       21557  PROJECT_MANIFEST.txt
-         303  astro.config.mjs
+       25809  PROJECT_MANIFEST.txt
+         367  astro.config.mjs
         2165  blender/assets/README.md
         2207  blender/assets/_template/build_asset.py
          211  blender/assets/chair/asset.json
@@ -44,7 +42,7 @@ INCLUDED FILES (227)
          508  blender/halls/museum/unique.py
        70500  blender/halls/shared/hall_shell.py
        60449  blender/house/house.py
-       20998  blender/rooms/blue/build_static_water_overlay.py
+       31329  blender/rooms/blue/build_static_water_overlay.py
        22182  blender/rooms/blue/build_water_animation.py
         1430  blender/rooms/blue/unique.py
         5030  blender/rooms/build_rooms.py
@@ -56,6 +54,15 @@ INCLUDED FILES (227)
        52677  blender/rooms/shared/room_builder.py
           72  blender/shared/__init__.py
        14421  blender/shared/asset_library.py
+          63  blender/terrarium/__init__.py
+        3746  blender/terrarium/build.py
+        2638  blender/terrarium/config.py
+       17263  blender/terrarium/core.py
+          52  blender/terrarium/parts/__init__.py
+        3039  blender/terrarium/parts/base.py
+        2826  blender/terrarium/parts/globe.py
+        8581  blender/terrarium/parts/landscape.py
+        4576  blender/terrarium/parts/master.py
           59  cloudflare/stats-worker/.gitignore
        50054  cloudflare/stats-worker/package-lock.json
          490  cloudflare/stats-worker/package.json
@@ -98,21 +105,22 @@ INCLUDED FILES (227)
         5518  public/scenes/house/windows/chess-black-rook-window.png
         9923  public/scenes/house/windows/chess-rook-window.png
        12214  public/scenes/house/windows/clarinet-window.png
-       38513  public/scenes/house/windows/picklabell-court-window.png
         7336  public/scenes/house/windows/pickleball-court-window.png
      2573159  public/scenes/house/windows/pickleball-court.png
-     1104726  public/scenes/rooms/blue/water-overlay.png
+       14944  public/scenes/rooms/blue/underwater-grade.png
+      799941  public/scenes/rooms/blue/water-caustics.png
+       21226  public/scenes/rooms/blue/water-surface.png
        11781  scripts/create-website-source-zip.mjs
         5508  scripts/generate-code-stats.mjs
-        5225  scripts/sync-scene-assets.mjs
-        7272  src/components/core/HtmlSiteTree.astro
+        5844  scripts/sync-scene-assets.mjs
         2391  src/components/core/BaseHead.astro
-       14070  src/components/core/Footer.astro
+       14063  src/components/core/Footer.astro
         2536  src/components/core/Header.astro
+        7383  src/components/core/HtmlSiteTree.astro
         1608  src/components/core/SeasonalBackdrop.astro
          406  src/components/core/SkipLink.astro
-        3178  src/components/core/ThemeBootstrap.astro
-       29692  src/components/graphs/ForceNetwork.svelte
+        3048  src/components/core/ThemeBootstrap.astro
+       55064  src/components/graphs/ForceNetwork.svelte
         1401  src/components/graphs/types.ts
          408  src/components/house/HouseExperience.svelte
         1612  src/components/house/HouseIllustration.svelte
@@ -145,11 +153,11 @@ INCLUDED FILES (227)
        27069  src/components/islands/ForceNetwork.svelte
         4477  src/components/islands/SeasonSelector.svelte
        34095  src/components/islands/SeasonalShower.svelte
-       12078  src/components/islands/SiteMapOverlay.svelte
+        6983  src/components/islands/SiteMapOverlay.svelte
        19849  src/components/islands/StatsDashboard.svelte
        12372  src/components/islands/VisitorMap.svelte
-        1073  src/components/projects/ProjectCard.astro
-        3226  src/components/projects/ProjectShowcase.astro
+        1207  src/components/projects/ProjectCard.astro
+        3336  src/components/projects/ProjectShowcase.astro
         2434  src/components/railway/RailwayArrivalBoard.svelte
        14347  src/components/railway/RailwayPassage.svelte
        11072  src/components/railway/RailwayStation.svelte
@@ -162,10 +170,10 @@ INCLUDED FILES (227)
         7976  src/config/house-scene.ts
          644  src/config/navigation.ts
         1404  src/config/railway.ts
-         880  src/config/seasonal-shower.ts
+         867  src/config/seasonal-shower.ts
          433  src/config/seasons.ts
         2683  src/config/site.ts
-        2427  src/data/home-network.ts
+        2441  src/data/navigation-network.ts
         7187  src/data/projects.ts
       157822  src/data/world-country-outlines.ts
        76802  src/data/world-map.ts
@@ -173,10 +181,10 @@ INCLUDED FILES (227)
          426  src/features/immersive/InteractiveLayer.svelte
          963  src/features/immersive/ModelLayer.svelte
         8427  src/features/immersive/PanoramaCamera.svelte
-       18176  src/features/immersive/PanoramaScene.svelte
+       19094  src/features/immersive/PanoramaScene.svelte
         6380  src/features/immersive/PanoramaViewer.svelte
         1456  src/features/immersive/SpaceExtras.svelte
-        5742  src/features/immersive/catalog.ts
+        6249  src/features/immersive/catalog.ts
          257  src/features/immersive/extras/halls/BallroomExtras.svelte
          257  src/features/immersive/extras/halls/MuseumExtras.svelte
          457  src/features/immersive/extras/rooms/BlueRoomExtras.svelte
@@ -184,7 +192,7 @@ INCLUDED FILES (227)
          461  src/features/immersive/extras/rooms/OrangeRoomExtras.svelte
          461  src/features/immersive/extras/rooms/PurpleRoomExtras.svelte
          455  src/features/immersive/extras/rooms/RedRoomExtras.svelte
-        5475  src/layouts/BaseLayout.astro
+        5545  src/layouts/BaseLayout.astro
         1114  src/layouts/EntryLayout.astro
          943  src/layouts/FullScreenPageLayout.astro
         2991  src/layouts/HousePreviewLayout.astro
@@ -193,7 +201,7 @@ INCLUDED FILES (227)
         6973  src/lib/analytics.ts
         2080  src/lib/canvas.ts
          202  src/lib/date.ts
-        3676  src/lib/html-mode.ts
+        2384  src/lib/html-mode.ts
          536  src/lib/motion.ts
          469  src/lib/paths.ts
         4390  src/lib/seasonal-shower/autumn.ts
@@ -205,53 +213,55 @@ INCLUDED FILES (227)
        11492  src/lib/seasonal-shower/summer.ts
         1162  src/lib/seasonal-shower/types.ts
         1789  src/lib/seasonal-shower/winter.ts
-        9192  src/lib/site-map.ts
-       16639  src/lib/site-sound.ts
-        1808  src/pages/404.astro
-       16611  src/pages/about.astro
+        9200  src/lib/site-map.ts
+       17094  src/lib/site-sound.ts
+        2479  src/pages/404.astro
+       18024  src/pages/about.astro
          617  src/pages/chess-board.astro
-        1530  src/pages/collision-detection.astro
-       15980  src/pages/contact.astro
+        1634  src/pages/collision-detection.astro
+       16272  src/pages/contact.astro
          885  src/pages/d3.astro
          812  src/pages/halls/[slug].astro
-        2480  src/pages/halls/index.astro
+        3296  src/pages/halls/index.astro
         1309  src/pages/house-compare.astro
          605  src/pages/house-png.astro
         1408  src/pages/house-svg.astro
-        1461  src/pages/index.astro
-         606  src/pages/picklabell.astro
+        1481  src/pages/index.astro
+        1265  src/pages/navigation.astro
          606  src/pages/pickleball.astro
          390  src/pages/projects/[slug].astro
-         848  src/pages/projects/index.astro
-        1681  src/pages/resume.astro
+         846  src/pages/projects/index.astro
+        1860  src/pages/resume.astro
          812  src/pages/rooms/[slug].astro
-        2202  src/pages/rooms/index.astro
+        3095  src/pages/rooms/index.astro
+         748  src/pages/shower.astro
         1025  src/pages/stats.astro
        10297  src/styles/about.css
-        2804  src/styles/html-mode.css
-        1950  src/styles/collision-detection.css
-       11100  src/styles/contact.css
+        2017  src/styles/collision-detection.css
+       10394  src/styles/contact.css
         7032  src/styles/d3.css
-        8261  src/styles/footer.css
-        7482  src/styles/global.css
+        8301  src/styles/footer.css
+        7618  src/styles/global.css
         9928  src/styles/header.css
-        1146  src/styles/home.css
+        8626  src/styles/home.css
         4445  src/styles/house-preview.css
         2290  src/styles/house-room-pages.css
         1950  src/styles/house-scene.css
         4504  src/styles/house-window-scenes.css
+        2932  src/styles/html-mode.css
          949  src/styles/layout.css
+         386  src/styles/navigation.css
         2915  src/styles/not-found.css
-        3788  src/styles/project-showcase.css
-        4376  src/styles/projects-index.css
+        3822  src/styles/project-showcase.css
+        4714  src/styles/projects-index.css
          439  src/styles/reset.css
-        1725  src/styles/resume.css
+        1832  src/styles/resume.css
        11447  src/styles/stats.css
         5385  src/styles/themes.css
           19  svelte.config.js
          187  tsconfig.json
 
-OMITTED FILES (79)
+OMITTED FILES (95)
          128  README.md  [markdown intentionally excluded]  sha256:08368ad788de01f454f5cf7e54341cd2cfd2d227eb83ff35313113a508288da6
       295652  blender/assets/chair/chair.blend  [generated or heavyweight binary]  sha256:f0686380c5a8d7c4fe4e9150099130a63cf5b8da188d23412d8065e19111f4dd
      2167849  blender/assets/chair/textures/GreenChair_01_diff_4k-original.jpg  [large non-source file]  sha256:53bd68a02296005bf5315b5ac06c1fc8e170e4c7296d4d1f0c832e2020af3166
@@ -270,14 +280,17 @@ OMITTED FILES (79)
     11932560  blender/halls/shared/hall-shell.glb  [generated or heavyweight binary]  sha256:1a2a317bdd749dce8d7e524558ef5fa3315f2c4e07ee17d0af453d95ec87d216
       919512  blender/house/house.blend  [generated or heavyweight binary]  sha256:dc66ecf2b405f348ba1b892530ff68c63ff14aad8c5255fe11ebfb1d7e45de83
      1808009  blender/house/house.png  [Blender output; Python source retained]  sha256:66afaf97d6128fbd47250b7d286e4ced700f5728a2a3fe91bfc024b6422e15a9
-     2672016  blender/rooms/blue/blue-room-interactive.glb  [generated or heavyweight binary]  sha256:b29dff0033f29722199ec721921c542362229cbce2e0b846feb4e0e5da000da0
+     2672016  blender/rooms/blue/blue-room-interactive.glb  [generated or heavyweight binary]  sha256:4e3e4c762b5023897438d5af5b249ae5d6ecad754d0e441b92bf8610515c7910
     19803236  blender/rooms/blue/blue-room-panorama.png  [Blender output; Python source retained]  sha256:4cf0e631e13fedacb1ea6943060044eb04428d880a3d655921c4684c29211a4d
-     1104726  blender/rooms/blue/blue-room-water-overlay.png  [Blender output; Python source retained]  sha256:a43ec325612725b67b555bd8d041b98eacf96786d7459a21d9ca25e9a1864ca0
-       60106  blender/rooms/blue/blue-room-water-overlay.webm  [generated or heavyweight binary]  sha256:5eae5c1ed0fb1c477b2d83e99c7845333f947a0396759fb48e86ab513960aee5
+       14944  blender/rooms/blue/blue-room-underwater-grade.png  [Blender output; Python source retained]  sha256:5853c6ded525e8c7bff69566a73f34910c599fcdcc339f47f2eb688d42220b22
+      799941  blender/rooms/blue/blue-room-water-caustics.png  [Blender output; Python source retained]  sha256:5d7edc11efab183f592929527e73ce108218549ea63bfe0e30d69d0dc41a3717
+      302539  blender/rooms/blue/blue-room-water-caustics.webm  [generated or heavyweight binary]  sha256:21183ba8f55b89500f427265928ab7c91aee8d9fd8cef6cfcb0f87285e85ac1a
      1408471  blender/rooms/blue/blue-room-water-poster.png  [Blender output; Python source retained]  sha256:9b42c909da27ec6ea314a827b07b6204aa92e8712dfd521ded3341a8f4527f4d
+       21226  blender/rooms/blue/blue-room-water-surface.png  [Blender output; Python source retained]  sha256:5218b06a18359e2736ac4a664633dce232227e2be45745765ff88712d2da8da1
+       31451  blender/rooms/blue/blue-room-water-surface.webm  [generated or heavyweight binary]  sha256:e2ef0bd9211044404f5281b1197f5e41791c242b57d49711de1f68f04241f65a
       628373  blender/rooms/blue/blue-room-water.blend  [generated or heavyweight binary]  sha256:3a7c124a93b013f48e0eb2f665f01aa373afcc5362ba4d45633802456155b837
      1313873  blender/rooms/blue/blue-room-water.webm  [generated or heavyweight binary]  sha256:343b8bf0f79459e0b0eee55c62c6f7c5c9650314a4ae766c0b0480d6cbf0f197
-      617632  blender/rooms/blue/blue-room.blend  [generated or heavyweight binary]  sha256:5b6e91a03c8bf1d2b0aee69596a0069f5c52942a7f56d30c6037e883b097b5d3
+      617624  blender/rooms/blue/blue-room.blend  [generated or heavyweight binary]  sha256:0636426817401d9f48094a5362203ee82f449f3e3a258df9775d91f57fdef152
     20126444  blender/rooms/green/green-room-board-panorama.png  [Blender output; Python source retained]  sha256:b2a21b541284994049e9a89cfe85e70cdd9d125bdf16e50ca21eba710be20523
      8467788  blender/rooms/green/green-room-interactive.glb  [generated or heavyweight binary]  sha256:5d1e6f7f6f7b006ff48c05f04d5526d988aeabe6cb955d49140f51edd7658b8a
     18692778  blender/rooms/green/green-room-panorama.png  [Blender output; Python source retained]  sha256:b22a24fefa1dcbc9ef8341187f34f28c6e4d1a297e8d4a136121d4ed81865c9f
@@ -294,6 +307,17 @@ OMITTED FILES (79)
       725766  blender/rooms/shared/textures/checker-texture.png  [Blender output; Python source retained]  sha256:17306e875ea1dd4202532d705baf0052d5bf5668f05af0ba4d05eb90c9bc6525
       325539  blender/rooms/shared/textures/dark-texture.png  [Blender output; Python source retained]  sha256:73ea18409c8813c37e0e6d712cb02480a9ea43b805c558165dc694ea1068bb94
       327459  blender/rooms/shared/textures/light-texture.png  [Blender output; Python source retained]  sha256:f4974a0d45ff0b8c62b24c5bb486261c0f14e3dcb79ac1d792e5fd75650d29fa
+        2474  blender/terrarium/README.md  [markdown intentionally excluded]  sha256:f542ca64e1d7e7e57a84bd1c8bd72b48ea104dcb0ca21ed84f0f8723d82d9c49
+        1461  blender/terrarium/component-manifest.json  [Blender output; Python source retained]  sha256:1aa7ae6a232b1cda8d545943b0bca376b05605686fa39f9816b055395410272e
+      258119  blender/terrarium/generated/components/terrarium-base.blend  [generated or heavyweight binary]  sha256:c154493d0d7bdfcda0d3e1a227ff10bb888439c6df4baab73a47c74aa4e38ee9
+      749563  blender/terrarium/generated/components/terrarium-globe.blend  [generated or heavyweight binary]  sha256:638707dd275c52a6a93c770e8197aef91bda747d0537cc1f3786402f62b676f9
+      176387  blender/terrarium/generated/components/terrarium-landscape.blend  [generated or heavyweight binary]  sha256:382cccc8e4a0144f6f3699fadae3dfd88441d06d3ec90aeb545e1786d5e19c17
+      381300  blender/terrarium/generated/previews/terrarium-base.png  [Blender output; Python source retained]  sha256:57e66ab8ca00d8791c127043f45270fc808efd05d644efd0b7144c2bee48c8d0
+      730534  blender/terrarium/generated/previews/terrarium-globe.png  [Blender output; Python source retained]  sha256:2a5773d91985fd31e4e398350456debd4fc8a01748115148dd3e99d473d0b99f
+     1175312  blender/terrarium/generated/previews/terrarium-landscape.png  [Blender output; Python source retained]  sha256:8858b946c5f662e0252a22c4cb054a3803a6d3e5c46d3cc006a64a3209c47c23
+      779092  blender/terrarium/generated/previews/terrarium-v1.png  [Blender output; Python source retained]  sha256:65cc5f3229542a0d429e1e2c28c1962d497806f0ff4e589a0b3d09d38fff95b1
+      904289  blender/terrarium/generated/terrarium-v1.blend  [generated or heavyweight binary]  sha256:ebc9c84d01168955302121d73485d5c1f06229108e31a4f2bcfe1f978800b995
+         857  blender/terrarium/preview.sh  [Blender output; Python source retained]  sha256:b5ee49983957002152a2a40d9dc6c914a983a8066e48262632132572a7ce6853
      2242195  public/images/pig.png  [unreferenced asset exceeds 524288 bytes]  sha256:9560f5a12f2d447ee9b73326a68c8a3b7d580363482125056470471342d3191d
      1768601  public/images/projects/keycad.png  [larger duplicate with WebP/AVIF sibling]  sha256:68e74ac236f06c85dc6ffaaa8cc28ba59de6405d13a522179e691c8e31753e7f
      2149696  public/images/projects/neutra.png  [larger duplicate with WebP/AVIF sibling]  sha256:ef235434fea45c9a99a40a97d1d8b0b738c0e832192bf60694edf9bb6bf63adb
@@ -310,12 +334,14 @@ OMITTED FILES (79)
      2453344  public/scenes/house/versions/house-white-raised-roof-v3.png  [unreferenced asset exceeds 524288 bytes]  sha256:0d480412e864160407505eeb72bdd58308bd73c155a05b568e3ba688a8ea847f
      3271603  public/scenes/house/versions/house-white-raised-roof-v3.svg  [unreferenced asset exceeds 524288 bytes]  sha256:614dff142f243fa8d9b8649aa0dd7e64f4ce6b1376a931ad114f4536a6b8d37d
      1188194  public/scenes/house/versions/neoclassical-house-blender-v10.png  [larger duplicate with WebP/AVIF sibling]  sha256:a97f612f0fee989a66ab685a27eb2f1fd536481906d0419a336774ad178bffb2
-     2573159  public/scenes/house/windows/picklabell-court.png  [unreferenced asset exceeds 524288 bytes]  sha256:7123bae77b5d8dbb2196262892073c6b47870faaaa850ac28fcaf4ea1ec247bc
-     2672016  public/scenes/rooms/blue/interactive.glb  [generated or heavyweight binary]  sha256:b29dff0033f29722199ec721921c542362229cbce2e0b846feb4e0e5da000da0
+     2672016  public/scenes/rooms/blue/interactive.glb  [generated or heavyweight binary]  sha256:4e3e4c762b5023897438d5af5b249ae5d6ecad754d0e441b92bf8610515c7910
     19803236  public/scenes/rooms/blue/panorama.png  [larger duplicate with WebP/AVIF sibling]  sha256:4cf0e631e13fedacb1ea6943060044eb04428d880a3d655921c4684c29211a4d
       764228  public/scenes/rooms/blue/panorama.webp  [unreferenced asset exceeds 524288 bytes]  sha256:161d061d536503e2218d01687e41c4e248fed16f5345a470e018bd00cf4d9097
-       60106  public/scenes/rooms/blue/water-overlay.webm  [generated or heavyweight binary]  sha256:5eae5c1ed0fb1c477b2d83e99c7845333f947a0396759fb48e86ab513960aee5
+      302539  public/scenes/rooms/blue/water-caustics.webm  [generated or heavyweight binary]  sha256:21183ba8f55b89500f427265928ab7c91aee8d9fd8cef6cfcb0f87285e85ac1a
+     1683143  public/scenes/rooms/blue/water-overlay.png  [unreferenced asset exceeds 524288 bytes]  sha256:77c1cdfe12fd41036e566a9008f91bf9dbbaaf73056e2540db253f7938ccab66
+      266351  public/scenes/rooms/blue/water-overlay.webm  [generated or heavyweight binary]  sha256:c114334f48a73586d8f3895358325dced42d06b2c43114ea35ce7326b08a6570
      1408471  public/scenes/rooms/blue/water-poster.png  [unreferenced asset exceeds 524288 bytes]  sha256:9b42c909da27ec6ea314a827b07b6204aa92e8712dfd521ded3341a8f4527f4d
+       31451  public/scenes/rooms/blue/water-surface.webm  [generated or heavyweight binary]  sha256:e2ef0bd9211044404f5281b1197f5e41791c242b57d49711de1f68f04241f65a
      1313873  public/scenes/rooms/blue/water.webm  [generated or heavyweight binary]  sha256:343b8bf0f79459e0b0eee55c62c6f7c5c9650314a4ae766c0b0480d6cbf0f197
      8467788  public/scenes/rooms/green/interactive.glb  [generated or heavyweight binary]  sha256:5d1e6f7f6f7b006ff48c05f04d5526d988aeabe6cb955d49140f51edd7658b8a
     18692778  public/scenes/rooms/green/panorama.png  [larger duplicate with WebP/AVIF sibling]  sha256:b22a24fefa1dcbc9ef8341187f34f28c6e4d1a297e8d4a136121d4ed81865c9f

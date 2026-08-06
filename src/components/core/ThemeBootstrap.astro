@@ -20,24 +20,7 @@
       }
     };
 
-    const queryValue = (targetDocument, key) => {
-      try {
-        const url = new URL(targetDocument.URL || window.location.href);
-        return url.searchParams.get(key);
-      } catch {
-        return null;
-      }
-    };
-
-    const urlUsesHtmlMode = (targetDocument) => {
-      try {
-        return queryValue(targetDocument, 'mode') === 'html';
-      } catch {
-        return false;
-      }
-    };
-
-    const resolvePreferences = (targetDocument = document) => {
+    const resolvePreferences = () => {
       const savedSeason = readPreference('season-preference');
       const seasonPreference = seasonNames.includes(savedSeason)
         ? savedSeason
@@ -52,20 +35,18 @@
           ? 'dark'
           : 'light';
 
-      const soundEnabled = queryValue(targetDocument, 'sounds') === 'on';
-
       return {
         seasonPreference,
         season,
         theme,
-        soundEnabled,
-        htmlMode: urlUsesHtmlMode(targetDocument),
+        soundEnabled: readPreference('site-sound') === 'on',
+        htmlMode: readPreference('html-mode') === 'html',
       };
     };
 
     const applyPreferences = (targetDocument = document) => {
       const { seasonPreference, season, theme, soundEnabled, htmlMode } =
-        resolvePreferences(targetDocument);
+        resolvePreferences();
       const root = targetDocument.documentElement;
 
       root.dataset.seasonPreference = seasonPreference;
@@ -91,7 +72,7 @@
       });
     };
 
-    /* The URL is the sole source of truth for HTML and sound modes. */
+    /* Apply every stored visual and audio preference before first paint. */
     applyPreferences();
 
     if (!window.__cyrusThemeBootstrapInstalled) {

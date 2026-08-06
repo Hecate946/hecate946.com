@@ -5,60 +5,362 @@
 
 .minimal-hero {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  width: min(calc(100% - 2rem), 74rem);
+  display: grid;
+  width: 100%;
   min-height: calc(100svh - var(--header-height));
-  margin-inline: auto;
-  padding: 0;
+  place-items: center;
+  padding: clamp(5.75rem, 12svh, 8rem) clamp(0.6rem, 2vw, 1.5rem)
+    clamp(1.5rem, 4svh, 3rem);
 }
 
 .minimal-intro {
-  position: relative;
-  z-index: 2;
-  display: block;
-  width: 100%;
-  flex: 0 0 auto;
-  padding-block: clamp(1.8rem, 4vw, 3.1rem);
+  position: absolute;
+  z-index: 8;
+  top: clamp(0.55rem, 1.6svh, 1.2rem);
+  left: 50%;
+  width: min(calc(100% - 2rem), 74rem);
   text-align: center;
+  transform: translateX(-50%);
 }
 
 .minimal-intro h1 {
   width: 100%;
   margin: 0;
-  text-align: center;
+  color: var(--accent-strong);
   font-family: var(--font-display);
   font-size: clamp(2.7rem, 5vw, 4.7rem);
   font-weight: 520;
   letter-spacing: -0.058em;
   line-height: 0.96;
-  color: var(--accent-strong);
+  text-align: center;
 }
 
 .minimal-intro p {
   width: 100%;
   margin: 0.75rem 0 0;
-  text-align: center;
   color: var(--muted);
   font-size: clamp(0.94rem, 1.4vw, 1.08rem);
   letter-spacing: 0.012em;
+  text-align: center;
 }
 
-.home-network-stage {
+.home-terrarium {
+  --terrarium-glass: color-mix(in srgb, var(--accent) 24%, transparent);
+  --terrarium-edge: color-mix(in srgb, var(--accent-strong) 42%, var(--line));
+  --terrarium-highlight: color-mix(in srgb, white 72%, transparent);
+  --terrarium-soil: color-mix(in srgb, #5d4934 78%, var(--bg));
+  --terrarium-soil-dark: color-mix(in srgb, #2d251d 88%, var(--bg));
+  --terrarium-moss: color-mix(in srgb, var(--season-1) 74%, #526a45);
+
+  position: relative;
+  isolation: isolate;
+  width: min(92vw, 66rem);
+  aspect-ratio: 1.48 / 1;
+  transform: translateY(clamp(0.4rem, 1.5svh, 1rem));
+}
+
+.home-terrarium__glass {
+  position: absolute;
+  z-index: 6;
+  inset: 0 3.2% 7.5%;
+  overflow: hidden;
+  border: 1.5px solid var(--terrarium-edge);
+  border-radius: 47% 47% 4.5% 4.5% / 21% 21% 3.5% 3.5%;
+  background:
+    linear-gradient(
+      102deg,
+      transparent 0 12%,
+      color-mix(in srgb, var(--terrarium-highlight) 34%, transparent) 17%,
+      transparent 23% 100%
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--terrarium-glass) 35%, transparent),
+      transparent 16% 82%,
+      color-mix(in srgb, var(--terrarium-glass) 38%, transparent)
+    );
+  box-shadow:
+    inset 0 0 0 0.28rem color-mix(in srgb, var(--terrarium-highlight) 8%, transparent),
+    inset 0 0 2rem color-mix(in srgb, var(--accent) 8%, transparent),
+    0 1.6rem 3.4rem color-mix(in srgb, var(--text) 10%, transparent);
+  pointer-events: none;
+}
+
+.home-terrarium__glass::before {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  width: 82%;
+  height: 15%;
+  border-top: 1px solid color-mix(in srgb, var(--terrarium-highlight) 48%, transparent);
+  border-radius: 50%;
+  content: '';
+  opacity: 0.72;
+  transform: translateX(-50%);
+}
+
+.home-terrarium__glass::after {
+  position: absolute;
+  inset: 8% 6% 12%;
+  background-image:
+    radial-gradient(circle at 14% 24%, var(--terrarium-highlight) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 86% 36%, var(--terrarium-highlight) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 78% 18%, var(--terrarium-highlight) 0 0.8px, transparent 1.4px),
+    radial-gradient(circle at 24% 42%, var(--terrarium-highlight) 0 0.8px, transparent 1.4px);
+  background-size: 9rem 8rem, 11rem 10rem, 7rem 9rem, 13rem 11rem;
+  content: '';
+  opacity: 0.22;
+}
+
+.home-terrarium__reflection {
+  position: absolute;
+  top: 12%;
+  bottom: 18%;
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--terrarium-highlight) 52%, transparent) 18% 72%,
+    transparent
+  );
+  filter: blur(0.35px);
+  opacity: 0.24;
+  transform: rotate(5deg);
+}
+
+.home-terrarium__reflection--wide {
+  left: 9%;
+  width: 1.3%;
+}
+
+.home-terrarium__reflection--narrow {
+  right: 12%;
+  width: 0.55%;
+  opacity: 0.16;
+}
+
+.home-terrarium__habitat {
+  position: absolute;
+  z-index: 1;
+  right: 5.8%;
+  bottom: 8.5%;
+  left: 5.8%;
+  height: 24%;
+  overflow: hidden;
+  border-radius: 50% 50% 4% 4% / 19% 19% 8% 8%;
+  pointer-events: none;
+}
+
+.home-terrarium__soil,
+.home-terrarium__moss {
+  position: absolute;
+  right: 0;
+  left: 0;
+  display: block;
+}
+
+.home-terrarium__soil {
+  bottom: 0;
+  height: 70%;
+  border-radius: 50% 50% 0 0 / 21% 21% 0 0;
+  background:
+    radial-gradient(circle at 18% 34%, rgb(255 255 255 / 10%) 0 1px, transparent 2px),
+    radial-gradient(circle at 62% 63%, rgb(0 0 0 / 22%) 0 1px, transparent 2px),
+    linear-gradient(180deg, var(--terrarium-soil), var(--terrarium-soil-dark));
+  background-size: 2.4rem 1.8rem, 3.1rem 2.2rem, auto;
+  box-shadow: inset 0 0.7rem 1rem rgb(0 0 0 / 16%);
+}
+
+.home-terrarium__moss {
+  bottom: 55%;
+  height: 22%;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 8% 100%, var(--terrarium-moss) 0 55%, transparent 57%),
+    radial-gradient(ellipse at 20% 100%, var(--terrarium-moss) 0 61%, transparent 63%),
+    radial-gradient(ellipse at 36% 100%, var(--terrarium-moss) 0 48%, transparent 50%),
+    radial-gradient(ellipse at 55% 100%, var(--terrarium-moss) 0 58%, transparent 60%),
+    radial-gradient(ellipse at 72% 100%, var(--terrarium-moss) 0 52%, transparent 54%),
+    radial-gradient(ellipse at 90% 100%, var(--terrarium-moss) 0 62%, transparent 64%);
+  filter: saturate(0.82);
+  opacity: 0.92;
+}
+
+.home-terrarium__plant {
+  position: absolute;
+  z-index: 2;
+  bottom: 48%;
+  width: 10%;
+  height: 42%;
+  border-left: clamp(1px, 0.14vw, 2px) solid var(--terrarium-moss);
+  border-radius: 50%;
+  opacity: 0.76;
+  transform-origin: bottom center;
+}
+
+.home-terrarium__plant::before,
+.home-terrarium__plant::after {
+  position: absolute;
+  width: 58%;
+  height: 25%;
+  border-radius: 100% 0 100% 0;
+  background: var(--terrarium-moss);
+  content: '';
+}
+
+.home-terrarium__plant::before {
+  top: 25%;
+  left: -48%;
+  transform: rotate(24deg);
+}
+
+.home-terrarium__plant::after {
+  top: 48%;
+  left: 5%;
+  transform: scaleX(-1) rotate(20deg);
+}
+
+.home-terrarium__plant--left {
+  left: 8%;
+  transform: rotate(-18deg);
+}
+
+.home-terrarium__plant--right {
+  right: 7%;
+  transform: scaleX(-1) rotate(-15deg);
+}
+
+.home-terrarium__house {
+  position: absolute !important;
+  z-index: 3;
+  right: 6.5%;
+  bottom: 12.5%;
+  left: 6.5%;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+}
+
+.home-terrarium__house .house-experience {
   width: 100%;
-  min-height: 0;
+  margin: 0;
+}
+
+.home-terrarium__house .house-experience__viewport {
+  aspect-ratio: 3 / 2;
+}
+
+.home-terrarium__house .house-scene-section__hint {
+  display: none;
+}
+
+.home-terrarium__base {
+  position: absolute;
+  z-index: 7;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 10.5%;
+  border: 1px solid color-mix(in srgb, var(--text) 22%, var(--line));
+  border-radius: 9% 9% 14% 14% / 24% 24% 44% 44%;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-strong) 84%, var(--text) 7%),
+    color-mix(in srgb, var(--surface-strong) 70%, var(--text) 17%)
+  );
+  box-shadow:
+    inset 0 0.22rem 0 color-mix(in srgb, white 28%, transparent),
+    0 0.8rem 1.5rem color-mix(in srgb, var(--text) 14%, transparent);
+  pointer-events: none;
+}
+
+.home-terrarium__base::before,
+.home-terrarium__base::after,
+.home-terrarium__base span {
+  position: absolute;
+  right: 4%;
+  left: 4%;
+  display: block;
+  height: 1px;
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+  content: '';
+}
+
+.home-terrarium__base::before {
+  top: 31%;
+}
+
+.home-terrarium__base::after {
+  bottom: 25%;
+}
+
+.home-terrarium__base span {
+  top: 50%;
+  right: 9%;
+  left: 9%;
+  opacity: 0.5;
+}
+
+html[data-theme='dark'] .home-terrarium {
+  --terrarium-highlight: color-mix(in srgb, white 58%, transparent);
+  --terrarium-soil: color-mix(in srgb, #403729 82%, var(--bg));
+  --terrarium-soil-dark: color-mix(in srgb, #171713 90%, var(--bg));
+
+  filter: drop-shadow(0 1.5rem 2.2rem rgb(0 0 0 / 24%));
+}
+
+
+@media (max-height: 52rem) and (min-width: 641px) {
+  .home-terrarium {
+    width: min(84vw, 55rem);
+  }
 }
 
 @media (max-width: 640px) {
   .minimal-hero {
-    width: min(calc(100% - 1rem), 74rem);
+    min-height: calc(100svh - (var(--header-height) * 2));
+    padding: 5.2rem 0.15rem 1.25rem;
   }
 
   .minimal-intro {
-    padding-block: 1.4rem;
+    top: 0.75rem;
   }
 
   .minimal-intro h1 {
     font-size: clamp(2.45rem, 12vw, 3.4rem);
+  }
+
+  .minimal-intro p {
+    margin-top: 0.55rem;
+    font-size: 0.88rem;
+  }
+
+  .home-terrarium {
+    width: min(99vw, 40rem);
+    min-width: 19rem;
+  }
+
+  .home-terrarium__glass {
+    inset-inline: 1.8%;
+  }
+
+  .home-terrarium__habitat {
+    right: 4%;
+    left: 4%;
+  }
+
+  .home-terrarium__house {
+    right: 2.5%;
+    bottom: 12%;
+    left: 2.5%;
+  }
+}
+
+
+@media (max-width: 640px) and (max-height: 36rem) {
+  .home-terrarium {
+    width: min(82vw, 30rem);
   }
 }

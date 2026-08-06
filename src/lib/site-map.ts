@@ -35,6 +35,11 @@ const PAGE_METADATA: Record<
     description: 'The center of the site',
     category: 'core',
   },
+  '/Graph/': {
+    label: 'Graph',
+    description: 'Interactive map of every site destination',
+    category: 'core',
+  },
   '/about/': {
     label: 'About',
     description: 'Biography and current work',
@@ -170,7 +175,7 @@ function pageFileToRoute(pageFile: string): string | null {
   }
 
   // Dynamic route files are expanded from their actual content catalogs in
-  // BaseLayout. Rendering a literal "[slug]" node would create a dead URL.
+  // the Website Graph page. Rendering a literal "[slug]" node would create a dead URL.
   if (relative.includes('[') || relative.includes(']')) return null;
 
   relative = relative.replace(/\/index$/, '');

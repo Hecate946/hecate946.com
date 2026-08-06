@@ -1,4 +1,5 @@
 ---
+import { withBase } from '@/lib/paths';
 import '@/styles/footer.css';
 
 const year = new Date().getFullYear();
@@ -31,23 +32,20 @@ const year = new Date().getFullYear();
       data-html-mode-toggle
     >
       <svg class="footer-code-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="m9 7.25-4.75 4.75L9 16.75" />
-        <path d="m15 7.25 4.75 4.75L15 16.75" />
-        <path d="m13.75 5.25-3.5 13.5" />
+        <path d="m9.35 6.65-5.35 5.35 5.35 5.35" />
+        <path d="m14.65 6.65 5.35 5.35-5.35 5.35" />
+        <path d="m14.1 4.8-4.2 14.4" />
       </svg>
     </button>
 
-    <button
-      class="footer-icon-link footer-site-map-toggle"
-      type="button"
-      aria-label="Open interactive site map"
-      aria-haspopup="dialog"
-      aria-controls="site-map-dialog"
-      aria-expanded="false"
-      data-label="Site map"
-      data-site-map-toggle
+    <a
+      class="footer-icon-link footer-graph-link"
+      href={withBase('/Graph/')}
+      aria-label="Open Website Graph"
+      data-label="Graph"
+      data-astro-prefetch
     >
-      <svg class="footer-site-map-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="footer-graph-icon" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 5.25 6.2 9.1m5.8-3.85 5.8 3.85M6.2 9.1v5.8m11.6-5.8v5.8M6.2 14.9 12 18.75m5.8-3.85L12 18.75" />
         <circle cx="12" cy="4.4" r="2.15" />
         <circle cx="5.25" cy="9.75" r="2.15" />
@@ -56,7 +54,7 @@ const year = new Date().getFullYear();
         <circle cx="18.75" cy="15.55" r="2.15" />
         <circle cx="12" cy="19.6" r="2.15" />
       </svg>
-    </button>
+    </a>
   </div>
 
   <p class="footer-copyright">© {year} Cyrus Asasi</p>
@@ -100,36 +98,3 @@ const year = new Date().getFullYear();
     </a>
   </nav>
 </footer>
-
-<script>
-  type SiteMapWindow = typeof window & {
-    __hecateSiteMapPending?: boolean;
-    __hecateSiteMapStateBound?: boolean;
-  };
-
-  const siteMapWindow = window as SiteMapWindow;
-
-  const initializeSiteMapButton = () => {
-    document.querySelectorAll<HTMLElement>('[data-site-map-toggle]').forEach((button) => {
-      if (button.dataset.siteMapBound === 'true') return;
-      button.dataset.siteMapBound = 'true';
-      button.addEventListener('click', () => {
-        siteMapWindow.__hecateSiteMapPending = true;
-        window.dispatchEvent(new CustomEvent('site-map:open'));
-      });
-    });
-  };
-
-  if (!siteMapWindow.__hecateSiteMapStateBound) {
-    siteMapWindow.__hecateSiteMapStateBound = true;
-    window.addEventListener('site-map:state', (event) => {
-      const open = Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open);
-      document.querySelectorAll<HTMLElement>('[data-site-map-toggle]').forEach((button) => {
-        button.setAttribute('aria-expanded', String(open));
-      });
-    });
-  }
-
-  initializeSiteMapButton();
-  document.addEventListener('astro:page-load', initializeSiteMapButton);
-</script>

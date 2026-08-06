@@ -29,7 +29,7 @@ const icons = {
  * In radial layout mode, the outer-node array order is the clockwise order.
  * Starting at the top: About → Résumé → Projects → Contact → Stats.
  */
-export const homeNetworkNodes: NetworkNode[] = [
+export const navigationNetworkNodes: NetworkNode[] = [
   {
     id: 'home',
     label: 'Home',
@@ -94,9 +94,9 @@ const primary = (target: string): NetworkLink => ({
   strength: 0.2,
 });
 
-// The homepage is intentionally a clean hub-and-spoke graph. The reusable
+// The hidden navigation page uses a clean hub-and-spoke graph. The reusable
 // component still supports secondary links for graphs elsewhere on the site.
-export const homeNetworkLinks: NetworkLink[] = [
+export const navigationNetworkLinks: NetworkLink[] = [
   primary('about'),
   primary('resume'),
   primary('projects'),

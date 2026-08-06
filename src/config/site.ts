@@ -30,6 +30,7 @@ export const headerNavigation = [
  */
 export const navigation = [
   { label: 'Home', href: '/' },
+  { label: 'Graph', href: '/Graph/' },
   // { label: 'Code', href: '/code/' },
   // { label: 'Clarinet', href: '/clarinet/' },
   // { label: 'Piano', href: '/piano/' },

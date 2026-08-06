@@ -1,0 +1,33 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Seasonal Shower — Cyrus Asasi"
+  description="A dedicated showcase for the current seasonal shower animation."
+>
+  <section class="shower-page" aria-labelledby="shower-title">
+    <h1 id="shower-title">Seasonal Shower</h1>
+    <p>The animation changes with the current site season.</p>
+  </section>
+</BaseLayout>
+
+<style>
+  .shower-page {
+    display: grid;
+    min-height: calc(100svh - (2 * var(--header-height)));
+    place-content: center;
+    padding: var(--space-6) var(--gutter);
+    text-align: center;
+  }
+
+  .shower-page h1,
+  .shower-page p {
+    margin: 0;
+  }
+
+  .shower-page p {
+    margin-top: var(--space-2);
+    color: var(--muted);
+  }
+</style>

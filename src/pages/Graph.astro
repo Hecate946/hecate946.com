@@ -1,0 +1,119 @@
+---
+import WebsiteGraph from '@/components/islands/WebsiteGraph.svelte';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { projects } from '@/data/projects';
+import { hallCatalog, secondStoryRooms } from '@/features/immersive/catalog';
+import { buildSiteMapGraph, normalizeSitePath } from '@/lib/site-map';
+import { withBase } from '@/lib/paths';
+
+const pageFiles = Object.keys(import.meta.glob('/src/pages/**/*.astro'));
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+const currentPath = normalizeSitePath(
+  basePath && Astro.url.pathname.startsWith(basePath)
+    ? Astro.url.pathname.slice(basePath.length) || '/'
+    : Astro.url.pathname,
+);
+
+const dynamicRoutes = [
+  ...projects.map((project) => ({
+    href: `/projects/${project.slug}/`,
+    label: project.title,
+    description: project.tagline,
+    category: 'projects' as const,
+  })),
+  ...secondStoryRooms.map((room) => ({
+    href: `/rooms/${room.slug}/`,
+    label: room.title,
+    description: room.description,
+    category: 'spaces' as const,
+  })),
+  ...hallCatalog.map((hall) => ({
+    href: `/halls/${hall.slug}/`,
+    label: hall.title,
+    description: hall.description,
+    category: 'spaces' as const,
+  })),
+];
+
+const graph = buildSiteMapGraph({
+  pageFiles,
+  dynamicRoutes,
+  currentPath,
+  resolveHref: withBase,
+});
+---
+
+<BaseLayout
+  title="Website Graph — Cyrus Asasi"
+  description="An interactive graph of every destination on hecate946.com."
+  hideFooter={true}
+  suppressSeasonalShower={true}
+  mainClass="website-graph-main"
+  bodyClass="website-graph-body"
+  soundSilent={true}
+>
+  <div class="website-graph-page" data-default-only>
+    <WebsiteGraph
+      client:load
+      nodes={graph.nodes}
+      links={graph.links}
+    />
+  </div>
+
+  <section class="website-graph-html" data-html-only>
+    <h1>Website Graph</h1>
+    <p>Use the site tree above to browse every page.</p>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  html:not([data-html-mode='true']),
+  html:not([data-html-mode='true']) body.website-graph-body {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    overflow: hidden;
+    background-color: var(--bg);
+    overscroll-behavior: none;
+  }
+
+  #main-content.website-graph-main {
+    box-sizing: border-box;
+    width: 100%;
+    height: calc(100dvh - var(--header-height));
+    min-height: 0;
+    padding: 0 !important;
+    overflow: hidden;
+  }
+
+  .website-graph-page {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background-color: var(--bg);
+  }
+
+  .website-graph-page > astro-island {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .website-graph-html {
+    padding: 2rem var(--site-edge);
+  }
+
+  html[data-html-mode='true'] body.website-graph-body {
+    height: auto;
+    overflow: auto;
+  }
+
+  html[data-html-mode='true'] #main-content.website-graph-main {
+    height: auto;
+    overflow: visible;
+  }
+</style>

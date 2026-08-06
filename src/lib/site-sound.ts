@@ -1,6 +1,6 @@
-const SOUND_QUERY_KEY = 'sounds';
-const SOUND_QUERY_ON = 'on';
-const SOUND_QUERY_OFF = 'off';
+const SOUND_STORAGE_KEY = 'site-sound';
+const SOUND_ENABLED_VALUE = 'on';
+const SOUND_DISABLED_VALUE = 'off';
 
 type SoundKind =
   | 'click'
@@ -22,7 +22,7 @@ let toastTimer: number | undefined;
 let collisionNoteIndex = 0;
 let nextCollisionNoteTime = 0;
 
-// One note advances on each new node collision in the home force graph.
+// One note advances on each new node collision in the navigation force graph.
 // C F G Ab F Db F C G Ab F Db F G Eb C Eb G D G3 D G E G3 E G
 const COLLISION_NOTE_SEQUENCE = [
   261.63, 349.23, 392, 415.3, 349.23, 277.18, 349.23, 261.63, 392, 415.3, 349.23,
@@ -35,16 +35,16 @@ type SiteSoundWindow = Window &
     __hecateSiteSoundInstalled?: boolean;
   };
 
-const soundModeFromUrl = (value: string | URL = window.location.href) => {
+const readStoredSoundPreference = () => {
   try {
-    const url = value instanceof URL ? value : new URL(value, window.location.href);
-    return url.searchParams.get(SOUND_QUERY_KEY);
+    return localStorage.getItem(SOUND_STORAGE_KEY);
   } catch {
     return null;
   }
 };
 
-const isEnabled = () => soundModeFromUrl() === SOUND_QUERY_ON;
+const isEnabled = () =>
+  document.documentElement.dataset.soundEnabled === 'true';
 
 const getAudioContext = () => {
   if (audioContext) return audioContext;
@@ -412,21 +412,17 @@ const handleClick = (event: MouseEvent) => {
   const toggle = target.closest<HTMLButtonElement>('[data-sound-toggle]');
   if (toggle) {
     const enabled = !isEnabled();
-    const url = new URL(window.location.href);
-    url.searchParams.set(
-      SOUND_QUERY_KEY,
-      enabled ? SOUND_QUERY_ON : SOUND_QUERY_OFF,
-    );
-
-    // The URL is the only sound state. Replace it first, then mirror that value
-    // to the root attribute and controls in the same click task.
-    window.history.replaceState(
-      window.history.state,
-      '',
-      `${url.pathname}${url.search}${url.hash}`,
-    );
     document.documentElement.dataset.soundEnabled = String(enabled);
     updateToggle(enabled);
+
+    try {
+      localStorage.setItem(
+        SOUND_STORAGE_KEY,
+        enabled ? SOUND_ENABLED_VALUE : SOUND_DISABLED_VALUE,
+      );
+    } catch {
+      // Sound still changes for the current page if storage is unavailable.
+    }
 
     if (enabled) {
       void playSound('click');
@@ -497,14 +493,14 @@ export const playNetworkCollisionNote = async () => {
   playCollisionNote(context, startTime);
 };
 
-const applySoundStateFromUrl = () => {
-  const enabled = isEnabled();
+const applyStoredSoundPreference = () => {
+  const enabled = readStoredSoundPreference() === SOUND_ENABLED_VALUE;
   document.documentElement.dataset.soundEnabled = String(enabled);
   updateToggle(enabled);
 };
 
 export const initializeSiteSound = () => {
-  applySoundStateFromUrl();
+  applyStoredSoundPreference();
   getPageTurnAudio().load();
 
   const siteSoundWindow = window as SiteSoundWindow;
@@ -513,5 +509,4 @@ export const initializeSiteSound = () => {
   siteSoundWindow.__hecateSiteSoundInstalled = true;
   document.addEventListener('click', handleClick, { capture: true });
   document.addEventListener('change', handleChange, { capture: true });
-  window.addEventListener('popstate', applySoundStateFromUrl);
 };
