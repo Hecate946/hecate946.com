@@ -1,0 +1,32 @@
+HECATE946 PROFESSIONAL EXTERIOR — SCENE CLEANUP V4
+
+This pass addresses the latest screenshot directly.
+
+Changes
+-------
+1. No more orange overlays.
+   - Window glow cards are disabled entirely.
+   - The house should now appear as imported from house.blend without facade overlays.
+
+2. Import-only house workflow.
+   - The exterior builder no longer regenerates the house.
+   - It now requires blender/house/house.blend to already exist.
+
+3. Grass / shrubs / flowers rebuilt.
+   - Replaces texture-heavy imported foreground assets with:
+     * a geometry-nodes lawn
+     * procedural formal shrubs
+     * restrained flower groundcover
+   - This is meant to reduce or eliminate the GPU texture warnings while also
+     giving the foreground a cleaner, more scene-bible-appropriate look.
+
+4. Composition refinement.
+   - slightly more open framing
+   - trees farther outward / slightly back
+   - quieter spring lighting
+
+Suggested test
+--------------
+HECATE_EXTERIOR_QUALITY=PREVIEW \
+HECATE_EXTERIOR_SEASONS=spring \
+blender --background --python blender/house/exterior/build_exterior_25d.py

@@ -5,11 +5,13 @@ import '@/styles/house-exterior.css';
 interface Props {
   class?: string;
   ariaLabel?: string;
+  defaultOnly?: boolean;
 }
 
 const {
   class: className = '',
   ariaLabel = 'Seasonal exterior view of the house',
+  defaultOnly = false,
 } = Astro.props;
 
 const renders = {
@@ -25,6 +27,7 @@ const renders = {
   role="img"
   aria-label={ariaLabel}
   data-house-exterior
+  data-default-only={defaultOnly ? true : undefined}
 >
   <div class="house-exterior-stage" aria-hidden="true">
     <img

@@ -4,6 +4,84 @@
     const themeNames = ['light', 'dark'];
     const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
+    const styleNodeState = new WeakMap();
+    const inlineStyleState = new WeakMap();
+    const hiddenState = new WeakMap();
+    const visualSelector = 'astro-island, img, picture, svg, canvas, video, audio, iframe';
+
+    const isStyleNode = (node) =>
+      node instanceof HTMLStyleElement ||
+      (node instanceof HTMLLinkElement && node.relList.contains('stylesheet'));
+
+    const setStyleNodeDisabled = (node, disabled) => {
+      if (!isStyleNode(node)) return;
+      if (!styleNodeState.has(node)) styleNodeState.set(node, Boolean(node.disabled));
+      node.disabled = disabled ? true : styleNodeState.get(node);
+    };
+
+    const setManagedHidden = (element, shouldHide) => {
+      if (!hiddenState.has(element)) hiddenState.set(element, element.hasAttribute('hidden'));
+      if (shouldHide || hiddenState.get(element)) element.setAttribute('hidden', '');
+      else element.removeAttribute('hidden');
+    };
+
+    const syncVisibility = (element, htmlMode) => {
+      if (!(element instanceof HTMLElement || element instanceof SVGElement)) return;
+
+      if (element.hasAttribute('data-html-only')) {
+        if (htmlMode) element.removeAttribute('hidden');
+        else element.setAttribute('hidden', '');
+        return;
+      }
+
+      if (
+        element.hasAttribute('data-default-only') ||
+        (element instanceof Element && element.matches(visualSelector))
+      ) {
+        setManagedHidden(element, htmlMode);
+      }
+    };
+
+    const syncInlineStyle = (element, htmlMode) => {
+      if (!(element instanceof Element)) return;
+
+      if (htmlMode) {
+        if (!element.hasAttribute('style')) return;
+        if (!inlineStyleState.has(element)) {
+          inlineStyleState.set(element, element.getAttribute('style'));
+        }
+        element.removeAttribute('style');
+        return;
+      }
+
+      if (!inlineStyleState.has(element)) return;
+      const original = inlineStyleState.get(element);
+      if (original === null) element.removeAttribute('style');
+      else element.setAttribute('style', original);
+      inlineStyleState.delete(element);
+    };
+
+    const applyHtmlPresentation = (targetDocument, htmlMode) => {
+      const root = targetDocument.documentElement;
+      root.dataset.htmlMode = String(htmlMode);
+
+      targetDocument
+        .querySelectorAll('style, link[rel~="stylesheet"]')
+        .forEach((node) => setStyleNodeDisabled(node, htmlMode));
+
+      targetDocument
+        .querySelectorAll('[data-html-only], [data-default-only], astro-island, img, picture, svg, canvas, video, audio, iframe')
+        .forEach((element) => syncVisibility(element, htmlMode));
+
+      targetDocument
+        .querySelectorAll('[style]')
+        .forEach((element) => syncInlineStyle(element, htmlMode));
+
+      syncInlineStyle(root, htmlMode);
+    };
+
+    window.__hecateApplyHtmlPresentation = applyHtmlPresentation;
+
     const automaticSeason = () => {
       const month = new Date().getMonth();
       if (month >= 2 && month <= 4) return 'spring';
@@ -53,12 +131,19 @@
       root.dataset.season = season;
       root.dataset.theme = theme;
       root.dataset.soundEnabled = String(soundEnabled);
-      root.dataset.htmlMode = String(htmlMode);
       root.dataset.themeReady = 'true';
       root.style.colorScheme = htmlMode ? 'light' : theme;
+      applyHtmlPresentation(targetDocument, htmlMode);
     };
 
     const updateThemeColor = () => {
+      if (document.documentElement.dataset.htmlMode === 'true') {
+        document
+          .querySelector('meta[name="theme-color"]')
+          ?.setAttribute('content', '#ffffff');
+        return;
+      }
+
       requestAnimationFrame(() => {
         const themeColor = getComputedStyle(document.documentElement)
           .getPropertyValue('--header-bg')
@@ -78,6 +163,45 @@
     if (!window.__cyrusThemeBootstrapInstalled) {
       window.__cyrusThemeBootstrapInstalled = true;
 
+      const observer = new MutationObserver((mutations) => {
+        const htmlMode = document.documentElement.dataset.htmlMode === 'true';
+
+        for (const mutation of mutations) {
+          if (mutation.type === 'attributes') {
+            const target = mutation.target;
+            if (target instanceof Element && mutation.attributeName === 'style') {
+              syncInlineStyle(target, htmlMode);
+            }
+            continue;
+          }
+
+          for (const node of mutation.addedNodes) {
+            if (!(node instanceof Element)) continue;
+
+            if (isStyleNode(node)) setStyleNodeDisabled(node, htmlMode);
+            syncVisibility(node, htmlMode);
+            syncInlineStyle(node, htmlMode);
+
+            node
+              .querySelectorAll('style, link[rel~="stylesheet"]')
+              .forEach((styleNode) => setStyleNodeDisabled(styleNode, htmlMode));
+            node
+              .querySelectorAll('[data-html-only], [data-default-only], astro-island, img, picture, svg, canvas, video, audio, iframe')
+              .forEach((element) => syncVisibility(element, htmlMode));
+            node
+              .querySelectorAll('[style]')
+              .forEach((element) => syncInlineStyle(element, htmlMode));
+          }
+        }
+      });
+
+      observer.observe(document.documentElement, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ['style'],
+      });
+
       document.addEventListener('astro:before-swap', (event) => {
         applyPreferences(event.newDocument);
       });
@@ -87,9 +211,10 @@
         updateThemeColor();
       });
 
-      document.addEventListener('DOMContentLoaded', updateThemeColor, {
-        once: true,
-      });
+      document.addEventListener('DOMContentLoaded', () => {
+        applyPreferences();
+        updateThemeColor();
+      }, { once: true });
 
       darkModeQuery.addEventListener('change', () => {
         if (!readPreference('color-theme')) {

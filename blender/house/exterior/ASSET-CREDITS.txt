@@ -1,0 +1,21 @@
+HECATE946 HOUSE EXTERIOR — PROFESSIONAL ASSET SOURCES
+
+All external visual assets used by the professional exterior are from Poly Haven
+and are licensed CC0.
+
+Assets:
+- Tree Small 02 — tree_small_02
+- Grass Bermuda 01 — grass_bermuda_01
+- Shrub 04 — shrub_04
+- Shrub Sorrel 01 — shrub_sorrel_01
+- Concrete Floor 01 — concrete_floor_01
+- Kloppenheim 01 (Pure Sky) — kloppenheim_01_puresky
+
+The files are downloaded locally by:
+    blender/house/exterior/download_exterior_assets.py
+
+They are intentionally NOT bundled in the patch ZIP because they are heavyweight
+render assets and the hecate946 source ZIP intentionally excludes .blend/.hdr
+binaries.
+
+Poly Haven asset license: CC0.

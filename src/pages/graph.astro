@@ -1,12 +1,10 @@
 ---
 import WebsiteGraph from '@/components/islands/WebsiteGraph.svelte';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { projects } from '@/data/projects';
-import { hallCatalog, secondStoryRooms } from '@/features/immersive/catalog';
 import { buildSiteMapGraph, normalizeSitePath } from '@/lib/site-map';
+import { siteRoutes } from '@/lib/site-routes';
 import { withBase } from '@/lib/paths';
 
-const pageFiles = Object.keys(import.meta.glob('/src/pages/**/*.astro'));
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const currentPath = normalizeSitePath(
   basePath && Astro.url.pathname.startsWith(basePath)
@@ -14,30 +12,8 @@ const currentPath = normalizeSitePath(
     : Astro.url.pathname,
 );
 
-const dynamicRoutes = [
-  ...projects.map((project) => ({
-    href: `/projects/${project.slug}/`,
-    label: project.title,
-    description: project.tagline,
-    category: 'projects' as const,
-  })),
-  ...secondStoryRooms.map((room) => ({
-    href: `/rooms/${room.slug}/`,
-    label: room.title,
-    description: room.description,
-    category: 'spaces' as const,
-  })),
-  ...hallCatalog.map((hall) => ({
-    href: `/halls/${hall.slug}/`,
-    label: hall.title,
-    description: hall.description,
-    category: 'spaces' as const,
-  })),
-];
-
 const graph = buildSiteMapGraph({
-  pageFiles,
-  dynamicRoutes,
+  routes: siteRoutes,
   currentPath,
   resolveHref: withBase,
 });
@@ -61,15 +37,33 @@ const graph = buildSiteMapGraph({
     />
   </div>
 
-  <section class="website-graph-html" data-html-only>
+  <section class="website-graph-html" data-html-only hidden>
     <h1>Website Graph</h1>
-    <p>Use the site tree above to browse every page.</p>
+    <p>The graphical view is replaced by the complete route inventory in HTML mode.</p>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Path</th>
+          <th scope="col">Page</th>
+          <th scope="col">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {siteRoutes.map((route) => (
+          <tr>
+            <td><code>{route.href}</code></td>
+            <td><a href={withBase(route.href)}>{route.label}</a></td>
+            <td>{route.description ?? ''}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </section>
 </BaseLayout>
 
 <style is:global>
-  html:not([data-html-mode='true']),
-  html:not([data-html-mode='true']) body.website-graph-body {
+  html,
+  body.website-graph-body {
     width: 100%;
     height: 100%;
     min-height: 100%;
@@ -78,8 +72,8 @@ const graph = buildSiteMapGraph({
     overscroll-behavior: none;
   }
 
-  html[data-theme='dark']:not([data-html-mode='true']),
-  html[data-theme='dark']:not([data-html-mode='true']) body.website-graph-body {
+  html[data-theme='dark'],
+  html[data-theme='dark'] body.website-graph-body {
     background: #000;
   }
 
@@ -117,13 +111,4 @@ const graph = buildSiteMapGraph({
     padding: 2rem var(--site-edge);
   }
 
-  html[data-html-mode='true'] body.website-graph-body {
-    height: auto;
-    overflow: auto;
-  }
-
-  html[data-html-mode='true'] #main-content.website-graph-main {
-    height: auto;
-    overflow: visible;
-  }
 </style>

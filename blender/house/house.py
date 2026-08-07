@@ -37,6 +37,14 @@ from mathutils import Vector
 
 import bpy
 
+# Shared project compatibility rule: never assume an Eevee enum name.
+import sys
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+from blender.shared.render_compat import set_best_eevee
+
 
 # -----------------------------------------------------------------------------
 # USER CONTROLS
@@ -1589,10 +1597,8 @@ def build_house() -> None:
     add_area("Centered roof fill", (0.0, -1.0, 12.0), 850.0, 5.5, (0.0, 0.0, 5.6))
 
     scene = bpy.context.scene
-    try:
-        scene.render.engine = "BLENDER_EEVEE_NEXT"
-    except Exception:
-        scene.render.engine = "BLENDER_EEVEE"
+    selected_engine = set_best_eevee(scene)
+    print(f"House preview render engine: {selected_engine}")
 
     scene.render.resolution_x = RENDER_WIDTH
     scene.render.resolution_y = RENDER_HEIGHT

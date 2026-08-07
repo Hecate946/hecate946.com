@@ -18,6 +18,7 @@ const seasons = [
   <HouseExterior
     class="house-preview-page"
     ariaLabel="Preview of the seasonal house exterior"
+    defaultOnly
   >
     <div
       class="house-preview-selector"
@@ -39,6 +40,14 @@ const seasons = [
       }
     </div>
   </HouseExterior>
+
+  <section data-html-only hidden>
+    <h1>House Preview</h1>
+    <p>Seasonal exterior preview. Available seasons:</p>
+    <ul>
+      {seasons.map((season) => <li>{season.label}</li>)}
+    </ul>
+  </section>
 </BaseLayout>
 
 <script>

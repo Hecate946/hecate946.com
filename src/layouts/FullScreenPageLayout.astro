@@ -2,7 +2,6 @@
 import HtmlSiteTree from '@/components/core/HtmlSiteTree.astro';
 import BaseHead from '@/components/core/BaseHead.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
-import '@/styles/html-mode.css';
 
 interface Props {
   title: string;
@@ -27,7 +26,7 @@ const plainTitle = title.split('—')[0].trim();
       <slot />
     </div>
 
-    <section data-html-only>
+    <section data-html-only hidden>
       <h1>{plainTitle}</h1>
       <p>{description}</p>
     </section>

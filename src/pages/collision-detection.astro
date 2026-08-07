@@ -25,7 +25,13 @@ import '@/styles/collision-detection.css';
         </p>
       </div>
 
-      <CollisionDetection client:visible />
+      <div data-default-only>
+        <CollisionDetection client:visible />
+      </div>
+
+      <p data-html-only hidden>
+        The pointer-driven rigid-body field is available in the standard site.
+      </p>
 
       <ul class="collision-credit" aria-label="Experiment credits">
         <li>

@@ -64,18 +64,18 @@ body::after {
   letter-spacing: 0.01em;
 }
 
-html:not([data-html-mode='true']) a {
+a {
   color: inherit;
   text-decoration-thickness: 0.07em;
   text-underline-offset: 0.2em;
 }
 
-html:not([data-html-mode='true']) a:hover {
+a:hover {
   color: var(--accent-strong);
 }
 
-html:not([data-html-mode='true']) button,
-html:not([data-html-mode='true']) a {
+button,
+a {
   transition:
     color var(--duration-fast) ease,
     background-color var(--duration-fast) ease,
@@ -93,7 +93,7 @@ b {
   outline-offset: 0.22rem;
 }
 
-html:not([data-html-mode='true']) ::selection {
+::selection {
   background: var(--accent-soft);
   color: var(--text);
 }

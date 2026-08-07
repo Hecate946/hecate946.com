@@ -15,7 +15,7 @@ import '@/styles/navigation.css';
   <section class="navigation-graph" aria-labelledby="navigation-title">
     <h1 id="navigation-title" class="visually-hidden">Site navigation</h1>
 
-    <div class="navigation-graph__stage">
+    <div class="navigation-graph__stage" data-default-only>
       <ForceNetwork
         client:visible
         nodes={navigationNetworkNodes}
@@ -38,5 +38,16 @@ import '@/styles/navigation.css';
         }}
       />
     </div>
+
+    <nav data-html-only hidden aria-label="Primary navigation destinations">
+      <ul>
+        {navigationNetworkNodes.map((node) => (
+          <li>
+            <a href={node.href}>{node.label}</a>
+            {node.description ? ` — ${node.description}` : ''}
+          </li>
+        ))}
+      </ul>
+    </nav>
   </section>
 </BaseLayout>

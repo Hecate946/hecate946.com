@@ -4,7 +4,6 @@ import BaseHead from '@/components/core/BaseHead.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import { withBase } from '@/lib/paths';
 import '@/styles/house-preview.css';
-import '@/styles/html-mode.css';
 
 interface Props {
   active: 'png' | 'svg' | 'compare';
@@ -47,7 +46,7 @@ const plainTitle = title.split('—')[0].trim();
       </main>
     </div>
 
-    <section data-html-only>
+    <section data-html-only hidden>
       <h1>{plainTitle}</h1>
       <p>{description}</p>
     </section>

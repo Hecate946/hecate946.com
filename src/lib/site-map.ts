@@ -15,16 +15,24 @@ export type SiteMapRoute = {
   category?: SiteMapCategory;
 };
 
+export type ResolvedSiteMapRoute = SiteMapRoute & {
+  category: SiteMapCategory;
+};
+
 export type SiteMapGraph = {
   nodes: NetworkNode[];
   links: NetworkLink[];
 };
 
 type BuildSiteMapOptions = {
-  pageFiles: readonly string[];
-  dynamicRoutes?: readonly SiteMapRoute[];
+  routes: readonly ResolvedSiteMapRoute[];
   currentPath: string;
   resolveHref: (href: string) => string;
+};
+
+type ResolveSiteMapRoutesOptions = {
+  pageFiles: readonly string[];
+  dynamicRoutes?: readonly SiteMapRoute[];
 };
 
 const PAGE_METADATA: Record<
@@ -76,6 +84,16 @@ const PAGE_METADATA: Record<
     description: 'Large immersive spaces',
     category: 'spaces',
   },
+  '/ballroom/': {
+    label: 'Ballroom',
+    description: 'Full-viewport rendered ballroom view',
+    category: 'spaces',
+  },
+  '/navigation/': {
+    label: 'Navigation',
+    description: 'Primary navigation force graph',
+    category: 'experiments',
+  },
   '/collision-detection/': {
     label: 'Collision Physics',
     description: 'Rapier seasonal-object simulation',
@@ -101,6 +119,21 @@ const PAGE_METADATA: Record<
     description: 'Vector house preview',
     category: 'experiments',
   },
+  '/house-preview/': {
+    label: 'House Preview',
+    description: 'Seasonal house exterior preview',
+    category: 'experiments',
+  },
+  '/pdfs/': {
+    label: 'PDFs',
+    description: 'Unlisted document index',
+    category: 'experiments',
+  },
+  '/shower/': {
+    label: 'Seasonal Shower',
+    description: 'Seasonal animation showcase',
+    category: 'experiments',
+  },
   '/chess-board/': {
     label: 'Chess Board',
     description: 'Interactive chess-board study',
@@ -109,11 +142,6 @@ const PAGE_METADATA: Record<
   '/pickleball/': {
     label: 'Pickleball',
     description: 'Pickleball interaction study',
-    category: 'experiments',
-  },
-  '/picklabell/': {
-    label: 'Picklabell',
-    description: 'Pickleball prototype',
     category: 'experiments',
   },
 };
@@ -183,6 +211,44 @@ function pageFileToRoute(pageFile: string): string | null {
   return normalizeSitePath(`/${relative}`);
 }
 
+export function resolveSiteMapRoutes({
+  pageFiles,
+  dynamicRoutes = [],
+}: ResolveSiteMapRoutesOptions): ResolvedSiteMapRoute[] {
+  const discoveredRoutes: SiteMapRoute[] = pageFiles
+    .map(pageFileToRoute)
+    .filter((path): path is string => Boolean(path))
+    .map((href) => ({
+      href,
+      label: PAGE_METADATA[href]?.label ?? labelForPath(href),
+      description: PAGE_METADATA[href]?.description,
+      category: PAGE_METADATA[href]?.category ?? categoryForPath(href),
+    }));
+
+  return Array.from(
+    new Map(
+      [...discoveredRoutes, ...dynamicRoutes].map((route) => {
+        const href = normalizeSitePath(route.href);
+        const category = route.category ?? categoryForPath(href);
+        const metadata = PAGE_METADATA[href];
+        return [
+          href,
+          {
+            href,
+            label: route.label || metadata?.label || labelForPath(href),
+            description: route.description ?? metadata?.description,
+            category,
+          } satisfies ResolvedSiteMapRoute,
+        ];
+      }),
+    ).values(),
+  ).sort((left, right) => {
+    const depthDifference = routeDepth(left.href) - routeDepth(right.href);
+    if (depthDifference !== 0) return depthDifference;
+    return left.label.localeCompare(right.label);
+  });
+}
+
 const WORLD_PARENT_BY_HREF = new Map(
   siteWorld.nodes
     .filter((node) => node.parent)
@@ -239,44 +305,10 @@ function anchorForRoute(
 }
 
 export function buildSiteMapGraph({
-  pageFiles,
-  dynamicRoutes = [],
+  routes,
   currentPath,
   resolveHref,
 }: BuildSiteMapOptions): SiteMapGraph {
-  const discoveredRoutes: SiteMapRoute[] = pageFiles
-    .map(pageFileToRoute)
-    .filter((path): path is string => Boolean(path))
-    .map((href) => ({
-      href,
-      label: PAGE_METADATA[href]?.label ?? labelForPath(href),
-      description: PAGE_METADATA[href]?.description,
-      category: PAGE_METADATA[href]?.category ?? categoryForPath(href),
-    }));
-
-  const routes = Array.from(
-    new Map(
-      [...discoveredRoutes, ...dynamicRoutes].map((route) => {
-        const href = normalizeSitePath(route.href);
-        const category = route.category ?? categoryForPath(href);
-        const metadata = PAGE_METADATA[href];
-        return [
-          href,
-          {
-            href,
-            label: route.label || metadata?.label || labelForPath(href),
-            description: route.description ?? metadata?.description,
-            category,
-          } satisfies SiteMapRoute & { category: SiteMapCategory },
-        ];
-      }),
-    ).values(),
-  ).sort((left, right) => {
-    const depthDifference = routeDepth(left.href) - routeDepth(right.href);
-    if (depthDifference !== 0) return depthDifference;
-    return left.label.localeCompare(right.label);
-  });
-
   const normalizedCurrentPath = normalizeSitePath(currentPath);
   const categoryRoutes = new Map<
     SiteMapCategory,

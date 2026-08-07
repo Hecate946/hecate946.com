@@ -2,6 +2,14 @@ const HTML_MODE_STORAGE_KEY = 'html-mode';
 const HTML_MODE_ENABLED_VALUE = 'html';
 const HTML_MODE_DISABLED_VALUE = 'standard';
 
+type HtmlModeWindow = Window &
+  typeof globalThis & {
+    __hecateApplyHtmlPresentation?: (
+      targetDocument: Document,
+      htmlEnabled: boolean,
+    ) => void;
+  };
+
 const readStoredHtmlMode = () => {
   try {
     return localStorage.getItem(HTML_MODE_STORAGE_KEY);
@@ -13,16 +21,20 @@ const readStoredHtmlMode = () => {
 const isHtmlModeEnabled = () =>
   document.documentElement.dataset.htmlMode === 'true';
 
-const updateThemeColor = () => {
+const updateThemeColor = (htmlEnabled: boolean) => {
+  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  if (!meta) return;
+
+  if (htmlEnabled) {
+    meta.setAttribute('content', '#ffffff');
+    return;
+  }
+
   requestAnimationFrame(() => {
     const color = getComputedStyle(document.documentElement)
       .getPropertyValue('--header-bg')
       .trim();
-    if (!color) return;
-
-    document
-      .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
-      .forEach((meta) => meta.setAttribute('content', color));
+    if (color) meta.setAttribute('content', color);
   });
 };
 
@@ -41,15 +53,18 @@ const updateControls = (htmlEnabled: boolean) => {
 };
 
 const applyHtmlMode = (htmlEnabled: boolean) => {
-  document.documentElement.dataset.htmlMode = String(htmlEnabled);
-  document.documentElement.style.colorScheme = htmlEnabled
-    ? 'light'
-    : document.documentElement.dataset.theme === 'dark'
-      ? 'dark'
-      : 'light';
+  const root = document.documentElement;
+  root.dataset.htmlMode = String(htmlEnabled);
+
+  const htmlModeWindow = window as HtmlModeWindow;
+  htmlModeWindow.__hecateApplyHtmlPresentation?.(document, htmlEnabled);
+
+  if (!htmlEnabled) {
+    root.style.colorScheme = root.dataset.theme === 'dark' ? 'dark' : 'light';
+  }
 
   updateControls(htmlEnabled);
-  updateThemeColor();
+  updateThemeColor(htmlEnabled);
 };
 
 const applyStoredHtmlMode = () => {

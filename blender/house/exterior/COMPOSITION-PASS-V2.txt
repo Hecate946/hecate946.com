@@ -1,0 +1,29 @@
+HECATE946 PROFESSIONAL EXTERIOR — COMPOSITION PASS V2
+
+This patch improves the first professional exterior render by focusing on the
+actual visible issues in the screenshot:
+
+1. Composition / camera
+   - pulls the camera back
+   - lowers the target slightly
+   - allows more sky, lawn, and path
+   - prevents the roof from crowding the selector/header area
+
+2. House framing
+   - moves the trees farther outward and slightly back
+   - scales the trees up so they frame the house rather than compete with it
+
+3. Daylight realism
+   - dramatically reduces spring/summer window glow
+   - keeps stronger glow for autumn/winter
+   - makes the glow cards smaller and places them farther inside the house
+
+4. Foreground
+   - gives the lawn more visible structure
+   - lengthens/widens the path so the approach reads more clearly
+
+5. Background
+   - pushes the hills farther back and softens their shape slightly
+
+Command to test spring only:
+HECATE_EXTERIOR_QUALITY=PREVIEW HECATE_EXTERIOR_SEASONS=spring blender --background --python blender/house/exterior/build_exterior_25d.py

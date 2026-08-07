@@ -15,7 +15,6 @@ import { navigation } from '@/config/site';
 import { withBase } from '@/lib/paths';
 import { ClientRouter } from 'astro:transitions';
 import '@/styles/global.css';
-import '@/styles/html-mode.css';
 
 interface Props {
   title?: string;
@@ -117,7 +116,11 @@ const commandItems = Array.from(
 
     <Header />
 
-    <main id="main-content" class={mainClass}>
+    <main
+      id="main-content"
+      class={mainClass}
+      data-default-only={htmlPage === 'home' ? true : undefined}
+    >
       <slot />
     </main>
 
@@ -139,7 +142,13 @@ const commandItems = Array.from(
     {!hideFooter && <Footer />}
     <CommandPalette client:idle items={commandItems} />
 
-    <div class="site-sound-toast" data-site-sound-toast role="status" aria-live="polite"></div>
+    <div
+      class="site-sound-toast"
+      data-site-sound-toast
+      data-default-only
+      role="status"
+      aria-live="polite"
+    ></div>
 
     <script>
       import { initializeHtmlMode } from '@/lib/html-mode';

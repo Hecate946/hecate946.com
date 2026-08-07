@@ -1,6 +1,7 @@
 ---
 import StatsDashboard from '@/components/islands/StatsDashboard.svelte';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import codeStats from '../../public/generated/code-stats.json';
 import { withBase } from '@/lib/paths';
 import '@/styles/stats.css';
 
@@ -9,6 +10,27 @@ const statsApiBase = String(import.meta.env.PUBLIC_STATS_API_URL ?? '').replace(
   '',
 );
 const codeStatsUrl = withBase('/generated/code-stats.json');
+
+type LanguageStat = {
+  name: string;
+  files: number;
+  lines: number;
+  percentage: number;
+};
+
+const languageStats = codeStats.languages as LanguageStat[];
+const generatedAt = new Date(codeStats.generatedAt);
+const generatedLabel = Number.isNaN(generatedAt.valueOf())
+  ? codeStats.generatedAt
+  : generatedAt.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'UTC',
+      timeZoneName: 'short',
+    });
 ---
 
 <BaseLayout
@@ -20,14 +42,208 @@ const codeStatsUrl = withBase('/generated/code-stats.json');
       <h1 id="stats-title">Stats</h1>
     </header>
 
-    <p data-html-only>Live website and code statistics are not rendered in HTML mode.</p>
-
-    <div class="stats-content interior-page-content interior-page-content--balanced">
+    <div class="stats-content interior-page-content interior-page-content--balanced" data-default-only>
       <StatsDashboard
         client:visible
         apiBase={statsApiBase}
         {codeStatsUrl}
       />
     </div>
+
+    <div data-html-only hidden>
+      <section aria-labelledby="html-website-stats-heading">
+        <h2 id="html-website-stats-heading">Website stats</h2>
+        <p data-html-live-status>
+          {statsApiBase ? 'Loading live website statistics…' : 'Live analytics are not configured.'}
+        </p>
+        <table>
+          <tbody>
+            <tr><th scope="row">Estimated visitors</th><td data-html-live="estimatedVisitors">—</td></tr>
+            <tr><th scope="row">Page views</th><td data-html-live="pageViews">—</td></tr>
+            <tr><th scope="row">Sessions</th><td data-html-live="sessions">—</td></tr>
+            <tr><th scope="row">Tracked requests</th><td data-html-live="trackedRequests">—</td></tr>
+            <tr><th scope="row">Countries</th><td data-html-live="countries">—</td></tr>
+            <tr><th scope="row">Active now</th><td data-html-live="activeVisitors">—</td></tr>
+            <tr><th scope="row">First event</th><td data-html-live="firstEventAt">—</td></tr>
+            <tr><th scope="row">Updated</th><td data-html-live="updatedAt">—</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Top pages</h3>
+        <table>
+          <thead><tr><th scope="col">Page</th><th scope="col">Views</th></tr></thead>
+          <tbody data-html-live-pages>
+            <tr><td colspan="2">—</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Top interactions</h3>
+        <table>
+          <thead><tr><th scope="col">Interaction</th><th scope="col">Count</th></tr></thead>
+          <tbody data-html-live-interactions>
+            <tr><td colspan="2">—</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section aria-labelledby="html-code-stats-heading">
+        <h2 id="html-code-stats-heading">Code stats</h2>
+        <p>Generated {generatedLabel}.</p>
+        <table>
+          <tbody>
+            <tr><th scope="row">Commits</th><td>{codeStats.commit.count}</td></tr>
+            <tr><th scope="row">Repository files</th><td>{codeStats.repository.files}</td></tr>
+            <tr><th scope="row">Counted files</th><td>{codeStats.repository.countedFiles ?? codeStats.repository.files}</td></tr>
+            <tr><th scope="row">Directories</th><td>{codeStats.repository.directories}</td></tr>
+            <tr><th scope="row">Total lines</th><td>{codeStats.repository.totalLines}</td></tr>
+            <tr><th scope="row">Source lines</th><td>{codeStats.repository.sourceLines}</td></tr>
+            <tr><th scope="row">Pages</th><td>{codeStats.site.pages}</td></tr>
+            <tr><th scope="row">Components</th><td>{codeStats.site.components}</td></tr>
+            <tr><th scope="row">Layouts</th><td>{codeStats.site.layouts}</td></tr>
+            <tr><th scope="row">Assets</th><td>{codeStats.site.assets}</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Languages</h3>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Language</th>
+              <th scope="col">Files</th>
+              <th scope="col">Lines</th>
+              <th scope="col">Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            {languageStats.length > 0 ? languageStats.map((language) => (
+              <tr>
+                <td>{language.name}</td>
+                <td>{language.files}</td>
+                <td>{language.lines}</td>
+                <td>{language.percentage}%</td>
+              </tr>
+            )) : (
+              <tr><td colspan="4">No generated language statistics yet.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </section>
+
+      <section aria-labelledby="html-your-stats-heading">
+        <h2 id="html-your-stats-heading">Your stats</h2>
+        <p data-html-local-status>Loading local browser statistics…</p>
+        <table>
+          <tbody>
+            <tr><th scope="row">First visit</th><td data-html-local="firstVisitAt">—</td></tr>
+            <tr><th scope="row">Last visit</th><td data-html-local="lastVisitAt">—</td></tr>
+            <tr><th scope="row">Visits</th><td data-html-local="visits">—</td></tr>
+            <tr><th scope="row">Page views</th><td data-html-local="pageViews">—</td></tr>
+            <tr><th scope="row">Active time</th><td data-html-local="activeSeconds">—</td></tr>
+            <tr><th scope="row">Interactions</th><td data-html-local="interactions">—</td></tr>
+            <tr><th scope="row">Theme</th><td data-html-local="colorTheme">—</td></tr>
+            <tr><th scope="row">Season</th><td data-html-local="season">—</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
   </section>
 </BaseLayout>
+
+<script is:inline define:vars={{ statsApiBase }}>
+  (() => {
+    const numberFormatter = new Intl.NumberFormat('en-US');
+    const dateFormatter = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
+    const formatDate = (value) => {
+      if (!value) return 'Not yet';
+      const date = new Date(value);
+      return Number.isNaN(date.valueOf()) ? 'Unknown' : dateFormatter.format(date);
+    };
+
+    const setText = (selector, value) => {
+      const element = document.querySelector(selector);
+      if (element) element.textContent = String(value);
+    };
+
+    const fillRankedTable = (selector, rows, emptyLabel) => {
+      const body = document.querySelector(selector);
+      if (!(body instanceof HTMLTableSectionElement)) return;
+      body.replaceChildren();
+
+      if (!rows?.length) {
+        const row = body.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 2;
+        cell.textContent = emptyLabel;
+        return;
+      }
+
+      for (const item of rows) {
+        const row = body.insertRow();
+        row.insertCell().textContent = item.label;
+        row.insertCell().textContent = numberFormatter.format(item.value ?? 0);
+      }
+    };
+
+    const loadLive = async () => {
+      if (!statsApiBase) return;
+      const status = document.querySelector('[data-html-live-status]');
+
+      try {
+        const response = await fetch(`${statsApiBase}/api/stats?days=30`, {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+        const stats = await response.json();
+        const summary = stats.summary ?? {};
+
+        for (const key of ['estimatedVisitors', 'pageViews', 'sessions', 'trackedRequests', 'countries', 'activeVisitors']) {
+          setText(`[data-html-live="${key}"]`, numberFormatter.format(summary[key] ?? 0));
+        }
+        setText('[data-html-live="firstEventAt"]', formatDate(summary.firstEventAt));
+        setText('[data-html-live="updatedAt"]', formatDate(summary.updatedAt));
+        fillRankedTable('[data-html-live-pages]', stats.pages, 'No page data yet.');
+        fillRankedTable('[data-html-live-interactions]', stats.interactions, 'No interaction data yet.');
+        if (status) status.textContent = `Live · updated ${formatDate(summary.updatedAt)}`;
+      } catch (error) {
+        if (status) {
+          status.textContent = `Live analytics are temporarily unavailable${error instanceof Error ? `: ${error.message}` : '.'}`;
+        }
+      }
+    };
+
+    const loadLocal = () => {
+      const status = document.querySelector('[data-html-local-status]');
+      try {
+        const raw = window.localStorage.getItem('hecate946:your-stats');
+        if (!raw) {
+          if (status) status.textContent = 'No local browser statistics recorded yet.';
+          return;
+        }
+
+        const stats = JSON.parse(raw);
+        setText('[data-html-local="firstVisitAt"]', formatDate(stats.firstVisitAt));
+        setText('[data-html-local="lastVisitAt"]', formatDate(stats.lastVisitAt));
+        setText('[data-html-local="visits"]', numberFormatter.format(stats.visits ?? 0));
+        setText('[data-html-local="pageViews"]', numberFormatter.format(stats.pageViews ?? 0));
+        setText('[data-html-local="activeSeconds"]', `${numberFormatter.format(stats.activeSeconds ?? 0)} seconds`);
+        setText('[data-html-local="interactions"]', numberFormatter.format(stats.interactions ?? 0));
+        setText('[data-html-local="colorTheme"]', stats.colorTheme ?? 'Unknown');
+        setText('[data-html-local="season"]', stats.season ?? 'Unknown');
+        if (status) status.textContent = 'Stored only in this browser.';
+      } catch {
+        if (status) status.textContent = 'Local browser statistics are unavailable.';
+      }
+    };
+
+    loadLocal();
+    void loadLive();
+  })();
+</script>

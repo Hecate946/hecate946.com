@@ -5,7 +5,6 @@ import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import RenderedWorld from '@/components/world/RenderedWorld.svelte';
 import { withBase } from '@/lib/paths';
 import '@/styles/global.css';
-import '@/styles/html-mode.css';
 
 interface Props {
   title: string;
@@ -61,7 +60,7 @@ const plainTitle = title.split('|')[0].trim();
       <a class="room-view-back" href={resolvedBackHref}>{backLabel}</a>
     </main>
 
-    <main data-html-only class="room-view-html">
+    <main data-html-only hidden class="room-view-html">
       <p><a href={resolvedBackHref}>{backLabel}</a></p>
       <h1>{plainTitle}</h1>
       <p>{description}</p>
@@ -75,8 +74,8 @@ const plainTitle = title.split('|')[0].trim();
 </html>
 
 <style is:global>
-  html:not([data-html-mode='true']),
-  html:not([data-html-mode='true']) body.room-view-page {
+  html,
+  body.room-view-page {
     width: 100%;
     height: 100%;
     margin: 0;
@@ -84,11 +83,11 @@ const plainTitle = title.split('|')[0].trim();
     background: #020202;
   }
 
-  html:not([data-html-mode='true']) body.room-view-page::after {
+  body.room-view-page::after {
     display: none;
   }
 
-  html:not([data-html-mode='true']) body.room-view-page #main-content.room-view-shell {
+  body.room-view-page #main-content.room-view-shell {
     position: fixed;
     inset: 0;
     width: 100vw;

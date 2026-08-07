@@ -1,6 +1,6 @@
 ---
-import { projects } from '@/data/projects';
-import { hallSlugs, roomSlugs } from '@/features/immersive/catalog';
+import { headerNavigation } from '@/config/navigation';
+import { htmlSiteRoutes } from '@/lib/site-routes';
 import { withBase } from '@/lib/paths';
 
 interface Props {
@@ -15,193 +15,91 @@ const normalizePath = (value: string) => {
 };
 
 const isHome = normalizePath(currentPath) === normalizePath(withBase('/'));
-
-const primaryPages = [
-  { label: 'about', href: '/about/' },
-  { label: 'resume', href: '/resume/' },
-  { label: 'projects/', href: '/projects/' },
-  { label: 'contact', href: '/contact/' },
-  { label: 'stats', href: '/stats/' },
-] as const;
-
-const experimentPages = [
-  { label: 'navigation', href: '/navigation/' },
-  { label: 'collision-detection', href: '/collision-detection/' },
-  { label: 'd3', href: '/d3/' },
-  { label: 'chess-board', href: '/chess-board/' },
-  { label: 'pickleball', href: '/pickleball/' },
-  { label: 'shower', href: '/shower/' },
-] as const;
-
-const housePreviewPages = [
-  { label: 'house-png', href: '/house-png/' },
-  { label: 'house-svg', href: '/house-svg/' },
-  { label: 'house-compare', href: '/house-compare/' },
-] as const;
+const routeHref = (href: string) =>
+  href === '/404.html' ? withBase('/404.html') : withBase(href);
 ---
 
 {
   isHome ? (
-    <section
-      class="html-site-tree"
-      data-html-only
-      aria-label="HTML mode site index"
-    >
+    <section data-html-only hidden aria-label="HTML mode site index">
       <header>
-        <p><strong>hecate946.com</strong></p>
+        <h1>hecate946.com</h1>
         <p>Cyrus Asasi</p>
         <p>software engineer + classical musician</p>
       </header>
 
       <nav aria-label="Primary site navigation">
-        <p><strong>navigation/</strong></p>
-        {
-          primaryPages.map((page, index) => {
-            const isProjects = page.href === '/projects/';
-            const branch = index === primaryPages.length - 1 ? '└── ' : '├── ';
+        <h2>Navigation</h2>
+        <ul>
+          {headerNavigation.map((page) => (
+            <li>
+              <a href={withBase(page.href)} data-astro-prefetch>
+                {page.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
-            return (
-              <>
-                <div>
-                  <span aria-hidden="true">{branch}</span>
-                  <a href={withBase(page.href)} data-astro-prefetch>
-                    {page.label}
+      <section aria-labelledby="all-routes-heading">
+        <h2 id="all-routes-heading">All routes</h2>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Path</th>
+              <th scope="col">Page</th>
+              <th scope="col">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            {htmlSiteRoutes.map((route) => (
+              <tr>
+                <td>
+                  <code>{route.href}</code>
+                </td>
+                <td>
+                  <a href={routeHref(route.href)} data-astro-prefetch>
+                    {route.label}
                   </a>
-                </div>
-
-                {
-                  isProjects &&
-                    projects.map((project, projectIndex) => (
-                      <div>
-                        <span aria-hidden="true">
-                          {projectIndex === projects.length - 1
-                            ? '│   └── '
-                            : '│   ├── '}
-                        </span>
-                        <a
-                          href={withBase(`/projects/${project.slug}/`)}
-                          data-astro-prefetch
-                        >
-                          {project.slug}
-                        </a>
-                      </div>
-                    ))
-                }
-              </>
-            );
-          })
-        }
-      </nav>
-
-      <nav aria-label="All remaining site paths">
-        <p><strong>all paths/</strong></p>
-
-        <div>
-          <span aria-hidden="true">├── </span>
-          <a href={withBase('/rooms/')} data-astro-prefetch>rooms/</a>
-        </div>
-        {
-          roomSlugs.map((slug, index) => (
-            <div>
-              <span aria-hidden="true">
-                {index === roomSlugs.length - 1 ? '│   └── ' : '│   ├── '}
-              </span>
-              <a href={withBase(`/rooms/${slug}/`)}>{slug}</a>
-            </div>
-          ))
-        }
-
-        <div>
-          <span aria-hidden="true">├── </span>
-          <a href={withBase('/halls/')} data-astro-prefetch>halls/</a>
-        </div>
-        {
-          hallSlugs.map((slug, index) => (
-            <div>
-              <span aria-hidden="true">
-                {index === hallSlugs.length - 1 ? '│   └── ' : '│   ├── '}
-              </span>
-              <a href={withBase(`/halls/${slug}/`)}>{slug}</a>
-            </div>
-          ))
-        }
-
-        <div><span aria-hidden="true">├── </span>house-previews/</div>
-        {
-          housePreviewPages.map((page, index) => (
-            <div>
-              <span aria-hidden="true">
-                {index === housePreviewPages.length - 1
-                  ? '│   └── '
-                  : '│   ├── '}
-              </span>
-              <a href={withBase(page.href)}>{page.label}</a>
-            </div>
-          ))
-        }
-
-        <div><span aria-hidden="true">├── </span>experiments/</div>
-        {
-          experimentPages.map((page, index) => (
-            <div>
-              <span aria-hidden="true">
-                {index === experimentPages.length - 1
-                  ? '│   └── '
-                  : '│   ├── '}
-              </span>
-              <a href={withBase(page.href)}>{page.label}</a>
-            </div>
-          ))
-        }
-
-        <div>
-          <span aria-hidden="true">└── </span>
-          <a href={withBase('/404.html')}>404.html</a>
-        </div>
-      </nav>
+                </td>
+                <td>{route.description ?? ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
 
       <nav aria-label="External links">
-        <p><strong>external/</strong></p>
-        <div>
-          <span aria-hidden="true">├── </span>
-          <a href="mailto:cyrusasasi@gmail.com">email</a>
-        </div>
-        <div>
-          <span aria-hidden="true">├── </span>
-          <a
-            href="https://github.com/Hecate946/"
-            target="_blank"
-            rel="me noopener noreferrer"
-          >
-            github
-          </a>
-        </div>
-        <div>
-          <span aria-hidden="true">├── </span>
-          <a
-            href="https://www.linkedin.com/in/cyrus-asasi/"
-            target="_blank"
-            rel="me noopener noreferrer"
-          >
-            linkedin
-          </a>
-        </div>
-        <div>
-          <span aria-hidden="true">└── </span>
-          <a
-            href="https://buymeacoffee.com/hecate946"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            buy me a coffee
-          </a>
-        </div>
+        <h2>External</h2>
+        <ul>
+          <li><a href="mailto:cyrusasasi@gmail.com">Email</a></li>
+          <li>
+            <a
+              href="https://github.com/Hecate946/"
+              target="_blank"
+              rel="me noopener noreferrer"
+            >GitHub</a>
+          </li>
+          <li>
+            <a
+              href="https://www.linkedin.com/in/cyrus-asasi/"
+              target="_blank"
+              rel="me noopener noreferrer"
+            >LinkedIn</a>
+          </li>
+          <li>
+            <a
+              href="https://buymeacoffee.com/hecate946"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Buy me a coffee</a>
+          </li>
+        </ul>
       </nav>
 
-      <div>
-        <p><strong>settings/</strong></p>
-        <div>
-          <span aria-hidden="true">├── </span>
+      <section aria-labelledby="html-settings-heading">
+        <h2 id="html-settings-heading">Settings</h2>
+        <p>
           <button
             type="button"
             aria-label="Enable sounds"
@@ -209,12 +107,10 @@ const housePreviewPages = [
             data-label="Enable sounds"
             data-sound-toggle
           >
-            <span data-sound-label="enable">Enable sounds</span>
-            <span data-sound-label="disable">Disable sounds</span>
+            <span data-sound-toggle-text>Enable sounds</span>
           </button>
-        </div>
-        <div>
-          <span aria-hidden="true">└── </span>
+        </p>
+        <p>
           <button
             type="button"
             aria-label="Return to standard site"
@@ -224,13 +120,15 @@ const housePreviewPages = [
           >
             <span data-html-mode-text>Return to standard site</span>
           </button>
-        </div>
-      </div>
+        </p>
+      </section>
     </section>
   ) : (
-    <nav class="html-back" data-html-only aria-label="HTML mode controls">
-      <a href={withBase('/')} data-astro-prefetch>&lt;- back</a>
-      <span aria-hidden="true"> | </span>
+    <nav data-html-only hidden aria-label="HTML mode controls">
+      <a href={withBase('/')} data-astro-prefetch>Home</a>
+      {' | '}
+      <code>{currentPath}</code>
+      {' | '}
       <button
         type="button"
         aria-label="Return to standard site"
@@ -240,6 +138,7 @@ const housePreviewPages = [
       >
         <span data-html-mode-text>Return to standard site</span>
       </button>
+      <hr />
     </nav>
   )
 }

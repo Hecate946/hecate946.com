@@ -18,8 +18,16 @@ import '@/styles/d3.css';
       </p>
     </header>
 
-    <div class="d3-page__content">
+    <div class="d3-page__content" data-default-only>
       <D3Playground client:visible />
     </div>
+
+    <section data-html-only hidden>
+      <h2>Interactive experiments</h2>
+      <p>
+        The force-graph experiments require the graphical site. Their page,
+        title, description, and route remain available here as plain HTML.
+      </p>
+    </section>
   </section>
 </BaseLayout>
