@@ -1,191 +1,266 @@
 <script lang="ts">
-  import PixiWebsiteGraph from '@/components/graphs/PixiWebsiteGraph.svelte';
+  import { onMount } from 'svelte';
+  import VoronoiWebsiteGraph from '@/components/graphs/VoronoiWebsiteGraph.svelte';
   import type { NetworkLink, NetworkNode } from '@/components/graphs/types';
+  import { WEBSITE_GRAPH_GROUPS } from '@/config/graph';
 
   export let nodes: NetworkNode[] = [];
   export let links: NetworkLink[] = [];
+  export let closeHref = '/';
+
+  type GraphTheme = 'light' | 'dark';
+
+  const GRAPH_THEME_STORAGE_KEY = 'hecate946:graph-theme';
+
   let graph: { resetView: () => void } | null = null;
+  let graphTheme: GraphTheme | null = null;
+
+  function currentSiteTheme(): GraphTheme {
+    return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+  }
+
+  function toggleGraphTheme() {
+    const current = graphTheme ?? currentSiteTheme();
+    graphTheme = current === 'dark' ? 'light' : 'dark';
+    try {
+      localStorage.setItem(GRAPH_THEME_STORAGE_KEY, graphTheme);
+    } catch {
+      // The graph still toggles normally when storage is unavailable.
+    }
+  }
+
+  onMount(() => {
+    let storedTheme: string | null = null;
+    try {
+      storedTheme = localStorage.getItem(GRAPH_THEME_STORAGE_KEY);
+    } catch {
+      storedTheme = null;
+    }
+
+    graphTheme = storedTheme === 'light' || storedTheme === 'dark'
+      ? storedTheme
+      : currentSiteTheme();
+  });
 </script>
 
 <section
   class="website-graph"
+  data-graph-theme={graphTheme ?? undefined}
   aria-label="Website graph"
-  aria-describedby="website-graph-instructions"
   data-site-sound-silent
 >
-  <p id="website-graph-instructions" class="website-graph__instructions">
-    Hover or focus a node to reveal its label. Scroll or pinch to zoom. Drag
-    empty space to pan, and drag nodes to rearrange them. Use Center graph to
-    restore the fitted view.
-  </p>
+  <VoronoiWebsiteGraph
+    bind:this={graph}
+    {nodes}
+    {links}
+    ariaLabel="Force-directed graph of every destination on the website"
+    theme={graphTheme}
+  />
 
-  <div class="website-graph__stage">
-    <PixiWebsiteGraph
-      bind:this={graph}
-      nodes={nodes}
-      {links}
-      ariaLabel="Zoomable force graph of every destination on the site"
-    />
+  <a class="website-graph__control website-graph__close" href={closeHref} aria-label="Close graph" title="Close graph">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18"></path>
+    </svg>
+  </a>
+
+  <div class="website-graph__controls-right">
+    <button
+      class="website-graph__control website-graph__mode"
+      type="button"
+      aria-label={graphTheme === 'dark' ? 'Switch graph to light mode' : 'Switch graph to dark mode'}
+      title={graphTheme === 'dark' ? 'Switch graph to light mode' : 'Switch graph to dark mode'}
+      on:click={toggleGraphTheme}
+    >
+      {graphTheme === 'dark' ? 'Light' : 'Dark'}
+    </button>
+
+    <button
+      class="website-graph__control website-graph__center"
+      type="button"
+      aria-label="Center graph"
+      title="Center graph"
+      on:click={() => graph?.resetView()}
+    >
+      Center
+    </button>
   </div>
 
-  <button
-    class="website-graph__center"
-    type="button"
-    aria-label="Center graph view"
-    title="Center graph"
-    on:click={() => graph?.resetView()}
-  >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"></path>
-      <circle cx="12" cy="12" r="2.25"></circle>
-    </svg>
-  </button>
+  <aside class="website-graph__legend" aria-label="Graph groups">
+    {#each WEBSITE_GRAPH_GROUPS as item}
+      <div class="website-graph__legend-item">
+        <span class="website-graph__legend-dot" style={`--legend-color: ${item.color}`}></span>
+        <span>{item.label}</span>
+      </div>
+    {/each}
+  </aside>
 </section>
 
 <style>
   .website-graph {
-    --website-graph-font: system-ui, -apple-system, BlinkMacSystemFont,
-      "Segoe UI", Ubuntu, Roboto, "Noto Sans", "Helvetica Neue", Arial,
-      sans-serif;
-
-    --graph-bg: #f4f7f6;
-    --graph-panel: #eef3f1;
-    --graph-text: #172522;
-    --graph-muted: #667572;
-    --graph-line: #d6dfdc;
-    --graph-node: #6f7e7a;
-    --graph-node-current: #344b47;
-    --graph-node-ring: #f4f7f6;
-    --graph-edge: #9ba9a5;
-    --graph-label: #1c312d;
-    --graph-label-active: #102925;
-    --graph-hover: #0b6f69;
-    --graph-hover-ring: #e4efed;
-    --graph-hover-soft: color-mix(in srgb, #0b6f69 11%, transparent);
-
     position: relative;
     width: 100%;
     height: 100%;
     min-width: 0;
     min-height: 0;
     overflow: hidden;
-    background-color: var(--graph-bg);
-    color: var(--graph-text);
-    font-family: var(--website-graph-font);
-    overscroll-behavior: none;
+    background: #fff;
+    color: #000;
   }
 
-  :global(html[data-theme='dark']) .website-graph {
-    --graph-bg: #0d1312;
-    --graph-panel: #111917;
-    --graph-text: #e4ebe9;
-    --graph-muted: #879592;
-    --graph-line: #26322f;
-    --graph-node: #93a19d;
-    --graph-node-current: #d2dcda;
-    --graph-node-ring: #0d1312;
-    --graph-edge: #45534f;
-    --graph-label: #e5eeeb;
-    --graph-label-active: #f2fffc;
-    --graph-hover: #0b6f69;
-    --graph-hover-ring: #183d38;
-    --graph-hover-soft: color-mix(in srgb, #0b6f69 22%, transparent);
+  .website-graph[data-graph-theme='dark'] {
+    background: #000;
+    color: #fff;
   }
 
-  .website-graph__stage {
+  :global(html[data-theme='dark']) .website-graph:not([data-graph-theme]) {
+    background: #000;
+    color: #fff;
+  }
+
+  .website-graph :global(.voronoi-website-graph) {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    min-width: 0;
-    min-height: 0;
-    overflow: hidden;
-    background-color: var(--graph-bg);
-    overscroll-behavior: none;
   }
 
-  .website-graph__stage :global(.pixi-website-graph) {
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-  }
-
-  .website-graph__center {
+  .website-graph__control {
     position: absolute;
-    top: 0.72rem;
-    right: 0.72rem;
-    z-index: 4;
-    display: grid;
-    width: 2.8rem;
-    height: 2.8rem;
-    place-items: center;
-    padding: 0;
-    border: 1px solid var(--graph-line);
-    border-radius: 0.5rem;
-    background: color-mix(in srgb, var(--graph-panel) 92%, transparent);
-    color: var(--graph-muted);
+    top: 14px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 30px;
+    border: 1px solid #d5d5d5;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #222;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    line-height: 1;
+    text-decoration: none;
     cursor: pointer;
-    box-shadow: 0 1px 5px color-mix(in srgb, #000 10%, transparent);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    transition:
-      color 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      border-color 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .website-graph__center:hover,
-  .website-graph__center:focus-visible {
-    border-color: var(--graph-hover);
-    background: var(--graph-hover-soft);
-    color: var(--graph-hover);
+  .website-graph[data-graph-theme='dark'] .website-graph__control {
+    border-color: #333;
+    background: rgba(0, 0, 0, 0.94);
+    color: #eee;
   }
 
-  .website-graph__center:focus-visible {
-    outline: 2px solid var(--graph-hover);
+  :global(html[data-theme='dark']) .website-graph:not([data-graph-theme]) .website-graph__control {
+    border-color: #333;
+    background: rgba(0, 0, 0, 0.94);
+    color: #eee;
+  }
+
+  .website-graph__control:hover,
+  .website-graph__control:focus-visible {
+    border-color: #999;
+  }
+
+  .website-graph__control:focus-visible {
+    outline: 1px solid currentColor;
     outline-offset: 2px;
   }
 
-  .website-graph__center svg {
-    width: 1.48rem;
-    height: 1.48rem;
-    overflow: visible;
+  .website-graph__close {
+    left: 14px;
+    width: 30px;
+    padding: 0;
+  }
+
+  .website-graph__close svg {
+    width: 14px;
+    height: 14px;
     fill: none;
     stroke: currentColor;
+    stroke-width: 1.5;
     stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 1.72;
   }
 
-  .website-graph__instructions {
+  .website-graph__controls-right {
     position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .website-graph__controls-right .website-graph__control {
+    position: static;
+  }
+
+  .website-graph__mode,
+  .website-graph__center {
+    padding: 0 10px;
+  }
+
+  .website-graph__legend {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    z-index: 4;
+    display: grid;
+    gap: 4px;
+    padding: 7px 9px;
+    border: 1px solid #e2e2e2;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #222;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    line-height: 1.15;
+  }
+
+  .website-graph[data-graph-theme='dark'] .website-graph__legend {
+    border-color: #282828;
+    background: rgba(0, 0, 0, 0.88);
+    color: #ddd;
+  }
+
+  :global(html[data-theme='dark']) .website-graph:not([data-graph-theme]) .website-graph__legend {
+    border-color: #282828;
+    background: rgba(0, 0, 0, 0.88);
+    color: #ddd;
+  }
+
+  .website-graph__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     white-space: nowrap;
-    border: 0;
   }
 
-  @media (max-width: 44rem) {
-    .website-graph__center {
-      top: 0.55rem;
-      right: 0.55rem;
-      width: 2.65rem;
-      height: 2.65rem;
-    }
-
-    .website-graph__center svg {
-      width: 1.42rem;
-      height: 1.42rem;
-    }
+  .website-graph__legend-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 50%;
+    background: var(--legend-color);
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .website-graph__center {
-      transition: none;
+  @media (max-width: 40rem) {
+    .website-graph__control {
+      top: 10px;
+    }
+
+    .website-graph__close {
+      left: 10px;
+    }
+
+    .website-graph__controls-right {
+      top: 10px;
+      right: 10px;
+    }
+
+    .website-graph__legend {
+      left: 10px;
+      bottom: 10px;
     }
   }
 </style>
