@@ -234,7 +234,7 @@ export const houseScene = {
       label: 'Ballroom',
       roomLabel: 'The Ballroom',
       description: 'A neoclassical ballroom rendered as an immersive panoramic hall.',
-      href: '/halls/ballroom/',
+      href: '/ballroom/',
       scene: 'ballroom',
       sceneViewBox: { width: 268, height: 162, fit: 'slice' },
       geometry: {

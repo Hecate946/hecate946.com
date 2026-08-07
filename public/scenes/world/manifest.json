@@ -6,7 +6,7 @@
       "id": "exterior",
       "label": "House",
       "description": "The exterior of the house.",
-      "image": "/scenes/world/views/exterior.png",
+      "image": "/scenes/house/shell.webp",
       "fallbackImage": "/scenes/house/shell.webp",
       "width": 1800,
       "height": 1200,
@@ -69,8 +69,7 @@
         {
           "id": "ballroom",
           "label": "Ballroom",
-          "href": "/halls/ballroom/",
-          "targetView": "ballroom",
+          "href": "/ballroom/",
           "bounds": {
             "x": 0.137222,
             "y": 0.595,
@@ -116,7 +115,7 @@
     {
       "id": "ballroom",
       "label": "Ballroom",
-      "description": "A sparse Neoclassical ballroom built as an authored 2.5D Cycles scene.",
+      "description": "A windowless house-matched Neoclassical ballroom with dark teal carpet, one centered arched door, a simple ring chandelier, and soft magical lighting.",
       "image": "/scenes/world/views/ballroom.png",
       "width": 1800,
       "height": 1200,
@@ -124,45 +123,13 @@
         {
           "id": "ballroom-exit",
           "label": "Exterior",
-          "targetView": "exterior",
           "bounds": {
-            "x": 0.376619,
-            "y": 0.285732,
-            "width": 0.246762,
-            "height": 0.508158
-          }
-        },
-        {
-          "id": "ballroom-piano",
-          "label": "Piano",
-          "targetView": "ballroom-piano",
-          "bounds": {
-            "x": 0,
-            "y": 0.580498,
-            "width": 0.366005,
-            "height": 0.371687
-          }
-        }
-      ]
-    },
-    {
-      "id": "ballroom-piano",
-      "label": "Ballroom Piano",
-      "description": "A closer authored composition of the ballroom piano.",
-      "image": "/scenes/world/views/ballroom-piano.png",
-      "width": 1800,
-      "height": 1200,
-      "hotspots": [
-        {
-          "id": "ballroom-return",
-          "label": "Ballroom",
-          "targetView": "ballroom",
-          "bounds": {
-            "x": 0.69,
-            "y": 0.23,
+            "x": 0.425,
+            "y": 0.305,
             "width": 0.15,
-            "height": 0.31
-          }
+            "height": 0.4
+          },
+          "href": "/"
         }
       ]
     }

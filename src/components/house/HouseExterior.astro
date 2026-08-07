@@ -1,0 +1,65 @@
+---
+import { withBase } from '@/lib/paths';
+import '@/styles/house-exterior.css';
+
+interface Props {
+  class?: string;
+  ariaLabel?: string;
+}
+
+const {
+  class: className = '',
+  ariaLabel = 'Seasonal exterior view of the house',
+} = Astro.props;
+
+const renders = {
+  spring: withBase('/scenes/house/exterior/spring.png'),
+  summer: withBase('/scenes/house/exterior/summer.png'),
+  autumn: withBase('/scenes/house/exterior/autumn.png'),
+  winter: withBase('/scenes/house/exterior/winter.png'),
+};
+---
+
+<div
+  class:list={['house-exterior-page', className]}
+  role="img"
+  aria-label={ariaLabel}
+  data-house-exterior
+>
+  <div class="house-exterior-stage" aria-hidden="true">
+    <img
+      class="house-exterior-render house-exterior-render--spring"
+      src={renders.spring}
+      alt=""
+      decoding="async"
+      loading="eager"
+      draggable="false"
+    />
+    <img
+      class="house-exterior-render house-exterior-render--summer"
+      src={renders.summer}
+      alt=""
+      decoding="async"
+      loading="eager"
+      draggable="false"
+    />
+    <img
+      class="house-exterior-render house-exterior-render--autumn"
+      src={renders.autumn}
+      alt=""
+      decoding="async"
+      loading="eager"
+      draggable="false"
+    />
+    <img
+      class="house-exterior-render house-exterior-render--winter"
+      src={renders.winter}
+      alt=""
+      decoding="async"
+      loading="eager"
+      draggable="false"
+    />
+  </div>
+
+  <slot />
+</div>

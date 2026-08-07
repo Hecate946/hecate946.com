@@ -1,226 +1,103 @@
-:root {
-  color-scheme: light;
-  --surface: #fffaf0;
-  --line: rgb(20 36 39 / 0.24);
-  --text: #10282c;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-family: var(--font-mono);
-}
+/*
+ * /house-preview
+ *
+ * The scene intentionally occupies exactly the live space between the site's
+ * existing header and footer. We do not guess their pixel heights.
+ */
 
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  width: 100%;
-  min-width: 320px;
-  min-height: 100%;
-  margin: 0;
-}
-
-body.house-preview-page {
-  min-height: 100svh;
+body:has(.house-preview-page) {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
   overflow: hidden;
-  color: var(--text);
-  background:
-    radial-gradient(circle at 50% 38%, rgb(255 255 255 / 0.95), transparent 58%),
-    #e8e7e5;
 }
 
-.house-preview-nav {
-  position: fixed;
-  z-index: 10;
-  top: max(0.75rem, env(safe-area-inset-top));
+body:has(.house-preview-page) > .site-header,
+body:has(.house-preview-page) > .site-footer {
+  flex: 0 0 auto;
+}
+
+body:has(.house-preview-page) > #main-content {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 0;
+  overflow: hidden;
+}
+
+.house-preview-page {
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 0;
+}
+
+/*
+ * Temporary review UI only. It sits over quiet background space and does not
+ * modify the site's normal SeasonSelector/localStorage state.
+ */
+.house-preview-selector {
+  position: absolute;
+  z-index: 2;
+  top: 0.75rem;
   left: 50%;
   display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem;
-  border: 1px solid rgb(16 40 44 / 0.2);
-  border-radius: 999px;
-  background: rgb(255 252 244 / 0.9);
-  box-shadow: 0 0.65rem 2rem rgb(16 31 34 / 0.16);
-  backdrop-filter: blur(14px);
+  max-width: calc(100% - 1rem);
+  border: 1px solid color-mix(in srgb, var(--fg, #111) 22%, transparent);
+  background: color-mix(in srgb, var(--bg, #fff) 86%, transparent);
+  box-shadow: 0 0.3rem 1.2rem rgb(0 0 0 / 8%);
+  backdrop-filter: blur(10px);
   transform: translateX(-50%);
 }
 
-.house-preview-nav__formats {
-  display: flex;
-  gap: 0.2rem;
-}
-
-.house-preview-nav__link,
-.house-preview-nav__home {
-  color: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+.house-preview-season {
+  min-width: 5.15rem;
+  border: 0;
+  border-right: 1px solid color-mix(in srgb, var(--fg, #111) 16%, transparent);
+  padding: 0.55rem 0.8rem;
+  background: transparent;
+  color: var(--fg, #111);
+  font: inherit;
+  font-size: 0.78rem;
   line-height: 1;
-  text-decoration: none;
-  text-transform: uppercase;
+  cursor: pointer;
 }
 
-.house-preview-nav__link {
-  padding: 0.68rem 0.88rem;
-  border-radius: 999px;
+.house-preview-season:last-child {
+  border-right: 0;
 }
 
-.house-preview-nav__link:hover,
-.house-preview-nav__link:focus-visible,
-.house-preview-nav__link.is-active {
-  color: #fffaf0;
-  background: #10282c;
-  outline: none;
-}
-
-.house-preview-nav__link:focus-visible,
-.house-preview-nav__home:focus-visible {
-  box-shadow: 0 0 0 3px rgb(16 40 44 / 0.22);
-}
-
-.house-preview-nav__keys {
-  padding-inline: 0.3rem;
-  color: rgb(16 40 44 / 0.58);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-}
-
-.house-preview-nav__home {
-  padding: 0.68rem 0.78rem;
-  border-left: 1px solid rgb(16 40 44 / 0.16);
-}
-
-.house-preview-nav__home:hover,
-.house-preview-nav__home:focus-visible {
+.house-preview-season:hover,
+.house-preview-season:focus-visible {
   text-decoration: underline;
-  text-underline-offset: 0.2em;
-  outline: none;
+  text-underline-offset: 0.18em;
 }
 
-.house-preview-stage {
-  display: grid;
-  width: 100vw;
-  height: 100svh;
-  place-items: center;
-  padding: 4.8rem clamp(0.5rem, 2vw, 1.5rem) clamp(0.5rem, 2vw, 1.5rem);
+.house-preview-season[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--fg, #111) 9%, transparent);
+  font-weight: 600;
 }
 
-.house-preview-art {
-  display: grid;
-  max-width: 100%;
-  max-height: 100%;
-  margin: 0;
-  place-items: center;
+.house-preview-season:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -3px;
 }
 
-.house-preview-art--png,
-.house-preview-art--png img {
-  width: 100%;
-  height: 100%;
-}
-
-.house-preview-art--png img {
-  display: block;
-  object-fit: contain;
-  user-select: none;
-}
-
-.house-preview-art--svg {
-  width: min(96vw, calc((100svh - 5.8rem) * 1.5));
-  aspect-ratio: 3 / 2;
-}
-
-.house-preview-art--svg .house-illustration {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-/* The comparison route is visual-only; homepage windows remain interactive. */
-.house-preview-art--svg .house-window {
-  pointer-events: none;
-}
-
-@media (max-width: 560px) {
-  .house-preview-nav__keys {
-    display: none;
+@media (max-width: 36rem) {
+  .house-preview-selector {
+    top: 0.5rem;
+    width: calc(100% - 1rem);
   }
 
-  .house-preview-stage {
-    padding-top: 4.55rem;
+  .house-preview-season {
+    min-width: 0;
+    flex: 1 1 25%;
+    padding-inline: 0.35rem;
+    font-size: 0.72rem;
   }
 }
 
-/* Side-by-side PNG / SVG comparison ------------------------------------ */
-.house-preview-page--compare {
-  overflow: auto;
-}
-
-.house-preview-page--compare .house-preview-stage {
-  min-height: 100svh;
-  height: auto;
-  align-items: center;
-}
-
-.house-comparison {
-  display: grid;
-  width: min(100%, 118rem);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.65rem, 1.5vw, 1.35rem);
-}
-
-.house-comparison__panel {
-  display: grid;
-  min-width: 0;
-  margin: 0;
-  gap: 0.5rem;
-}
-
-.house-comparison__panel figcaption {
-  color: rgb(16 40 44 / 0.72);
-  font-size: clamp(0.65rem, 0.9vw, 0.76rem);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.house-comparison__panel img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border: 1px solid rgb(16 40 44 / 0.16);
-  background: #e8e7e5;
-  box-shadow: 0 0.9rem 2.6rem rgb(16 31 34 / 0.13);
-  user-select: none;
-}
-
-@media (max-width: 900px) {
-  .house-comparison {
-    grid-template-columns: 1fr;
+@media (prefers-reduced-motion: reduce) {
+  .house-preview-selector {
+    backdrop-filter: none;
   }
-
-  .house-preview-page--compare .house-preview-stage {
-    padding-top: 5rem;
-  }
-}
-
-
-.house-comparison__svg-panel {
-  width: 100%;
-  max-width: 100%;
-  border: 1px solid rgb(16 40 44 / 0.16);
-  background: #e8e7e5;
-  box-shadow: 0 0.9rem 2.6rem rgb(16 31 34 / 0.13);
-}
-
-.house-comparison__svg-panel .house-illustration {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.house-comparison__svg-panel .house-window {
-  pointer-events: none;
 }

@@ -1,0 +1,35 @@
+HECATE946 HOUSE EXTERIOR — INSTALL
+
+This ZIP is intentionally a modified/new-files package, not a replacement repo.
+
+From ~/Desktop/projects/hecate946.com:
+
+1. Unzip the package over the repo root.
+
+2. Confirm the exact existing house source is present:
+       blender/house/house.blend
+
+3. Fast composition preview:
+       HECATE_EXTERIOR_QUALITY=PREVIEW blender --background --python blender/house/exterior/build_exterior_25d.py
+
+4. Normal website render:
+       blender --background --python blender/house/exterior/build_exterior_25d.py
+
+5. Final high-resolution render:
+       HECATE_EXTERIOR_QUALITY=FINAL blender --background --python blender/house/exterior/build_exterior_25d.py
+
+6. Build the editable .blend but skip PNG rendering:
+       HECATE_EXTERIOR_RENDER=0 blender --background --python blender/house/exterior/build_exterior_25d.py
+
+The builder creates:
+    blender/house/exterior/exterior-25d.blend
+    public/scenes/house/exterior/spring.png
+    public/scenes/house/exterior/summer.png
+    public/scenes/house/exterior/autumn.png
+    public/scenes/house/exterior/winter.png
+
+Website integration:
+    src/components/house/HouseExterior.astro
+    src/styles/house-exterior.css
+
+The component is season-selector aware and center-crops safely on mobile.

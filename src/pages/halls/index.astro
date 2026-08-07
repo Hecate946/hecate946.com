@@ -19,7 +19,7 @@ import { withBase } from '@/lib/paths';
             style={`--space-color: ${hall.accent}`}
           >
             {hall.implemented ? (
-              <a class="hall-card__link" href={withBase(`/halls/${hall.slug}/`)}>
+              <a class="hall-card__link" href={withBase(hall.slug === 'ballroom' ? '/ballroom/' : `/halls/${hall.slug}/`)}>
                 <span>{hall.label}</span>
                 <strong>{hall.title}</strong>
                 <small>Enter hall</small>

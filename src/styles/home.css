@@ -1,40 +1,25 @@
 .home-display {
   position: relative;
-  display: grid;
-  min-height: calc(100svh - var(--header-height));
-  place-items: center;
-  overflow: clip;
-  padding: clamp(0.35rem, 1.2svh, 0.9rem) clamp(0.2rem, 1.2vw, 0.8rem)
-    clamp(0.6rem, 1.7svh, 1.15rem);
+  display: block;
+  width: 100vw;
+  height: calc(100svh - (var(--header-height) * 2));
+  min-height: calc(100svh - (var(--header-height) * 2));
+  margin-inline: calc(50% - 50vw);
+  overflow: hidden;
+  padding: 0;
 }
 
 .home-display__stage {
   position: relative;
-  width: min(98vw, 88rem);
-  aspect-ratio: 3 / 2;
-  filter: drop-shadow(0 1.35rem 2.8rem rgb(0 0 0 / 0.16));
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  overflow: hidden;
 }
 
-@media (max-height: 52rem) and (min-width: 641px) {
-  .home-display__stage {
-    width: min(92vw, 74rem);
-  }
-}
-
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
   .home-display {
-    min-height: calc(100svh - (var(--header-height) * 2));
-    padding-inline: 0;
-  }
-
-  .home-display__stage {
-    width: 116vw;
-    min-width: 22rem;
-  }
-}
-
-@media (max-width: 420px) {
-  .home-display__stage {
-    width: 122vw;
+    height: calc(100svh - (var(--header-height) * 3));
+    min-height: calc(100svh - (var(--header-height) * 3));
   }
 }

@@ -89,7 +89,7 @@
     {
       "id": "ballroom",
       "label": "The Ballroom",
-      "href": "/halls/ballroom/",
+      "href": "/ballroom/",
       "parent": "halls"
     },
     {
@@ -184,15 +184,14 @@
         {
           "id": "ballroom",
           "label": "Ballroom",
-          "href": "/halls/ballroom/",
+          "href": "/ballroom/",
           "object": "WORLD_HOTSPOT__ballroom",
           "bootstrapBounds": {
             "x": 0.137222,
             "y": 0.595,
             "width": 0.182222,
             "height": 0.16
-          },
-          "targetView": "ballroom"
+          }
         },
         {
           "id": "museum",
@@ -235,7 +234,7 @@
     {
       "id": "ballroom",
       "label": "Ballroom",
-      "description": "A sparse Neoclassical ballroom built as an authored 2.5D Cycles scene.",
+      "description": "A windowless house-matched Neoclassical ballroom with dark teal carpet, one centered arched door, a simple ring chandelier, and soft magical lighting.",
       "image": "/scenes/world/views/ballroom.png",
       "width": 1800,
       "height": 1200,
@@ -249,53 +248,14 @@
         {
           "id": "ballroom-exit",
           "label": "Exterior",
-          "targetView": "exterior",
           "object": "WORLD_HOTSPOT__ballroom-exit",
           "bootstrapBounds": {
-            "x": 0.435,
-            "y": 0.335,
-            "width": 0.13,
-            "height": 0.34
-          }
-        },
-        {
-          "id": "ballroom-piano",
-          "label": "Piano",
-          "targetView": "ballroom-piano",
-          "object": "WORLD_HOTSPOT__ballroom-piano",
-          "bootstrapBounds": {
-            "x": 0.18,
-            "y": 0.5,
-            "width": 0.27,
-            "height": 0.28
-          }
-        }
-      ]
-    },
-    {
-      "id": "ballroom-piano",
-      "label": "Ballroom Piano",
-      "description": "A closer authored composition of the ballroom piano.",
-      "image": "/scenes/world/views/ballroom-piano.png",
-      "width": 1800,
-      "height": 1200,
-      "blender": {
-        "blendFile": "blender/halls/ballroom/ballroom-25d.blend",
-        "sourceImage": "blender/halls/ballroom/ballroom-piano-25d.png",
-        "camera": "WORLD_CAMERA__ballroom-piano"
-      },
-      "hotspots": [
-        {
-          "id": "ballroom-return",
-          "label": "Ballroom",
-          "targetView": "ballroom",
-          "object": "WORLD_HOTSPOT__ballroom-return",
-          "bootstrapBounds": {
-            "x": 0.69,
-            "y": 0.23,
+            "x": 0.425,
+            "y": 0.305,
             "width": 0.15,
-            "height": 0.31
-          }
+            "height": 0.4
+          },
+          "href": "/"
         }
       ]
     }

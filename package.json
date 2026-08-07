@@ -15,7 +15,7 @@
     "site:zip": "node scripts/create-website-source-zip.mjs",
     "world:sync": "node scripts/sync-rendered-world.mjs",
     "world:render": "node scripts/render-world.mjs",
-    "ballroom:render": "npm run world:render -- ballroom ballroom-piano"
+    "ballroom:render": "npm run world:render -- ballroom"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",

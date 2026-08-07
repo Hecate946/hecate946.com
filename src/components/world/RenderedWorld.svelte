@@ -28,6 +28,8 @@
 
   export let manifestUrl: string;
   export let startViewId: string | undefined = undefined;
+  export let fillViewport = false;
+  export let showHotspots = true;
 
   let manifest: Manifest | null = null;
   let activeView: WorldView | null = null;
@@ -125,6 +127,7 @@
   class="rendered-world"
   class:is-loading={loading}
   class:has-error={Boolean(error)}
+  class:rendered-world--fill={fillViewport}
   style:--world-aspect={activeView ? `${activeView.width} / ${activeView.height}` : '3 / 2'}
   aria-label={activeView?.description ?? 'Explore the house'}
 >
@@ -142,27 +145,29 @@
         on:error={handleImageError}
       />
 
-      <div class="rendered-world__hotspots" aria-label={`${activeView.label} destinations`}>
-        {#each activeView.hotspots as hotspot (hotspot.id)}
-          <button
-            type="button"
-            class="rendered-world__hotspot"
-            class:is-hovered={hoveredId === hotspot.id}
-            style:left={`${hotspot.bounds.x * 100}%`}
-            style:top={`${hotspot.bounds.y * 100}%`}
-            style:width={`${hotspot.bounds.width * 100}%`}
-            style:height={`${hotspot.bounds.height * 100}%`}
-            aria-label={hotspot.label}
-            on:mouseenter={() => (hoveredId = hotspot.id)}
-            on:mouseleave={() => (hoveredId = null)}
-            on:focus={() => (hoveredId = hotspot.id)}
-            on:blur={() => (hoveredId = null)}
-            on:click={() => activate(hotspot)}
-          >
-            <span class="rendered-world__label">{hotspot.label}</span>
-          </button>
-        {/each}
-      </div>
+      {#if showHotspots}
+        <div class="rendered-world__hotspots" aria-label={`${activeView.label} destinations`}>
+          {#each activeView.hotspots as hotspot (hotspot.id)}
+            <button
+              type="button"
+              class="rendered-world__hotspot"
+              class:is-hovered={hoveredId === hotspot.id}
+              style:left={`${hotspot.bounds.x * 100}%`}
+              style:top={`${hotspot.bounds.y * 100}%`}
+              style:width={`${hotspot.bounds.width * 100}%`}
+              style:height={`${hotspot.bounds.height * 100}%`}
+              aria-label={hotspot.label}
+              on:mouseenter={() => (hoveredId = hotspot.id)}
+              on:mouseleave={() => (hoveredId = null)}
+              on:focus={() => (hoveredId = hotspot.id)}
+              on:blur={() => (hoveredId = null)}
+              on:click={() => activate(hotspot)}
+            >
+              <span class="rendered-world__label">{hotspot.label}</span>
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
   {:else if loading}
     <div class="rendered-world__status" aria-live="polite">Loading house…</div>
@@ -177,6 +182,12 @@
     width: 100%;
     aspect-ratio: var(--world-aspect, 3 / 2);
     contain: layout paint;
+    min-height: 0;
+  }
+
+  .rendered-world--fill {
+    height: 100%;
+    aspect-ratio: auto;
   }
 
   .rendered-world__frame,
@@ -197,6 +208,10 @@
     object-fit: contain;
     user-select: none;
     pointer-events: none;
+  }
+
+  .rendered-world--fill .rendered-world__image {
+    object-fit: cover;
   }
 
   .rendered-world__image--previous {
