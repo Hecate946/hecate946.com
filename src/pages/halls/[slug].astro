@@ -1,6 +1,8 @@
 ---
 import ImmersiveLayout from '@/layouts/ImmersiveLayout.astro';
 import PanoramaViewer from '@/features/immersive/PanoramaViewer.svelte';
+import RenderedWorld from '@/components/world/RenderedWorld.svelte';
+import { withBase } from '@/lib/paths';
 import { implementedHalls, type ImmersiveSpace } from '@/features/immersive/catalog';
 
 export function getStaticPaths() {
@@ -15,21 +17,49 @@ interface Props {
 }
 
 const { space } = Astro.props;
+const manifestUrl = withBase('/scenes/world/manifest.json');
+const renderedViewId = space.renderedViewId;
 ---
 
 <ImmersiveLayout title={`${space.title} | Cyrus Asasi`} description={space.description}>
-  <section class="panorama-page">
-    <PanoramaViewer client:only="svelte" {space} />
-  </section>
+  {renderedViewId ? (
+    <section class="rendered-hall-page">
+      <div class="rendered-hall-stage">
+        <RenderedWorld client:load {manifestUrl} startViewId={renderedViewId} />
+      </div>
+    </section>
+  ) : (
+    <section class="panorama-page">
+      <PanoramaViewer client:only="svelte" {space} />
+    </section>
+  )}
 </ImmersiveLayout>
 
 <style>
-  .panorama-page {
+  .panorama-page,
+  .rendered-hall-page {
     width: 100vw;
     height: 100vh;
     height: 100dvh;
     margin: 0;
     padding: 0;
     overflow: hidden;
+  }
+
+  .rendered-hall-page {
+    display: grid;
+    place-items: center;
+    background: #ece5d9;
+  }
+
+  .rendered-hall-stage {
+    width: min(100vw, 150dvh);
+    aspect-ratio: 3 / 2;
+  }
+
+  @media (max-width: 640px) {
+    .rendered-hall-stage {
+      width: min(112vw, 150dvh);
+    }
   }
 </style>

@@ -1,74 +1,12 @@
-"""Compatibility entry point for building the ballroom assets.
+"""Compatibility launcher for the current Hecate946 ballroom.
 
-The architectural source lives in ../shared/hall_shell.py. Run this file when
-only the shared shell and ballroom object file should be rebuilt.
+The ballroom no longer uses the old shared 360-degree hall shell. Its source is
+``build_ballroom_25d.py``, which creates authored Cycles/Eevee still views for
+the rendered-world pipeline.
 """
 
 from pathlib import Path
 import runpy
 
-import bpy
-
-
-# Set this to an absolute blender/halls path only if the repository is moved.
-HALLS_ROOT_OVERRIDE = None
-
-
-def find_halls_root() -> Path:
-    candidates = []
-
-    if HALLS_ROOT_OVERRIDE:
-        candidates.append(Path(HALLS_ROOT_OVERRIDE).expanduser())
-
-    try:
-        text = bpy.context.space_data.text
-        if text and text.filepath:
-            value = text.filepath
-            if value.startswith("//"):
-                value = bpy.path.abspath(value)
-            folder = Path(value).expanduser().parent
-            candidates.extend((folder, folder.parent, folder.parent.parent))
-    except (AttributeError, RuntimeError):
-        pass
-
-    try:
-        value = str(__file__)
-        if value.startswith("//"):
-            value = bpy.path.abspath(value)
-        folder = Path(value).expanduser().parent
-        candidates.extend((folder, folder.parent, folder.parent.parent))
-    except NameError:
-        pass
-
-    candidates.append(
-        Path.home()
-        / "Desktop"
-        / "projects"
-        / "hecate946.com"
-        / "blender"
-        / "halls"
-    )
-
-    for candidate in candidates:
-        candidate = candidate.resolve()
-        if (
-            (candidate / "build_halls.py").is_file()
-            and (candidate / "shared" / "hall_shell.py").is_file()
-        ):
-            return candidate
-
-    raise FileNotFoundError(
-        "Could not find blender/halls. Set HALLS_ROOT_OVERRIDE in this file."
-    )
-
-
-HALLS_ROOT = find_halls_root()
-runpy.run_path(
-    str(HALLS_ROOT / "build_halls.py"),
-    run_name="__main__",
-    init_globals={
-        "HALL_TO_BUILD": "BALLROOM",
-        "REBUILD_SHARED_SHELL": True,
-        "HALLS_ROOT_OVERRIDE": str(HALLS_ROOT),
-    },
-)
+SCRIPT = Path(__file__).resolve().with_name("build_ballroom_25d.py")
+runpy.run_path(str(SCRIPT), run_name="__main__")

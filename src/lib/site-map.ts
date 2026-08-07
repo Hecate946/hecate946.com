@@ -1,3 +1,4 @@
+import siteWorld from '@/content/site-world.json';
 import type { NetworkLink, NetworkNode } from '@/components/graphs/types';
 
 export type SiteMapCategory =
@@ -182,8 +183,21 @@ function pageFileToRoute(pageFile: string): string | null {
   return normalizeSitePath(`/${relative}`);
 }
 
+const WORLD_PARENT_BY_HREF = new Map(
+  siteWorld.nodes
+    .filter((node) => node.parent)
+    .map((node) => {
+      const parent = siteWorld.nodes.find((candidate) => candidate.id === node.parent);
+      return [normalizeSitePath(node.href), normalizeSitePath(parent?.href ?? '/')] as const;
+    }),
+);
+
 function parentPath(path: string, knownPaths: Set<string>) {
   if (path === '/') return null;
+
+  const worldParent = WORLD_PARENT_BY_HREF.get(normalizeSitePath(path));
+  if (worldParent && knownPaths.has(worldParent)) return worldParent;
+
   const segments = path.split('/').filter(Boolean);
   if (segments.length <= 1) return '/';
 

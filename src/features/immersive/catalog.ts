@@ -44,6 +44,7 @@ export type ImmersiveSpace = {
   panoramaOverlayVideoUrl?: string;
   panoramaViews?: ImmersivePanoramaView[];
   cyclesOnly?: boolean;
+  renderedViewId?: string;
   modelLayers: ImmersiveModelLayer[];
   implemented: boolean;
   cameraPosition: Vector3Tuple;
@@ -197,14 +198,18 @@ export const rooms = {
 } as const satisfies Record<RoomSlug, ImmersiveSpace>;
 
 export const halls = {
-  ballroom: hall(
-    'ballroom',
-    'Hall 001',
-    'The Ballroom',
-    'A mirrored instance of the shared neoclassical hall with ballroom-specific objects.',
-    '#7d6848',
-    true,
-  ),
+  ballroom: {
+    ...hall(
+      'ballroom',
+      'Hall 001',
+      'The Ballroom',
+      'A sparse, Cycles-rendered 2.5D Neoclassical ballroom with authored camera views.',
+      '#7d6848',
+      false,
+    ),
+    cyclesOnly: true,
+    renderedViewId: 'ballroom',
+  },
   museum: hall(
     'museum',
     'Hall 002',

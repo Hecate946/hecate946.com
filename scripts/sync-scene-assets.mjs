@@ -102,15 +102,15 @@ await copyAsset({
 await copyAsset({
   source: path.join(projectRoot, 'blender', 'house', 'display-case-glass.png'),
   destination: path.join(publicRoot, 'house', 'display-case-glass.png'),
-  required: true,
-  label: 'homepage display-case glass render',
+  required: false,
+  label: 'legacy homepage display-case glass render',
 });
 
 await copyAsset({
   source: path.join(projectRoot, 'blender', 'house', 'display-case-base.png'),
   destination: path.join(publicRoot, 'house', 'display-case-base.png'),
-  required: true,
-  label: 'homepage display-case base render',
+  required: false,
+  label: 'legacy homepage display-case base render',
 });
 
 for (const slug of roomSlugs) {

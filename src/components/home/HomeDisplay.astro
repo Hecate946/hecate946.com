@@ -1,55 +1,13 @@
 ---
-import HouseExperience from '@/components/house/HouseExperience.svelte';
-import { houseScene } from '@/config/house-scene';
+import RenderedWorld from '@/components/world/RenderedWorld.svelte';
 import { withBase } from '@/lib/paths';
-import '@/styles/house-scene.css';
 
-const destinations = houseScene.destinations.map((destination) => ({
-  ...destination,
-  href: withBase(destination.href),
-}));
-
-const displayCaseBase = withBase('/scenes/house/display-case-base.png');
-const displayCaseGlass = withBase('/scenes/house/display-case-glass.png');
+const manifestUrl = withBase('/scenes/world/manifest.json');
 ---
 
 <section class="home-display" aria-labelledby="home-title">
-  <header class="home-display__intro">
-    <h1 id="home-title">Cyrus Asasi</h1>
-    <p>Software engineer and classical musician</p>
-  </header>
-
-  <div class="home-display__stage" aria-label="Explore the house through its windows">
-    <img
-      class="home-display__case-layer home-display__case-layer--base"
-      src={displayCaseBase}
-      alt=""
-      width="1800"
-      height="1200"
-      loading="eager"
-      decoding="async"
-      aria-hidden="true"
-    />
-
-    <div class="home-display__house">
-      <HouseExperience
-        client:visible
-        {destinations}
-        navigationEnabled={houseScene.navigationEnabled}
-      />
-    </div>
-
-    <img
-      class="home-display__case-layer home-display__case-layer--glass"
-      src={displayCaseGlass}
-      alt=""
-      width="1800"
-      height="1200"
-      loading="eager"
-      decoding="async"
-      aria-hidden="true"
-    />
+  <h1 id="home-title" class="visually-hidden">Cyrus Asasi</h1>
+  <div class="home-display__stage">
+    <RenderedWorld client:load {manifestUrl} />
   </div>
-
-  <p class="home-display__hint">Select a window</p>
 </section>

@@ -42,7 +42,7 @@ import bpy
 # USER CONTROLS
 # -----------------------------------------------------------------------------
 
-OUTPUT_DIR = os.path.expanduser("~/Desktop/projects/hecate946.com/blender/house")
+OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 BLEND_NAME = "house.blend"
 RENDER_NAME = "house.png"
 
@@ -200,6 +200,27 @@ def move_to_collection(obj: bpy.types.Object, collection: bpy.types.Collection) 
     for old_collection in list(obj.users_collection):
         old_collection.objects.unlink(obj)
     collection.objects.link(obj)
+
+
+def add_world_hotspot(
+    hotspot_id: str,
+    *,
+    location: tuple[float, float, float],
+    dimensions: tuple[float, float, float],
+    collection: bpy.types.Collection,
+) -> bpy.types.Object:
+    """Add a non-rendering authoring volume consumed by the website world exporter."""
+    bpy.ops.mesh.primitive_cube_add(location=location)
+    obj = bpy.context.object
+    obj.name = f"WORLD_HOTSPOT__{hotspot_id}"
+    obj.dimensions = dimensions
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    obj["world_hotspot_id"] = hotspot_id
+    obj.hide_render = True
+    obj.display_type = "WIRE"
+    obj.show_in_front = True
+    move_to_collection(obj, collection)
+    return obj
 
 
 def look_at(obj: bpy.types.Object, target: tuple[float, float, float]) -> None:
@@ -1394,6 +1415,7 @@ def build_house() -> None:
     door_collection = create_collection("Door")
     roof_collection = create_collection("Roof")
     lighting_collection = create_collection("Lighting")
+    world_metadata = create_collection("WORLD_METADATA")
 
     wall_material = make_material("Warm cream stucco", CREAM, roughness=0.76)
     trim_material = make_material("Cream limestone trim", TRIM_CREAM, roughness=0.64)
@@ -1504,7 +1526,45 @@ def build_house() -> None:
     camera.data.type = "ORTHO"
     camera.data.ortho_scale = 16.65
     look_at(camera, (0.0, 0.0, 3.55))
+    camera["world_view_id"] = "exterior"
     bpy.context.scene.camera = camera
+
+    # Website interaction geometry lives in Blender beside the visual scene.
+    # These invisible volumes are projected through the active camera by
+    # blender/world/export_rendered_world.py, so browser hotspots never need
+    # hand-tuned pixel coordinates after the house or camera changes.
+    hotspot_front_y = wall_front_y - 0.72
+    for hotspot_id, x in zip(
+        ("red-room", "green-room", "orange-room", "blue-room", "purple-room"),
+        UPPER_WINDOW_X,
+    ):
+        add_world_hotspot(
+            hotspot_id,
+            location=(x, hotspot_front_y, UPPER_WINDOW_Z),
+            dimensions=(UPPER_WINDOW_WIDTH, 0.06, UPPER_WINDOW_HEIGHT),
+            collection=world_metadata,
+        )
+
+    for hotspot_id, x in (("ballroom", LOWER_WINDOW_X[0]), ("museum", LOWER_WINDOW_X[1])):
+        add_world_hotspot(
+            hotspot_id,
+            location=(x, hotspot_front_y, LOWER_WINDOW_Z),
+            dimensions=(LOWER_WINDOW_WIDTH, 0.06, LOWER_WINDOW_HEIGHT),
+            collection=world_metadata,
+        )
+
+    add_world_hotspot(
+        "about",
+        location=(0.0, hotspot_front_y, 1.58),
+        dimensions=(1.82, 0.06, 2.62),
+        collection=world_metadata,
+    )
+    add_world_hotspot(
+        "graph",
+        location=(0.0, hotspot_front_y, roof_base_z + 0.73),
+        dimensions=(0.76, 0.06, 0.76),
+        collection=world_metadata,
+    )
 
     # Symmetrical lighting prevents one side/window from appearing different.
     def add_area(

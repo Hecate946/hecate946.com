@@ -7,6 +7,7 @@ section for normal use.
 from pathlib import Path
 import importlib
 import importlib.util
+import runpy
 import sys
 
 import bpy
@@ -131,6 +132,30 @@ def load_live_hall_builder(builder_file: Path):
 HALLS_ROOT = script_directory()
 if str(HALLS_ROOT) not in sys.path:
     sys.path.insert(0, str(HALLS_ROOT))
+
+# The ballroom has migrated to the authored 2.5D rendered-world pipeline. Keep
+# this familiar entry point useful without allowing it to rebuild the retired
+# shared-shell ballroom by accident.
+requested_selection = str(HALL_TO_BUILD).strip().upper()
+if requested_selection in {"BALLROOM", "ALL"}:
+    ballroom_builder = HALLS_ROOT / "ballroom" / "build_ballroom_25d.py"
+    print(f"Building current 2.5D ballroom from: {ballroom_builder}")
+    ballroom_quality = {"FAST": "PREVIEW", "SLOW": "WEB", "CRISP": "FINAL"}.get(
+        str(RENDER_QUALITY).strip().upper(),
+        "WEB",
+    )
+    runpy.run_path(
+        str(ballroom_builder),
+        run_name="__main__",
+        init_globals={
+            "QUALITY": ballroom_quality,
+            "AUTO_RENDER": bool(AUTO_RENDER_PANORAMA),
+            "USE_GPU": bool(USE_GPU),
+        },
+    )
+    if requested_selection == "BALLROOM":
+        raise SystemExit(0)
+    HALL_TO_BUILD = "MUSEUM"
 
 builder_file = HALLS_ROOT / "shared" / "hall_shell.py"
 hall_builder = load_live_hall_builder(builder_file)
