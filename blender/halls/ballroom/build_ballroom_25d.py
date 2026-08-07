@@ -858,23 +858,49 @@ def configure_cycles_device(scene: bpy.types.Scene) -> None:
         print(f"Cycles GPU setup warning; using CPU: {exc}")
 
 
+def configure_eevee_engine(scene: bpy.types.Scene) -> str:
+    """Select the Eevee engine name supported by this Blender build.
+
+    Blender exposes the same renderer as ``BLENDER_EEVEE`` in older builds and
+    ``BLENDER_EEVEE_NEXT`` in newer ones.  Assigning an unsupported enum raises
+    immediately, so probe the two names instead of assuming a Blender version.
+    """
+    errors: list[str] = []
+    for engine in ("BLENDER_EEVEE_NEXT", "BLENDER_EEVEE"):
+        try:
+            scene.render.engine = engine
+            print(f"Preview render engine: {engine}")
+            return engine
+        except (TypeError, ValueError) as exc:
+            errors.append(f"{engine}: {exc}")
+
+    raise RuntimeError(
+        "No supported Eevee render engine is available in this Blender build. "
+        + " | ".join(errors)
+    )
+
+
 def configure_cycles(scene: bpy.types.Scene) -> None:
     preset = QUALITY_PRESETS[QUALITY]
-    scene.render.engine = "BLENDER_EEVEE_NEXT"
 
-    # Prefer Cycles for WEB/FINAL. Eevee is intentionally used for PREVIEW so
-    # composition changes can be reviewed in seconds.
-    if QUALITY in {"WEB", "FINAL"}:
+    # PREVIEW deliberately uses Eevee so composition changes can be reviewed in
+    # seconds.  The enum changed names across Blender releases, so select it
+    # dynamically. WEB/FINAL go straight to Cycles and therefore never depend on
+    # an Eevee enum being present.
+    if QUALITY == "PREVIEW":
+        configure_eevee_engine(scene)
+    else:
         try:
             scene.render.engine = "CYCLES"
             scene.cycles.samples = preset["samples"]
             scene.cycles.use_denoising = True
-            scene.cycles.preview_samples = min(32, preset["samples"])
+            scene.cycles.preview_samples = min(32, preset["samples"] )
             scene.cycles.use_adaptive_sampling = True
             scene.cycles.adaptive_threshold = 0.025 if QUALITY == "WEB" else 0.015
             configure_cycles_device(scene)
         except Exception as exc:
-            print(f"Cycles setup warning; using current render engine: {exc}")
+            print(f"Cycles setup warning; falling back to Eevee: {exc}")
+            configure_eevee_engine(scene)
 
     scene.render.resolution_x = preset["width"]
     scene.render.resolution_y = preset["height"]

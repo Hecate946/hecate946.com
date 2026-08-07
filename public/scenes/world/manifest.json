@@ -6,7 +6,7 @@
       "id": "exterior",
       "label": "House",
       "description": "The exterior of the house.",
-      "image": "/scenes/house/shell.webp",
+      "image": "/scenes/world/views/exterior.png",
       "fallbackImage": "/scenes/house/shell.webp",
       "width": 1800,
       "height": 1200,
@@ -126,10 +126,10 @@
           "label": "Exterior",
           "targetView": "exterior",
           "bounds": {
-            "x": 0.435,
-            "y": 0.335,
-            "width": 0.13,
-            "height": 0.34
+            "x": 0.376619,
+            "y": 0.285732,
+            "width": 0.246762,
+            "height": 0.508158
           }
         },
         {
@@ -137,10 +137,10 @@
           "label": "Piano",
           "targetView": "ballroom-piano",
           "bounds": {
-            "x": 0.18,
-            "y": 0.5,
-            "width": 0.27,
-            "height": 0.28
+            "x": 0,
+            "y": 0.580498,
+            "width": 0.366005,
+            "height": 0.371687
           }
         }
       ]

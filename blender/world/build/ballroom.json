@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "view": "ballroom",
+  "camera": "WORLD_CAMERA__ballroom",
+  "hotspots": [
+    {
+      "id": "ballroom-exit",
+      "bounds": {
+        "x": 0.376619,
+        "y": 0.285732,
+        "width": 0.246762,
+        "height": 0.508158
+      }
+    },
+    {
+      "id": "ballroom-piano",
+      "bounds": {
+        "x": 0.0,
+        "y": 0.580498,
+        "width": 0.366005,
+        "height": 0.371687
+      }
+    }
+  ]
+}
