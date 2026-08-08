@@ -26,7 +26,7 @@
   draggable="false"
   tabindex={keyboardAccessible ? undefined : -1}
   onfocus={() => keyboardAccessible && onFocus(destination)}
-  style={`--window-x: ${destination.x}px; --window-width: ${destination.width}px; --window-height: ${destination.height}px; --painting-position: ${destination.painting.objectPosition ?? '50% 50%'};`}
+  style={`left: ${destination.x}px; --painting-position: ${destination.painting.objectPosition ?? '50% 50%'};`}
   onclick={(event) => onEnter(event, destination)}
 >
   <span class="wall-window__recess" aria-hidden="true">
@@ -35,8 +35,11 @@
         class="wall-window__painting"
         src={withBase(destination.painting.src)}
         alt=""
+        width={destination.width}
+        height={destination.height}
         draggable="false"
         decoding="async"
+        loading="eager"
       />
     </span>
     <span class="wall-window__reflection"></span>
@@ -46,7 +49,11 @@
   <span class="wall-window__label">
     <span class="wall-window__index">{indexLabel}</span>
     <span class="wall-window__name">{destination.label}</span>
-    <span class="wall-window__arrow" aria-hidden="true">↗</span>
+    <span class="wall-window__arrow" aria-hidden="true">
+      <svg viewBox="0 0 16 16" focusable="false">
+        <path d="M4 12 12 4M6.25 4H12v5.75" />
+      </svg>
+    </span>
   </span>
 </a>
 
@@ -58,23 +65,28 @@
     z-index: 3;
     top: calc((100% - var(--floor-height)) / 2 + 1.125rem);
     bottom: auto;
-    left: var(--window-x);
     display: block;
+    box-sizing: border-box;
     width: var(--window-width);
     height: var(--window-height);
+    margin-top: var(--window-offset-y);
+    margin-left: var(--window-offset-x);
     color: color-mix(in srgb, var(--wall-light, #f4f1e9) 72%, transparent);
     outline: none;
     text-decoration: none;
-    transform: translate(-50%, -50%) scale(var(--window-scale));
-    transform-origin: 50% 50%;
     user-select: none;
     -webkit-user-drag: none;
   }
 
   .wall-window__recess {
     position: absolute;
-    inset: 0 0 2.25rem;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: calc(100% - 2.25rem);
     overflow: hidden;
+    contain: paint;
     border: 0.7rem solid #050505;
     background: #020202;
     box-shadow:
@@ -91,26 +103,38 @@
   .wall-window__glass {
     position: absolute;
     inset: 0.3rem;
+    box-sizing: border-box;
     overflow: hidden;
+    contain: paint;
     background: #0b0b0a;
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 8%, transparent);
   }
 
   .wall-window__painting {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    z-index: 1;
     display: block;
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: cover;
     object-position: var(--painting-position);
-    filter: saturate(0.92) brightness(0.86);
-    transform: scale(1.008);
-    transition:
-      filter 420ms cubic-bezier(0.2, 0.75, 0.25, 1),
-      transform 620ms cubic-bezier(0.2, 0.75, 0.25, 1);
+    transform: none;
+    pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
+  }
+
+  .wall-window__glass::after {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    background: rgb(0 0 0 / 14%);
+    content: '';
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity 320ms cubic-bezier(0.2, 0.75, 0.25, 1);
   }
 
   .wall-window__reflection {
@@ -159,6 +183,10 @@
   }
 
   .wall-window__arrow {
+    display: grid;
+    width: 0.9rem;
+    height: 0.9rem;
+    place-items: center;
     opacity: 0;
     transform: translate(-0.2rem, 0.2rem);
     transition:
@@ -166,12 +194,22 @@
       transform 260ms ease;
   }
 
-  .wall-window:hover,
+  .wall-window__arrow svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.35;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   .wall-window--entering {
     color: var(--wall-light, #f4f1e9);
   }
 
-  .wall-window:hover .wall-window__recess,
   .wall-window--entering .wall-window__recess {
     border-color: #080808;
     box-shadow:
@@ -182,32 +220,51 @@
       inset 0 0 1.5rem rgb(0 0 0 / 58%);
   }
 
-  .wall-window:hover .wall-window__painting,
-  .wall-window--entering .wall-window__painting {
-    filter: saturate(1) brightness(1);
-    transform: scale(1.025);
+  .wall-window--entering .wall-window__glass::after {
+    opacity: 0;
   }
 
-  .wall-window:hover .wall-window__label,
   .wall-window--entering .wall-window__label {
     color: color-mix(in srgb, var(--wall-light, #f4f1e9) 92%, transparent);
   }
 
-  .wall-window:hover .wall-window__arrow,
   .wall-window--entering .wall-window__arrow {
     opacity: 1;
     transform: translate(0, 0);
   }
 
+  @media (hover: hover) and (pointer: fine) {
+    .wall-window:hover {
+      color: var(--wall-light, #f4f1e9);
+    }
+
+    .wall-window:hover .wall-window__recess {
+      border-color: #080808;
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 11%, transparent),
+        0 0 0 0.32rem #0d0d0d,
+        0.65rem 0.85rem 1.15rem rgb(0 0 0 / 68%),
+        0 0 2.8rem color-mix(in srgb, var(--room-light-hot) 32%, transparent),
+        inset 0 0 1.5rem rgb(0 0 0 / 58%);
+    }
+
+    .wall-window:hover .wall-window__glass::after {
+      opacity: 0;
+    }
+
+    .wall-window:hover .wall-window__label {
+      color: color-mix(in srgb, var(--wall-light, #f4f1e9) 92%, transparent);
+    }
+
+    .wall-window:hover .wall-window__arrow {
+      opacity: 1;
+      transform: translate(0, 0);
+    }
+  }
 
   .wall-window:focus-visible .wall-window__recess {
     outline: 2px solid color-mix(in srgb, var(--wall-light, #f4f1e9) 82%, transparent);
     outline-offset: 0.5rem;
-  }
-
-  .wall-window--entering .wall-window__painting {
-    filter: saturate(1.02) brightness(1.08);
-    transform: scale(1.06);
   }
 
   @media (max-width: 40rem) {
@@ -218,7 +275,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .wall-window__recess,
-    .wall-window__painting,
+    .wall-window__glass::after,
     .wall-window__label,
     .wall-window__arrow {
       transition: none;

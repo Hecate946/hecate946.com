@@ -17,14 +17,15 @@ export interface WallDestination {
 /**
  * Five evenly-spaced destinations form one seamless lap. Using a loop width
  * equal to five frame spacings keeps the gap across the wrap identical to all
- * of the interior gaps.
+ * of the interior gaps. 3840 is also evenly divisible by the 96px brick repeat
+ * and 120px floor repeat, so decorative textures cannot jump at the loop seam.
  */
-export const WALL_LOOP_WIDTH = 3_800;
+export const WALL_LOOP_WIDTH = 3_840;
 export const WALL_START_X = 500;
 
 const FRAME_WIDTH = 340;
 const FRAME_HEIGHT = 420;
-const FRAME_SPACING = 760;
+const FRAME_SPACING = 768;
 const FRAME_START_X = 500;
 
 const frameX = (index: number) => FRAME_START_X + FRAME_SPACING * index;

@@ -12,12 +12,17 @@
   const loopCopies = [-1, 0, 1] as const;
   const DRAG_THRESHOLD = 7;
   const WHEEL_SCALE = 0.82;
-  const IDLE_DRIFT_SPEED = 24; // pixels per second
+  const IDLE_DRIFT_SPEED = 30; // pixels per second
+  const WALL_PATTERN_WIDTH = 96;
+  const FLOOR_TILE_SIZE = 120;
   const DIRECTION_THRESHOLD = 36;
   const INERTIA_TIME_CONSTANT = 0.78;
   const MAX_MANUAL_SPEED = 2_400;
 
   let stage: HTMLElement;
+  let wallWorld: HTMLElement;
+  let wallTexture: HTMLElement;
+  let floorSurface: HTMLElement;
   let cameraX = WALL_START_X;
   let velocity = 0;
   let driftDirection = 1;
@@ -37,8 +42,10 @@
   let lastFrame = 0;
   let programmatic = false;
   let cameraAnimationToken = 0;
+  let lastRenderedCameraX = Number.NaN;
+  let renderDevicePixelRatio = 1;
 
-  const stageStyle = `--camera-x: ${WALL_START_X}px; --loop-width: ${WALL_LOOP_WIDTH}px; --world-left: -${WALL_LOOP_WIDTH}px; --world-span: ${WALL_LOOP_WIDTH * 3}px;`;
+  const stageStyle = `--loop-width: ${WALL_LOOP_WIDTH}px;`;
 
   function wrapCamera() {
     while (cameraX < 0) cameraX += WALL_LOOP_WIDTH;
@@ -59,8 +66,42 @@
     return isPaused || prefersReducedMotion ? 0 : driftDirection * IDLE_DRIFT_SPEED;
   }
 
-  function renderCamera() {
-    stage?.style.setProperty('--camera-x', `${cameraX}px`);
+  function periodicOffset(position: number, period: number) {
+    return -(((position % period) + period) % period);
+  }
+
+  function snapToDevicePixel(value: number) {
+    return Math.round(value * renderDevicePixelRatio) / renderDevicePixelRatio;
+  }
+
+  function refreshRenderDevicePixelRatio() {
+    renderDevicePixelRatio = Math.max(1, window.devicePixelRatio || 1);
+    lastRenderedCameraX = Number.NaN;
+    renderCamera(true);
+  }
+
+  function renderCamera(force = false) {
+    // Keep the physics camera fully precise, but quantize the *rendered* camera
+    // to physical pixels. Slow fractional CSS-pixel transforms make detailed
+    // raster images alternate between sampling phases, which reads as shimmer
+    // or tiny resizing even when their layout box is perfectly stable.
+    const renderedCameraX = snapToDevicePixel(cameraX);
+    if (!force && renderedCameraX === lastRenderedCameraX) return;
+
+    // All scene layers use the same snapped camera value. The frame and its
+    // painting therefore remain pixel-locked while the logical camera still
+    // retains smooth, high-resolution velocity/inertia state.
+    wallWorld?.style.setProperty('transform', `translate3d(${-renderedCameraX}px, 0, 0)`);
+    wallTexture?.style.setProperty(
+      'transform',
+      `translate3d(${periodicOffset(renderedCameraX, WALL_PATTERN_WIDTH)}px, 0, 0)`,
+    );
+    floorSurface?.style.setProperty(
+      'transform',
+      `translate3d(${periodicOffset(renderedCameraX, FLOOR_TILE_SIZE)}px, 0, 0) rotateX(64deg) scaleY(1.28) translateY(14%)`,
+    );
+
+    lastRenderedCameraX = renderedCameraX;
   }
 
   function toggleMotion() {
@@ -169,6 +210,15 @@
     markInteracted();
   }
 
+  function captureTouchPointer(event: PointerEvent) {
+    if (event.pointerType === 'mouse' || !stage) return;
+    try {
+      if (!stage.hasPointerCapture(event.pointerId)) stage.setPointerCapture(event.pointerId);
+    } catch {
+      // Some older mobile browsers can throw if capture races pointercancel.
+    }
+  }
+
   function onPointerMove(event: PointerEvent) {
     if (!dragging || activePointerId !== event.pointerId || enteringId) return;
 
@@ -190,6 +240,7 @@
 
       if (totalX <= totalY * 1.12) return;
       gestureAxis = 'horizontal';
+      captureTouchPointer(event);
     }
 
     if (gestureAxis !== 'horizontal') return;
@@ -212,6 +263,16 @@
 
   function clearPointerDrag(pointerId?: number) {
     if (pointerId !== undefined && activePointerId !== pointerId) return;
+
+    const pointerToRelease = activePointerId;
+    if (stage && pointerToRelease !== null) {
+      try {
+        if (stage.hasPointerCapture(pointerToRelease)) stage.releasePointerCapture(pointerToRelease);
+      } catch {
+        // Pointer capture may already have been released by the browser.
+      }
+    }
+
     dragging = false;
     activePointerId = null;
     gestureAxis = 'pending';
@@ -237,6 +298,19 @@
     clearPointerDrag();
   }
 
+  function onVisibilityChange() {
+    if (document.hidden) {
+      clearPointerDrag();
+      return;
+    }
+
+    // rAF is suspended in background tabs. Reset the clock on return so a
+    // stale frame interval can never feed a visible velocity jump.
+    lastFrame = performance.now();
+    lastRenderedCameraX = Number.NaN;
+    renderCamera(true);
+  }
+
   function restoreWallAfterHistoryNavigation() {
     cancelCameraAnimation();
     enteringId = null;
@@ -247,6 +321,8 @@
     dragDistance = 0;
     lastFrame = performance.now();
     velocity = getDriftVelocity();
+    lastRenderedCameraX = Number.NaN;
+    renderCamera(true);
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -310,7 +386,7 @@
     prefersReducedMotion = reducedMotionQuery.matches;
     reducedMotionQuery.addEventListener('change', onReducedMotionChange);
     velocity = getDriftVelocity();
-    renderCamera();
+    refreshRenderDevicePixelRatio();
 
     stage.addEventListener('wheel', onWheel, { passive: false });
     stage.addEventListener('pointerdown', onPointerDown);
@@ -320,6 +396,8 @@
     stage.addEventListener('pointerleave', onPointerLeave);
     window.addEventListener('keydown', onKeydown);
     window.addEventListener('blur', onWindowBlur);
+    window.addEventListener('resize', refreshRenderDevicePixelRatio, { passive: true });
+    document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('pageshow', restoreWallAfterHistoryNavigation);
     rafId = requestAnimationFrame(animationFrame);
 
@@ -333,6 +411,8 @@
       stage.removeEventListener('pointerleave', onPointerLeave);
       window.removeEventListener('keydown', onKeydown);
       window.removeEventListener('blur', onWindowBlur);
+      window.removeEventListener('resize', refreshRenderDevicePixelRatio);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pageshow', restoreWallAfterHistoryNavigation);
       cancelAnimationFrame(rafId);
     };
@@ -350,16 +430,21 @@
 >
   <h1 class="visually-hidden">Cyrus Asasi</h1>
 
+  <div
+    bind:this={wallTexture}
+    class="wall-stage__wall-surface"
+    aria-hidden="true"
+    style={`transform: translate3d(${periodicOffset(WALL_START_X, WALL_PATTERN_WIDTH)}px, 0, 0);`}
+  ></div>
+
   <div class="wall-stage__mortar-light" aria-hidden="true"></div>
 
-  <div class="wall-world" aria-label="Website destinations">
-    <div class="wall-world__wall-surface" aria-hidden="true"></div>
-
-    <div class="wall-world__floor" aria-hidden="true">
-      <div class="wall-world__floor-surface"></div>
-      <div class="wall-world__baseboard"></div>
-    </div>
-
+  <div
+    bind:this={wallWorld}
+    class="wall-world"
+    aria-label="Website destinations"
+    style={`transform: translate3d(${-WALL_START_X}px, 0, 0);`}
+  >
     {#each loopCopies as loopIndex}
       <div
         class="wall-loop"
@@ -380,6 +465,15 @@
         {/each}
       </div>
     {/each}
+  </div>
+
+  <div class="wall-floor" aria-hidden="true">
+    <div
+      bind:this={floorSurface}
+      class="wall-floor__surface"
+      style={`transform: translate3d(${periodicOffset(WALL_START_X, FLOOR_TILE_SIZE)}px, 0, 0) rotateX(64deg) scaleY(1.28) translateY(14%);`}
+    ></div>
+    <div class="wall-floor__baseboard"></div>
   </div>
 
   <div class="wall-stage__vignette" aria-hidden="true"></div>
@@ -414,7 +508,10 @@
   .wall-stage {
     --floor-height: clamp(5.2rem, 18%, 9.8rem);
     --baseboard-height: clamp(0.62rem, 1.15vw, 0.92rem);
-    --window-scale: 0.9;
+    --window-width: 306px;
+    --window-height: 378px;
+    --window-offset-x: -153px;
+    --window-offset-y: -189px;
 
     position: relative;
     isolation: isolate;
@@ -426,6 +523,7 @@
     color: var(--wall-light, #f4f1e9);
     cursor: grab;
     touch-action: pan-y;
+    overscroll-behavior-x: contain;
     user-select: none;
   }
 
@@ -456,22 +554,13 @@
     pointer-events: none;
   }
 
-  .wall-world {
+  .wall-stage__wall-surface {
     position: absolute;
-    z-index: 4;
-    inset: 0;
-    transform: translate3d(calc(50vw - var(--camera-x)), 0, 0);
-    backface-visibility: hidden;
-    will-change: transform;
-  }
-
-  .wall-world__wall-surface {
-    position: absolute;
-    z-index: 0;
+    z-index: 1;
     top: 0;
     bottom: 0;
-    left: var(--world-left);
-    width: var(--world-span);
+    left: -96px;
+    width: calc(100% + 192px);
     background-color: var(--wall-dark, #010101);
     background-image: linear-gradient(
       180deg,
@@ -480,12 +569,16 @@
       rgb(0 0 0 / 14%) 82%,
       rgb(0 0 0 / 22%)
     );
+    backface-visibility: hidden;
+    contain: layout paint style;
     box-shadow:
       inset 0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 0.5%, transparent),
       inset 0 -8rem 12rem rgb(0 0 0 / 32%);
+    pointer-events: none;
+    will-change: transform;
   }
 
-  .wall-world__wall-surface::before {
+  .wall-stage__wall-surface::before {
     position: absolute;
     inset: 0;
     background: color-mix(in srgb, var(--wall-light, #f4f1e9) 22%, transparent);
@@ -501,32 +594,49 @@
     pointer-events: none;
   }
 
-  .wall-world__wall-surface::after {
+  .wall-stage__wall-surface::after {
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(90deg, rgb(0 0 0 / 18%), transparent 12% 88%, rgb(0 0 0 / 18%)),
-      linear-gradient(180deg, transparent, rgb(0 0 0 / 16%) 78%, rgb(0 0 0 / 28%));
+    background: linear-gradient(180deg, transparent, rgb(0 0 0 / 16%) 78%, rgb(0 0 0 / 28%));
     content: '';
     pointer-events: none;
   }
 
-  .wall-world__floor {
+  .wall-world {
     position: absolute;
-    z-index: 1;
+    z-index: 4;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100%;
+    backface-visibility: hidden;
+    contain: layout style;
+    /* The destination track is the only moving compositor layer. Frames and
+       paintings stay untransformed inside it so they cannot drift against one
+       another during slow subpixel motion. */
+    will-change: transform;
+  }
+
+  .wall-floor {
+    position: absolute;
+    z-index: 5;
+    right: 0;
     bottom: -0.2rem;
-    left: var(--world-left);
-    width: var(--world-span);
+    left: 0;
     height: calc(var(--floor-height) + 0.2rem);
     overflow: hidden;
+    perspective: 30rem;
+    perspective-origin: 50% 0;
+    contain: layout paint style;
     pointer-events: none;
   }
 
-  .wall-world__floor-surface {
+  .wall-floor__surface {
     position: absolute;
-    inset: -0.15rem 0 0;
-    backface-visibility: hidden;
-    will-change: transform;
+    top: -0.15rem;
+    bottom: 0;
+    left: -50%;
+    width: 200%;
     background-color: var(--wall-dark, #050505);
     background-image:
       linear-gradient(
@@ -545,25 +655,27 @@
     background-position: 0 0, 0 0;
     background-repeat: no-repeat, repeat;
     background-size: 100% 100%, 120px 120px;
+    backface-visibility: hidden;
     box-shadow:
       inset 0 1rem 1.5rem rgb(0 0 0 / 22%),
       inset 0 -1.1rem 2rem rgb(0 0 0 / 16%);
-    transform: perspective(30rem) rotateX(64deg) scaleY(1.28) translateY(14%);
-    transform-origin: calc(var(--camera-x) + var(--loop-width)) 0;
+    transform-origin: 50% 0;
+    will-change: transform;
   }
 
-  .wall-world__floor-surface::after {
+  .wall-floor::after {
     position: absolute;
+    z-index: 1;
     inset: 0;
     background:
-      linear-gradient(108deg, transparent 0 32%, color-mix(in srgb, var(--wall-light, #f4f1e9) 3%, transparent) 41%, transparent 50%) 0 0 / 30rem 100% repeat-x,
-      linear-gradient(180deg, color-mix(in srgb, var(--wall-light, #f4f1e9) 1.5%, transparent), transparent 45%);
+      linear-gradient(108deg, transparent 0 32%, color-mix(in srgb, var(--wall-light, #f4f1e9) 2.4%, transparent) 41%, transparent 50%) 0 0 / 30rem 100% repeat-x,
+      linear-gradient(180deg, color-mix(in srgb, var(--wall-light, #f4f1e9) 1.2%, transparent), transparent 45%);
     content: '';
-    mix-blend-mode: screen;
-    opacity: 0.18;
+    opacity: 0.14;
+    pointer-events: none;
   }
 
-  .wall-world__baseboard {
+  .wall-floor__baseboard {
     position: absolute;
     z-index: 2;
     top: 0;
@@ -585,7 +697,7 @@
     transform: translateY(-0.14rem);
   }
 
-  .wall-world__baseboard::before {
+  .wall-floor__baseboard::before {
     position: absolute;
     top: -0.12rem;
     right: -0.05rem;
@@ -606,7 +718,7 @@
     content: '';
   }
 
-  .wall-world__baseboard::after {
+  .wall-floor__baseboard::after {
     position: absolute;
     inset: 0.5rem 0.4rem 0.18rem;
     background: linear-gradient(
@@ -708,13 +820,19 @@
 
   @media (min-height: 50rem) and (min-width: 40.001rem) {
     .wall-stage {
-      --window-scale: 1;
+      --window-width: 340px;
+      --window-height: 420px;
+      --window-offset-x: -170px;
+      --window-offset-y: -210px;
     }
   }
 
   @media (max-height: 42rem) and (min-width: 40.001rem) {
     .wall-stage {
-      --window-scale: 0.78;
+      --window-width: 266px;
+      --window-height: 328px;
+      --window-offset-x: -133px;
+      --window-offset-y: -164px;
     }
   }
 
@@ -722,15 +840,18 @@
     .wall-stage {
       --floor-height: 6.4rem;
       --baseboard-height: 0.78rem;
-      --window-scale: 0.73;
+      --window-width: 248px;
+      --window-height: 308px;
+      --window-offset-x: -124px;
+      --window-offset-y: -154px;
     }
 
-    .wall-world__floor {
+    .wall-floor {
       bottom: -0.55rem;
       height: calc(var(--floor-height) + 0.8rem);
     }
 
-    .wall-world__baseboard {
+    .wall-floor__baseboard {
       height: calc(var(--baseboard-height) + 0.9rem);
     }
 
