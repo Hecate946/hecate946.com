@@ -16,15 +16,12 @@
   const DIRECTION_THRESHOLD = 36;
   const INERTIA_TIME_CONSTANT = 0.78;
   const MAX_MANUAL_SPEED = 2_400;
-  const WALL_MUSIC_SRC = '/audio/music/kitty-with-the-bent-frame.mp3';
-
 
   let stage: HTMLElement;
   let cameraX = WALL_START_X;
   let velocity = 0;
   let driftDirection = 1;
   let isPaused = false;
-  let musicStarted = false;
   let prefersReducedMotion = false;
   let dragging = false;
   let activePointerId: number | null = null;
@@ -40,7 +37,6 @@
   let lastFrame = 0;
   let programmatic = false;
   let cameraAnimationToken = 0;
-  let musicAudio: HTMLAudioElement | null = null;
 
   const stageStyle = `--camera-x: ${WALL_START_X}px; --loop-width: ${WALL_LOOP_WIDTH}px; --world-left: -${WALL_LOOP_WIDTH}px; --world-span: ${WALL_LOOP_WIDTH * 3}px;`;
 
@@ -67,35 +63,9 @@
     stage?.style.setProperty('--camera-x', `${cameraX}px`);
   }
 
-  function tryPlayMusic() {
-    if (!musicAudio || !musicStarted || isPaused) return;
-    void musicAudio.play().catch(() => {
-      // This call happens from the explicit play/pause control, so normal
-      // browser gesture policies should permit playback. If a browser still
-      // declines, keep the wall usable and leave audio silent.
-    });
-  }
-
-  function syncMusicWithMotion() {
-    if (!musicAudio) return;
-    if (!musicStarted || isPaused) musicAudio.pause();
-    else tryPlayMusic();
-  }
-
   function toggleMotion() {
-    // Initial state: wall moves, music is silent. The first button press starts
-    // music without interrupting the wall. From then on this is a shared
-    // pause/play control for both motion and music.
-    if (!musicStarted) {
-      musicStarted = true;
-      isPaused = false;
-      tryPlayMusic();
-      return;
-    }
-
     isPaused = !isPaused;
     velocity = isPaused ? 0 : getDriftVelocity();
-    syncMusicWithMotion();
   }
 
   function cancelCameraAnimation() {
@@ -277,7 +247,6 @@
     dragDistance = 0;
     lastFrame = performance.now();
     velocity = getDriftVelocity();
-    syncMusicWithMotion();
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -343,12 +312,6 @@
     velocity = getDriftVelocity();
     renderCamera();
 
-    musicAudio = new Audio(withBase(WALL_MUSIC_SRC));
-    musicAudio.loop = true;
-    musicAudio.preload = 'auto';
-    musicAudio.volume = 0.55;
-    musicAudio.load();
-
     stage.addEventListener('wheel', onWheel, { passive: false });
     stage.addEventListener('pointerdown', onPointerDown);
     stage.addEventListener('pointermove', onPointerMove);
@@ -372,9 +335,6 @@
       window.removeEventListener('blur', onWindowBlur);
       window.removeEventListener('pageshow', restoreWallAfterHistoryNavigation);
       cancelAnimationFrame(rafId);
-      musicAudio?.pause();
-      if (musicAudio) musicAudio.src = '';
-      musicAudio = null;
     };
   });
 </script>
@@ -428,16 +388,16 @@
   <button
     class="wall-motion-toggle"
     type="button"
-    aria-label={!musicStarted ? 'Play music' : isPaused ? 'Play wall and music' : 'Pause wall and music'}
-    aria-pressed={musicStarted && isPaused}
-    title={!musicStarted ? 'Play music' : isPaused ? 'Play wall and music' : 'Pause wall and music'}
+    aria-label={isPaused ? 'Play wall animation' : 'Pause wall animation'}
+    aria-pressed={isPaused}
+    title={isPaused ? 'Play wall animation' : 'Pause wall animation'}
     onpointerdown={(event) => event.stopPropagation()}
     onclick={(event) => {
       event.stopPropagation();
       toggleMotion();
     }}
   >
-    {#if !musicStarted || isPaused}
+    {#if isPaused}
       <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M8 5.5v13l10-6.5z" fill="currentColor" />
       </svg>
