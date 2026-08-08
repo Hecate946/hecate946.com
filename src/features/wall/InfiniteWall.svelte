@@ -12,8 +12,10 @@
   const loopCopies = [-1, 0, 1] as const;
   const DRAG_THRESHOLD = 7;
   const WHEEL_SCALE = 0.82;
-  const IDLE_DRIFT_SPEED = 0.36;
-  const DIRECTION_THRESHOLD = 0.12;
+  const IDLE_DRIFT_SPEED = 24; // pixels per second
+  const DIRECTION_THRESHOLD = 36;
+  const INERTIA_TIME_CONSTANT = 0.78;
+  const MAX_MANUAL_SPEED = 2_400;
   const WALL_MUSIC_SRC = '/audio/music/kitty-with-the-bent-frame.mp3';
 
 
@@ -22,11 +24,14 @@
   let velocity = 0;
   let driftDirection = 1;
   let isPaused = false;
+  let musicStarted = false;
+  let prefersReducedMotion = false;
   let dragging = false;
   let activePointerId: number | null = null;
   let pointerX = 0;
   let pointerOriginX = 0;
   let pointerOriginY = 0;
+  let lastPointerTime = 0;
   let gestureAxis: 'pending' | 'horizontal' | 'vertical' = 'pending';
   let dragDistance = 0;
   let hasInteracted = false;
@@ -37,7 +42,7 @@
   let cameraAnimationToken = 0;
   let musicAudio: HTMLAudioElement | null = null;
 
-  $: cameraStyle = `--camera-x: ${cameraX}px; --loop-width: ${WALL_LOOP_WIDTH}px; --world-left: -${WALL_LOOP_WIDTH}px; --world-span: ${WALL_LOOP_WIDTH * 3}px;`;
+  const stageStyle = `--camera-x: ${WALL_START_X}px; --loop-width: ${WALL_LOOP_WIDTH}px; --world-left: -${WALL_LOOP_WIDTH}px; --world-span: ${WALL_LOOP_WIDTH * 3}px;`;
 
   function wrapCamera() {
     while (cameraX < 0) cameraX += WALL_LOOP_WIDTH;
@@ -55,26 +60,39 @@
   }
 
   function getDriftVelocity() {
-    return isPaused || window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      ? 0
-      : driftDirection * IDLE_DRIFT_SPEED;
+    return isPaused || prefersReducedMotion ? 0 : driftDirection * IDLE_DRIFT_SPEED;
+  }
+
+  function renderCamera() {
+    stage?.style.setProperty('--camera-x', `${cameraX}px`);
   }
 
   function tryPlayMusic() {
-    if (!musicAudio || isPaused) return;
+    if (!musicAudio || !musicStarted || isPaused) return;
     void musicAudio.play().catch(() => {
-      // Browsers may block unmuted autoplay until the first user gesture.
-      // A document-level gesture listener below retries when that happens.
+      // This call happens from the explicit play/pause control, so normal
+      // browser gesture policies should permit playback. If a browser still
+      // declines, keep the wall usable and leave audio silent.
     });
   }
 
   function syncMusicWithMotion() {
     if (!musicAudio) return;
-    if (isPaused) musicAudio.pause();
+    if (!musicStarted || isPaused) musicAudio.pause();
     else tryPlayMusic();
   }
 
   function toggleMotion() {
+    // Initial state: wall moves, music is silent. The first button press starts
+    // music without interrupting the wall. From then on this is a shared
+    // pause/play control for both motion and music.
+    if (!musicStarted) {
+      musicStarted = true;
+      isPaused = false;
+      tryPlayMusic();
+      return;
+    }
+
     isPaused = !isPaused;
     velocity = isPaused ? 0 : getDriftVelocity();
     syncMusicWithMotion();
@@ -162,7 +180,7 @@
     const normalized = Math.max(-190, Math.min(190, event.deltaX));
 
     moveBy(normalized * WHEEL_SCALE);
-    velocity = normalized * 0.14;
+    velocity = Math.max(-MAX_MANUAL_SPEED, Math.min(MAX_MANUAL_SPEED, normalized * 8.5));
     updateDriftDirection(velocity);
   }
 
@@ -174,6 +192,7 @@
     pointerX = event.clientX;
     pointerOriginX = event.clientX;
     pointerOriginY = event.clientY;
+    lastPointerTime = event.timeStamp;
     gestureAxis = event.pointerType === 'mouse' ? 'horizontal' : 'pending';
     dragDistance = 0;
     velocity = 0;
@@ -187,10 +206,11 @@
     if (gestureAxis === 'pending') {
       const totalX = Math.abs(event.clientX - pointerOriginX);
       const totalY = Math.abs(event.clientY - pointerOriginY);
-      if (Math.max(totalX, totalY) < 7) return;
+      if (Math.max(totalX, totalY) < 8) return;
 
-      if (totalY > totalX) {
-        // Let the browser own vertical touch motion so the page can scroll.
+      // Use hysteresis on touch. A mostly-horizontal swipe should not get
+      // cancelled just because the finger wanders a few pixels vertically.
+      if (totalY > totalX * 1.3) {
         gestureAxis = 'vertical';
         dragging = false;
         activePointerId = null;
@@ -198,15 +218,24 @@
         return;
       }
 
+      if (totalX <= totalY * 1.12) return;
       gestureAxis = 'horizontal';
     }
 
     if (gestureAxis !== 'horizontal') return;
+    event.preventDefault();
 
+    const elapsedMs = Math.max(4, Math.min(50, event.timeStamp - lastPointerTime || 16.667));
+    lastPointerTime = event.timeStamp;
     pointerX = event.clientX;
     dragDistance += Math.abs(deltaX);
     cameraX -= deltaX;
-    velocity = -deltaX * 0.96;
+
+    const sampledVelocity = Math.max(
+      -MAX_MANUAL_SPEED,
+      Math.min(MAX_MANUAL_SPEED, (-deltaX / elapsedMs) * 1000),
+    );
+    velocity = velocity * 0.58 + sampledVelocity * 0.42;
     updateDriftDirection(velocity);
     wrapCamera();
   }
@@ -268,12 +297,12 @@
     if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
       event.preventDefault();
       moveBy(event.shiftKey ? 380 : 150);
-      velocity = event.shiftKey ? 11 : 6;
+      velocity = event.shiftKey ? 660 : 360;
       updateDriftDirection(velocity);
     } else if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
       event.preventDefault();
       moveBy(event.shiftKey ? -380 : -150);
-      velocity = event.shiftKey ? -11 : -6;
+      velocity = event.shiftKey ? -660 : -360;
       updateDriftDirection(velocity);
     } else if (event.key === 'Home') {
       event.preventDefault();
@@ -282,40 +311,44 @@
     }
   }
 
-  function unlockMusicFromGesture(event: Event) {
-    const target = event.target;
-    if (target instanceof Element && target.closest('.wall-motion-toggle')) return;
-    if (!isPaused && musicAudio?.paused) tryPlayMusic();
-  }
 
   function animationFrame(now: number) {
-    const deltaFrames = lastFrame ? Math.min(2.4, (now - lastFrame) / 16.667) : 1;
+    const elapsedMs = lastFrame ? Math.min(50, Math.max(0, now - lastFrame)) : 16.667;
+    const dt = elapsedMs / 1000;
     lastFrame = now;
 
     if (!dragging && !programmatic && !enteringId) {
       const driftVelocity = getDriftVelocity();
-      const easing = 1 - Math.pow(0.94, deltaFrames);
+      const easing = 1 - Math.exp(-dt / INERTIA_TIME_CONSTANT);
       velocity += (driftVelocity - velocity) * easing;
-      if (Math.abs(velocity) < 0.0001 && driftVelocity === 0) velocity = 0;
-      cameraX += velocity * deltaFrames;
+      if (Math.abs(velocity) < 0.01 && driftVelocity === 0) velocity = 0;
+      cameraX += velocity * dt;
       wrapCamera();
     }
 
+    // Render exactly once per display frame. Pointer/wheel events only update
+    // world state; they no longer force separate Svelte/DOM updates.
+    renderCamera();
     rafId = requestAnimationFrame(animationFrame);
   }
 
   onMount(() => {
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onReducedMotionChange = () => {
+      prefersReducedMotion = reducedMotionQuery.matches;
+      if (prefersReducedMotion) velocity = 0;
+    };
+    prefersReducedMotion = reducedMotionQuery.matches;
+    reducedMotionQuery.addEventListener('change', onReducedMotionChange);
     velocity = getDriftVelocity();
+    renderCamera();
 
     musicAudio = new Audio(withBase(WALL_MUSIC_SRC));
     musicAudio.loop = true;
     musicAudio.preload = 'auto';
     musicAudio.volume = 0.55;
     musicAudio.load();
-    tryPlayMusic();
 
-    document.addEventListener('pointerdown', unlockMusicFromGesture, { capture: true });
-    document.addEventListener('keydown', unlockMusicFromGesture, { capture: true });
     stage.addEventListener('wheel', onWheel, { passive: false });
     stage.addEventListener('pointerdown', onPointerDown);
     stage.addEventListener('pointermove', onPointerMove);
@@ -328,8 +361,7 @@
     rafId = requestAnimationFrame(animationFrame);
 
     return () => {
-      document.removeEventListener('pointerdown', unlockMusicFromGesture, { capture: true });
-      document.removeEventListener('keydown', unlockMusicFromGesture, { capture: true });
+      reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
       stage.removeEventListener('wheel', onWheel);
       stage.removeEventListener('pointerdown', onPointerDown);
       stage.removeEventListener('pointermove', onPointerMove);
@@ -353,7 +385,7 @@
   class:wall-stage--interacted={hasInteracted}
   class:wall-stage--entering={Boolean(enteringId)}
   class="wall-stage"
-  style={cameraStyle}
+  style={stageStyle}
   aria-label="Infinite navigation wall. Drag or scroll horizontally, then select a lit window to enter a page."
 >
   <h1 class="visually-hidden">Cyrus Asasi</h1>
@@ -396,16 +428,16 @@
   <button
     class="wall-motion-toggle"
     type="button"
-    aria-label={isPaused ? 'Play wall and music' : 'Pause wall and music'}
-    aria-pressed={isPaused}
-    title={isPaused ? 'Play wall and music' : 'Pause wall and music'}
+    aria-label={!musicStarted ? 'Play music' : isPaused ? 'Play wall and music' : 'Pause wall and music'}
+    aria-pressed={musicStarted && isPaused}
+    title={!musicStarted ? 'Play music' : isPaused ? 'Play wall and music' : 'Pause wall and music'}
     onpointerdown={(event) => event.stopPropagation()}
     onclick={(event) => {
       event.stopPropagation();
       toggleMotion();
     }}
   >
-    {#if isPaused}
+    {#if !musicStarted || isPaused}
       <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M8 5.5v13l10-6.5z" fill="currentColor" />
       </svg>
@@ -469,6 +501,7 @@
     z-index: 4;
     inset: 0;
     transform: translate3d(calc(50vw - var(--camera-x)), 0, 0);
+    backface-visibility: hidden;
     will-change: transform;
   }
 
@@ -532,6 +565,8 @@
   .wall-world__floor-surface {
     position: absolute;
     inset: -0.15rem 0 0;
+    backface-visibility: hidden;
+    will-change: transform;
     background-color: var(--wall-dark, #050505);
     background-image:
       linear-gradient(
