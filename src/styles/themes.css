@@ -187,3 +187,29 @@ html[data-season='winter'][data-theme='dark'] {
   --header-active-text: #d7e9f4;
   --header-accent: #8eb8d2;
 }
+
+/*
+ * Homepage wall palette. These stay deliberately darker than each season's
+ * dark-mode page background so the wall remains architectural while still
+ * inheriting the active seasonal hue in either color mode.
+ */
+html[data-season='spring'] {
+  --wall-dark: #0c130f;
+  --wall-light: #f8f4ed;
+}
+
+html[data-season='summer'] {
+  --wall-dark: #051417;
+  --wall-light: #fff8e8;
+}
+
+html[data-season='autumn'] {
+  --wall-dark: #140c09;
+  --wall-light: #f7ead5;
+}
+
+html[data-season='winter'] {
+  --wall-dark: #0a1016;
+  --wall-light: #edf2f6;
+}
+

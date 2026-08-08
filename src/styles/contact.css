@@ -280,7 +280,6 @@
   stroke: currentColor !important;
 }
 
-.contact-service-logo--gmail,
 .contact-service-logo--github,
 .contact-service-logo--linkedin,
 .contact-service-logo--coffee {
@@ -490,9 +489,7 @@
   }
 
   .email-identity {
-    display: grid;
-    grid-template-columns: 3rem minmax(0, 1fr);
-    align-items: center;
+    display: block;
   }
 
   .email-address {

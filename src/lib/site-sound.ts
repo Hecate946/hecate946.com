@@ -177,7 +177,7 @@ const playCollisionNote = (context: AudioContext, now: number) => {
 const getPageTurnAudio = () => {
   if (pageTurnAudio) return pageTurnAudio;
 
-  pageTurnAudio = new Audio('/audio/page.mp3');
+  pageTurnAudio = new Audio('/audio/sounds/page-turn.mp3');
   pageTurnAudio.preload = 'auto';
   pageTurnAudio.volume = 0.55;
   return pageTurnAudio;

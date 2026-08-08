@@ -32,9 +32,19 @@
   box-shadow: 0 1rem 2.5rem color-mix(in srgb, var(--text) 8%, transparent);
   isolation: isolate;
   transition:
-    border-color var(--duration-medium) var(--ease-standard),
     box-shadow var(--duration-medium) var(--ease-standard),
     transform var(--duration-medium) var(--ease-standard);
+}
+
+.project-window__image::before {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  border: 1px solid var(--accent);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-medium) var(--ease-standard);
 }
 
 .project-window__image::after {
@@ -143,9 +153,13 @@
 
 .project-window:hover .project-window__image,
 .project-window:focus-within .project-window__image {
-  border-color: var(--accent);
   box-shadow: 0 1.35rem 3.25rem color-mix(in srgb, var(--text) 13%, transparent);
   transform: translateY(-0.18rem);
+}
+
+.project-window:hover .project-window__image::before,
+.project-window:focus-within .project-window__image::before {
+  opacity: 1;
 }
 
 .project-window:hover .project-window__image::after,
@@ -208,6 +222,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .project-window__image,
+  .project-window__image::before,
   .project-window__image img,
   .project-window__open {
     transition: none;

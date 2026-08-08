@@ -1,9 +1,15 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import InfiniteWall from '@/features/wall/InfiniteWall.svelte';
+import '@/styles/wall-home.css';
 ---
 
 <BaseLayout
   title="Cyrus Asasi — Software Engineer & Classical Musician"
   description="The portfolio of Cyrus Asasi, software engineer and classical musician."
   suppressSeasonalShower
-/>
+  mainClass="wall-home-main"
+  bodyClass="wall-home-page"
+>
+  <InfiniteWall client:load />
+</BaseLayout>
