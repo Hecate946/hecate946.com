@@ -350,7 +350,7 @@
       <article class="stats-panel stats-panel-map">
         <div class="stats-panel-heading">
           <h3>Where people visit from</h3>
-          <p>One anonymous dot per visitor; nearby dots remain separate.</p>
+          <p>One anonymous dot per visitor; nearby dots separate as you zoom.</p>
         </div>
 
         {#if liveStats?.locations?.length}

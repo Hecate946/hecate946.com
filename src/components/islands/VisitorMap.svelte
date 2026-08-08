@@ -138,6 +138,23 @@
     };
   }
 
+  function pointSpread(currentZoom: number) {
+    // At world scale, visitors from the same approximate location overlap at
+    // their real map coordinate instead of being visually pushed into oceans.
+    // As the user zooms in, smoothly reveal the privacy-preserving sunflower
+    // separation so individual anonymous visitors remain distinguishable.
+    const startZoom = 1.35;
+    const fullSpreadZoom = 4.25;
+    const progress = clamp(
+      (currentZoom - startZoom) / (fullSpreadZoom - startZoom),
+      0,
+      1,
+    );
+
+    // Smoothstep avoids a visible pop when the separation begins.
+    return progress * progress * (3 - 2 * progress);
+  }
+
   function updateVisibleDimensions() {
     if (!mapElement) return;
 
@@ -433,8 +450,8 @@
           {#each projectedLocations as location}
             <circle
               class="map-dot"
-              cx={location.x + location.offsetX / zoom}
-              cy={location.y + location.offsetY / zoom}
+              cx={location.x + (location.offsetX * pointSpread(zoom)) / zoom}
+              cy={location.y + (location.offsetY * pointSpread(zoom)) / zoom}
               r={dotRadius()}
             >
               <title>
