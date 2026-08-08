@@ -49,6 +49,11 @@ const PAGE_METADATA: Record<
     description: 'Interactive map of every site destination',
     category: 'core',
   },
+  '/house/': {
+    label: 'House',
+    description: 'Rendered house and world experience',
+    category: 'core',
+  },
   '/about/': {
     label: 'About',
     description: 'Biography and current work',
@@ -102,21 +107,6 @@ const PAGE_METADATA: Record<
   '/d3/': {
     label: 'D3 Laboratory',
     description: 'Interactive force and data experiments',
-    category: 'experiments',
-  },
-  '/house-compare/': {
-    label: 'House Comparison',
-    description: 'House rendering comparisons',
-    category: 'experiments',
-  },
-  '/house-png/': {
-    label: 'House PNG',
-    description: 'Raster house preview',
-    category: 'experiments',
-  },
-  '/house-svg/': {
-    label: 'House SVG',
-    description: 'Vector house preview',
     category: 'experiments',
   },
   '/house-preview/': {

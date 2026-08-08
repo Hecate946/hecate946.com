@@ -1,9 +1,13 @@
 ---
+import HomeDisplay from '@/components/home/HomeDisplay.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import '@/styles/home.css';
 ---
 
 <BaseLayout
   title="Cyrus Asasi — Software Engineer & Classical Musician"
   description="The portfolio of Cyrus Asasi, software engineer and classical musician."
   suppressSeasonalShower
-/>
+>
+  <HomeDisplay />
+</BaseLayout>
