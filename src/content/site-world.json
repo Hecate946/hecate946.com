@@ -234,10 +234,10 @@
     {
       "id": "ballroom",
       "label": "Ballroom",
-      "description": "A windowless house-matched Neoclassical ballroom with dark teal carpet, one centered arched door, a simple ring chandelier, and soft magical lighting.",
+      "description": "A Cycles-rendered windowless Neoclassical ballroom with dark teal wool carpet, a centered arched mahogany door, refined cream moldings, a brass ring chandelier, and soft magical cove lighting.",
       "image": "/scenes/world/views/ballroom.png",
-      "width": 1800,
-      "height": 1200,
+      "width": 2048,
+      "height": 1536,
       "blender": {
         "blendFile": "blender/halls/ballroom/ballroom-25d.blend",
         "buildScript": "blender/halls/ballroom/build_ballroom_25d.py",

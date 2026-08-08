@@ -301,7 +301,7 @@
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     stopViewAnimation();
 
-    const target = event.currentTarget as SVGRectElement;
+    const target = event.currentTarget as SVGSVGElement;
     target.setPointerCapture(event.pointerId);
     const point = clientToCanvas(event.clientX, event.clientY);
     canvasPointers.set(event.pointerId, point);
@@ -339,7 +339,7 @@
   }
 
   function canvasPointerEnd(event: PointerEvent) {
-    const target = event.currentTarget as SVGRectElement;
+    const target = event.currentTarget as SVGSVGElement;
     if (target.hasPointerCapture(event.pointerId)) {
       target.releasePointerCapture(event.pointerId);
     }
@@ -363,7 +363,7 @@
   function dragStarted(event: PointerEvent, node: GraphNode) {
     if (event.button !== 0 || !event.isPrimary) return;
     event.stopPropagation();
-    const target = event.currentTarget as SVGCircleElement;
+    const target = event.currentTarget as SVGElement;
     target.setPointerCapture(event.pointerId);
     dragNodeId = node.id;
     dragStartX = event.clientX;
@@ -385,7 +385,7 @@
   }
 
   function dragEnded(event: PointerEvent, node: GraphNode) {
-    const target = event.currentTarget as SVGCircleElement;
+    const target = event.currentTarget as SVGElement;
     if (target.hasPointerCapture(event.pointerId)) {
       target.releasePointerCapture(event.pointerId);
     }
@@ -411,8 +411,7 @@
     }
   }
 
-  function handleNodeKeydown(event: KeyboardEvent, node: GraphNode) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
+  function handleNodeClick(event: MouseEvent, node: GraphNode) {
     event.preventDefault();
     activateNode(node);
   }
@@ -428,6 +427,15 @@
     rebuildGraph();
     resizeObserver = new ResizeObserver(updateSize);
     resizeObserver.observe(hostElement);
+
+    // Pan/zoom are canvas gestures, not control semantics. Register them
+    // imperatively so the SVG stays a graphics container while graph nodes
+    // remain native keyboard-accessible links.
+    svgElement.addEventListener('wheel', handleWheel, { passive: false });
+    svgElement.addEventListener('pointerdown', canvasPointerDown);
+    svgElement.addEventListener('pointermove', canvasPointerMove);
+    svgElement.addEventListener('pointerup', canvasPointerEnd);
+    svgElement.addEventListener('pointercancel', canvasPointerEnd);
   });
 
   onDestroy(() => {
@@ -437,6 +445,14 @@
     simulation = null;
     resizeObserver?.disconnect();
     resizeObserver = null;
+
+    if (svgElement) {
+      svgElement.removeEventListener('wheel', handleWheel);
+      svgElement.removeEventListener('pointerdown', canvasPointerDown);
+      svgElement.removeEventListener('pointermove', canvasPointerMove);
+      svgElement.removeEventListener('pointerup', canvasPointerEnd);
+      svgElement.removeEventListener('pointercancel', canvasPointerEnd);
+    }
   });
 </script>
 
@@ -453,18 +469,13 @@
       class:voronoi-website-graph__svg--panning={isPanning}
       class="voronoi-website-graph__svg"
       viewBox={`0 0 ${width} ${height}`}
-      role="img"
-      aria-label={ariaLabel}
-      on:wheel|nonpassive={handleWheel}
     >
+      <title>{ariaLabel}</title>
+
       <rect
         class="voronoi-website-graph__background"
         width={width}
         height={height}
-        on:pointerdown={canvasPointerDown}
-        on:pointermove={canvasPointerMove}
-        on:pointerup={canvasPointerEnd}
-        on:pointercancel={canvasPointerEnd}
       ></rect>
 
       <g class="voronoi-website-graph__viewport" transform={`translate(${viewX} ${viewY}) scale(${viewScale})`}>
@@ -486,34 +497,58 @@
       <g class="voronoi-website-graph__nodes">
         {#each graphNodes as node (node.id)}
           {@const label = placementFor(node)}
-          <g
-            class="voronoi-website-graph__node"
-            role={node.href ? 'link' : 'group'}
-            tabindex={node.href ? 0 : undefined}
-            aria-label={node.description ? `${node.label}. ${node.description}` : node.label}
-            on:keydown={(event) => handleNodeKeydown(event, node)}
-          >
-            <circle
-              class="voronoi-website-graph__dot"
-              cx={node.x ?? 0}
-              cy={node.y ?? 0}
-              r={NODE_RADIUS}
-              fill={nodeColor(node)}
+          {#if node.href}
+            <a
+              class="voronoi-website-graph__node"
+              href={node.href}
+              target={node.external ? '_blank' : undefined}
+              rel={node.external ? 'noopener noreferrer' : undefined}
+              aria-label={node.description ? `${node.label}. ${node.description}` : node.label}
               on:pointerdown={(event) => dragStarted(event, node)}
               on:pointermove={(event) => dragged(event, node)}
               on:pointerup={(event) => dragEnded(event, node)}
               on:pointercancel={(event) => dragEnded(event, node)}
-              on:click={() => activateNode(node)}
-            ></circle>
+              on:click={(event) => handleNodeClick(event, node)}
+            >
+              <circle
+                class="voronoi-website-graph__dot"
+                cx={node.x ?? 0}
+                cy={node.y ?? 0}
+                r={NODE_RADIUS}
+                fill={nodeColor(node)}
+              ></circle>
 
-            <text
-              class="voronoi-website-graph__label"
-              x={label.x}
-              y={label.y}
-              text-anchor={label.anchor}
-              dominant-baseline={label.baseline}
-            >{node.label}</text>
-          </g>
+              <text
+                class="voronoi-website-graph__label"
+                x={label.x}
+                y={label.y}
+                text-anchor={label.anchor}
+                dominant-baseline={label.baseline}
+              >{node.label}</text>
+            </a>
+          {:else}
+            <g
+              class="voronoi-website-graph__node"
+              role="group"
+              aria-label={node.description ? `${node.label}. ${node.description}` : node.label}
+            >
+              <circle
+                class="voronoi-website-graph__dot"
+                cx={node.x ?? 0}
+                cy={node.y ?? 0}
+                r={NODE_RADIUS}
+                fill={nodeColor(node)}
+              ></circle>
+
+              <text
+                class="voronoi-website-graph__label"
+                x={label.x}
+                y={label.y}
+                text-anchor={label.anchor}
+                dominant-baseline={label.baseline}
+              >{node.label}</text>
+            </g>
+          {/if}
         {/each}
       </g>
       </g>

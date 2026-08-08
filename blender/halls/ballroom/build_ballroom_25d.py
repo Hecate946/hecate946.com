@@ -45,9 +45,9 @@ from mathutils import Vector
 # EASY SETTINGS
 # =============================================================================
 
-SCRIPT_VERSION = "ballroom-approved-build-sheet-v7-framing-fix-2026-08-07"
+SCRIPT_VERSION = "ballroom-cycles-realism-v9.1-blender-5.2-2026-08-07"
 SCRIPT_DIR = Path(__file__).resolve().parent
-REFERENCE_PATH = SCRIPT_DIR / "reference" / "approved-ballroom-build-sheet.png"
+REFERENCE_PATH = SCRIPT_DIR / "reference" / "ballroom-target-reference.png"
 BLEND_PATH = SCRIPT_DIR / "ballroom-25d.blend"
 ESTABLISHING_RENDER = SCRIPT_DIR / "ballroom-25d.png"
 
@@ -64,9 +64,9 @@ AUTO_RENDER = bool(globals().get("AUTO_RENDER", env_flag("HECATE_BALLROOM_RENDER
 USE_GPU = bool(globals().get("USE_GPU", env_flag("HECATE_BALLROOM_GPU", True)))
 
 QUALITY_PRESETS = {
-    "PREVIEW": {"width": 960, "height": 640, "samples": 24},
-    "WEB": {"width": 1800, "height": 1200, "samples": 96},
-    "FINAL": {"width": 2700, "height": 1800, "samples": 192},
+    "PREVIEW": {"width": 1024, "height": 768, "samples": 32},
+    "WEB": {"width": 2048, "height": 1536, "samples": 256},
+    "FINAL": {"width": 3200, "height": 2400, "samples": 512},
 }
 if QUALITY not in QUALITY_PRESETS:
     raise ValueError(
@@ -76,19 +76,19 @@ if QUALITY not in QUALITY_PRESETS:
 
 # These proportions are deliberately stage-like and chosen to reproduce the
 # approved wide establishing composition rather than to simulate a floor plan.
-ROOM_WIDTH = 11.60
-ROOM_DEPTH = 8.20
-ROOM_HEIGHT = 5.40
+ROOM_WIDTH = 12.40
+ROOM_DEPTH = 9.10
+ROOM_HEIGHT = 5.55
 WALL_THICKNESS = 0.22
 BACK_Y = ROOM_DEPTH / 2
 LEFT_X = -ROOM_WIDTH / 2
 RIGHT_X = ROOM_WIDTH / 2
 
 # House palette copied from blender/house/house.py.
-HOUSE_CREAM = (0.73, 0.67, 0.53, 1.0)
-HOUSE_TRIM = (0.91, 0.86, 0.72, 1.0)
-DOOR_WOOD_DARK = (0.018, 0.0025, 0.0015, 1.0)
-DOOR_WOOD_LIGHT = (0.072, 0.010, 0.005, 1.0)
+HOUSE_CREAM = (0.70, 0.61, 0.50, 1.0)
+HOUSE_TRIM = (0.88, 0.80, 0.67, 1.0)
+DOOR_WOOD_DARK = (0.020, 0.006, 0.0025, 1.0)
+DOOR_WOOD_LIGHT = (0.105, 0.032, 0.012, 1.0)
 
 
 # =============================================================================
@@ -190,6 +190,8 @@ def add_cylinder(
     obj = bpy.context.object
     obj.name = name
     obj.data.materials.append(mat)
+    for polygon in obj.data.polygons:
+        polygon.use_smooth = True
     move_to_collection(obj, target)
     return obj
 
@@ -230,6 +232,8 @@ def add_uv_sphere(
     obj = bpy.context.object
     obj.name = name
     obj.data.materials.append(mat)
+    for polygon in obj.data.polygons:
+        polygon.use_smooth = True
     move_to_collection(obj, target)
     return obj
 
@@ -252,6 +256,8 @@ def add_torus(
     obj = bpy.context.object
     obj.name = name
     obj.data.materials.append(mat)
+    for polygon in obj.data.polygons:
+        polygon.use_smooth = True
     move_to_collection(obj, target)
     return obj
 
@@ -280,41 +286,7 @@ def simple_material(
 
 
 def make_plaster(name: str, base: tuple[float, float, float, float]) -> bpy.types.Material:
-    """Very low-frequency plaster variation; never visible as noisy microtexture."""
-    mat = bpy.data.materials.new(name=name)
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-    links = mat.node_tree.links
-    nodes.clear()
-
-    out = nodes.new("ShaderNodeOutputMaterial")
-    bsdf = nodes.new("ShaderNodeBsdfPrincipled")
-    tex = nodes.new("ShaderNodeTexNoise")
-    ramp = nodes.new("ShaderNodeValToRGB")
-    texcoord = nodes.new("ShaderNodeTexCoord")
-
-    tex.inputs["Scale"].default_value = 1.35
-    tex.inputs["Detail"].default_value = 1.1
-    tex.inputs["Roughness"].default_value = 0.38
-    dark = tuple(max(0.0, channel * 0.96) for channel in base[:3]) + (1.0,)
-    light = tuple(min(1.0, channel * 1.035) for channel in base[:3]) + (1.0,)
-    ramp.color_ramp.elements[0].color = dark
-    ramp.color_ramp.elements[1].color = light
-    ramp.color_ramp.elements[0].position = 0.25
-    ramp.color_ramp.elements[1].position = 0.78
-
-    set_input(bsdf, ("Roughness",), 0.77)
-    set_input(bsdf, ("Specular IOR Level", "Specular"), 0.20)
-
-    links.new(texcoord.outputs["Generated"], tex.inputs["Vector"])
-    links.new(tex.outputs["Fac"], ramp.inputs["Fac"])
-    links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
-    links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
-    return mat
-
-
-def make_carpet(name: str) -> bpy.types.Material:
-    """Dark teal broadcloth: rich field color without visible fibers."""
+    """Fine architectural plaster: broad tonal variation plus imperceptible micro-bump."""
     mat = bpy.data.materials.new(name=name)
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
@@ -324,31 +296,105 @@ def make_carpet(name: str) -> bpy.types.Material:
     out = nodes.new("ShaderNodeOutputMaterial")
     bsdf = nodes.new("ShaderNodeBsdfPrincipled")
     texcoord = nodes.new("ShaderNodeTexCoord")
-    noise = nodes.new("ShaderNodeTexNoise")
+    broad = nodes.new("ShaderNodeTexNoise")
+    micro = nodes.new("ShaderNodeTexNoise")
     ramp = nodes.new("ShaderNodeValToRGB")
     bump = nodes.new("ShaderNodeBump")
 
-    noise.inputs["Scale"].default_value = 3.4
-    noise.inputs["Detail"].default_value = 1.3
-    noise.inputs["Roughness"].default_value = 0.42
-    ramp.color_ramp.elements[0].color = (0.006, 0.035, 0.033, 1.0)
-    ramp.color_ramp.elements[1].color = (0.015, 0.078, 0.070, 1.0)
-    ramp.color_ramp.elements[0].position = 0.25
-    ramp.color_ramp.elements[1].position = 0.78
+    broad.inputs["Scale"].default_value = 0.95
+    broad.inputs["Detail"].default_value = 0.65
+    broad.inputs["Roughness"].default_value = 0.28
+    micro.inputs["Scale"].default_value = 48.0
+    micro.inputs["Detail"].default_value = 1.5
+    micro.inputs["Roughness"].default_value = 0.48
 
-    set_input(bsdf, ("Roughness",), 0.88)
-    set_input(bsdf, ("Specular IOR Level", "Specular"), 0.16)
-    bump.inputs["Strength"].default_value = 0.035
-    bump.inputs["Distance"].default_value = 0.010
+    dark = tuple(max(0.0, channel * 0.965) for channel in base[:3]) + (1.0,)
+    light = tuple(min(1.0, channel * 1.025) for channel in base[:3]) + (1.0,)
+    ramp.color_ramp.elements[0].color = dark
+    ramp.color_ramp.elements[1].color = light
+    ramp.color_ramp.elements[0].position = 0.28
+    ramp.color_ramp.elements[1].position = 0.74
 
-    links.new(texcoord.outputs["Generated"], noise.inputs["Vector"])
-    links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
+    set_input(bsdf, ("Roughness",), 0.72)
+    set_input(bsdf, ("Specular IOR Level", "Specular"), 0.22)
+    bump.inputs["Strength"].default_value = 0.055
+    bump.inputs["Distance"].default_value = 0.0025
+
+    links.new(texcoord.outputs["Generated"], broad.inputs["Vector"])
+    links.new(texcoord.outputs["Generated"], micro.inputs["Vector"])
+    links.new(broad.outputs["Fac"], ramp.inputs["Fac"])
     links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
-    links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    links.new(micro.outputs["Fac"], bump.inputs["Height"])
     links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
     links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
     return mat
 
+
+def make_trim(name: str, base: tuple[float, float, float, float]) -> bpy.types.Material:
+    """Painted/limestone trim with just enough texture to catch grazing light."""
+    mat = make_plaster(name, base)
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    if bsdf is not None:
+        set_input(bsdf, ("Roughness",), 0.58)
+        set_input(bsdf, ("Specular IOR Level", "Specular"), 0.28)
+    return mat
+
+
+def make_emission(name: str, color: tuple[float, float, float, float], strength: float) -> bpy.types.Material:
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+    out = nodes.new("ShaderNodeOutputMaterial")
+    emission = nodes.new("ShaderNodeEmission")
+    emission.inputs["Color"].default_value = color
+    emission.inputs["Strength"].default_value = strength
+    links.new(emission.outputs["Emission"], out.inputs["Surface"])
+    return mat
+
+def make_carpet(name: str) -> bpy.types.Material:
+    """Dark teal wool carpet with soft fiber-scale bump and restrained sheen."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out = nodes.new("ShaderNodeOutputMaterial")
+    bsdf = nodes.new("ShaderNodeBsdfPrincipled")
+    texcoord = nodes.new("ShaderNodeTexCoord")
+    broad = nodes.new("ShaderNodeTexNoise")
+    fiber = nodes.new("ShaderNodeTexNoise")
+    ramp = nodes.new("ShaderNodeValToRGB")
+    bump = nodes.new("ShaderNodeBump")
+
+    broad.inputs["Scale"].default_value = 2.6
+    broad.inputs["Detail"].default_value = 1.2
+    broad.inputs["Roughness"].default_value = 0.38
+    fiber.inputs["Scale"].default_value = 125.0
+    fiber.inputs["Detail"].default_value = 2.0
+    fiber.inputs["Roughness"].default_value = 0.62
+    ramp.color_ramp.elements[0].color = (0.009, 0.055, 0.050, 1.0)
+    ramp.color_ramp.elements[1].color = (0.026, 0.125, 0.112, 1.0)
+    ramp.color_ramp.elements[0].position = 0.26
+    ramp.color_ramp.elements[1].position = 0.76
+
+    set_input(bsdf, ("Roughness",), 0.91)
+    set_input(bsdf, ("Specular IOR Level", "Specular"), 0.14)
+    set_input(bsdf, ("Sheen Weight", "Sheen"), 0.16)
+    set_input(bsdf, ("Sheen Roughness",), 0.72)
+    bump.inputs["Strength"].default_value = 0.12
+    bump.inputs["Distance"].default_value = 0.0018
+
+    links.new(texcoord.outputs["Generated"], broad.inputs["Vector"])
+    links.new(texcoord.outputs["Generated"], fiber.inputs["Vector"])
+    links.new(broad.outputs["Fac"], ramp.inputs["Fac"])
+    links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    links.new(fiber.outputs["Fac"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    return mat
 
 def make_wood(name: str) -> bpy.types.Material:
     """Use the same restrained mahogany language as the exterior house door."""
@@ -369,12 +415,12 @@ def make_wood(name: str) -> bpy.types.Material:
     rough = nodes.new("ShaderNodeValToRGB")
     bump = nodes.new("ShaderNodeBump")
 
-    mapping.inputs["Scale"].default_value = (4.0, 2.0, 0.42)
+    mapping.inputs["Scale"].default_value = (5.5, 1.4, 0.50)
     wave.wave_type = "BANDS"
     wave.bands_direction = "X"
-    wave.inputs["Scale"].default_value = 11.0
-    wave.inputs["Distortion"].default_value = 3.6
-    noise.inputs["Scale"].default_value = 5.0
+    wave.inputs["Scale"].default_value = 16.0
+    wave.inputs["Distortion"].default_value = 2.1
+    noise.inputs["Scale"].default_value = 7.0
     noise.inputs["Detail"].default_value = 4.0
     noise.inputs["Roughness"].default_value = 0.68
     mix.blend_type = "MULTIPLY"
@@ -388,8 +434,8 @@ def make_wood(name: str) -> bpy.types.Material:
     rough.color_ramp.elements[1].color = (0.56, 0.56, 0.56, 1.0)
 
     set_input(bsdf, ("Specular IOR Level", "Specular"), 0.30)
-    bump.inputs["Strength"].default_value = 0.12
-    bump.inputs["Distance"].default_value = 0.014
+    bump.inputs["Strength"].default_value = 0.07
+    bump.inputs["Distance"].default_value = 0.006
 
     links.new(texcoord.outputs["Generated"], mapping.inputs["Vector"])
     links.new(mapping.outputs["Vector"], wave.inputs["Vector"])
@@ -407,7 +453,7 @@ def make_wood(name: str) -> bpy.types.Material:
 
 
 def make_brass(name: str) -> bpy.types.Material:
-    return simple_material(name, (0.32, 0.18, 0.045, 1.0), roughness=0.30, metallic=0.82)
+    return simple_material(name, (0.30, 0.135, 0.025, 1.0), roughness=0.22, metallic=0.88)
 
 
 def make_candle(name: str) -> bpy.types.Material:
@@ -424,7 +470,7 @@ def make_flame(name: str) -> bpy.types.Material:
     out = nodes.new("ShaderNodeOutputMaterial")
     emission = nodes.new("ShaderNodeEmission")
     emission.inputs["Color"].default_value = (1.0, 0.52, 0.12, 1.0)
-    emission.inputs["Strength"].default_value = 4.0
+    emission.inputs["Strength"].default_value = 12.0
     links.new(emission.outputs["Emission"], out.inputs["Surface"])
     return mat
 
@@ -525,13 +571,25 @@ def add_back_pilaster(
     trim: bpy.types.Material,
     target: bpy.types.Collection,
 ) -> None:
-    # Stacked rectangles are intentionally used instead of ornate profiles so the
-    # module looks like the exterior house and remains trivial to regenerate.
-    add_box(f"{name} plinth", (x, y, 0.23), (0.44, 0.13, 0.42), trim, target, bevel=0.018)
-    add_box(f"{name} base", (x, y - 0.006, 0.51), (0.35, 0.14, 0.18), trim, target, bevel=0.014)
-    add_box(f"{name} shaft", (x, y, 2.58), (0.24, 0.11, 3.96), trim, target, bevel=0.014)
-    add_box(f"{name} neck", (x, y - 0.006, 4.61), (0.32, 0.13, 0.15), trim, target, bevel=0.014)
-    add_box(f"{name} capital", (x, y - 0.012, 4.76), (0.43, 0.15, 0.16), trim, target, bevel=0.018)
+    """Restrained fluted pilaster matching the reference wall rhythm."""
+    add_box(f"{name} plinth", (x, y, 0.23), (0.46, 0.15, 0.42), trim, target, bevel=0.018)
+    add_box(f"{name} base lower", (x, y - 0.006, 0.48), (0.38, 0.15, 0.14), trim, target, bevel=0.014)
+    add_box(f"{name} base upper", (x, y - 0.010, 0.61), (0.31, 0.14, 0.10), trim, target, bevel=0.012)
+    add_box(f"{name} shaft", (x, y, 2.62), (0.27, 0.12, 3.86), trim, target, bevel=0.012)
+    # Four shallow raised fillets create the fluted reading at normal website scale.
+    for index, dx in enumerate((-0.082, -0.027, 0.027, 0.082), 1):
+        add_box(
+            f"{name} flute {index}",
+            (x + dx, y - 0.067, 2.62),
+            (0.018, 0.018, 3.42),
+            trim,
+            target,
+            bevel=0.006,
+        )
+    add_box(f"{name} neck lower", (x, y - 0.006, 4.55), (0.32, 0.14, 0.11), trim, target, bevel=0.012)
+    add_box(f"{name} neck upper", (x, y - 0.010, 4.66), (0.37, 0.15, 0.10), trim, target, bevel=0.012)
+    add_box(f"{name} capital", (x, y - 0.014, 4.76), (0.47, 0.17, 0.13), trim, target, bevel=0.018)
+    add_box(f"{name} abacus", (x, y - 0.017, 4.86), (0.53, 0.19, 0.08), trim, target, bevel=0.014)
 
 
 def add_side_pilaster(
@@ -542,12 +600,23 @@ def add_side_pilaster(
     trim: bpy.types.Material,
     target: bpy.types.Collection,
 ) -> None:
-    add_box(f"{name} plinth", (x, y, 0.23), (0.13, 0.44, 0.42), trim, target, bevel=0.018)
-    add_box(f"{name} base", (x - side * 0.006, y, 0.51), (0.14, 0.35, 0.18), trim, target, bevel=0.014)
-    add_box(f"{name} shaft", (x, y, 2.58), (0.11, 0.24, 3.96), trim, target, bevel=0.014)
-    add_box(f"{name} neck", (x - side * 0.006, y, 4.61), (0.13, 0.32, 0.15), trim, target, bevel=0.014)
-    add_box(f"{name} capital", (x - side * 0.012, y, 4.76), (0.15, 0.43, 0.16), trim, target, bevel=0.018)
-
+    add_box(f"{name} plinth", (x, y, 0.23), (0.15, 0.46, 0.42), trim, target, bevel=0.018)
+    add_box(f"{name} base lower", (x - side * 0.006, y, 0.48), (0.15, 0.38, 0.14), trim, target, bevel=0.014)
+    add_box(f"{name} base upper", (x - side * 0.010, y, 0.61), (0.14, 0.31, 0.10), trim, target, bevel=0.012)
+    add_box(f"{name} shaft", (x, y, 2.62), (0.12, 0.27, 3.86), trim, target, bevel=0.012)
+    for index, dy in enumerate((-0.082, -0.027, 0.027, 0.082), 1):
+        add_box(
+            f"{name} flute {index}",
+            (x - side * 0.067, y + dy, 2.62),
+            (0.018, 0.018, 3.42),
+            trim,
+            target,
+            bevel=0.006,
+        )
+    add_box(f"{name} neck lower", (x - side * 0.006, y, 4.55), (0.14, 0.32, 0.11), trim, target, bevel=0.012)
+    add_box(f"{name} neck upper", (x - side * 0.010, y, 4.66), (0.15, 0.37, 0.10), trim, target, bevel=0.012)
+    add_box(f"{name} capital", (x - side * 0.014, y, 4.76), (0.17, 0.47, 0.13), trim, target, bevel=0.018)
+    add_box(f"{name} abacus", (x - side * 0.017, y, 4.86), (0.19, 0.53, 0.08), trim, target, bevel=0.014)
 
 def add_perimeter_rail(
     name: str,
@@ -595,9 +664,9 @@ def build_carpet(
     # All tiny motifs live in one mesh, so the approved patterned field stays cheap.
     verts: list[tuple[float, float, float]] = []
     faces: list[tuple[int, int, int, int]] = []
-    size = 0.038
-    x_step = 0.72
-    y_step = 0.68
+    size = 0.030
+    x_step = 0.60
+    y_step = 0.58
     x_limit = inner_x - 0.28
     y_limit = inner_y - 0.28
     row = 0
@@ -636,22 +705,27 @@ def build_door(
 ) -> None:
     wall_front = BACK_Y - WALL_THICKNESS / 2
     # Nested filled arch silhouettes create a clean, layered surround with no booleans.
-    extruded_arch_xz("Door outer cream arch", 0, wall_front - 0.035, 0.10, 2.30, 2.68, 0.12, trim, target)
-    extruded_arch_xz("Door inner cream arch", 0, wall_front - 0.090, 0.13, 2.10, 2.61, 0.10, plaster_inset, target)
-    extruded_arch_xz("Dark mahogany arched double door", 0, wall_front - 0.145, 0.14, 1.88, 2.54, 0.09, wood, target)
+    extruded_arch_xz("Door outer cream arch", 0, wall_front - 0.030, 0.08, 2.42, 2.78, 0.12, trim, target)
+    extruded_arch_xz("Door middle cream arch", 0, wall_front - 0.066, 0.105, 2.24, 2.70, 0.10, plaster_inset, target)
+    extruded_arch_xz("Door inner cream arch", 0, wall_front - 0.100, 0.13, 2.08, 2.62, 0.09, trim, target)
+    extruded_arch_xz("Dark mahogany arched double door", 0, wall_front - 0.140, 0.14, 1.90, 2.55, 0.08, wood, target)
 
-    face_y = wall_front - 0.202
+    face_y = wall_front - 0.194
+    # Raised arched upper panel follows the geometry of the opening instead of
+    # terminating as a rectangular slab, which is what makes the reference door read.
+    extruded_arch_xz("Door upper arched raised frame", 0, face_y - 0.018, 1.62, 1.62, 0.28, 0.030, wood, target, segments=40)
+    extruded_arch_xz("Door upper arched recessed panel", 0, face_y - 0.040, 1.68, 1.46, 0.24, 0.024, wood_dark, target, segments=40)
     add_box("Door center seam", (0, face_y, 1.58), (0.028, 0.022, 2.88), wood_dark, target, bevel=0.004)
 
     # Simple raised panels: enough depth to feel real, still exactly within the scene bible.
     for side in (-1, 1):
         cx = side * 0.47
-        add_box(f"Door lower panel {side:+d}", (cx, face_y - 0.012, 0.69), (0.66, 0.032, 0.74), wood_dark, target, bevel=0.025)
-        add_box(f"Door upper panel {side:+d}", (cx, face_y - 0.012, 1.77), (0.66, 0.032, 1.15), wood_dark, target, bevel=0.025)
-        # Thin wood rails around the two rectangular panels.
+        add_box(f"Door lower panel {side:+d}", (cx, face_y - 0.012, 0.70), (0.64, 0.030, 0.76), wood_dark, target, bevel=0.022)
+        add_box(f"Door middle panel {side:+d}", (cx, face_y - 0.012, 1.48), (0.64, 0.030, 0.52), wood_dark, target, bevel=0.022)
+        # Thin wood rails around the lower rectangular panels.
         for label, zc, width, height in (
-            ("lower", 0.69, 0.73, 0.82),
-            ("upper", 1.77, 0.73, 1.23),
+            ("lower", 0.70, 0.72, 0.84),
+            ("middle", 1.48, 0.72, 0.60),
         ):
             t = 0.035
             add_box(f"Door {label} panel L {side:+d}", (cx - width / 2, face_y - 0.035, zc), (t, 0.030, height), wood, target, bevel=0.006)
@@ -661,9 +735,9 @@ def build_door(
 
     for side in (-1, 1):
         x = side * 0.18
-        add_cylinder(f"Door brass pull {side:+d}", (x, face_y - 0.060, 1.47), 0.022, 0.46, brass, target, vertices=24)
-        add_uv_sphere(f"Door pull top cap {side:+d}", (x, face_y - 0.060, 1.70), 0.030, brass, target)
-        add_uv_sphere(f"Door pull bottom cap {side:+d}", (x, face_y - 0.060, 1.24), 0.030, brass, target)
+        add_cylinder(f"Door brass pull {side:+d}", (x, face_y - 0.060, 1.43), 0.018, 0.42, brass, target, vertices=24)
+        add_uv_sphere(f"Door pull top cap {side:+d}", (x, face_y - 0.060, 1.64), 0.025, brass, target)
+        add_uv_sphere(f"Door pull bottom cap {side:+d}", (x, face_y - 0.060, 1.22), 0.025, brass, target)
 
 
 def build_architecture(
@@ -677,6 +751,7 @@ def build_architecture(
     wood: bpy.types.Material,
     wood_dark: bpy.types.Material,
     brass: bpy.types.Material,
+    cove_emission: bpy.types.Material,
 ) -> None:
     # Clean stage shell: back + side walls + ceiling, deliberately no front wall.
     add_box("Back plaster wall", (0, BACK_Y, ROOM_HEIGHT / 2), (ROOM_WIDTH, WALL_THICKNESS, ROOM_HEIGHT), plaster, background, bevel=0.015)
@@ -691,21 +766,22 @@ def build_architecture(
     add_perimeter_rail("Base plinth upper", 0.43, 0.12, 0.14, trim, background)
     add_perimeter_rail("Wainscot rail lower", 1.03, 0.10, 0.11, trim, background)
     add_perimeter_rail("Wainscot rail upper", 1.18, 0.13, 0.14, trim, background)
-    add_perimeter_rail("Cornice lower", 4.73, 0.14, 0.16, trim, background)
-    add_perimeter_rail("Cornice middle", 4.91, 0.18, 0.20, trim, background)
-    add_perimeter_rail("Cornice upper", 5.09, 0.16, 0.25, trim, background)
+    add_perimeter_rail("Cornice lower", 4.70, 0.12, 0.14, trim, background)
+    add_perimeter_rail("Cornice bead", 4.82, 0.05, 0.10, trim, background)
+    add_perimeter_rail("Cornice middle", 4.93, 0.16, 0.18, trim, background)
+    add_perimeter_rail("Cornice upper", 5.10, 0.16, 0.24, trim, background)
 
     # Back wall pilasters and modular framed panels.
     back_detail_y = BACK_Y - WALL_THICKNESS / 2 - 0.078
-    for index, x in enumerate((-5.05, -2.25, 2.25, 5.05), 1):
+    for index, x in enumerate((-5.35, -2.35, 2.35, 5.35), 1):
         add_back_pilaster(f"Back pilaster {index}", x, back_detail_y, trim, background)
 
     # Upper frames exactly avoid wall lights; they remain empty architectural panels.
     back_panels = (
-        (-3.65, 2.05),
-        (-1.55, 0.72),
-        (1.55, 0.72),
-        (3.65, 2.05),
+        (-3.90, 2.22),
+        (-1.62, 0.78),
+        (1.62, 0.78),
+        (3.90, 2.22),
     )
     for index, (x, width) in enumerate(back_panels, 1):
         add_back_molding_rect(f"Back upper panel {index}", x, width, 1.48, 4.38, back_detail_y - 0.028, trim, background)
@@ -714,9 +790,9 @@ def build_architecture(
     # Side walls use the same module rhythm and no side doors or sconces.
     for side in (-1, 1):
         side_detail_x = side * (ROOM_WIDTH / 2 - WALL_THICKNESS / 2 - 0.078)
-        for index, y in enumerate((-2.85, 0.0, 2.85), 1):
+        for index, y in enumerate((-3.15, 0.0, 3.15), 1):
             add_side_pilaster(f"{'Left' if side < 0 else 'Right'} pilaster {index}", side, y, side_detail_x, trim, background)
-        for index, y in enumerate((-1.45, 1.45), 1):
+        for index, y in enumerate((-1.62, 1.62), 1):
             add_side_molding_rect(
                 f"{'Left' if side < 0 else 'Right'} upper panel {index}",
                 side,
@@ -742,12 +818,18 @@ def build_architecture(
             )
 
     # A slightly deeper ceiling tray / cove lip. The light itself stays invisible.
-    add_box("Back dropped ceiling soffit", (0, BACK_Y - 0.43, 5.18), (ROOM_WIDTH - 0.18, 0.70, 0.25), trim, background, bevel=0.028)
-    add_box("Left dropped ceiling soffit", (LEFT_X + 0.43, 0, 5.18), (0.70, ROOM_DEPTH - 0.18, 0.25), trim, background, bevel=0.028)
-    add_box("Right dropped ceiling soffit", (RIGHT_X - 0.43, 0, 5.18), (0.70, ROOM_DEPTH - 0.18, 0.25), trim, background, bevel=0.028)
-    add_box("Back cove inner lip", (0, BACK_Y - 0.81, 5.02), (ROOM_WIDTH - 1.50, 0.12, 0.16), trim, background, bevel=0.018)
-    add_box("Left cove inner lip", (LEFT_X + 0.81, 0, 5.02), (0.12, ROOM_DEPTH - 1.50, 0.16), trim, background, bevel=0.018)
-    add_box("Right cove inner lip", (RIGHT_X - 0.81, 0, 5.02), (0.12, ROOM_DEPTH - 1.50, 0.16), trim, background, bevel=0.018)
+    add_box("Back dropped ceiling soffit", (0, BACK_Y - 0.46, 5.23), (ROOM_WIDTH - 0.18, 0.76, 0.26), trim, background, bevel=0.028)
+    add_box("Left dropped ceiling soffit", (LEFT_X + 0.46, 0, 5.23), (0.76, ROOM_DEPTH - 0.18, 0.26), trim, background, bevel=0.028)
+    add_box("Right dropped ceiling soffit", (RIGHT_X - 0.46, 0, 5.23), (0.76, ROOM_DEPTH - 0.18, 0.26), trim, background, bevel=0.028)
+    add_box("Back cove inner lip", (0, BACK_Y - 0.86, 5.05), (ROOM_WIDTH - 1.62, 0.12, 0.18), trim, background, bevel=0.018)
+    add_box("Left cove inner lip", (LEFT_X + 0.86, 0, 5.05), (0.12, ROOM_DEPTH - 1.62, 0.18), trim, background, bevel=0.018)
+    add_box("Right cove inner lip", (RIGHT_X - 0.86, 0, 5.05), (0.12, ROOM_DEPTH - 1.62, 0.18), trim, background, bevel=0.018)
+
+    # Thin continuous luminous lines are visible in the reference. These meshes are
+    # physically emissive in Cycles; hidden area lights below provide clean fill.
+    add_box("Back cove luminous line", (0, BACK_Y - 0.78, 5.18), (ROOM_WIDTH - 1.48, 0.045, 0.035), cove_emission, background, bevel=0.008)
+    add_box("Left cove luminous line", (LEFT_X + 0.78, 0, 5.18), (0.045, ROOM_DEPTH - 1.48, 0.035), cove_emission, background, bevel=0.008)
+    add_box("Right cove luminous line", (RIGHT_X - 0.78, 0, 5.18), (0.045, ROOM_DEPTH - 1.48, 0.035), cove_emission, background, bevel=0.008)
 
     build_door(background, plaster_inset, trim, wood, wood_dark, brass)
 
@@ -762,37 +844,43 @@ def build_chandelier(
     brass: bpy.types.Material,
     candle: bpy.types.Material,
     flame: bpy.types.Material,
-) -> None:
-    center = (0.0, -0.05, 4.18)
-    ring_radius = 1.05
-    add_torus("Simple centered brass chandelier ring", center, ring_radius, 0.035, brass, target)
+) -> list[tuple[float, float, float]]:
+    """Simple but properly proportioned brass ring chandelier from the reference."""
+    center = (0.0, -0.08, 4.34)
+    ring_radius = 0.90
+    add_torus("Centered brass chandelier ring", center, ring_radius, 0.032, brass, target)
+    add_torus("Chandelier inner ring detail", center, ring_radius - 0.075, 0.010, brass, target)
 
-    add_cylinder("Chandelier ceiling rose", (0, -0.05, 5.23), 0.18, 0.08, brass, target, vertices=32)
-    add_cylinder("Chandelier lower hub", (0, -0.05, 4.18), 0.09, 0.16, brass, target, vertices=28)
+    add_cylinder("Chandelier ceiling rose", (0, -0.08, 5.32), 0.16, 0.07, brass, target, vertices=40)
+    add_cylinder("Chandelier lower hub", (0, -0.08, 4.34), 0.075, 0.13, brass, target, vertices=32)
 
-    support_z = 5.18
+    support_z = 5.27
     for index, angle in enumerate((45, 135, 225, 315), 1):
         rad = math.radians(angle)
-        end = (math.cos(rad) * ring_radius * 0.93, -0.05 + math.sin(rad) * ring_radius * 0.93, 4.20)
+        end = (math.cos(rad) * ring_radius * 0.94, -0.08 + math.sin(rad) * ring_radius * 0.94, 4.36)
         add_cylinder_between(
-            f"Chandelier support {index}",
-            (0.0, -0.05, support_z),
+            f"Chandelier chain {index}",
+            (0.0, -0.08, support_z),
             end,
-            0.014,
+            0.009,
             brass,
             target,
             vertices=12,
         )
 
-    for index in range(8):
-        angle = 2 * math.pi * index / 8
+    flame_positions: list[tuple[float, float, float]] = []
+    candle_count = 10
+    for index in range(candle_count):
+        angle = 2 * math.pi * index / candle_count
         x = math.cos(angle) * ring_radius
-        y = -0.05 + math.sin(angle) * ring_radius
-        add_cylinder(f"Chandelier candle cup {index+1}", (x, y, 4.28), 0.060, 0.090, brass, target, vertices=20)
-        add_cylinder(f"Chandelier candle {index+1}", (x, y, 4.43), 0.032, 0.25, candle, target, vertices=20)
-        flame_obj = add_uv_sphere(f"Chandelier flame {index+1}", (x, y, 4.59), 0.040, flame, target)
-        flame_obj.scale.z = 1.45
-
+        y = -0.08 + math.sin(angle) * ring_radius
+        add_cylinder(f"Chandelier candle cup {index+1}", (x, y, 4.43), 0.050, 0.075, brass, target, vertices=24)
+        add_cylinder(f"Chandelier candle {index+1}", (x, y, 4.57), 0.027, 0.22, candle, target, vertices=24)
+        flame_pos = (x, y, 4.715)
+        flame_obj = add_uv_sphere(f"Chandelier flame {index+1}", flame_pos, 0.034, flame, target)
+        flame_obj.scale.z = 1.5
+        flame_positions.append(flame_pos)
+    return flame_positions
 
 def add_area_light(
     name: str,
@@ -830,18 +918,45 @@ def add_area_light(
     return obj
 
 
-def build_lighting(target: bpy.types.Collection) -> None:
-    # House-like symmetrical "impossible" light. These sources sit outside the
-    # authored frame; visible chandelier candles are decorative only.
-    add_area_light("Left magical key", (-4.6, -5.0, 6.4), (0.0, 0.7, 2.45), 720.0, 5.0, target)
-    add_area_light("Right magical key", (4.6, -5.0, 6.4), (0.0, 0.7, 2.45), 720.0, 5.0, target)
-    add_area_light("Centered magical fill", (0.0, -5.8, 4.9), (0.0, 0.8, 2.25), 480.0, 5.6, target)
-    add_area_light("Soft overhead fill", (0.0, 0.2, 7.4), (0.0, 0.6, 2.2), 520.0, 4.8, target, color=(1.0, 0.86, 0.68))
+def add_point_light(
+    name: str,
+    location: tuple[float, float, float],
+    energy: float,
+    radius: float,
+    target: bpy.types.Collection,
+    *,
+    color: tuple[float, float, float] = (1.0, 0.56, 0.28),
+) -> bpy.types.Object:
+    data = bpy.data.lights.new(name=name, type="POINT")
+    data.energy = energy
+    data.color = color
+    data.shadow_soft_size = radius
+    obj = bpy.data.objects.new(name, data)
+    target.objects.link(obj)
+    obj.location = location
+    return obj
 
-    # Cove glow: three hidden rectangular area lights bounce into the ceiling tray.
-    add_area_light("Back hidden cove", (0.0, BACK_Y - 0.90, 5.03), (0.0, 2.2, 5.34), 330.0, 7.8, target, size_y=0.45, color=(1.0, 0.68, 0.42))
-    add_area_light("Left hidden cove", (LEFT_X + 0.90, 0.0, 5.03), (-4.25, 0.0, 5.34), 250.0, 5.6, target, size_y=0.45, color=(1.0, 0.68, 0.42))
-    add_area_light("Right hidden cove", (RIGHT_X - 0.90, 0.0, 5.03), (4.25, 0.0, 5.34), 250.0, 5.6, target, size_y=0.45, color=(1.0, 0.68, 0.42))
+
+def build_lighting(
+    target: bpy.types.Collection,
+    chandelier_flames: Sequence[tuple[float, float, float]],
+) -> None:
+    # Broad off-camera sources reproduce the source image's impossible, elegant
+    # illumination without introducing windows or visible studio fixtures.
+    add_area_light("Left magical key", (-5.4, -6.2, 6.8), (0.0, 1.0, 2.50), 780.0, 6.0, target)
+    add_area_light("Right magical key", (5.4, -6.2, 6.8), (0.0, 1.0, 2.50), 780.0, 6.0, target)
+    add_area_light("Centered magical fill", (0.0, -7.0, 5.15), (0.0, 1.2, 2.35), 540.0, 6.4, target)
+    add_area_light("Soft overhead bounce", (0.0, 0.0, 7.8), (0.0, 0.9, 2.20), 430.0, 5.8, target, color=(1.0, 0.84, 0.67))
+
+    # Cove bounce follows the three visible sides of the ceiling tray.
+    add_area_light("Back hidden cove", (0.0, BACK_Y - 0.98, 5.15), (0.0, 2.45, 5.42), 390.0, 8.8, target, size_y=0.50, color=(1.0, 0.66, 0.38))
+    add_area_light("Left hidden cove", (LEFT_X + 0.98, 0.0, 5.15), (-4.8, 0.0, 5.42), 300.0, 6.5, target, size_y=0.50, color=(1.0, 0.66, 0.38))
+    add_area_light("Right hidden cove", (RIGHT_X - 0.98, 0.0, 5.15), (4.8, 0.0, 5.42), 300.0, 6.5, target, size_y=0.50, color=(1.0, 0.66, 0.38))
+
+    # The visible chandelier contributes only a gentle local pool of warm light.
+    # A subset of points is enough at this viewing distance and keeps Cycles clean.
+    for index, position in enumerate(chandelier_flames[::2], 1):
+        add_point_light(f"Chandelier candle light {index}", position, 18.0, 0.16, target)
 
 
 # =============================================================================
@@ -957,66 +1072,100 @@ def configure_cycles_device(scene: bpy.types.Scene) -> None:
         scene.cycles.device = "CPU"
 
 
+def configure_compositor(scene: bpy.types.Scene) -> None:
+    """Very restrained highlight bloom, similar to a real lens rather than game bloom."""
+    try:
+        scene.use_nodes = True
+        tree = scene.node_tree
+        nodes = tree.nodes
+        links = tree.links
+        nodes.clear()
+        render_layers = nodes.new("CompositorNodeRLayers")
+        glare = nodes.new("CompositorNodeGlare")
+        composite = nodes.new("CompositorNodeComposite")
+        glare.glare_type = "FOG_GLOW"
+        glare.quality = "HIGH"
+        glare.threshold = 1.15
+        glare.size = 6
+        glare.mix = -0.94
+        links.new(render_layers.outputs["Image"], glare.inputs["Image"])
+        links.new(glare.outputs["Image"], composite.inputs["Image"])
+    except Exception as exc:
+        print(f"Compositor setup warning: {exc}")
+
+
 def configure_render(scene: bpy.types.Scene) -> None:
     preset = QUALITY_PRESETS[QUALITY]
-    if QUALITY == "PREVIEW":
-        configure_eevee_engine(scene)
-        # Enable conservative Eevee quality features when this Blender exposes them.
-        eevee = getattr(scene, "eevee", None)
-        if eevee is not None:
-            for attr, value in (
-                ("use_gtao", True),
-                ("gtao_distance", 3.0),
-                ("gtao_factor", 1.15),
-                ("use_soft_shadows", True),
-            ):
-                if hasattr(eevee, attr):
-                    setattr(eevee, attr, value)
-    else:
-        try:
-            scene.render.engine = "CYCLES"
-            scene.cycles.samples = preset["samples"]
-            scene.cycles.use_denoising = True
-            scene.cycles.preview_samples = min(32, preset["samples"])
-            if hasattr(scene.cycles, "use_adaptive_sampling"):
-                scene.cycles.use_adaptive_sampling = True
-            if hasattr(scene.cycles, "adaptive_threshold"):
-                scene.cycles.adaptive_threshold = 0.020 if QUALITY == "WEB" else 0.012
-            configure_cycles_device(scene)
-        except Exception as exc:
-            print(f"Cycles setup warning; falling back to Eevee: {exc}")
-            configure_eevee_engine(scene)
+
+    # Every published ballroom image is a real Cycles render. PREVIEW simply uses
+    # fewer samples; it never swaps to Eevee, so composition/material feedback is reliable.
+    scene.render.engine = "CYCLES"
+    scene.cycles.samples = preset["samples"]
+    scene.cycles.preview_samples = min(64, preset["samples"])
+    scene.cycles.use_denoising = True
+    if hasattr(scene.cycles, "use_preview_denoising"):
+        scene.cycles.use_preview_denoising = True
+    if hasattr(scene.cycles, "use_adaptive_sampling"):
+        scene.cycles.use_adaptive_sampling = True
+    if hasattr(scene.cycles, "adaptive_threshold"):
+        scene.cycles.adaptive_threshold = {
+            "PREVIEW": 0.040,
+            "WEB": 0.010,
+            "FINAL": 0.006,
+        }[QUALITY]
+    if hasattr(scene.cycles, "max_bounces"):
+        scene.cycles.max_bounces = 12
+    if hasattr(scene.cycles, "diffuse_bounces"):
+        scene.cycles.diffuse_bounces = 5
+    if hasattr(scene.cycles, "glossy_bounces"):
+        scene.cycles.glossy_bounces = 5
+    if hasattr(scene.cycles, "transmission_bounces"):
+        scene.cycles.transmission_bounces = 8
+    if hasattr(scene.cycles, "transparent_max_bounces"):
+        scene.cycles.transparent_max_bounces = 8
+    if hasattr(scene.cycles, "volume_bounces"):
+        scene.cycles.volume_bounces = 2
+    if hasattr(scene.cycles, "use_light_tree"):
+        scene.cycles.use_light_tree = True
+    if hasattr(scene.cycles, "sample_clamp_indirect"):
+        scene.cycles.sample_clamp_indirect = 4.0
+    if hasattr(scene.cycles, "blur_glossy"):
+        scene.cycles.blur_glossy = 0.5
+    configure_cycles_device(scene)
 
     scene.render.resolution_x = preset["width"]
     scene.render.resolution_y = preset["height"]
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGBA"
+    scene.render.image_settings.color_depth = "8"
     scene.render.film_transparent = False
     scene.render.use_file_extension = True
 
-    # Match the quiet exterior render rather than pushing cinematic contrast.
+    # Blender 5.2 uses AgX; keep the grade warm and controlled like the reference.
     for transform in ("AgX", "Filmic", "Standard"):
         try:
             scene.view_settings.view_transform = transform
             break
         except Exception:
             continue
-    for look in ("AgX - Medium High Contrast", "Medium High Contrast", "Medium High Contrast"):
+    for look in ("AgX - Medium High Contrast", "Medium High Contrast", "AgX - Medium Low Contrast", "None"):
         try:
             scene.view_settings.look = look
             break
         except Exception:
             continue
-    scene.view_settings.exposure = -0.15
+    scene.view_settings.exposure = -0.10
 
     world = scene.world or bpy.data.worlds.new("Ballroom world")
     scene.world = world
     world.use_nodes = True
     background = world.node_tree.nodes.get("Background")
     if background is not None:
-        background.inputs["Color"].default_value = (0.020, 0.018, 0.015, 1.0)
-        background.inputs["Strength"].default_value = 0.10
+        background.inputs["Color"].default_value = (0.018, 0.015, 0.012, 1.0)
+        background.inputs["Strength"].default_value = 0.075
+
+    configure_compositor(scene)
 
 
 def render_view(scene: bpy.types.Scene, camera: bpy.types.Object, output: Path) -> None:
@@ -1050,14 +1199,15 @@ def main() -> None:
 
     plaster = make_plaster("House-matched warm cream plaster", HOUSE_CREAM)
     plaster_inset = make_plaster("Slightly lighter inset plaster", (0.77, 0.71, 0.58, 1.0))
-    trim = simple_material("House-matched cream limestone trim", HOUSE_TRIM, roughness=0.64)
+    trim = make_trim("House-matched cream limestone trim", HOUSE_TRIM)
     carpet = make_carpet("Approved dark teal carpet")
-    carpet_gold = simple_material("Muted gold carpet pattern", (0.26, 0.145, 0.032, 1.0), roughness=0.48, metallic=0.58)
+    carpet_gold = simple_material("Muted gold carpet pattern", (0.22, 0.105, 0.020, 1.0), roughness=0.48, metallic=0.42)
     wood = make_wood("House-matched procedural mahogany")
     wood_dark = simple_material("Door recessed mahogany", (0.010, 0.0015, 0.0010, 1.0), roughness=0.58)
     brass = make_brass("Muted warm brass")
     candle = make_candle("Warm ivory chandelier candles")
     flame = make_flame("Quiet candle flame")
+    cove_emission = make_emission("Warm recessed cove glow", (1.0, 0.54, 0.24, 1.0), 7.5)
 
     build_architecture(
         background,
@@ -1070,9 +1220,10 @@ def main() -> None:
         wood,
         wood_dark,
         brass,
+        cove_emission,
     )
-    build_chandelier(midground, brass, candle, flame)
-    build_lighting(lights)
+    chandelier_flames = build_chandelier(midground, brass, candle, flame)
+    build_lighting(lights, chandelier_flames)
     camera = build_camera_and_hotspot(cameras, interactions)
     configure_render(scene)
 

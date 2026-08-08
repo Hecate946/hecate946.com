@@ -1,5 +1,5 @@
 """
-HECATE946.COM — PROFESSIONAL SEASONAL HOUSE EXTERIOR (v4 scene cleanup pass) (v2 composition pass)
+HECATE946.COM — PROFESSIONAL SEASONAL HOUSE EXTERIOR (v7 realism pass) (v4 scene cleanup pass) (v2 composition pass)
 ====================================================
 
 Target Blender: 5.2.0 LTS
@@ -40,6 +40,7 @@ import json
 import math
 import os
 import random
+import warnings
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -47,6 +48,11 @@ from typing import Iterable
 
 import bpy
 from mathutils import Vector
+
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning,
+    message=r".*Material\\.use_nodes.*",
+)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parents[2]
@@ -97,32 +103,16 @@ HOUSE_DEPTH = 3.10
 HOUSE_FRONT_Y = -HOUSE_DEPTH / 2.0
 
 # Long-lens calm architectural composition.
-CAMERA_LOCATION = (0.0, -46.0, 4.60)
-CAMERA_TARGET = (0.0, -1.15, 3.18)
+CAMERA_LOCATION = (0.0, -46.0, 4.45)
+CAMERA_TARGET = (0.0, -1.05, 3.12)
 CAMERA_LENS = 70.0
 
 TREE_X = 11.8
 TREE_Y = 1.90
 
-SHRUB_POSITIONS = (
-    (-7.70, -0.60, 0.00, 1.05),
-    (-6.95, -0.30, 0.00, 0.92),
-    (-4.20, -3.25, 0.00, 0.92),
-    (-3.50, -3.62, 0.00, 0.68),
-    (3.50, -3.62, 0.00, 0.68),
-    (4.20, -3.25, 0.00, 0.92),
-    (6.95, -0.30, 0.00, 0.92),
-    (7.70, -0.60, 0.00, 1.05),
-)
+SHRUB_POSITIONS = ()
 
-FLOWER_POSITIONS = (
-    (-8.05, -1.22, 0.0, 0.64),
-    (-4.70, -3.95, 0.0, 0.56),
-    (-4.00, -4.12, 0.0, 0.48),
-    (4.00, -4.12, 0.0, 0.48),
-    (4.70, -3.95, 0.0, 0.56),
-    (8.05, -1.22, 0.0, 0.64),
-)
+FLOWER_POSITIONS = ()
 
 
 @dataclass
@@ -156,20 +146,20 @@ STYLES = {
         sun_energy=1.15,
         sun_angle=math.radians(7.0),
         sun_color=(1.0, 0.84, 0.72),
-        ground_color=(0.17, 0.30, 0.12, 1.0),
-        hill_far=(0.40, 0.50, 0.45, 1.0),
-        hill_mid=(0.27, 0.39, 0.31, 1.0),
-        hill_near=(0.17, 0.29, 0.21, 1.0),
-        tree_tint=(0.94, 0.55, 0.64, 1.0),
-        tree_tint_mix=0.66,
-        grass_tint=(0.56, 0.76, 0.43, 1.0),
-        grass_tint_mix=0.10,
+        ground_color=(0.15, 0.28, 0.11, 1.0),
+        hill_far=(0.50, 0.67, 0.46, 1.0),
+        hill_mid=(0.34, 0.58, 0.30, 1.0),
+        hill_near=(0.24, 0.49, 0.21, 1.0),
+        tree_tint=(0.98, 0.79, 0.86, 1.0),
+        tree_tint_mix=0.82,
+        grass_tint=(0.22, 0.47, 0.15, 1.0),
+        grass_tint_mix=0.18,
         shrub_tint=(0.42, 0.61, 0.30, 1.0),
         shrub_tint_mix=0.08,
         leaf_visibility=1.0,
         grass_visibility=True,
-        shrub_visibility=True,
-        flower_visibility=True,
+        shrub_visibility=False,
+        flower_visibility=False,
         snow_visibility=False,
         window_strength=0.0,
         exposure=0.10,
@@ -180,9 +170,9 @@ STYLES = {
         sun_angle=math.radians(5.0),
         sun_color=(1.0, 0.94, 0.82),
         ground_color=(0.12, 0.27, 0.09, 1.0),
-        hill_far=(0.31, 0.45, 0.37, 1.0),
-        hill_mid=(0.19, 0.34, 0.24, 1.0),
-        hill_near=(0.11, 0.25, 0.16, 1.0),
+        hill_far=(0.36, 0.57, 0.39, 1.0),
+        hill_mid=(0.23, 0.48, 0.26, 1.0),
+        hill_near=(0.16, 0.40, 0.18, 1.0),
         tree_tint=(0.22, 0.45, 0.16, 1.0),
         tree_tint_mix=0.03,
         grass_tint=(0.28, 0.51, 0.19, 1.0),
@@ -191,8 +181,8 @@ STYLES = {
         shrub_tint_mix=0.03,
         leaf_visibility=1.0,
         grass_visibility=True,
-        shrub_visibility=True,
-        flower_visibility=True,
+        shrub_visibility=False,
+        flower_visibility=False,
         snow_visibility=False,
         window_strength=0.0,
         exposure=0.08,
@@ -214,7 +204,7 @@ STYLES = {
         shrub_tint_mix=0.22,
         leaf_visibility=0.90,
         grass_visibility=True,
-        shrub_visibility=True,
+        shrub_visibility=False,
         flower_visibility=False,
         snow_visibility=False,
         window_strength=0.0,
@@ -237,7 +227,7 @@ STYLES = {
         shrub_tint_mix=0.08,
         leaf_visibility=0.0,
         grass_visibility=False,
-        shrub_visibility=True,
+        shrub_visibility=False,
         flower_visibility=False,
         snow_visibility=True,
         window_strength=0.0,
@@ -547,6 +537,11 @@ def add_window_glow(collection: bpy.types.Collection):
 
 
 def grass_material(name: str):
+    """
+    Darker, richer lawn material for the website exterior.
+
+    Blender 5.2-safe: uses supported Noise nodes only.
+    """
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
@@ -555,40 +550,44 @@ def grass_material(name: str):
 
     out = nodes.new("ShaderNodeOutputMaterial")
     bsdf = nodes.new("ShaderNodeBsdfPrincipled")
-    bsdf.inputs["Roughness"].default_value = 0.86
-    bsdf.inputs["Subsurface Weight"].default_value = 0.02
-    bsdf.inputs["Subsurface Scale"].default_value = 0.01
+    bsdf.inputs["Roughness"].default_value = 0.72
+    bsdf.inputs["Subsurface Weight"].default_value = 0.03
+    bsdf.inputs["Subsurface Scale"].default_value = 0.015
+    bsdf.inputs["Specular IOR Level"].default_value = 0.34
 
     texcoord = nodes.new("ShaderNodeTexCoord")
     mapping = nodes.new("ShaderNodeMapping")
-    mapping.inputs["Scale"].default_value = (2.1, 2.1, 2.1)
+    mapping.inputs["Scale"].default_value = (2.35, 2.35, 2.35)
 
-    noise = nodes.new("ShaderNodeTexNoise")
-    noise.inputs["Scale"].default_value = 4.8
-    noise.inputs["Detail"].default_value = 3.0
-    noise.inputs["Roughness"].default_value = 0.42
+    broad_noise = nodes.new("ShaderNodeTexNoise")
+    broad_noise.inputs["Scale"].default_value = 3.6
+    broad_noise.inputs["Detail"].default_value = 4.5
+    broad_noise.inputs["Roughness"].default_value = 0.48
 
-    musgrave = nodes.new("ShaderNodeTexMusgrave")
-    musgrave.inputs["Scale"].default_value = 18.0
-    musgrave.inputs["Detail"].default_value = 5.0
-    musgrave.inputs["Dimension"].default_value = 0.38
+    fine_noise = nodes.new("ShaderNodeTexNoise")
+    fine_noise.name = "Fine lawn variation"
+    fine_noise.inputs["Scale"].default_value = 26.0
+    if "Detail" in fine_noise.inputs:
+        fine_noise.inputs["Detail"].default_value = 8.0
+    if "Roughness" in fine_noise.inputs:
+        fine_noise.inputs["Roughness"].default_value = 0.42
 
-    ramp = nodes.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].position = 0.28
-    ramp.color_ramp.elements[0].color = (0.24, 0.42, 0.18, 1.0)
-    ramp.color_ramp.elements[1].position = 0.76
-    ramp.color_ramp.elements[1].color = (0.40, 0.61, 0.26, 1.0)
+    color_ramp = nodes.new("ShaderNodeValToRGB")
+    color_ramp.color_ramp.elements[0].position = 0.22
+    color_ramp.color_ramp.elements[0].color = (0.11, 0.27, 0.08, 1.0)
+    color_ramp.color_ramp.elements[1].position = 0.82
+    color_ramp.color_ramp.elements[1].color = (0.26, 0.49, 0.17, 1.0)
 
     bump = nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value = 0.028
-    bump.inputs["Distance"].default_value = 0.08
+    bump.inputs["Strength"].default_value = 0.05
+    bump.inputs["Distance"].default_value = 0.05
 
     links.new(texcoord.outputs["Object"], mapping.inputs["Vector"])
-    links.new(mapping.outputs["Vector"], noise.inputs["Vector"])
-    links.new(mapping.outputs["Vector"], musgrave.inputs["Vector"])
-    links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
-    links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
-    links.new(musgrave.outputs["Fac"], bump.inputs["Height"])
+    links.new(mapping.outputs["Vector"], broad_noise.inputs["Vector"])
+    links.new(mapping.outputs["Vector"], fine_noise.inputs["Vector"])
+    links.new(broad_noise.outputs["Fac"], color_ramp.inputs["Fac"])
+    links.new(color_ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    links.new(fine_noise.outputs["Fac"], bump.inputs["Height"])
     links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
     links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
     return mat
@@ -609,88 +608,167 @@ def flower_material(name: str):
     return plant_material(name, base=(0.90, 0.72, 0.78, 1.0), roughness=0.76)
 
 
-def create_grass_blade_source(collection: bpy.types.Collection, material: bpy.types.Material):
-    mesh = bpy.data.meshes.new("Grass blade source mesh")
-    verts = [
-        (-0.008, 0.0, 0.0),
-        (0.008, 0.0, 0.0),
-        (-0.006, 0.0, 0.10),
-        (0.006, 0.0, 0.10),
-        (-0.003, 0.0, 0.22),
-        (0.003, 0.0, 0.22),
-        (0.0, 0.0, 0.34),
-    ]
-    faces = [(0, 1, 3, 2), (2, 3, 5, 4), (4, 5, 6)]
-    mesh.from_pydata(verts, [], faces)
+def create_procedural_lawn_mesh(
+    collection: bpy.types.Collection,
+    material: bpy.types.Material,
+    *,
+    count: int,
+) -> bpy.types.Object:
+    """
+    Denser fixed-camera lawn with finer grass needles.
+    """
+    rng = random.Random(946)
+    vertices = []
+    faces = []
+
+    x_min, x_max = -10.75, 10.75
+    y_min, y_max = -8.15, 2.55
+    z0 = 0.035
+
+    made = 0
+    attempts = 0
+    while made < count and attempts < count * 7:
+        attempts += 1
+        x = rng.uniform(x_min, x_max)
+        y = rng.uniform(y_min, y_max)
+
+        if y < -1.55 and abs(x) < 1.42:
+            continue
+        if -1.65 <= y <= 0.18 and abs(x) < 1.76:
+            continue
+        if y > 1.78 and rng.random() < 0.40:
+            continue
+
+        depth = max(0.0, min(1.0, (2.55 - y) / 10.70))
+        height = rng.uniform(0.11, 0.22) * (0.80 + depth * 0.42)
+        half_w = rng.uniform(0.0035, 0.0075)
+        base_angle = rng.uniform(0.0, math.tau)
+        lean = rng.uniform(0.006, 0.020)
+        lean_angle = rng.uniform(0.0, math.tau)
+        lx = math.cos(lean_angle) * lean
+        ly = math.sin(lean_angle) * lean
+
+        # Three crossed blades per tuft for fuller, more realistic coverage.
+        for cross in (0.0, math.pi / 3.0, 2.0 * math.pi / 3.0):
+            angle = base_angle + cross
+            dx = math.cos(angle) * half_w
+            dy = math.sin(angle) * half_w
+            tx = dx * 0.14
+            ty = dy * 0.14
+
+            i = len(vertices)
+            vertices.extend([
+                (x - dx, y - dy, z0),
+                (x + dx, y + dy, z0),
+                (x + lx + tx, y + ly + ty, z0 + height),
+                (x + lx - tx, y + ly - ty, z0 + height),
+            ])
+            faces.append((i, i + 1, i + 2, i + 3))
+
+        made += 1
+
+    mesh = bpy.data.meshes.new("Procedural lawn blade mesh")
+    mesh.from_pydata(vertices, [], faces)
     mesh.update()
-    blade = bpy.data.objects.new("GrassBladeSource", mesh)
-    collection.objects.link(blade)
-    blade.data.materials.append(material)
-    blade.hide_render = True
-    blade.hide_viewport = True
-    return blade
+
+    lawn = bpy.data.objects.new("Procedural Grass Blades", mesh)
+    collection.objects.link(lawn)
+    lawn.data.materials.append(material)
+    return lawn
 
 
-def add_geometry_nodes_lawn(lawn_obj: bpy.types.Object, source_obj: bpy.types.Object, density: float = 3000.0) -> None:
-    mod = lawn_obj.modifiers.new("LawnScatter", "NODES")
-    node_group = bpy.data.node_groups.new("Lawn Scatter", "GeometryNodeTree")
-    mod.node_group = node_group
-    interface = node_group.interface
-    interface.new_socket(name="Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
-    interface.new_socket(name="Density", in_out='INPUT', socket_type='NodeSocketFloat')
-    interface.new_socket(name="Source", in_out='INPUT', socket_type='NodeSocketObject')
-    interface.new_socket(name="Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
 
-    nodes = node_group.nodes
-    links = node_group.links
+def yellow_brick_material(name: str):
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
 
-    group_in = nodes.new("NodeGroupInput")
-    group_out = nodes.new("NodeGroupOutput")
-    distribute = nodes.new("GeometryNodeDistributePointsOnFaces")
-    distribute.distribute_method = "POISSON"
-    distribute.inputs["Density Max"].default_value = density
-    distribute.inputs["Density Factor"].default_value = 0.84
+    out = nodes.new("ShaderNodeOutputMaterial")
+    bsdf = nodes.new("ShaderNodeBsdfPrincipled")
+    bsdf.inputs["Roughness"].default_value = 0.68
+    bsdf.inputs["Specular IOR Level"].default_value = 0.28
 
-    obj_info = nodes.new("GeometryNodeObjectInfo")
-    obj_info.transform_space = "RELATIVE"
+    texcoord = nodes.new("ShaderNodeTexCoord")
+    mapping = nodes.new("ShaderNodeMapping")
+    mapping.inputs["Scale"].default_value = (2.2, 6.8, 1.0)
 
-    instance = nodes.new("GeometryNodeInstanceOnPoints")
-    align = nodes.new("GeometryNodeAlignEulerToVector")
-    random_rot = nodes.new("FunctionNodeRandomValue")
-    random_rot.data_type = "FLOAT_VECTOR"
-    random_rot.inputs[2].default_value = (-0.24, -0.08, 0.0)
-    random_rot.inputs[3].default_value = (0.24, 0.08, math.tau)
+    brick = nodes.new("ShaderNodeTexBrick")
+    brick.inputs["Scale"].default_value = 7.5
+    brick.inputs["Mortar Size"].default_value = 0.03
+    brick.inputs["Mortar Smooth"].default_value = 0.03
+    brick.inputs["Bias"].default_value = 0.22
+    brick.inputs["Brick Width"].default_value = 0.56
+    brick.inputs["Row Height"].default_value = 0.22
+    brick.inputs["Color1"].default_value = (0.92, 0.73, 0.21, 1.0)
+    brick.inputs["Color2"].default_value = (0.84, 0.61, 0.12, 1.0)
+    brick.inputs["Mortar"].default_value = (0.58, 0.42, 0.12, 1.0)
 
-    random_scale = nodes.new("FunctionNodeRandomValue")
-    random_scale.data_type = "FLOAT"
-    random_scale.inputs[2].default_value = 0.86
-    random_scale.inputs[3].default_value = 1.15
+    noise = nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = 18.0
+    noise.inputs["Detail"].default_value = 6.0
+    noise.inputs["Roughness"].default_value = 0.46
 
-    combine_scale = nodes.new("ShaderNodeCombineXYZ")
-    rotate = nodes.new("FunctionNodeRotateEuler")
-    realize = nodes.new("GeometryNodeRealizeInstances")
-    set_material = nodes.new("GeometryNodeSetMaterial")
-    set_material.inputs["Material"].default_value = source_obj.data.materials[0]
+    mix = nodes.new("ShaderNodeMixRGB")
+    mix.blend_type = "MULTIPLY"
+    mix.inputs[0].default_value = 0.18
+    mix.inputs[2].default_value = (0.96, 0.92, 0.84, 1.0)
 
-    links.new(group_in.outputs["Geometry"], distribute.inputs["Mesh"])
-    links.new(group_in.outputs["Source"], obj_info.inputs["Object"])
-    links.new(distribute.outputs["Points"], instance.inputs["Points"])
-    links.new(obj_info.outputs["Geometry"], instance.inputs["Instance"])
-    links.new(distribute.outputs["Normal"], align.inputs["Vector"])
-    links.new(align.outputs["Rotation"], rotate.inputs["Rotation"])
-    links.new(random_rot.outputs["Value"], rotate.inputs["Rotate By"])
-    links.new(rotate.outputs["Rotation"], instance.inputs["Rotation"])
-    links.new(random_scale.outputs["Value"], combine_scale.inputs["X"])
-    links.new(random_scale.outputs["Value"], combine_scale.inputs["Y"])
-    links.new(random_scale.outputs["Value"], combine_scale.inputs["Z"])
-    links.new(combine_scale.outputs["Vector"], instance.inputs["Scale"])
-    links.new(instance.outputs["Instances"], realize.inputs["Geometry"])
-    links.new(realize.outputs["Geometry"], set_material.inputs["Geometry"])
-    links.new(set_material.outputs["Geometry"], group_out.inputs["Geometry"])
+    bump = nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.08
+    bump.inputs["Distance"].default_value = 0.03
 
-    mod["Input_2"] = density
-    mod["Input_3"] = source_obj
+    links.new(texcoord.outputs["Generated"], mapping.inputs["Vector"])
+    links.new(mapping.outputs["Vector"], brick.inputs["Vector"])
+    links.new(mapping.outputs["Vector"], noise.inputs["Vector"])
+    links.new(brick.outputs["Color"], mix.inputs[1])
+    links.new(mix.outputs["Color"], bsdf.inputs["Base Color"])
+    links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    return mat
 
+
+def blossom_material(name: str):
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = (0.98, 0.82, 0.88, 1.0)
+    bsdf.inputs["Roughness"].default_value = 0.76
+    bsdf.inputs["Subsurface Weight"].default_value = 0.03
+    bsdf.inputs["Subsurface Scale"].default_value = 0.02
+    return mat
+
+
+def add_cherry_blossom_canopy(collection: bpy.types.Collection, material: bpy.types.Material, center_x: float, center_y: float, tree_height: float):
+    rng = random.Random(int((center_x + 20.0) * 100))
+    canopy_center_z = tree_height * 0.70
+    offsets = [
+        (-0.65, -0.10, -0.10, 0.90),
+        (-0.25, 0.15, 0.10, 0.88),
+        (0.20, -0.05, 0.18, 0.98),
+        (0.55, 0.12, -0.05, 0.82),
+        (0.00, 0.30, 0.05, 1.05),
+        (-0.42, 0.36, 0.22, 0.76),
+        (0.42, 0.34, 0.22, 0.74),
+    ]
+    for idx, (ox, oy, oz, scale) in enumerate(offsets, start=1):
+        bpy.ops.mesh.primitive_ico_sphere_add(
+            subdivisions=3,
+            radius=0.62 * scale,
+            location=(center_x + ox, center_y + oy, canopy_center_z + oz),
+        )
+        obj = bpy.context.object
+        obj.name = f"Cherry blossom canopy {center_x:+.2f} {idx:02d}"
+        obj.scale = (
+            scale * rng.uniform(0.95, 1.16),
+            scale * rng.uniform(0.88, 1.08),
+            scale * rng.uniform(0.72, 0.98),
+        )
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+        obj.data.materials.append(material)
+        move_to_collection(obj, collection)
 
 def add_formal_shrub(collection: bpy.types.Collection, material: bpy.types.Material, name: str, location, scale: float):
     bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=4, radius=0.5, location=location)
@@ -1013,8 +1091,8 @@ def add_hill_mesh(
 def build_path(collection, path_material):
     y_front = -17.0
     y_back = -1.70
-    width = 2.35
-    slab_count = 15
+    width = 2.55
+    slab_count = 17
     gap = 0.045
     total = y_back - y_front
     slab_length = (total - (slab_count - 1) * gap) / slab_count
@@ -1114,6 +1192,7 @@ class SceneParts:
     grass_collection: bpy.types.Collection
     shrub_collection: bpy.types.Collection
     flower_collection: bpy.types.Collection
+    blossom_collection: bpy.types.Collection
     snow_collection: bpy.types.Collection
     ground_material: bpy.types.Material
     hill_materials: tuple[bpy.types.Material, bpy.types.Material, bpy.types.Material]
@@ -1182,6 +1261,7 @@ def build_scene() -> SceneParts:
     path_col = new_collection("WORLD_PATH", root)
     hills_col = new_collection("WORLD_HILLS", root)
     trees_col = new_collection("WORLD_TREES", root)
+    blossom_col = new_collection("WORLD_BLOSSOMS", root)
     grass_col = new_collection("WORLD_GRASS", root)
     shrubs_col = new_collection("WORLD_SHRUBS", root)
     flowers_col = new_collection("WORLD_FLOWERS", root)
@@ -1193,15 +1273,7 @@ def build_scene() -> SceneParts:
     append_house(house_col)
     window_glow, _ = add_window_glow(house_col)
 
-    concrete = texture_paths(manifest, "concrete_floor_01")
-    path_material = pbr_material(
-        "Poly Haven concrete path",
-        concrete["diffuse"],
-        roughness=concrete.get("roughness"),
-        normal=concrete.get("normal"),
-        displacement=concrete.get("displacement"),
-        scale=2.2,
-    )
+    path_material = yellow_brick_material("Yellow brick road")
 
     ground_material = material_simple(
         "Seasonal ground underlay",
@@ -1257,8 +1329,11 @@ def build_scene() -> SceneParts:
         "HECATE_TREE",
         ("leaf", "leaves"),
     )
+    blossom_mat = blossom_material("Cherry blossom petals")
+    add_cherry_blossom_canopy(blossom_col, blossom_mat, -TREE_X, TREE_Y, desired_tree_height)
+    add_cherry_blossom_canopy(blossom_col, blossom_mat, TREE_X, TREE_Y, desired_tree_height)
 
-    # Image-free foreground: geometry-nodes lawn + procedural shrubs/groundcover.
+    # Image-free foreground: geometry-rich lawn only.
     lawn_material = grass_material("Procedural lawn")
     add_box(
         "Lawn underlay",
@@ -1278,8 +1353,17 @@ def build_scene() -> SceneParts:
     lawn_mesh.update()
     lawn = bpy.data.objects.new("Formal Lawn", lawn_mesh)
     grass_col.objects.link(lawn)
-    blade_source = create_grass_blade_source(asset_library, lawn_material)
-    add_geometry_nodes_lawn(lawn, blade_source, density=3000.0)
+
+    grass_count = {
+        "PREVIEW": 14000,
+        "WEB": 26000,
+        "FINAL": 42000,
+    }[QUALITY]
+    create_procedural_lawn_mesh(
+        grass_col,
+        lawn_material,
+        count=grass_count,
+    )
     grass_materials = [lawn_material]
 
     shrub_leaf = plant_material("Formal shrub foliage", base=(0.12, 0.20, 0.11, 1.0), roughness=0.86)
@@ -1315,15 +1399,15 @@ def build_scene() -> SceneParts:
 
     add_hill_mesh(
         "Far rolling hills", hills_col, hill_far,
-        center_y=18.5, width=58.0, depth=7.6, peak=3.0, base_z=-0.28, phase=0.4,
+        center_y=18.5, width=58.0, depth=8.2, peak=3.8, base_z=-0.26, phase=0.4,
     )
     add_hill_mesh(
         "Mid rolling hills", hills_col, hill_mid,
-        center_y=13.8, width=48.0, depth=6.2, peak=2.1, base_z=-0.28, phase=1.5,
+        center_y=13.8, width=48.0, depth=6.6, peak=2.8, base_z=-0.24, phase=1.5,
     )
     add_hill_mesh(
         "Near rolling hills", hills_col, hill_near,
-        center_y=10.2, width=42.0, depth=5.2, peak=1.40, base_z=-0.24, phase=2.4,
+        center_y=10.2, width=42.0, depth=5.6, peak=1.9, base_z=-0.20, phase=2.4,
     )
 
     # Winter snow sits above the underlay but below path slabs.
@@ -1358,6 +1442,7 @@ def build_scene() -> SceneParts:
         grass_collection=grass_col,
         shrub_collection=shrubs_col,
         flower_collection=flowers_col,
+        blossom_collection=blossom_col,
         snow_collection=snow_col,
         ground_material=ground_material,
         hill_materials=(hill_far, hill_mid, hill_near),
@@ -1418,6 +1503,9 @@ def apply_season(parts: SceneParts, season_name: str):
     parts.shrub_collection.hide_viewport = not style.shrub_visibility
     parts.flower_collection.hide_render = not style.flower_visibility
     parts.flower_collection.hide_viewport = not style.flower_visibility
+    spring_blossoms = season_name == "spring"
+    parts.blossom_collection.hide_render = not spring_blossoms
+    parts.blossom_collection.hide_viewport = not spring_blossoms
     parts.snow_collection.hide_render = not style.snow_visibility
     parts.snow_collection.hide_viewport = not style.snow_visibility
 

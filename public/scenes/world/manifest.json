@@ -6,7 +6,7 @@
       "id": "exterior",
       "label": "House",
       "description": "The exterior of the house.",
-      "image": "/scenes/house/shell.webp",
+      "image": "/scenes/world/views/exterior.png",
       "fallbackImage": "/scenes/house/shell.webp",
       "width": 1800,
       "height": 1200,
@@ -115,21 +115,21 @@
     {
       "id": "ballroom",
       "label": "Ballroom",
-      "description": "A windowless house-matched Neoclassical ballroom with dark teal carpet, one centered arched door, a simple ring chandelier, and soft magical lighting.",
+      "description": "A Cycles-rendered windowless Neoclassical ballroom with dark teal wool carpet, a centered arched mahogany door, refined cream moldings, a brass ring chandelier, and soft magical cove lighting.",
       "image": "/scenes/world/views/ballroom.png",
-      "width": 1800,
-      "height": 1200,
+      "width": 2048,
+      "height": 1536,
       "hotspots": [
         {
           "id": "ballroom-exit",
           "label": "Exterior",
+          "href": "/",
           "bounds": {
-            "x": 0.425,
-            "y": 0.305,
-            "width": 0.15,
-            "height": 0.4
-          },
-          "href": "/"
+            "x": 0.442276,
+            "y": 0.438483,
+            "width": 0.115449,
+            "height": 0.239432
+          }
         }
       ]
     }

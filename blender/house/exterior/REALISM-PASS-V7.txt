@@ -1,0 +1,37 @@
+HECATE946 EXTERIOR — REALISM PASS V7
+
+What changed
+------------
+1. Spring trees now get cherry-blossom canopies.
+   - The realistic broadleaf tree asset remains the structural template.
+   - Spring adds blossom canopy geometry on top of those trees.
+   - Other seasons hide the blossom overlay.
+
+2. Bushes removed.
+   - Shrub and flower placement arrays are now empty.
+   - Shrub and flower visibility are disabled.
+
+3. Lawn improved.
+   - darker green grass
+   - denser coverage
+   - finer needle-like blades
+   - more tufts at every quality tier
+
+4. Path redesigned.
+   - path slabs now use a yellow-brick material inspired by a rich storybook road
+
+5. Background hills improved.
+   - lusher green season colors
+   - fuller hill profiles
+
+Notes
+-----
+This pass keeps using the existing realistic broadleaf tree as the base tree
+template and swaps the spring look using blossom canopy overlays + stronger
+spring leaf tint.
+
+Suggested test
+--------------
+HECATE_EXTERIOR_QUALITY=PREVIEW \
+HECATE_EXTERIOR_SEASONS=spring \
+blender --background --python blender/house/exterior/build_exterior_25d.py
