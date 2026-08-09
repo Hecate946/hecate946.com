@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { WORLD_MAP_PATH } from '@/data/world-map';
-  import { WORLD_COUNTRY_OUTLINES_PATH } from '@/data/world-country-outlines';
+  import { WORLD_INTERNAL_BORDERS_PATH } from '@/data/world-internal-borders';
 
   interface VisitorLocation {
     city: string | null;
@@ -443,8 +443,8 @@
         <g transform={`translate(${copy * WIDTH} 0)`}>
           <path class="map-land" d={WORLD_MAP_PATH} />
           <path
-            class="map-country-outline"
-            d={WORLD_COUNTRY_OUTLINES_PATH}
+            class="map-country-border"
+            d={WORLD_INTERNAL_BORDERS_PATH}
           />
 
           {#each projectedLocations as location}

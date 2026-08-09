@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import * as THREE from 'three';
   import { WORLD_MAP_PATH } from '@/data/world-map';
-  import { WORLD_COUNTRY_OUTLINES_PATH } from '@/data/world-country-outlines';
+  import { WORLD_INTERNAL_BORDERS_PATH } from '@/data/world-internal-borders';
 
   export let apiBase = '';
 
@@ -172,7 +172,7 @@
           vector-effect="non-scaling-stroke"
         />
         <path
-          d="${WORLD_COUNTRY_OUTLINES_PATH}"
+          d="${WORLD_INTERNAL_BORDERS_PATH}"
           fill="none"
           stroke="${colors.text}"
           stroke-opacity="${COUNTRY_BORDER_OPACITY}"
