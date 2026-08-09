@@ -501,37 +501,113 @@
     const dragSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), GLOBE_RADIUS);
     const dragHit = new THREE.Vector3();
     const dragDesired = new THREE.Vector3();
+    const dragExact = new THREE.Vector3();
+    const dragContinuation = new THREE.Vector3();
     const dragCurrent = new THREE.Vector3();
     const dragDelta = new THREE.Quaternion();
+    const dragEdgeAxis = new THREE.Vector3();
+    const dragEdgeQuaternion = new THREE.Quaternion();
+    const dragCameraRight = new THREE.Vector3();
+    const dragCameraUp = new THREE.Vector3();
 
-    function pointerSurfaceVector(clientX: number, clientY: number) {
-      const bounds = canvas.getBoundingClientRect();
+    function setRayFromClient(clientX: number, clientY: number, bounds: DOMRect) {
       pointerNdc.x = ((clientX - bounds.left) / bounds.width) * 2 - 1;
       pointerNdc.y = -((clientY - bounds.top) / bounds.height) * 2 + 1;
       raycaster.setFromCamera(pointerNdc, camera);
+    }
+
+    function pointerSurfaceVector(clientX: number, clientY: number) {
+      const bounds = canvas.getBoundingClientRect();
+      setRayFromClient(clientX, clientY, bounds);
 
       const hit = raycaster.ray.intersectSphere(dragSphere, dragHit);
-      if (hit) return dragDesired.copy(hit).normalize();
+      if (hit) dragExact.copy(hit).normalize();
 
-      // Once the pointer leaves the silhouette, continue along the virtual
-      // trackball rim instead of letting the grab snap or accelerate.
       const centerX = bounds.left + bounds.width / 2;
       const centerY = bounds.top + bounds.height / 2;
-      const focalPixels = bounds.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
-      const denominator = Math.sqrt(Math.max(0.0001, camera.position.z ** 2 - GLOBE_RADIUS ** 2));
-      const projectedRadius = Math.max(1, (focalPixels * GLOBE_RADIUS) / denominator);
-      let x = (clientX - centerX) / projectedRadius;
-      let y = (centerY - clientY) / projectedRadius;
-      const radialSquared = x * x + y * y;
+      const dx = clientX - centerX;
+      const dy = clientY - centerY;
+      const radialPixels = Math.hypot(dx, dy);
 
-      if (radialSquared > 1) {
-        const radial = Math.sqrt(radialSquared);
-        x /= radial;
-        y /= radial;
-        return dragDesired.set(x, y, 0).normalize();
+      if (radialPixels < 0.0001) {
+        return hit ? dragDesired.copy(dragExact) : dragDesired.set(0, 0, 1);
       }
 
-      return dragDesired.set(x, y, Math.sqrt(1 - radialSquared)).normalize();
+      const focalPixels =
+        bounds.height /
+        (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
+      const denominator = Math.sqrt(
+        Math.max(0.0001, camera.position.z ** 2 - GLOBE_RADIUS ** 2),
+      );
+      const projectedRadius = Math.max(1, (focalPixels * GLOBE_RADIUS) / denominator);
+
+      // The ray/sphere mapping is perfectly 1:1 across the face, but its rate of
+      // change becomes extremely steep as the ray approaches the silhouette. The
+      // outside continuation is position-continuous at the rim, yet that derivative
+      // mismatch can still feel like a tiny snap. Keep exact 1:1 grabbing over
+      // almost the whole globe, then use a narrow screen-space soft rim to converge
+      // smoothly onto the continuation before the cursor actually crosses the edge.
+      const rimBlendPixels = clamp(projectedRadius * 0.035, 10, 24);
+      const rimBlendStart = projectedRadius - rimBlendPixels;
+      if (hit && radialPixels <= rimBlendStart) {
+        return dragDesired.copy(dragExact);
+      }
+
+      // Sample the true perspective silhouette in this radial direction. For an
+      // inside pointer we deliberately project *outward* to the rim; for an outside
+      // pointer we project inward. Keeping this one edge anchor on both sides is what
+      // makes the continuation geometrically continuous.
+      const edgeScale = (projectedRadius * 0.999999) / radialPixels;
+      const edgeX = centerX + dx * edgeScale;
+      const edgeY = centerY + dy * edgeScale;
+      setRayFromClient(edgeX, edgeY, bounds);
+
+      const edgeHit = raycaster.ray.intersectSphere(dragSphere, dragHit);
+      if (!edgeHit) {
+        // Extremely defensive fallback for tangent precision. Prefer the exact hit
+        // when one exists; otherwise fall back to a normalized view-space rim point.
+        if (hit) return dragDesired.copy(dragExact);
+        return dragDesired.set(dx, -dy, projectedRadius).normalize();
+      }
+
+      dragContinuation.copy(edgeHit).normalize();
+
+      const screenX = dx / radialPixels;
+      const screenY = -dy / radialPixels;
+      dragCameraRight.set(1, 0, 0).applyQuaternion(camera.quaternion);
+      dragCameraUp.set(0, 1, 0).applyQuaternion(camera.quaternion);
+      dragEdgeAxis
+        .copy(dragCameraRight)
+        .multiplyScalar(-screenY)
+        .addScaledVector(dragCameraUp, screenX)
+        .normalize();
+
+      // Signed distance from the silhouette: negative just inside, positive outside.
+      // The same tangent continuation is therefore valid on both sides of the rim.
+      dragEdgeQuaternion.setFromAxisAngle(
+        dragEdgeAxis,
+        (radialPixels - projectedRadius) / projectedRadius,
+      );
+      dragContinuation.applyQuaternion(dragEdgeQuaternion).normalize();
+
+      if (!hit || radialPixels >= projectedRadius) {
+        return dragDesired.copy(dragContinuation);
+      }
+
+      // Quintic smootherstep has zero first *and* second derivative at both ends.
+      // That suppresses the last perceptible velocity kink while making the soft
+      // region visually impossible to distinguish from the exact sphere grab.
+      const t = clamp(
+        (radialPixels - rimBlendStart) / rimBlendPixels,
+        0,
+        1,
+      );
+      const smoothT = t * t * t * (t * (t * 6 - 15) + 10);
+
+      return dragDesired
+        .copy(dragExact)
+        .lerp(dragContinuation, smoothT)
+        .normalize();
     }
 
     function beginSinglePointerDrag(point: PointerPoint) {
