@@ -2,10 +2,7 @@
   "name": "hecate-stats",
   "main": "src/index.js",
   "compatibility_date": "2026-07-23",
-  "workers_dev": false,
-  "routes": [
-    { "pattern": "stats.hecate946.com", "custom_domain": true }
-  ],
+  "workers_dev": true,
   "triggers": {
     "crons": ["17 4 * * *"]
   },

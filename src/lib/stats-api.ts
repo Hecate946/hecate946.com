@@ -1,4 +1,7 @@
-export const PROD_STATS_API_BASE = 'https://stats.hecate946.com';
+// Updated automatically by `npm run stats:deploy` after Wrangler publishes the
+// production Worker. Keep this empty in source until the first successful
+// workers.dev deployment rather than pointing at a hostname that may not exist.
+export const PROD_STATS_API_BASE = 'https://hecate-stats.hecate946.workers.dev';
 export const LOCAL_STATS_API_BASE = '/__local-stats';
 
 // Kept as the production constant for server-rendered markup and backwards
@@ -20,7 +23,7 @@ function isLoopbackHostname(hostname: string) {
 /**
  * Local development never contacts the production analytics Worker.
  * `npm run dev` serves LOCAL_STATS_API_BASE from the Astro/Vite dev server.
- * Hosted HTTP and HTTPS builds both use the same deployed Worker URL.
+ * Hosted HTTP and HTTPS builds both use the same deployed workers.dev URL.
  */
 export function resolveStatsApiBase(
   productionBase = PROD_STATS_API_BASE,

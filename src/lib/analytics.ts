@@ -115,6 +115,12 @@ export function trackEvent(
   if (analyticsDisabled()) return;
 
   const apiBase = resolveStatsApiBase();
+  // Before the first production Worker deployment the production endpoint is
+  // intentionally empty. Local development still uses /__local-stats, while
+  // hosted analytics simply stays disabled instead of falling back to a wrong
+  // relative URL. `npm run stats:deploy` fills this value automatically.
+  if (!apiBase) return;
+
   let eventProperties = properties;
 
   // Local analytics has no IP/Cloudflare context. Give only the local dev
