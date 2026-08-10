@@ -10,10 +10,11 @@ type AnalyticsWindow = Window & {
   __hecateAnalyticsCleanup?: () => void;
 };
 
-const VISITOR_KEY = 'hecate946:visitor-id';
-const SESSION_KEY = 'hecate946:session-id';
+/* Remote analytics deliberately uses sessionStorage only. There is no
+ * persistent cross-session visitor identifier, fingerprint, cookie, referrer,
+ * or browser/device profile. */
+const SESSION_KEY = 'hecate946:analytics-session';
 const LOCAL_STATS_KEY = 'hecate946:your-stats';
-
 
 interface LocalVisitorStats {
   firstVisitAt: string;
@@ -62,7 +63,7 @@ function updateLocalStats(update: (stats: LocalVisitorStats) => void) {
     window.localStorage.setItem(LOCAL_STATS_KEY, JSON.stringify(stats));
     window.dispatchEvent(new CustomEvent('hecate:local-stats-updated'));
   } catch {
-    // Local visit statistics are optional and must never affect the site.
+    // Personal browser statistics are optional and never affect navigation.
   }
 }
 
@@ -77,19 +78,16 @@ function createId() {
     return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
 
-  // Analytics IDs are anonymous deduplication tokens, not security credentials.
-  // Keep tracking functional even on older/non-secure HTTP contexts where Web
-  // Crypto may be unavailable.
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
 }
 
-function getStoredId(storage: Storage, key: string) {
+function getSessionId(key: string) {
   try {
-    const existing = storage.getItem(key);
+    const existing = window.sessionStorage.getItem(key);
     if (existing) return existing;
 
     const next = createId();
-    storage.setItem(key, next);
+    window.sessionStorage.setItem(key, next);
     return next;
   } catch {
     return createId();
@@ -98,9 +96,70 @@ function getStoredId(storage: Storage, key: string) {
 
 function analyticsDisabled() {
   if (typeof window === 'undefined') return true;
-  const legacyDoNotTrack = (window as Window & { doNotTrack?: string })
-    .doNotTrack;
-  return navigator.doNotTrack === '1' || legacyDoNotTrack === '1';
+  const legacyDoNotTrack = (window as Window & { doNotTrack?: string }).doNotTrack;
+  const globalPrivacyControl = (
+    navigator as Navigator & { globalPrivacyControl?: boolean }
+  ).globalPrivacyControl;
+
+  return (
+    navigator.doNotTrack === '1' ||
+    legacyDoNotTrack === '1' ||
+    globalPrivacyControl === true
+  );
+}
+
+function sendRemoteEvent(
+  name: string,
+  properties: AnalyticsProperties = {},
+) {
+  if (analyticsDisabled()) return;
+
+  const apiBase = resolveStatsApiBase();
+  if (!apiBase) return;
+
+  let eventProperties = properties;
+
+  // Local development gets only a coarse timezone hint so the local visitor
+  // map can be exercised without geolocation permission or production calls.
+  if (apiBase.startsWith('/')) {
+    try {
+      const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
+      if (localTimeZone) {
+        eventProperties = { ...properties, __localTimeZone: localTimeZone };
+      }
+    } catch {
+      // Optional dev-only hint.
+    }
+  }
+
+  const sessionId = getSessionId(SESSION_KEY);
+  const payload = JSON.stringify({
+    name,
+    path: window.location.pathname,
+    // The analytics backend requires visitor + session fields, but both are the
+    // same session-scoped random value. There is no cross-session identifier.
+    visitorId: sessionId,
+    sessionId,
+    properties: eventProperties,
+  });
+
+  void fetch(`${apiBase}/api/event`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+    body: payload,
+    keepalive: true,
+    mode: 'cors',
+    credentials: 'omit',
+    referrerPolicy: 'no-referrer',
+  })
+    .then((response) => {
+      if (response.ok && apiBase.startsWith('/') && name === 'page_view') {
+        window.dispatchEvent(new CustomEvent('hecate:local-backend-stats-updated'));
+      }
+    })
+    .catch(() => {
+      // Analytics is optional and must never interfere with the site.
+    });
 }
 
 export function trackEvent(
@@ -108,90 +167,19 @@ export function trackEvent(
   properties: AnalyticsProperties = {},
 ) {
   updateLocalStats((stats) => {
-    stats.interactions += 1;
+    if (name !== 'page_view') stats.interactions += 1;
     stats.events[name] = (stats.events[name] ?? 0) + 1;
   });
 
-  if (analyticsDisabled()) return;
-
-  const apiBase = resolveStatsApiBase();
-  // Before the first production Worker deployment the production endpoint is
-  // intentionally empty. Local development still uses /__local-stats, while
-  // hosted analytics simply stays disabled instead of falling back to a wrong
-  // relative URL. `npm run stats:deploy` fills this value automatically.
-  if (!apiBase) return;
-
-  let eventProperties = properties;
-
-  // Local analytics has no IP/Cloudflare context. Give only the local dev
-  // backend a coarse browser-timezone hint so its visitor map can render a
-  // meaningful test light without contacting production or prompting for
-  // geolocation permission.
-  if (apiBase.startsWith('/')) {
-    let localTimeZone = '';
-    try {
-      localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
-    } catch {
-      localTimeZone = '';
-    }
-
-    if (localTimeZone) {
-      eventProperties = { ...properties, __localTimeZone: localTimeZone };
-    }
-  }
-
-  const payload = JSON.stringify({
-    name,
-    path: window.location.pathname,
-    visitorId: getStoredId(window.localStorage, VISITOR_KEY),
-    sessionId: getStoredId(window.sessionStorage, SESSION_KEY),
-    properties: eventProperties,
-  });
-  const endpoint = `${apiBase}/api/event`;
-  const requestInit: RequestInit = {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-    body: payload,
-    keepalive: true,
-    mode: 'cors',
-    credentials: 'omit',
-  };
-
-  // The local endpoint is same-origin and cheap. Await its completion in the
-  // background so the Stats page can refresh immediately after its own page
-  // view is stored instead of briefly showing an empty map for up to a minute.
-  if (apiBase.startsWith('/')) {
-    void fetch(endpoint, requestInit)
-      .then((response) => {
-        if (response.ok && name === 'page_view') {
-          window.dispatchEvent(new CustomEvent('hecate:local-backend-stats-updated'));
-        }
-      })
-      .catch(() => {
-        // Local analytics is optional and must never interfere with dev.
-      });
-    return;
-  }
-
-  if ('sendBeacon' in navigator) {
-    const blob = new Blob([payload], { type: 'text/plain;charset=UTF-8' });
-    if (navigator.sendBeacon(endpoint, blob)) return;
-  }
-
-  void fetch(endpoint, requestInit).catch(() => {
-    // Analytics must never interfere with the website itself.
-  });
+  sendRemoteEvent(name, properties);
 }
 
 export function initAnalytics() {
-  if (analyticsDisabled()) return;
-
   const analyticsWindow = window as AnalyticsWindow;
   if (analyticsWindow.__hecateAnalyticsInitialized) return;
   analyticsWindow.__hecateAnalyticsInitialized = true;
 
   let lastTrackedPath = '';
-  let heartbeatTimer = 0;
   let activeStartedAt = document.visibilityState === 'visible' ? Date.now() : 0;
 
   updateLocalStats((stats) => {
@@ -202,47 +190,31 @@ export function initAnalytics() {
     const path = window.location.pathname;
     if (path === lastTrackedPath) return;
     lastTrackedPath = path;
+
     updateLocalStats((stats) => {
       stats.pageViews += 1;
       stats.pages[path] = (stats.pages[path] ?? 0) + 1;
     });
-    trackEvent('page_view');
-  };
 
-  const stopHeartbeat = () => {
-    window.clearInterval(heartbeatTimer);
-    heartbeatTimer = 0;
-  };
-
-  const sendHeartbeat = () => {
-    if (document.visibilityState === 'visible') {
-      trackEvent('heartbeat');
-    }
-  };
-
-  const startHeartbeat = (sendImmediately = false) => {
-    stopHeartbeat();
-
-    if (document.visibilityState !== 'visible') return;
-    if (sendImmediately) sendHeartbeat();
-
-    heartbeatTimer = window.setInterval(sendHeartbeat, 120_000);
+    sendRemoteEvent('page_view');
   };
 
   const saveActiveTime = () => {
     if (!activeStartedAt) return;
     const elapsed = Math.max(0, Math.round((Date.now() - activeStartedAt) / 1000));
     activeStartedAt = 0;
-    if (elapsed) updateLocalStats((stats) => { stats.activeSeconds += elapsed; });
+    if (elapsed) {
+      updateLocalStats((stats) => {
+        stats.activeSeconds += elapsed;
+      });
+    }
   };
 
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
       activeStartedAt = Date.now();
-      startHeartbeat(true);
     } else {
       saveActiveTime();
-      stopHeartbeat();
     }
   };
 
@@ -263,19 +235,12 @@ export function initAnalytics() {
     if (!link) return;
 
     const destination = new URL(link.href, window.location.href);
-
     if (
       link.hasAttribute('download') ||
       destination.pathname.startsWith('/resumes/')
     ) {
       trackEvent('resume_download', {
         file: destination.pathname.split('/').pop() ?? null,
-      });
-    }
-
-    if (destination.origin !== window.location.origin) {
-      trackEvent('outbound_click', {
-        host: destination.hostname,
       });
     }
   };
@@ -286,10 +251,8 @@ export function initAnalytics() {
   window.addEventListener('pagehide', handlePageHide);
 
   trackPage();
-  startHeartbeat();
 
   analyticsWindow.__hecateAnalyticsCleanup = () => {
-    stopHeartbeat();
     document.removeEventListener('astro:page-load', trackPage);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     document.removeEventListener('click', handleClick);

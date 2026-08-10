@@ -358,6 +358,8 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
         const response = await fetch(CHESS_STATS_URL, {
           cache: 'no-store',
           headers: { Accept: 'application/json' },
+          credentials: 'omit',
+          referrerPolicy: 'no-referrer',
           signal: requestController.signal,
         });
         if (!response.ok) throw new Error(`Chess.com returned ${response.status}`);

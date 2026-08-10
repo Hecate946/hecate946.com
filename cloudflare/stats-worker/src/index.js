@@ -1,16 +1,10 @@
 const EVENT_NAMES = new Set([
   'page_view',
-  'heartbeat',
   'resume_download',
-  'project_open',
-  'graph_drag',
-  'graph_node_opened',
   'command_palette_opened',
-  'site_search',
-  'theme_change',
+  'site_map_opened',
   'color_theme_changed',
   'season_changed',
-  'outbound_click',
 ]);
 
 const BOT_PATTERN =
@@ -135,23 +129,6 @@ async function ingestEvent(request, env) {
 
   const visitorHash = await hashIdentifier(`visitor:${visitorId}`, env);
   const sessionHash = await hashIdentifier(`session:${sessionId}`, env);
-
-  if (eventName === 'heartbeat') {
-    await env.DB.batch([
-      env.DB.prepare(
-        `UPDATE visitors
-         SET last_seen = ?
-         WHERE visitor_hash = ?`,
-      ).bind(timestamp, visitorHash),
-      env.DB.prepare(
-        `UPDATE sessions
-         SET last_seen = ?
-         WHERE session_hash = ? AND visitor_hash = ?`,
-      ).bind(timestamp, sessionHash, visitorHash),
-    ]);
-
-    return json({ accepted: true }, 202, request);
-  }
 
   await upsertEventCount(env.DB, eventKey, timestamp);
 
@@ -504,8 +481,10 @@ function readApproximateLocation(request) {
 
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
 
-  const roundedLatitude = Math.round(latitude * 10_000) / 10_000;
-  const roundedLongitude = Math.round(longitude * 10_000) / 10_000;
+  // Keep only coarse location precision (~1 km at the equator). The map
+  // does not need street-level coordinates and the database should never store them.
+  const roundedLatitude = Math.round(latitude * 100) / 100;
+  const roundedLongitude = Math.round(longitude * 100) / 100;
   const city = cleanText(cf?.city, 80);
   const region = cleanText(cf?.region, 80);
   const country = cleanText(cf?.country, 80);
@@ -514,8 +493,8 @@ function readApproximateLocation(request) {
     countryCode ?? 'XX',
     region ?? '',
     city ?? '',
-    roundedLatitude.toFixed(4),
-    roundedLongitude.toFixed(4),
+    roundedLatitude.toFixed(2),
+    roundedLongitude.toFixed(2),
   ].join('|');
 
   return {
@@ -540,25 +519,19 @@ async function hashIdentifier(value, env) {
 
 function isAllowedReadOrigin(origin) {
   if (!origin) return true;
-  if (!isHttpOrigin(origin)) return false;
-
-  const url = new URL(origin);
-  return PUBLIC_SITE_HOSTS.has(url.hostname);
+  return isAllowedSiteOrigin(origin);
 }
 
 function isAllowedWriteOrigin(origin) {
-  if (!isHttpOrigin(origin)) return false;
-
-  const url = new URL(origin);
-  return PUBLIC_SITE_HOSTS.has(url.hostname);
+  return isAllowedSiteOrigin(origin);
 }
 
-function isHttpOrigin(origin) {
+function isAllowedSiteOrigin(origin) {
   if (!origin) return false;
 
   try {
     const url = new URL(origin);
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    return url.protocol === 'https:' && PUBLIC_SITE_HOSTS.has(url.hostname);
   } catch {
     return false;
   }
@@ -589,6 +562,10 @@ function json(payload, status, request, extraHeaders = {}) {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'no-referrer',
+      'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
+      'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+      'X-Frame-Options': 'DENY',
       ...corsHeaders(request),
       ...extraHeaders,
     },

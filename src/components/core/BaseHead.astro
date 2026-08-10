@@ -49,13 +49,31 @@ function getPageName(input: string) {
 
 const pageName = getPageName(title);
 const resolvedTitle = `${pageName} | ${siteConfig.name}`;
+const canonicalHref = canonicalURL.toString();
+const socialImage = image ? new URL(image, Astro.site).toString() : undefined;
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: siteConfig.name,
+  url: Astro.site?.toString() ?? 'https://hecate946.com/',
+  email: `mailto:${siteConfig.email}`,
+  sameAs: [siteConfig.social.github, siteConfig.social.linkedin],
+};
 ---
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="generator" content={Astro.generator} />
 <meta name="description" content={description} />
-{noindex && <meta name="robots" content="noindex, nofollow, noarchive" />}
+<meta name="application-name" content={siteConfig.name} />
+<meta name="apple-mobile-web-app-title" content={siteConfig.shortName} />
+<meta name="color-scheme" content="light dark" />
+<meta name="referrer" content="same-origin" />
+<meta
+  name="robots"
+  content={noindex
+    ? 'noindex, nofollow, noarchive'
+    : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}
+/>
 <meta
   name="theme-color"
   media="(prefers-color-scheme: light)"
@@ -66,23 +84,34 @@ const resolvedTitle = `${pageName} | ${siteConfig.name}`;
   media="(prefers-color-scheme: dark)"
   content="#07191d"
 />
-<link rel="canonical" href={canonicalURL} />
 
+<link rel="canonical" href={canonicalHref} />
 <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+<link rel="me" href={siteConfig.social.github} />
+<link rel="me" href={siteConfig.social.linkedin} />
 
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<!-- Keep the only global third-party stylesheet privacy-minimal: no eager
+     preconnect and no referrer is sent to the font provider. -->
 <link
   href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap"
   rel="stylesheet"
+  referrerpolicy="no-referrer"
 />
 
 <title>{resolvedTitle}</title>
 
 <meta property="og:type" content="website" />
+<meta property="og:site_name" content={siteConfig.name} />
+<meta property="og:locale" content={siteConfig.locale.replace('-', '_')} />
 <meta property="og:title" content={resolvedTitle} />
 <meta property="og:description" content={description} />
-<meta property="og:url" content={canonicalURL} />
-{image && <meta property="og:image" content={new URL(image, Astro.site)} />}
+<meta property="og:url" content={canonicalHref} />
+{socialImage && <meta property="og:image" content={socialImage} />}
+{socialImage && <meta property="og:image:alt" content={`${pageName} — ${siteConfig.name}`} />}
 
-<meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={resolvedTitle} />
+<meta name="twitter:description" content={description} />
+{socialImage && <meta name="twitter:image" content={socialImage} />}
+
+<script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>

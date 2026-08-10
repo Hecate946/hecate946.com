@@ -15,7 +15,7 @@ const homeHref = withBase('/');
 <html lang="en" data-theme="light" data-html-mode="false">
   <head>
     <ThemeBootstrap />
-    <BaseHead title="404" description="this page is not here." />
+    <BaseHead title="404" description="This page is not here." noindex />
   </head>
   <body class="error-page" data-html-page="interior">
     <HtmlSiteTree {currentPath} />
@@ -31,7 +31,7 @@ const homeHref = withBase('/');
           src={embedUrl}
           title="404 page video"
           allow="autoplay; encrypted-media; picture-in-picture"
-          referrerpolicy="strict-origin-when-cross-origin"
+          referrerpolicy="no-referrer"
         ></iframe>
       </div>
 

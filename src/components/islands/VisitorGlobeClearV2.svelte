@@ -665,6 +665,8 @@
         const response = await fetch(`${base}/api/stats?days=30`, {
           headers: { Accept: 'application/json' },
           cache: 'default',
+          credentials: 'omit',
+          referrerPolicy: 'no-referrer',
         });
         if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
 

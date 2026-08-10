@@ -1,15 +1,14 @@
 export const siteConfig = {
   name: 'Cyrus Asasi',
   shortName: 'Cyrus',
-  title: 'Cyrus Asasi — Music, Software, Strategy, and Motion',
+  title: 'Cyrus Asasi — Software Engineer & Classical Musician',
   description:
-    'The personal portfolio of Cyrus Asasi: computer science, clarinet, piano, chess, and pickleball.',
-  email: 'replace-me@example.com',
+    'Personal portfolio of Cyrus Asasi, a software engineer and classical musician, featuring projects, performances, experiments, and contact information.',
+  email: 'cyrusasasi@gmail.com',
   locale: 'en-US',
   social: {
-    github: 'https://github.com/replace-me',
-    linkedin: 'https://www.linkedin.com/in/replace-me',
-    youtube: 'https://www.youtube.com/@replace-me',
+    github: 'https://github.com/Hecate946/',
+    linkedin: 'https://www.linkedin.com/in/cyrus-asasi/',
   },
 } as const;
 

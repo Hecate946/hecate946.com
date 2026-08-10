@@ -1,0 +1,4 @@
+Contact: mailto:cyrusasasi@gmail.com
+Canonical: https://hecate946.com/.well-known/security.txt
+Expires: 2027-08-10T23:59:59Z
+Preferred-Languages: en

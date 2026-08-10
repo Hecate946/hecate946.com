@@ -72,7 +72,9 @@ export default defineConfig({
     svelte(),
     sitemap({
       filter: (page) =>
-        !page.endsWith('/navigation/') && !page.endsWith('/pdfs/'),
+        !page.endsWith('/navigation/') &&
+        !page.endsWith('/404/') &&
+        !page.endsWith('/404.html'),
     }),
   ],
   vite: {

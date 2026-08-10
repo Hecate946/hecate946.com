@@ -5,17 +5,10 @@ import path from 'node:path';
 const API_PREFIX = '/__local-stats';
 const EVENT_NAMES = new Set([
   'page_view',
-  'heartbeat',
   'resume_download',
-  'project_open',
-  'graph_drag',
-  'graph_node_opened',
   'command_palette_opened',
-  'site_search',
-  'theme_change',
   'color_theme_changed',
   'season_changed',
-  'outbound_click',
 ]);
 
 function emptyStore() {

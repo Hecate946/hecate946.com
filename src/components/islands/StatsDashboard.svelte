@@ -197,6 +197,8 @@
     const response = await fetch(url, {
       headers: { Accept: 'application/json' },
       cache: url.includes('/api/stats') ? 'default' : 'no-store',
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
     });
 
     if (!response.ok) {
@@ -382,39 +384,39 @@
       <h2 id="website-stats-title">Website</h2>
       <p
         class="stats-status"
-        data-state={liveStats && !liveError ? 'live' : 'offline'}
+        data-state={liveStats && !liveError ? 'live' : liveError ? 'offline' : 'loading'}
       >
         {#if liveStats && !liveError}
           Live · updated {formatDateTime(liveStats.summary.updatedAt)}
         {:else}
-          {liveError || 'Connecting…'}
+          {liveError || 'Loading live data…'}
         {/if}
       </p>
     </div>
 
     <div class="stats-metrics">
       <div class="stats-metric">
-        <strong>{formatNumber(liveStats?.summary.estimatedVisitors ?? 0)}</strong>
+        <strong>{liveStats ? formatNumber(liveStats.summary.estimatedVisitors) : '—'}</strong>
         <span>Estimated visitors</span>
       </div>
       <div class="stats-metric">
-        <strong>{formatNumber(liveStats?.summary.pageViews ?? 0)}</strong>
+        <strong>{liveStats ? formatNumber(liveStats.summary.pageViews) : '—'}</strong>
         <span>Page views</span>
       </div>
       <div class="stats-metric">
-        <strong>{formatNumber(liveStats?.summary.sessions ?? 0)}</strong>
+        <strong>{liveStats ? formatNumber(liveStats.summary.sessions) : '—'}</strong>
         <span>Sessions</span>
       </div>
       <div class="stats-metric">
-        <strong>{formatNumber(liveStats?.summary.trackedRequests ?? 0)}</strong>
+        <strong>{liveStats ? formatNumber(liveStats.summary.trackedRequests) : '—'}</strong>
         <span>Tracked requests</span>
       </div>
       <div class="stats-metric">
-        <strong>{formatNumber(liveStats?.summary.countries ?? 0)}</strong>
+        <strong>{liveStats ? formatNumber(liveStats.summary.countries) : '—'}</strong>
         <span>Countries</span>
       </div>
       <div class="stats-metric">
-        <strong>{formatNumber(liveStats?.summary.activeVisitors ?? 0)}</strong>
+        <strong>{liveStats ? formatNumber(liveStats.summary.activeVisitors) : '—'}</strong>
         <span>Active now</span>
       </div>
     </div>
@@ -459,6 +461,8 @@
           </div>
         {:else if liveError}
           <div class="stats-error">{liveError}</div>
+        {:else if !liveStats}
+          <div class="stats-empty">Loading visitor map…</div>
         {:else}
           <div class="stats-empty">
             No visitor location data has been recorded yet.
@@ -490,6 +494,8 @@
               </text>
             </svg>
           </div>
+        {:else if !liveStats && !liveError}
+          <div class="stats-empty">Loading activity…</div>
         {:else}
           <div class="stats-empty">No daily activity recorded yet.</div>
         {/if}
@@ -510,6 +516,8 @@
               </li>
             {/each}
           </ol>
+        {:else if !liveStats && !liveError}
+          <div class="stats-empty">Loading page ranking…</div>
         {:else}
           <div class="stats-empty">No page ranking yet.</div>
         {/if}
@@ -530,6 +538,8 @@
               </li>
             {/each}
           </ol>
+        {:else if !liveStats && !liveError}
+          <div class="stats-empty">Loading interactions…</div>
         {:else}
           <div class="stats-empty">No interactions recorded yet.</div>
         {/if}
@@ -537,10 +547,10 @@
     </div>
 
     <p class="stats-footnote">
-      “Tracked requests” means requests accepted by this site's analytics API,
-      not every image, font, or asset request served by GitHub Pages. Visitor
-      totals are estimates because browsers can clear storage or visit from
-      multiple devices.
+      “Tracked requests” means anonymous events accepted by this site's analytics API,
+      not every image, font, or asset request served by GitHub Pages. Remote visitor
+      identifiers last only for the current browser session, and map locations are
+      stored at coarse precision.
     </p>
   </div>
   {:else if activeTab === 'code'}
