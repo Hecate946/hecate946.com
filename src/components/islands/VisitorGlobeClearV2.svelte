@@ -3,10 +3,9 @@
   import * as THREE from 'three';
   import { resolveStatsApiBase } from '@/lib/stats-api';
   import {
-    VISITOR_LIGHT_CORE_CLOSE_PX,
-    VISITOR_LIGHT_CORE_FAR_PX,
-    VISITOR_LIGHT_GLOW_CLOSE_PX,
-    VISITOR_LIGHT_GLOW_FAR_PX,
+    VISITOR_LIGHT_CLOSE_PX,
+    VISITOR_LIGHT_FAR_PX,
+    VISITOR_LIGHT_HIT_RADIUS_PX,
     VISITOR_VIEW_WHEEL_DELTA_CAP,
     VISITOR_VIEW_WHEEL_RATE,
     VISITOR_VIEW_ZOOM_EASING,
@@ -348,12 +347,11 @@
     globeRim.renderOrder = -1;
     globeGroup.add(globeRim);
 
-    // Visitor markers are rendered as camera-facing points instead of little
-    // tangent discs. Each point has a soft halo plus a crisp core, so it reads as
-    // a restrained point of light even when the globe is zoomed out. Exact same-
-    // coordinate visitors are coalesced into one slightly larger light.
+    // A visitor is one camera-facing light, not a stack of independently-sized
+    // rings. The single continuous radial profile keeps the accent hue coherent
+    // and avoids concentric edges at every zoom level.
     let markerGeometry = new THREE.BufferGeometry();
-    const markerCoreMaterial = new THREE.ShaderMaterial({
+    const markerMaterial = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
       blending: THREE.NormalBlending,
@@ -372,7 +370,7 @@
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           vec3 viewNormal = normalize(normalMatrix * normalize(position));
           vec3 viewDir = normalize(-mvPosition.xyz);
-          vFacing = smoothstep(0.0, 0.10, dot(viewNormal, viewDir));
+          vFacing = smoothstep(0.0, 0.12, dot(viewNormal, viewDir));
 
           float zoomT = clamp(
             (cameraZ - ${MIN_CAMERA_Z.toFixed(2)}) / ${(
@@ -381,7 +379,7 @@
             0.0,
             1.0
           );
-          float pointSize = mix(${VISITOR_LIGHT_CORE_CLOSE_PX.toFixed(1)}, ${VISITOR_LIGHT_CORE_FAR_PX.toFixed(1)}, zoomT);
+          float pointSize = mix(${VISITOR_LIGHT_CLOSE_PX.toFixed(1)}, ${VISITOR_LIGHT_FAR_PX.toFixed(1)}, zoomT);
           gl_PointSize = pointSize * markerScale * pixelRatio;
           gl_Position = projectionMatrix * mvPosition;
         }
@@ -395,71 +393,27 @@
           float radius = length(point);
           if (radius > 1.0 || vFacing <= 0.001) discard;
 
-          float core = 1.0 - smoothstep(0.45, 0.78, radius);
-          float feather = 1.0 - smoothstep(0.72, 1.0, radius);
-          float alpha = max(core, feather * 0.78) * vFacing;
-          gl_FragColor = vec4(markerColor, alpha);
-        }
-      `,
-    });
-
-    const markerGlowMaterial = new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.NormalBlending,
-      uniforms: {
-        markerColor: { value: new THREE.Color(initialThemeColors.accent) },
-        cameraZ: { value: INITIAL_CAMERA_Z },
-        pixelRatio: { value: renderer.getPixelRatio() },
-      },
-      vertexShader: `
-        attribute float markerScale;
-        uniform float cameraZ;
-        uniform float pixelRatio;
-        varying float vFacing;
-
-        void main() {
-          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          vec3 viewNormal = normalize(normalMatrix * normalize(position));
-          vec3 viewDir = normalize(-mvPosition.xyz);
-          vFacing = smoothstep(0.0, 0.13, dot(viewNormal, viewDir));
-
-          float zoomT = clamp(
-            (cameraZ - ${MIN_CAMERA_Z.toFixed(2)}) / ${(
-              MAX_CAMERA_Z - MIN_CAMERA_Z
-            ).toFixed(2)},
-            0.0,
-            1.0
-          );
-          float pointSize = mix(${VISITOR_LIGHT_GLOW_CLOSE_PX.toFixed(1)}, ${VISITOR_LIGHT_GLOW_FAR_PX.toFixed(1)}, zoomT);
-          gl_PointSize = pointSize * markerScale * pixelRatio;
-          gl_Position = projectionMatrix * mvPosition;
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 markerColor;
-        varying float vFacing;
-
-        void main() {
-          vec2 point = gl_PointCoord * 2.0 - 1.0;
-          float radius = length(point);
-          if (radius > 1.0 || vFacing <= 0.001) discard;
-
-          float glow = exp(-radius * radius * 4.6);
-          float edge = 1.0 - smoothstep(0.72, 1.0, radius);
-          float alpha = glow * edge * 0.30 * vFacing;
+          float core = exp(-radius * radius * 20.0) * 0.82;
+          float glow = exp(-radius * radius * 5.2) * 0.30;
+          float tail = exp(-radius * radius * 1.8) * 0.08;
+          float edgeT = clamp((radius - 0.82) / 0.18, 0.0, 1.0);
+          float edge = 1.0 - edgeT * edgeT * (3.0 - 2.0 * edgeT);
+          float alpha = min(1.0, (core + glow + tail) * edge) * vFacing;
           gl_FragColor = vec4(markerColor, alpha);
         }
       `,
     });
 
     let markerPoints: THREE.Points | null = null;
-    let markerGlowPoints: THREE.Points | null = null;
     let markerMetadata: GlobeMarker[] = [];
     let markerPositions: THREE.Vector3[] = [];
 
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2();
+    const markerHitWorld = new THREE.Vector3();
+    const markerHitNormal = new THREE.Vector3();
+    const markerHitView = new THREE.Vector3();
+    const markerHitProjected = new THREE.Vector3();
     const activePointers = new Map<number, PointerPoint>();
     let dragLocalVector: THREE.Vector3 | null = null;
     let pinchState: PinchState | null = null;
@@ -480,10 +434,6 @@
       if (markerPoints) {
         globeGroup.remove(markerPoints);
         markerPoints = null;
-      }
-      if (markerGlowPoints) {
-        globeGroup.remove(markerGlowPoints);
-        markerGlowPoints = null;
       }
       markerGeometry.dispose();
       markerGeometry = new THREE.BufferGeometry();
@@ -635,15 +585,10 @@
       );
       markerGeometry.computeBoundingSphere();
 
-      markerGlowPoints = new THREE.Points(markerGeometry, markerGlowMaterial);
-      markerGlowPoints.renderOrder = 2;
-      markerGlowPoints.userData.kind = 'visitor-marker-glow';
-
-      markerPoints = new THREE.Points(markerGeometry, markerCoreMaterial);
-      markerPoints.renderOrder = 3;
+      markerPoints = new THREE.Points(markerGeometry, markerMaterial);
+      markerPoints.renderOrder = 2;
       markerPoints.userData.kind = 'visitor-markers';
 
-      globeGroup.add(markerGlowPoints);
       globeGroup.add(markerPoints);
     }
 
@@ -659,8 +604,7 @@
       // The map texture is a white alpha mask, so theme changes only need to
       // recolor the material. No image decode, rasterization, or GPU re-upload.
       globeMaterial.color.set(colors.text);
-      markerCoreMaterial.uniforms.markerColor.value.set(colors.accent);
-      markerGlowMaterial.uniforms.markerColor.value.set(colors.accent);
+      markerMaterial.uniforms.markerColor.value.set(colors.accent);
       rimMaterial.uniforms.rimColor.value.set(colors.text);
     }
 
@@ -750,8 +694,7 @@
       const width = Math.max(1, bounds.width);
       const height = Math.max(1, bounds.height);
       renderer.setSize(width, height, false);
-      markerCoreMaterial.uniforms.pixelRatio.value = renderer.getPixelRatio();
-      markerGlowMaterial.uniforms.pixelRatio.value = renderer.getPixelRatio();
+      markerMaterial.uniforms.pixelRatio.value = renderer.getPixelRatio();
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
     }
@@ -778,6 +721,43 @@
       pointerNdc.x = ((clientX - bounds.left) / bounds.width) * 2 - 1;
       pointerNdc.y = -((clientY - bounds.top) / bounds.height) * 2 + 1;
       raycaster.setFromCamera(pointerNdc, camera);
+    }
+
+    function markerIndexAtScreenPoint(clientX: number, clientY: number) {
+      if (!markerPoints || markerPositions.length === 0) return -1;
+
+      const bounds = canvas.getBoundingClientRect();
+      const hitRadius = VISITOR_LIGHT_HIT_RADIUS_PX;
+      const hitRadiusSq = hitRadius * hitRadius;
+      let bestIndex = -1;
+      let bestDistanceSq = hitRadiusSq;
+
+      for (let index = 0; index < markerPositions.length; index += 1) {
+        markerHitWorld
+          .copy(markerPositions[index])
+          .applyQuaternion(globeGroup.quaternion);
+        markerHitNormal.copy(markerHitWorld).normalize();
+        markerHitView.copy(camera.position).sub(markerHitWorld).normalize();
+
+        // Never make a marker on the far hemisphere interactive through the globe.
+        if (markerHitNormal.dot(markerHitView) <= 0.015) continue;
+
+        markerHitProjected.copy(markerHitWorld).project(camera);
+        const screenX =
+          bounds.left + (markerHitProjected.x * 0.5 + 0.5) * bounds.width;
+        const screenY =
+          bounds.top + (-markerHitProjected.y * 0.5 + 0.5) * bounds.height;
+        const dx = clientX - screenX;
+        const dy = clientY - screenY;
+        const distanceSq = dx * dx + dy * dy;
+
+        if (distanceSq <= bestDistanceSq) {
+          bestDistanceSq = distanceSq;
+          bestIndex = index;
+        }
+      }
+
+      return bestIndex;
     }
 
     function pointerSurfaceVector(clientX: number, clientY: number) {
@@ -944,14 +924,12 @@
 
       if (event.buttons === 0 && markerPoints) {
         const bounds = canvas.getBoundingClientRect();
-        pointerNdc.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
-        pointerNdc.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
-        raycaster.setFromCamera(pointerNdc, camera);
-        raycaster.params.Points = { threshold: 0.09 };
-        const intersection = raycaster.intersectObject(markerPoints, false)[0];
-        const markerIndex = intersection?.index;
+        const markerIndex = markerIndexAtScreenPoint(
+          event.clientX,
+          event.clientY,
+        );
 
-        if (typeof markerIndex === 'number' && markerMetadata[markerIndex]) {
+        if (markerIndex >= 0 && markerMetadata[markerIndex]) {
           const marker = markerMetadata[markerIndex];
           tooltipText = `${marker.label}${marker.count > 1 ? ` · ${marker.count} visitors` : ''}`;
           tooltipX = event.clientX - bounds.left;
@@ -1037,13 +1015,19 @@
     canvas.addEventListener('wheel', onWheel, { passive: false });
 
     const themeObserver = new MutationObserver((records) => {
-      if (records.some((record) => record.attributeName === 'data-theme')) {
+      if (
+        records.some(
+          (record) =>
+            record.attributeName === 'data-theme' ||
+            record.attributeName === 'data-season',
+        )
+      ) {
         applyTheme();
       }
     });
     themeObserver.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme'],
+      attributeFilter: ['data-theme', 'data-season'],
     });
 
     applyTheme();
@@ -1071,8 +1055,7 @@
 
       camera.position.z +=
         (targetCameraZ - camera.position.z) * VISITOR_VIEW_ZOOM_EASING;
-      markerCoreMaterial.uniforms.cameraZ.value = camera.position.z;
-      markerGlowMaterial.uniforms.cameraZ.value = camera.position.z;
+      markerMaterial.uniforms.cameraZ.value = camera.position.z;
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
     };
@@ -1095,8 +1078,7 @@
       canvas.removeEventListener('wheel', onWheel);
       disposeMarkerMesh();
       markerGeometry.dispose();
-      markerCoreMaterial.dispose();
-      markerGlowMaterial.dispose();
+      markerMaterial.dispose();
       currentTexture?.dispose();
       globeGeometry.dispose();
       rimGeometry.dispose();

@@ -14,18 +14,25 @@ const {
 } = Astro.props;
 ---
 
-<details class:list={['disclosure', className]} data-disclosure open={open}>
+<details
+  class:list={['disclosure', className]}
+  data-disclosure
+  data-expanded={open ? '' : undefined}
+  open={open}
+>
   <summary class:list={['disclosure__summary', summaryClass]}>
     <slot name="summary" />
     <span class="disclosure__arrow" aria-hidden="true">
-      <svg viewBox="0 0 24 24" focusable="false">
-        <path d="M6 3l9 9-9 9" />
+      <svg viewBox="0 0 32 32" focusable="false">
+        <path d="M10 6 L22 16 L10 26" />
       </svg>
     </span>
   </summary>
 
   <div class="disclosure__body" data-disclosure-body>
-    <slot />
+    <div class="disclosure__content">
+      <slot />
+    </div>
   </div>
 </details>
 

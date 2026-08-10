@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-08-10T19:49:44.118Z",
+  "generatedAt": "2026-08-10T20:12:24.403Z",
   "commit": {
-    "count": 148,
-    "latestSha": "ea8d96adcb511537f77b2f56f06ebe0631675beb",
-    "latestDate": "2026-08-10T12:37:38-07:00",
-    "latestMessage": "fix dot placement",
+    "count": 149,
+    "latestSha": "f7e3c6dc1cdbbc3d2c63c2ecf6ae9bcf92c4d37d",
+    "latestDate": "2026-08-10T12:51:49-07:00",
+    "latestMessage": "fix stats page map zooming",
     "firstDate": "2026-07-21T11:52:42-07:00"
   },
   "repository": {
     "files": 443,
     "countedFiles": 439,
     "directories": 87,
-    "totalLines": 46065,
-    "sourceLines": 39964
+    "totalLines": 46108,
+    "sourceLines": 39999
   },
   "site": {
     "pages": 23,
@@ -24,74 +24,74 @@
     {
       "name": "Svelte",
       "files": 38,
-      "lines": 14151,
-      "percentage": 35.409368431588426
+      "lines": 14118,
+      "percentage": 35.29588239705993
     },
     {
       "name": "Python",
       "files": 28,
       "lines": 11530,
-      "percentage": 28.85096586928235
+      "percentage": 28.825720643016073
     },
     {
       "name": "CSS",
       "files": 24,
-      "lines": 4309,
-      "percentage": 10.782203983585227
+      "lines": 4359,
+      "percentage": 10.897772444311107
     },
     {
       "name": "TypeScript",
       "files": 36,
-      "lines": 3753,
-      "percentage": 9.390951856671004
+      "lines": 3764,
+      "percentage": 9.410235255881396
     },
     {
       "name": "Astro",
       "files": 45,
-      "lines": 3356,
-      "percentage": 8.39755780202182
+      "lines": 3363,
+      "percentage": 8.40771019275482
     },
     {
       "name": "JavaScript",
       "files": 11,
       "lines": 1962,
-      "percentage": 4.909418476628966
+      "percentage": 4.905122628065701
     },
     {
       "name": "JSON",
       "files": 8,
       "lines": 628,
-      "percentage": 1.571414272845561
+      "percentage": 1.5700392509812744
     },
     {
       "name": "Markdown",
       "files": 4,
       "lines": 115,
-      "percentage": 0.28775898308477627
+      "percentage": 0.287507187679692
     },
     {
       "name": "SQL",
       "files": 1,
       "lines": 69,
-      "percentage": 0.17265538985086576
+      "percentage": 0.17250431260781518
     },
     {
       "name": "YAML",
       "files": 2,
       "lines": 55,
-      "percentage": 0.1376238614753278
+      "percentage": 0.13750343758593966
     },
     {
       "name": "Shell",
       "files": 2,
       "lines": 35,
-      "percentage": 0.08757882093884496
+      "percentage": 0.08750218755468887
     },
     {
       "name": "HTML",
       "files": 1,
       "lines": 1,
-      "percentage": 0.002502252026824142
+      "percentage": 0.002500062501562539
     }
   ]
 }

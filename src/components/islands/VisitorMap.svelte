@@ -3,12 +3,8 @@
   import { WORLD_MAP_PATH } from '@/data/world-map';
   import { WORLD_INTERNAL_BORDERS_PATH } from '@/data/world-internal-borders';
   import {
-    VISITOR_LIGHT_CORE_CLOSE_PX,
-    VISITOR_LIGHT_CORE_FAR_PX,
-    VISITOR_LIGHT_CORE_STOPS,
-    VISITOR_LIGHT_GLOW_CLOSE_PX,
-    VISITOR_LIGHT_GLOW_FAR_PX,
-    VISITOR_LIGHT_GLOW_STOPS,
+    VISITOR_LIGHT_HIT_RADIUS_PX,
+    VISITOR_LIGHT_STOPS,
     visitorLightMapDistanceT,
     visitorLightSizePx,
     VISITOR_VIEW_WHEEL_DELTA_CAP,
@@ -111,7 +107,6 @@
   onMount(() => {
     updateVisibleDimensions();
     fitLocations(true);
-
     const observer = new ResizeObserver(() => {
       updateVisibleDimensions();
       constrainCamera();
@@ -157,6 +152,7 @@
   function wrapX(value: number) {
     return ((value % WIDTH) + WIDTH) % WIDTH;
   }
+
 
   function locationLabel(location: VisitorLocation) {
     return [location.city, location.region, location.country]
@@ -471,22 +467,22 @@
     previousPointer = null;
   }
 
-  function lightRadius(
-    closePx: number,
-    farPx: number,
-    count: number,
-    currentZoom: number,
-  ) {
-    // currentZoom is passed explicitly from the template. Besides making the
-    // intended screen-space math clear, this gives Svelte a direct reactive
-    // dependency so every eased zoom frame updates the SVG radii.
+  function lightRadius(count: number, currentZoom: number) {
+    // currentZoom is passed explicitly so every eased zoom frame updates the
+    // rendered SVG radius. The visible light has a firm close-zoom floor.
     const distanceT = visitorLightMapDistanceT(
       currentZoom,
       MIN_ZOOM,
       MAX_ZOOM,
     );
-    const diameterPx = visitorLightSizePx(closePx, farPx, distanceT, count);
+    const diameterPx = visitorLightSizePx(distanceT, count);
     return (diameterPx * 0.5 * viewUnitsPerCssPixel) / currentZoom;
+  }
+
+  function hitRadius(currentZoom: number) {
+    return (
+      VISITOR_LIGHT_HIT_RADIUS_PX * viewUnitsPerCssPixel / currentZoom
+    );
   }
 </script>
 
@@ -506,19 +502,10 @@
     on:pointercancel={endPointer}
   >
     <defs>
-      <!-- Sampled from the exact alpha equations used by the 3D point shaders.
-           Both layers use the current theme accent with no separate 2D palette. -->
-      <radialGradient id="visitor-light-core" cx="50%" cy="50%" r="50%">
-        {#each VISITOR_LIGHT_CORE_STOPS as stop}
-          <stop
-            offset={`${stop.offset}%`}
-            stop-color="var(--accent-strong)"
-            stop-opacity={stop.opacity}
-          />
-        {/each}
-      </radialGradient>
-      <radialGradient id="visitor-light-glow" cx="50%" cy="50%" r="50%">
-        {#each VISITOR_LIGHT_GLOW_STOPS as stop}
+      <!-- One continuous accent-colored light profile. A single radial falloff
+           avoids the concentric-ring look of separately-sized glow layers. -->
+      <radialGradient id="visitor-light" cx="50%" cy="50%" r="50%">
+        {#each VISITOR_LIGHT_STOPS as stop}
           <stop
             offset={`${stop.offset}%`}
             stop-color="var(--accent-strong)"
@@ -540,16 +527,16 @@
           {#each projectedLocations as location}
             <g class="map-light">
               <circle
-                class="map-light-glow"
+                class="map-light-visual"
                 cx={location.x}
                 cy={location.y}
-                r={lightRadius(VISITOR_LIGHT_GLOW_CLOSE_PX, VISITOR_LIGHT_GLOW_FAR_PX, location.count, zoom)}
+                r={lightRadius(location.count, zoom)}
               />
               <circle
-                class="map-light-core"
+                class="map-light-hit"
                 cx={location.x}
                 cy={location.y}
-                r={lightRadius(VISITOR_LIGHT_CORE_CLOSE_PX, VISITOR_LIGHT_CORE_FAR_PX, location.count, zoom)}
+                r={hitRadius(zoom)}
               >
                 <title>
                   {location.label} — {location.count === 1 ? '1 visitor' : `${location.count} visitors`}

@@ -273,18 +273,15 @@
   pointer-events: none;
 }
 
-.visitor-map .map-light-core,
-.visitor-map .map-light-glow {
+.visitor-map .map-light-visual {
+  fill: url(#visitor-light);
   pointer-events: none;
 }
 
-.visitor-map .map-light-core {
-  fill: url(#visitor-light-core);
-  pointer-events: visiblePainted;
-}
-
-.visitor-map .map-light-glow {
-  fill: url(#visitor-light-glow);
+.visitor-map .map-light-hit {
+  fill: transparent;
+  pointer-events: all;
+  cursor: pointer;
 }
 
 

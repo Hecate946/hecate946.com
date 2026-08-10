@@ -1,9 +1,9 @@
 const DISCLOSURE_SELECTOR = '[data-disclosure]';
 const BODY_SELECTOR = '[data-disclosure-body]';
 const DEFAULT_DURATION_MS = 820;
-const DEFAULT_EASING = 'cubic-bezier(0.45, 0, 0.55, 1)';
 
-const activeAnimations = new WeakMap<HTMLDetailsElement, Animation>();
+const closeTimers = new WeakMap<HTMLDetailsElement, number>();
+const closeListeners = new WeakMap<HTMLDetailsElement, (event: TransitionEvent) => void>();
 
 type DisclosureWindow = Window &
   typeof globalThis & {
@@ -33,67 +33,79 @@ const parseDuration = (value: string) => {
   return Number.isFinite(milliseconds) ? milliseconds : DEFAULT_DURATION_MS;
 };
 
-const animationOptions = (details: HTMLDetailsElement): KeyframeAnimationOptions => {
-  const styles = getComputedStyle(details);
+const disclosureDuration = (details: HTMLDetailsElement) =>
+  parseDuration(getComputedStyle(details).getPropertyValue('--disclosure-duration'));
 
-  return {
-    duration: parseDuration(styles.getPropertyValue('--disclosure-duration')),
-    easing: styles.getPropertyValue('--disclosure-easing').trim() || DEFAULT_EASING,
-    fill: 'both',
-  };
+const clearCloseWork = (details: HTMLDetailsElement, body?: HTMLElement) => {
+  const timer = closeTimers.get(details);
+  if (timer !== undefined) {
+    window.clearTimeout(timer);
+    closeTimers.delete(details);
+  }
+
+  const listener = closeListeners.get(details);
+  if (listener && body) {
+    body.removeEventListener('transitionend', listener);
+    closeListeners.delete(details);
+  }
 };
 
-const finishAnimation = (
-  details: HTMLDetailsElement,
-  animation: Animation,
-  closeWhenFinished: boolean,
-) => {
-  animation.onfinish = () => {
-    if (activeAnimations.get(details) !== animation) return;
+const finishClose = (details: HTMLDetailsElement) => {
+  if (details.hasAttribute('data-expanded')) return;
 
-    if (closeWhenFinished) details.open = false;
-    details.removeAttribute('data-closing');
-    activeAnimations.delete(details);
-    animation.cancel();
-  };
-};
-
-const animateOpen = (details: HTMLDetailsElement, body: HTMLElement) => {
-  const currentHeight = body.getBoundingClientRect().height;
-  activeAnimations.get(details)?.cancel();
-
+  const body = details.querySelector<HTMLElement>(`:scope > ${BODY_SELECTOR}`);
+  clearCloseWork(details, body ?? undefined);
+  details.open = false;
   details.removeAttribute('data-closing');
-  details.open = true;
-
-  const targetHeight = body.scrollHeight;
-  const animation = body.animate(
-    [
-      { height: `${currentHeight}px` },
-      { height: `${targetHeight}px` },
-    ],
-    animationOptions(details),
-  );
-
-  activeAnimations.set(details, animation);
-  finishAnimation(details, animation, false);
 };
 
-const animateClosed = (details: HTMLDetailsElement, body: HTMLElement) => {
-  const currentHeight = body.getBoundingClientRect().height;
-  activeAnimations.get(details)?.cancel();
+const openDisclosure = (details: HTMLDetailsElement, body: HTMLElement) => {
+  clearCloseWork(details, body);
+  details.removeAttribute('data-closing');
 
+  if (!details.open) {
+    /*
+     * Expose the native details content in its collapsed 0fr state first.
+     * Forcing one layout here guarantees the browser has a real start state
+     * before data-expanded switches the grid track to 1fr.
+     */
+    details.open = true;
+    void body.offsetHeight;
+  }
+
+  details.setAttribute('data-expanded', '');
+};
+
+const closeDisclosure = (details: HTMLDetailsElement, body: HTMLElement) => {
+  clearCloseWork(details, body);
   details.setAttribute('data-closing', '');
+  details.removeAttribute('data-expanded');
 
-  const animation = body.animate(
-    [
-      { height: `${currentHeight}px` },
-      { height: '0px' },
-    ],
-    animationOptions(details),
+  const onTransitionEnd = (event: TransitionEvent) => {
+    if (event.target !== body || event.propertyName !== 'grid-template-rows') return;
+
+    body.removeEventListener('transitionend', onTransitionEnd);
+    closeListeners.delete(details);
+    finishClose(details);
+  };
+
+  closeListeners.set(details, onTransitionEnd);
+  body.addEventListener('transitionend', onTransitionEnd);
+
+  /* transitionend may not fire if the page is backgrounded or motion rules
+     change during the transition, so keep a small fallback timer. */
+  const timer = window.setTimeout(
+    () => finishClose(details),
+    disclosureDuration(details) + 80,
   );
+  closeTimers.set(details, timer);
+};
 
-  activeAnimations.set(details, animation);
-  finishAnimation(details, animation, true);
+const syncNativeState = (details: HTMLDetailsElement) => {
+  const body = details.querySelector<HTMLElement>(`:scope > ${BODY_SELECTOR}`);
+  clearCloseWork(details, body ?? undefined);
+  details.removeAttribute('data-closing');
+  details.toggleAttribute('data-expanded', details.open);
 };
 
 const connectDisclosure = (details: HTMLDetailsElement) => {
@@ -104,6 +116,7 @@ const connectDisclosure = (details: HTMLDetailsElement) => {
   if (!summary || !body) return;
 
   details.dataset.disclosureConnected = 'true';
+  details.toggleAttribute('data-expanded', details.open);
 
   summary.addEventListener('click', (event) => {
     /* HTML mode deliberately falls back to the browser-native disclosure. */
@@ -114,17 +127,21 @@ const connectDisclosure = (details: HTMLDetailsElement) => {
     const shouldOpen = !details.open || details.hasAttribute('data-closing');
 
     /*
-     * Defer the visual state change until the click has bubbled. The site's
-     * existing sound handler reads the native pre-toggle <details> state to
-     * choose its dropdown-open/dropdown-close sound.
+     * Defer state changes until the click has bubbled. The site's existing
+     * sound handler reads the pre-toggle native <details> state to choose its
+     * dropdown-open/dropdown-close sound.
      */
     queueMicrotask(() => {
       if (shouldOpen) {
-        animateOpen(details, body);
+        openDisclosure(details, body);
       } else {
-        animateClosed(details, body);
+        closeDisclosure(details, body);
       }
     });
+  });
+
+  details.addEventListener('toggle', () => {
+    if (isHtmlMode() || prefersReducedMotion()) syncNativeState(details);
   });
 };
 

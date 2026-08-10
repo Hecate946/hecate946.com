@@ -1,9 +1,10 @@
 /*
  * Reusable animated disclosure.
  *
- * The native <details>/<summary> structure is preserved so HTML-only mode,
- * no-JS browsing, keyboard navigation, and assistive technology all retain
- * the browser's normal disclosure behavior.
+ * The native <details>/<summary> structure is preserved for semantics and for
+ * the zero-CSS HTML mode. In styled mode, a 0fr -> 1fr grid track performs the
+ * reveal, so content of any natural height opens and closes smoothly without
+ * hard-coded max-heights or stale pixel measurements.
  */
 .disclosure {
   --disclosure-duration: 820ms;
@@ -20,17 +21,23 @@
   display: none;
 }
 
+/*
+ * The icon owns one square box and the SVG fills that box exactly. Keeping
+ * those coordinate systems identical avoids the optical drift caused by an
+ * oversized SVG overflowing a smaller wrapper. The SVG itself rotates around
+ * the center of its viewBox, so the chevron has one stable pivot in both
+ * states.
+ */
 .disclosure__arrow {
   display: grid;
-  width: clamp(2.15rem, 3.8vw, 2.65rem);
-  height: clamp(2.15rem, 3.8vw, 2.65rem);
-  flex: 0 0 auto;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 2.35rem;
   place-items: center;
+  align-self: center;
+  justify-self: end;
   color: currentColor;
-  transform: rotate(0deg);
-  transform-origin: 50% 50%;
-  transition: transform var(--disclosure-duration) var(--disclosure-easing);
-  will-change: transform;
+  line-height: 0;
 }
 
 .disclosure__arrow svg {
@@ -38,6 +45,11 @@
   width: 100%;
   height: 100%;
   overflow: visible;
+  transform: rotate(0deg);
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  transition: transform var(--disclosure-duration) var(--disclosure-easing);
+  will-change: transform;
 }
 
 .disclosure__arrow path {
@@ -45,22 +57,38 @@
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.7;
+  stroke-width: 2.85;
   vector-effect: non-scaling-stroke;
 }
 
-/* data-closing keeps <details> open while its body animates to zero. */
-.disclosure[open]:not([data-closing]) > .disclosure__summary .disclosure__arrow {
+.disclosure[data-expanded] > .disclosure__summary .disclosure__arrow svg {
   transform: rotate(90deg);
 }
 
-
+/*
+ * A single grid row makes the animation content-aware. The inner wrapper is
+ * the track item and must be allowed to shrink all the way to zero.
+ */
 .disclosure__body {
-  overflow: clip;
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows var(--disclosure-duration) var(--disclosure-easing);
+  will-change: grid-template-rows;
+}
+
+.disclosure[data-expanded] > .disclosure__body {
+  grid-template-rows: 1fr;
+}
+
+.disclosure__content {
+  min-height: 0;
+  overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .disclosure__arrow {
+  .disclosure__arrow svg,
+  .disclosure__body {
     transition: none;
   }
 }

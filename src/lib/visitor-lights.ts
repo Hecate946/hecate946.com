@@ -1,10 +1,14 @@
-export const VISITOR_LIGHT_CORE_CLOSE_PX = 4.4;
-export const VISITOR_LIGHT_CORE_FAR_PX = 6.8;
-export const VISITOR_LIGHT_GLOW_CLOSE_PX = 11.5;
-export const VISITOR_LIGHT_GLOW_FAR_PX = 18.0;
+export const VISITOR_LIGHT_CLOSE_PX = 12.0;
+export const VISITOR_LIGHT_FAR_PX = 16.0;
 
-export const VISITOR_LIGHT_DENSITY_CAP = 0.65;
-export const VISITOR_LIGHT_DENSITY_RATE = 0.16;
+// Interaction is intentionally decoupled from the rendered light. A marker can
+// stay visually restrained while still meeting a comfortable pointer target.
+export const VISITOR_LIGHT_HIT_RADIUS_PX = 14.0;
+
+// Coalesced visitors should read as a stronger concentration, not a bubble.
+// Keep the size gain deliberately small so dense places do not cover neighbors.
+export const VISITOR_LIGHT_DENSITY_CAP = 0.25;
+export const VISITOR_LIGHT_DENSITY_RATE = 0.07;
 
 // Shared navigation constants. Both the flat map and globe use these exact
 // values so wheel zoom and the eased camera response feel identical.
@@ -39,8 +43,7 @@ export function visitorLightDensityScale(count: number) {
 /**
  * Normalized apparent-distance value for the flat map. 1 = far/world view and
  * 0 = close/detail view. Map scale is treated as the inverse of camera surface
- * distance, matching the globe's zoom model: equal wheel input multiplies the
- * effective distance, and light size follows that same eased distance.
+ * distance, matching the globe's zoom model.
  */
 export function visitorLightMapDistanceT(
   zoom: number,
@@ -60,41 +63,35 @@ export function visitorLightMapDistanceT(
   );
 }
 
-export function visitorLightSizePx(
-  closePx: number,
-  farPx: number,
-  distanceT: number,
-  count: number,
-) {
-  const apparentPx = closePx + (farPx - closePx) * clamp(distanceT, 0, 1);
+export function visitorLightSizePx(distanceT: number, count: number) {
+  const apparentPx =
+    VISITOR_LIGHT_CLOSE_PX +
+    (VISITOR_LIGHT_FAR_PX - VISITOR_LIGHT_CLOSE_PX) *
+      clamp(distanceT, 0, 1);
   return apparentPx * visitorLightDensityScale(count);
 }
 
-// These sample the exact alpha equations used by the Three.js point shaders.
-// SVG radial gradients interpolate between the samples, making the 2D light
-// visually indistinguishable from the 3D light while still remaining native SVG.
-function visitorLightCoreAlpha(radius: number) {
-  const core = 1 - smoothstep(0.45, 0.78, radius);
-  const feather = 1 - smoothstep(0.72, 1.0, radius);
-  return Math.max(core, feather * 0.78);
+// One continuous light profile: a hot center plus two progressively broader
+// Gaussian tails, all the same hue. There are no independently-sized layers,
+// so there are no visible concentric rings when the marker is enlarged.
+export function visitorLightAlpha(radius: number) {
+  const r = clamp(radius, 0, 1);
+  const core = Math.exp(-r * r * 20.0) * 0.82;
+  const glow = Math.exp(-r * r * 5.2) * 0.30;
+  const tail = Math.exp(-r * r * 1.8) * 0.08;
+  const edge = 1 - smoothstep(0.82, 1.0, r);
+  return clamp((core + glow + tail) * edge, 0, 1);
 }
 
-function visitorLightGlowAlpha(radius: number) {
-  const glow = Math.exp(-radius * radius * 4.6);
-  const edge = 1 - smoothstep(0.72, 1.0, radius);
-  return glow * edge * 0.3;
-}
-
-function makeStops(alphaAtRadius: (radius: number) => number) {
-  const steps = 20;
+function makeStops() {
+  const steps = 32;
   return Array.from({ length: steps + 1 }, (_, index) => {
     const radius = index / steps;
     return {
       offset: radius * 100,
-      opacity: clamp(alphaAtRadius(radius), 0, 1),
+      opacity: visitorLightAlpha(radius),
     } satisfies VisitorLightGradientStop;
   });
 }
 
-export const VISITOR_LIGHT_CORE_STOPS = makeStops(visitorLightCoreAlpha);
-export const VISITOR_LIGHT_GLOW_STOPS = makeStops(visitorLightGlowAlpha);
+export const VISITOR_LIGHT_STOPS = makeStops();

@@ -55,7 +55,7 @@ const links = [
               <rect x="8" y="8" width="11" height="11" rx="2"></rect>
               <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path>
             </svg>
-            <span data-copy-label>Copy</span>
+            <span class="ui-text" data-copy-label>Copy</span>
           </button>
         </div>
 
@@ -71,7 +71,7 @@ const links = [
                     value={subject.value}
                     checked={index === 0}
                   />
-                  <span>{subject.label}</span>
+                  <span class="ui-text">{subject.label}</span>
                 </label>
               ))}
             </div>
@@ -83,8 +83,8 @@ const links = [
           </label>
 
           <button class="compose-button" type="submit">
-            Compose email
-            <span aria-hidden="true">↗︎</span>
+            <span class="ui-text">Compose email</span>
+            <span class="ui-text" aria-hidden="true">↗︎</span>
           </button>
         </form>
       </article>

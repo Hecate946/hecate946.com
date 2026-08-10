@@ -93,6 +93,26 @@ b {
   outline-offset: 0.22rem;
 }
 
+/*
+ * Text inside fixed-height UI can be mathematically centered while still
+ * looking slightly high because fonts reserve ascent/descent space that is
+ * not part of the visible Latin letterforms. Keep a single reusable class
+ * for those labels. Browsers with CSS text-box trimming use the font's own
+ * cap-height/baseline metrics; older browsers retain the normal line box.
+ */
+.ui-text {
+  display: inline-block;
+  line-height: 1;
+}
+
+@supports (text-box-trim: trim-both) and (text-box-edge: cap alphabetic) {
+  .ui-text,
+  .interior-page-heading h1 {
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+  }
+}
+
 ::selection {
   background: var(--accent-soft);
   color: var(--text);

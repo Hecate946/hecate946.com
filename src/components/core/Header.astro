@@ -26,7 +26,7 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
       aria-label={`${siteConfig.name} home`}
       data-astro-prefetch
     >
-      <span class="brand-full">{siteConfig.name}</span>
+      <span class="brand-full ui-text">{siteConfig.name}</span>
     </a>
 
     <nav class="primary-nav" aria-label="Primary navigation">
@@ -39,7 +39,7 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
                 aria-current={isHeaderItemCurrent(item) ? 'page' : undefined}
                 data-astro-prefetch
               >
-                {item.label}
+                <span class="ui-text">{item.label}</span>
               </a>
             </li>
           ))
