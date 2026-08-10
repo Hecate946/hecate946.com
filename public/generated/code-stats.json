@@ -1,24 +1,24 @@
 {
-  "generatedAt": "2026-08-10T20:34:40.643Z",
+  "generatedAt": "2026-08-10T20:40:33.768Z",
   "commit": {
-    "count": 150,
-    "latestSha": "c35a7c38cf8531b9cd78012952432477a83ab45c",
-    "latestDate": "2026-08-10T13:13:31-07:00",
-    "latestMessage": "add new about page updates",
+    "count": 151,
+    "latestSha": "e1577f1cbc6d803f05e1df59ae5dd11b8473b301",
+    "latestDate": "2026-08-10T13:40:15-07:00",
+    "latestMessage": "website cleanup",
     "firstDate": "2026-07-21T11:52:42-07:00"
   },
   "repository": {
-    "files": 443,
-    "countedFiles": 439,
-    "directories": 87,
+    "files": 411,
+    "countedFiles": 407,
+    "directories": 84,
     "totalLines": 40942,
     "sourceLines": 35465
   },
   "site": {
-    "pages": 23,
-    "components": 39,
-    "layouts": 6,
-    "assets": 75
+    "pages": 20,
+    "components": 25,
+    "layouts": 3,
+    "assets": 73
   },
   "languages": [
     {
