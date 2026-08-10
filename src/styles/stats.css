@@ -199,8 +199,10 @@
 }
 
 .stats-map-view-switcher button {
+  display: grid;
   min-width: 2.5rem;
   height: 2.25rem;
+  place-items: center;
   padding: 0 0.72rem;
   background: transparent;
   border: 0;
@@ -209,6 +211,8 @@
   cursor: pointer;
   font: inherit;
   font-size: 0.72rem;
+  line-height: 1;
+  transition: none;
 }
 
 .stats-map-view-switcher button:last-child {
@@ -265,11 +269,22 @@
   pointer-events: none;
 }
 
-.visitor-map .map-dot {
-  fill: var(--accent-strong);
-  stroke: var(--bg);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
+.visitor-map .map-light {
+  pointer-events: none;
+}
+
+.visitor-map .map-light-core,
+.visitor-map .map-light-glow {
+  pointer-events: none;
+}
+
+.visitor-map .map-light-core {
+  fill: url(#visitor-light-core);
+  pointer-events: visiblePainted;
+}
+
+.visitor-map .map-light-glow {
+  fill: url(#visitor-light-glow);
 }
 
 .map-controls {

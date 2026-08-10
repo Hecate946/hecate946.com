@@ -1,8 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import * as THREE from 'three';
-  import { WORLD_MAP_PATH } from '@/data/world-map';
-  import { WORLD_INTERNAL_BORDERS_PATH } from '@/data/world-internal-borders';
 
   export let apiBase = '';
   export let embedded = false;
@@ -48,21 +46,26 @@
     cameraZ: number;
   }
 
+  interface GlobeFocus {
+    quaternion: THREE.Quaternion;
+    cameraZ: number;
+  }
+
   const GLOBE_RADIUS = 2.35;
   const MARKER_RADIUS = GLOBE_RADIUS + 0.038;
   const MIN_CAMERA_Z = 3.55;
   const MAX_CAMERA_Z = 9.5;
   const INITIAL_CAMERA_Z = 6.45;
-  const BASE_WORLD_TEXTURE_WIDTH = 4096;
-  const WORLD_TEXTURE_WIDTH = 8192;
-  const WORLD_TEXTURE_HEIGHT = 4096;
-  // Keep the globe artwork visually identical to the 2D /stats map.
-  const LAND_FILL_OPACITY = 0.12;
-  const COASTLINE_OPACITY = 0.42;
-  const COUNTRY_BORDER_OPACITY = 0.52;
+  const SITE_BASE = String(import.meta.env.BASE_URL ?? '/').replace(/\/?$/, '/');
+  const WORLD_TEXTURE_PREVIEW_URL = `${SITE_BASE}generated/globe-world-mask-4096.png`;
+  const WORLD_TEXTURE_HD_URL = `${SITE_BASE}generated/globe-world-mask-8192.png`;
   const GLOBE_SHELL_BASE_OPACITY = 0.0075;
   const GLOBE_SHELL_EDGE_OPACITY = 0.082;
   const GLOBE_SHELL_OUTER_OPACITY = 0.014;
+  const MARKER_CORE_CLOSE_PX = 4.4;
+  const MARKER_CORE_FAR_PX = 6.8;
+  const MARKER_GLOW_CLOSE_PX = 11.5;
+  const MARKER_GLOW_FAR_PX = 18.0;
 
   let shell!: HTMLDivElement;
   let canvas!: HTMLCanvasElement;
@@ -76,6 +79,7 @@
   let tooltipText = '';
 
   let resetGlobe: (() => void) | null = null;
+  let zoomGlobe: ((ratio: number) => void) | null = null;
   let applyExternalLocations: ((nextLocations: VisitorLocation[], nextTotalVisitors: number) => void) | null = null;
   let lastExternalLocations: VisitorLocation[] | null = null;
 
@@ -161,74 +165,39 @@
     };
   }
 
-  async function makeWorldTexture(renderer: THREE.WebGLRenderer) {
-    const colors = readThemeColors();
-    const textureWidth = Math.min(
-      WORLD_TEXTURE_WIDTH,
-      renderer.capabilities.maxTextureSize,
-    );
-    const textureHeight = Math.min(
-      WORLD_TEXTURE_HEIGHT,
-      Math.floor(textureWidth / 2),
-    );
-    const textureScale = textureWidth / BASE_WORLD_TEXTURE_WIDTH;
-    const coastlineStrokeWidth = 0.75 * textureScale;
-    const countryStrokeWidth = 0.52 * textureScale;
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="${textureWidth}" height="${textureHeight}">
-        <path
-          d="${WORLD_MAP_PATH}"
-          fill="${colors.text}"
-          fill-opacity="${LAND_FILL_OPACITY}"
-          stroke="${colors.text}"
-          stroke-opacity="${COASTLINE_OPACITY}"
-          stroke-width="${coastlineStrokeWidth}"
-          vector-effect="non-scaling-stroke"
-        />
-        <path
-          d="${WORLD_INTERNAL_BORDERS_PATH}"
-          fill="none"
-          stroke="${colors.text}"
-          stroke-opacity="${COUNTRY_BORDER_OPACITY}"
-          stroke-width="${countryStrokeWidth}"
-          vector-effect="non-scaling-stroke"
-        />
-      </svg>
-    `;
+  function configureWorldTexture(texture: THREE.Texture) {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    // The source images are already high resolution. Avoiding runtime mipmap
+    // generation removes a large GPU upload cost and keeps first interaction fast.
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.needsUpdate = true;
+    return texture;
+  }
 
-    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+  function loadWorldTexture(url: string) {
+    return new Promise<THREE.Texture>((resolve, reject) => {
+      const loader = new THREE.TextureLoader();
+      loader.load(
+        url,
+        (texture) => resolve(configureWorldTexture(texture)),
+        undefined,
+        () => reject(new Error(`Unable to load globe texture: ${url}`)),
+      );
+    });
+  }
 
-    try {
-      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const nextImage = new Image();
-        nextImage.onload = () => resolve(nextImage);
-        nextImage.onerror = () => reject(new Error('Unable to render world texture.'));
-        nextImage.src = url;
-      });
-
-      const textureCanvas = document.createElement('canvas');
-      textureCanvas.width = textureWidth;
-      textureCanvas.height = textureHeight;
-      const context = textureCanvas.getContext('2d', { alpha: true });
-      if (!context) throw new Error('Unable to create world texture canvas.');
-
-      context.clearRect(0, 0, textureWidth, textureHeight);
-      context.drawImage(image, 0, 0, textureWidth, textureHeight);
-
-      const texture = new THREE.CanvasTexture(textureCanvas);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.ClampToEdgeWrapping;
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      texture.minFilter = THREE.LinearMipmapLinearFilter;
-      texture.magFilter = THREE.LinearFilter;
-      texture.generateMipmaps = true;
-      texture.needsUpdate = true;
-      return texture;
-    } finally {
-      URL.revokeObjectURL(url);
-    }
+  function waitForIdle(timeout = 700) {
+    return new Promise<void>((resolve) => {
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => resolve(), { timeout });
+      } else {
+        window.setTimeout(resolve, 80);
+      }
+    });
   }
 
   function readableTime(value: string | null) {
@@ -303,8 +272,9 @@
     // from true spherical longitude/latitude rather than SphereGeometry UVs, which
     // prevents the equirectangular texture from smearing into a cap at the poles.
     const globeGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 192, 128);
+    const initialThemeColors = readThemeColors();
     const globeMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+      color: initialThemeColors.text,
       transparent: true,
       opacity: 1,
       alphaTest: 0.001,
@@ -313,6 +283,8 @@
     });
     enableSphericalTextureLookup(globeMaterial);
     const globe = new THREE.Mesh(globeGeometry, globeMaterial);
+    // Never render the untextured material: this is what caused the white flash.
+    globe.visible = false;
     globe.renderOrder = 0;
     globeGroup.add(globe);
 
@@ -325,7 +297,7 @@
       depthWrite: false,
       side: THREE.FrontSide,
       uniforms: {
-        rimColor: { value: new THREE.Color(readThemeColors().text) },
+        rimColor: { value: new THREE.Color(initialThemeColors.text) },
         baseOpacity: { value: GLOBE_SHELL_BASE_OPACITY },
         edgeOpacity: { value: GLOBE_SHELL_EDGE_OPACITY },
         outerOpacity: { value: GLOBE_SHELL_OUTER_OPACITY },
@@ -367,23 +339,115 @@
     globeRim.renderOrder = -1;
     globeGroup.add(globeRim);
 
-    const markerGeometry = new THREE.CircleGeometry(0.045, 24);
-    const markerOutlineGeometry = new THREE.CircleGeometry(0.059, 24);
-    let markerMaterial = new THREE.MeshBasicMaterial({
-      color: readThemeColors().accent,
-      side: THREE.FrontSide,
+    // Visitor markers are rendered as camera-facing points instead of little
+    // tangent discs. Each point has a soft halo plus a crisp core, so it reads as
+    // a restrained point of light even when the globe is zoomed out. Exact same-
+    // coordinate visitors are coalesced into one slightly larger light.
+    let markerGeometry = new THREE.BufferGeometry();
+    const markerCoreMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.NormalBlending,
+      uniforms: {
+        markerColor: { value: new THREE.Color(initialThemeColors.accent) },
+        cameraZ: { value: INITIAL_CAMERA_Z },
+        pixelRatio: { value: renderer.getPixelRatio() },
+      },
+      vertexShader: `
+        attribute float markerScale;
+        uniform float cameraZ;
+        uniform float pixelRatio;
+        varying float vFacing;
+
+        void main() {
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vec3 viewNormal = normalize(normalMatrix * normalize(position));
+          vec3 viewDir = normalize(-mvPosition.xyz);
+          vFacing = smoothstep(-0.01, 0.10, dot(viewNormal, viewDir));
+
+          float zoomT = clamp(
+            (cameraZ - ${MIN_CAMERA_Z.toFixed(2)}) / ${(
+              MAX_CAMERA_Z - MIN_CAMERA_Z
+            ).toFixed(2)},
+            0.0,
+            1.0
+          );
+          float pointSize = mix(${MARKER_CORE_CLOSE_PX.toFixed(1)}, ${MARKER_CORE_FAR_PX.toFixed(1)}, zoomT);
+          gl_PointSize = pointSize * markerScale * pixelRatio;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 markerColor;
+        varying float vFacing;
+
+        void main() {
+          vec2 point = gl_PointCoord * 2.0 - 1.0;
+          float radius = length(point);
+          if (radius > 1.0 || vFacing <= 0.001) discard;
+
+          float core = 1.0 - smoothstep(0.45, 0.78, radius);
+          float feather = 1.0 - smoothstep(0.72, 1.0, radius);
+          float alpha = max(core, feather * 0.78) * vFacing;
+          gl_FragColor = vec4(markerColor, alpha);
+        }
+      `,
     });
-    let markerOutlineMaterial = new THREE.MeshBasicMaterial({
-      color: readThemeColors().background,
-      side: THREE.FrontSide,
+
+    const markerGlowMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.NormalBlending,
+      uniforms: {
+        markerColor: { value: new THREE.Color(initialThemeColors.accent) },
+        cameraZ: { value: INITIAL_CAMERA_Z },
+        pixelRatio: { value: renderer.getPixelRatio() },
+      },
+      vertexShader: `
+        attribute float markerScale;
+        uniform float cameraZ;
+        uniform float pixelRatio;
+        varying float vFacing;
+
+        void main() {
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vec3 viewNormal = normalize(normalMatrix * normalize(position));
+          vec3 viewDir = normalize(-mvPosition.xyz);
+          vFacing = smoothstep(-0.02, 0.13, dot(viewNormal, viewDir));
+
+          float zoomT = clamp(
+            (cameraZ - ${MIN_CAMERA_Z.toFixed(2)}) / ${(
+              MAX_CAMERA_Z - MIN_CAMERA_Z
+            ).toFixed(2)},
+            0.0,
+            1.0
+          );
+          float pointSize = mix(${MARKER_GLOW_CLOSE_PX.toFixed(1)}, ${MARKER_GLOW_FAR_PX.toFixed(1)}, zoomT);
+          gl_PointSize = pointSize * markerScale * pixelRatio;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 markerColor;
+        varying float vFacing;
+
+        void main() {
+          vec2 point = gl_PointCoord * 2.0 - 1.0;
+          float radius = length(point);
+          if (radius > 1.0 || vFacing <= 0.001) discard;
+
+          float glow = exp(-radius * radius * 4.6);
+          float edge = 1.0 - smoothstep(0.72, 1.0, radius);
+          float alpha = glow * edge * 0.30 * vFacing;
+          gl_FragColor = vec4(markerColor, alpha);
+        }
+      `,
     });
-    let markerMesh: THREE.InstancedMesh | null = null;
-    let markerOutlineMesh: THREE.InstancedMesh | null = null;
+
+    let markerPoints: THREE.Points | null = null;
+    let markerGlowPoints: THREE.Points | null = null;
     let markerMetadata: GlobeMarker[] = [];
     let markerPositions: THREE.Vector3[] = [];
-    let markerQuaternions: THREE.Quaternion[] = [];
-    let markerBaseScales: number[] = [];
-    let lastMarkerCameraZ = Number.NaN;
 
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2();
@@ -396,104 +460,180 @@
     let inertiaAngle = 0;
     let disposed = false;
     let currentTexture: THREE.Texture | null = null;
+    let hasUserAdjustedView = false;
+    let defaultFocus: GlobeFocus = {
+      quaternion: globeGroup.quaternion.clone(),
+      cameraZ: INITIAL_CAMERA_Z,
+    };
 
     function disposeMarkerMesh() {
-      if (markerMesh) {
-        globeGroup.remove(markerMesh);
-        markerMesh = null;
+      if (markerPoints) {
+        globeGroup.remove(markerPoints);
+        markerPoints = null;
       }
-      if (markerOutlineMesh) {
-        globeGroup.remove(markerOutlineMesh);
-        markerOutlineMesh = null;
+      if (markerGlowPoints) {
+        globeGroup.remove(markerGlowPoints);
+        markerGlowPoints = null;
       }
+      markerGeometry.dispose();
+      markerGeometry = new THREE.BufferGeometry();
       markerPositions = [];
-      markerQuaternions = [];
-      markerBaseScales = [];
-      lastMarkerCameraZ = Number.NaN;
     }
 
-    function markerZoomCompensation(cameraZ: number) {
-      // Keep dots visually small while zooming toward the globe. The marker
-      // radius shrinks with the camera-to-surface distance, approximately
-      // cancelling perspective magnification near the visible hemisphere.
-      const initialSurfaceDistance = INITIAL_CAMERA_Z - MARKER_RADIUS;
-      const currentSurfaceDistance = Math.max(0.2, cameraZ - MARKER_RADIUS);
-      return clamp(currentSurfaceDistance / initialSurfaceDistance, 0.16, 1);
+    function weightedPercentile(
+      values: Array<{ value: number; weight: number }>,
+      percentile: number,
+    ) {
+      if (values.length === 0) return 0;
+      const sorted = [...values].sort((a, b) => a.value - b.value);
+      const totalWeight = sorted.reduce((sum, item) => sum + item.weight, 0);
+      if (totalWeight <= 0) return sorted[sorted.length - 1]?.value ?? 0;
+
+      const target = totalWeight * percentile;
+      let cumulative = 0;
+      for (const item of sorted) {
+        cumulative += item.weight;
+        if (cumulative >= target) return item.value;
+      }
+      return sorted[sorted.length - 1]?.value ?? 0;
     }
 
-    function updateMarkerMatrices(cameraZ: number, force = false) {
-      if (!markerMesh || !markerOutlineMesh || markerMetadata.length === 0) return;
-      if (!force && Number.isFinite(lastMarkerCameraZ) && Math.abs(cameraZ - lastMarkerCameraZ) < 0.001) return;
+    function focusForMarkers(markers: GlobeMarker[]): GlobeFocus {
+      if (markers.length === 0) {
+        return {
+          quaternion: new THREE.Quaternion().setFromEuler(
+            new THREE.Euler(-0.12, -0.58, 0),
+          ),
+          cameraZ: INITIAL_CAMERA_Z,
+        };
+      }
 
-      lastMarkerCameraZ = cameraZ;
-      const zoomScale = markerZoomCompensation(cameraZ);
-      const dummy = new THREE.Object3D();
-      const outward = new THREE.Vector3();
+      const directions = markers.map((marker) =>
+        markerPosition(marker.latitude, marker.longitude, 1).normalize(),
+      );
+      const sigma = THREE.MathUtils.degToRad(34);
 
-      markerMetadata.forEach((_, index) => {
-        const position = markerPositions[index];
-        const quaternion = markerQuaternions[index];
-        const scale = markerBaseScales[index] * zoomScale;
-        if (!position || !quaternion || !Number.isFinite(scale)) return;
-
-        outward.copy(position).normalize();
-        dummy.position.copy(position);
-        dummy.quaternion.copy(quaternion);
-        dummy.scale.setScalar(scale);
-        dummy.updateMatrix();
-        markerOutlineMesh?.setMatrixAt(index, dummy.matrix);
-
-        // Lift the accent circle a fraction above its background ring to avoid
-        // z-fighting while preserving the 2D map's bordered-dot appearance.
-        dummy.position.copy(position).addScaledVector(outward, 0.0025);
-        dummy.updateMatrix();
-        markerMesh?.setMatrixAt(index, dummy.matrix);
+      // Find the point with the strongest nearby visitor mass. This is more
+      // useful than a raw world centroid, which can land in an ocean whenever
+      // there are a few visitors on another continent.
+      let bestSeed = 0;
+      let bestScore = -Infinity;
+      directions.forEach((seed, seedIndex) => {
+        let score = 0;
+        directions.forEach((direction, index) => {
+          const angle = Math.acos(clamp(seed.dot(direction), -1, 1));
+          const kernel = Math.exp(-0.5 * (angle / sigma) ** 2);
+          score += markers[index].count * kernel;
+        });
+        if (score > bestScore) {
+          bestScore = score;
+          bestSeed = seedIndex;
+        }
       });
 
-      markerOutlineMesh.instanceMatrix.needsUpdate = true;
-      markerMesh.instanceMatrix.needsUpdate = true;
+      const seed = directions[bestSeed];
+      const focusVector = new THREE.Vector3();
+      const spreadSamples: Array<{ value: number; weight: number }> = [];
+
+      directions.forEach((direction, index) => {
+        const angle = Math.acos(clamp(seed.dot(direction), -1, 1));
+        const kernel = Math.exp(-0.5 * (angle / sigma) ** 2);
+        const weight = markers[index].count * kernel;
+        focusVector.addScaledVector(direction, weight);
+      });
+
+      if (focusVector.lengthSq() < 0.000001) focusVector.copy(seed);
+      focusVector.normalize();
+
+      directions.forEach((direction, index) => {
+        const angle = Math.acos(clamp(focusVector.dot(direction), -1, 1));
+        const seedAngle = Math.acos(clamp(seed.dot(direction), -1, 1));
+        const localWeight =
+          markers[index].count * Math.exp(-0.5 * (seedAngle / sigma) ** 2);
+        spreadSamples.push({ value: angle, weight: localWeight });
+      });
+
+      const spread = weightedPercentile(spreadSamples, 0.82);
+      const spreadDegrees = THREE.MathUtils.radToDeg(spread);
+      const cameraZ = clamp(6.05 + spreadDegrees * 0.012, 6.05, INITIAL_CAMERA_Z);
+      // Center the dominant visitor direction while keeping geographic north
+      // upright. A simple setFromUnitVectors() leaves roll unconstrained and can
+      // make the focused region appear tilted sideways.
+      const north = new THREE.Vector3(0, 1, 0).addScaledVector(
+        focusVector,
+        -focusVector.y,
+      );
+      if (north.lengthSq() < 0.000001) {
+        north.set(0, 0, -1).addScaledVector(
+          focusVector,
+          focusVector.z,
+        );
+      }
+      north.normalize();
+      const east = new THREE.Vector3().crossVectors(north, focusVector).normalize();
+      const localBasis = new THREE.Matrix4().makeBasis(east, north, focusVector);
+      const quaternion = new THREE.Quaternion().setFromRotationMatrix(
+        localBasis.clone().invert(),
+      );
+
+      return { quaternion, cameraZ };
     }
 
-    function setMarkers(locations: VisitorLocation[]) {
-      markerMetadata = groupLocations(locations);
+    function applyDefaultFocus(markers: GlobeMarker[], force = false) {
+      defaultFocus = focusForMarkers(markers);
+      if (!force && hasUserAdjustedView) return;
+
+      globeGroup.quaternion.copy(defaultFocus.quaternion);
+      targetCameraZ = defaultFocus.cameraZ;
+      camera.position.z = defaultFocus.cameraZ;
+      inertiaAngle = 0;
+    }
+
+    function setMarkers(nextLocations: VisitorLocation[]) {
+      markerMetadata = groupLocations(nextLocations);
       disposeMarkerMesh();
+      applyDefaultFocus(markerMetadata);
 
       if (markerMetadata.length === 0) return;
-
-      markerOutlineMesh = new THREE.InstancedMesh(
-        markerOutlineGeometry,
-        markerOutlineMaterial,
-        markerMetadata.length,
-      );
-      markerOutlineMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      markerOutlineMesh.userData.kind = 'visitor-marker-outlines';
-
-      markerMesh = new THREE.InstancedMesh(
-        markerGeometry,
-        markerMaterial,
-        markerMetadata.length,
-      );
-      markerMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      markerMesh.userData.kind = 'visitor-markers';
-
-      const circleNormal = new THREE.Vector3(0, 0, 1);
 
       markerPositions = markerMetadata.map((marker) =>
         markerPosition(marker.latitude, marker.longitude, MARKER_RADIUS),
       );
-      markerQuaternions = markerPositions.map((position) =>
-        new THREE.Quaternion().setFromUnitVectors(
-          circleNormal,
-          position.clone().normalize(),
-        ),
-      );
-      markerBaseScales = markerMetadata.map(
-        (marker) => 0.72 + Math.min(1.35, Math.log2(marker.count + 1) * 0.24),
-      );
+      const positions = new Float32Array(markerPositions.length * 3);
+      const markerScales = new Float32Array(markerPositions.length);
 
-      globeGroup.add(markerOutlineMesh);
-      globeGroup.add(markerMesh);
-      updateMarkerMatrices(camera.position.z, true);
+      markerPositions.forEach((position, index) => {
+        positions[index * 3] = position.x;
+        positions[index * 3 + 1] = position.y;
+        positions[index * 3 + 2] = position.z;
+
+        // Exact same-location visitors become one brighter/larger light. The
+        // logarithm keeps dense locations expressive without letting them turn
+        // into oversized bubbles.
+        markerScales[index] =
+          1 + Math.min(0.65, Math.log2(Math.max(1, markerMetadata[index].count)) * 0.16);
+      });
+
+      markerGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, 3),
+      );
+      markerGeometry.setAttribute(
+        'markerScale',
+        new THREE.BufferAttribute(markerScales, 1),
+      );
+      markerGeometry.computeBoundingSphere();
+
+      markerGlowPoints = new THREE.Points(markerGeometry, markerGlowMaterial);
+      markerGlowPoints.renderOrder = 2;
+      markerGlowPoints.userData.kind = 'visitor-marker-glow';
+
+      markerPoints = new THREE.Points(markerGeometry, markerCoreMaterial);
+      markerPoints.renderOrder = 3;
+      markerPoints.userData.kind = 'visitor-markers';
+
+      globeGroup.add(markerGlowPoints);
+      globeGroup.add(markerPoints);
     }
 
     applyExternalLocations = (nextLocations, nextTotalVisitors) => {
@@ -503,23 +643,47 @@
       error = '';
     };
 
-    async function updateTheme() {
+    function applyTheme() {
+      const colors = readThemeColors();
+      // The map texture is a white alpha mask, so theme changes only need to
+      // recolor the material. No image decode, rasterization, or GPU re-upload.
+      globeMaterial.color.set(colors.text);
+      markerCoreMaterial.uniforms.markerColor.value.set(colors.accent);
+      markerGlowMaterial.uniforms.markerColor.value.set(colors.accent);
+      rimMaterial.uniforms.rimColor.value.set(colors.text);
+    }
+
+    function installWorldTexture(nextTexture: THREE.Texture) {
+      if (disposed) {
+        nextTexture.dispose();
+        return;
+      }
+
+      const hadTexture = Boolean(globeMaterial.map);
+      currentTexture?.dispose();
+      currentTexture = nextTexture;
+      globeMaterial.map = nextTexture;
+      // The shader needs one compile when USE_MAP is introduced. Swapping the
+      // preview for the HD texture does not require another material compile.
+      if (!hadTexture) globeMaterial.needsUpdate = true;
+      globe.visible = true;
+    }
+
+    async function loadWorldTextures() {
       try {
-        const nextTexture = await makeWorldTexture(renderer);
-        if (disposed) {
-          nextTexture.dispose();
-          return;
-        }
+        // 4K preview first: small enough to decode/upload quickly, already sharp
+        // at the normal view, and prevents the UI from waiting on the 8K texture.
+        const previewTexture = await loadWorldTexture(WORLD_TEXTURE_PREVIEW_URL);
+        installWorldTexture(previewTexture);
 
-        currentTexture?.dispose();
-        currentTexture = nextTexture;
-        globeMaterial.map = nextTexture;
-        globeMaterial.needsUpdate = true;
+        if (disposed) return;
+        await waitForIdle();
+        if (disposed) return;
 
-        const colors = readThemeColors();
-        markerMaterial.color.set(colors.accent);
-        markerOutlineMaterial.color.set(colors.background);
-        rimMaterial.uniforms.rimColor.value.set(colors.text);
+        // Upgrade quietly to the 8K texture after the globe is already visible
+        // and interactive. Browser image caching also makes remounts very cheap.
+        const hdTexture = await loadWorldTexture(WORLD_TEXTURE_HD_URL);
+        installWorldTexture(hdTexture);
       } catch (textureError) {
         console.error(textureError);
       }
@@ -561,6 +725,8 @@
       const width = Math.max(1, bounds.width);
       const height = Math.max(1, bounds.height);
       renderer.setSize(width, height, false);
+      markerCoreMaterial.uniforms.pixelRatio.value = renderer.getPixelRatio();
+      markerGlowMaterial.uniforms.pixelRatio.value = renderer.getPixelRatio();
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
     }
@@ -701,6 +867,7 @@
     }
 
     function onPointerDown(event: PointerEvent) {
+      hasUserAdjustedView = true;
       canvas.setPointerCapture(event.pointerId);
       activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       tooltipVisible = false;
@@ -750,16 +917,17 @@
         return;
       }
 
-      if (event.buttons === 0 && markerMesh) {
+      if (event.buttons === 0 && markerPoints) {
         const bounds = canvas.getBoundingClientRect();
         pointerNdc.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
         pointerNdc.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
         raycaster.setFromCamera(pointerNdc, camera);
-        const intersection = raycaster.intersectObject(markerMesh, false)[0];
-        const instanceId = intersection?.instanceId;
+        raycaster.params.Points = { threshold: 0.09 };
+        const intersection = raycaster.intersectObject(markerPoints, false)[0];
+        const markerIndex = intersection?.index;
 
-        if (typeof instanceId === 'number' && markerMetadata[instanceId]) {
-          const marker = markerMetadata[instanceId];
+        if (typeof markerIndex === 'number' && markerMetadata[markerIndex]) {
+          const marker = markerMetadata[markerIndex];
           tooltipText = `${marker.label}${marker.count > 1 ? ` · ${marker.count} visitors` : ''}`;
           tooltipX = event.clientX - bounds.left;
           tooltipY = event.clientY - bounds.top;
@@ -795,6 +963,7 @@
 
     function onWheel(event: WheelEvent) {
       event.preventDefault();
+      hasUserAdjustedView = true;
 
       const pixelDelta =
         event.deltaMode === WheelEvent.DOM_DELTA_LINE
@@ -812,9 +981,17 @@
       if (activePointers.size === 0) tooltipVisible = false;
     }
 
+    zoomGlobe = (ratio: number) => {
+      hasUserAdjustedView = true;
+      targetCameraZ = zoomFromSurfaceDistance(targetCameraZ, ratio);
+      inertiaAngle = 0;
+      tooltipVisible = false;
+    };
+
     resetGlobe = () => {
-      globeGroup.rotation.set(-0.12, -0.58, 0);
-      targetCameraZ = INITIAL_CAMERA_Z;
+      hasUserAdjustedView = false;
+      globeGroup.quaternion.copy(defaultFocus.quaternion);
+      targetCameraZ = defaultFocus.cameraZ;
       inertiaAngle = 0;
       tooltipVisible = false;
     };
@@ -832,7 +1009,7 @@
 
     const themeObserver = new MutationObserver((records) => {
       if (records.some((record) => record.attributeName === 'data-theme')) {
-        void updateTheme();
+        applyTheme();
       }
     });
     themeObserver.observe(document.documentElement, {
@@ -840,7 +1017,8 @@
       attributeFilter: ['data-theme'],
     });
 
-    void updateTheme();
+    applyTheme();
+    void loadWorldTextures();
     let statsInterval: number | null = null;
     if (embedded) {
       applyExternalLocations?.(locations, totalVisitors);
@@ -861,7 +1039,8 @@
       }
 
       camera.position.z += (targetCameraZ - camera.position.z) * 0.13;
-      updateMarkerMatrices(camera.position.z);
+      markerCoreMaterial.uniforms.cameraZ.value = camera.position.z;
+      markerGlowMaterial.uniforms.cameraZ.value = camera.position.z;
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
     };
@@ -870,6 +1049,7 @@
     return () => {
       disposed = true;
       resetGlobe = null;
+      zoomGlobe = null;
       applyExternalLocations = null;
       if (statsInterval !== null) window.clearInterval(statsInterval);
       cancelAnimationFrame(frameId);
@@ -883,9 +1063,8 @@
       canvas.removeEventListener('wheel', onWheel);
       disposeMarkerMesh();
       markerGeometry.dispose();
-      markerOutlineGeometry.dispose();
-      markerMaterial.dispose();
-      markerOutlineMaterial.dispose();
+      markerCoreMaterial.dispose();
+      markerGlowMaterial.dispose();
       currentTexture?.dispose();
       globeGeometry.dispose();
       rimGeometry.dispose();
@@ -924,12 +1103,23 @@
     <div class="globe-help">Grab and drag 1:1 · scroll or pinch to zoom</div>
   {/if}
 
-  <button
-    class="globe-reset"
-    type="button"
-    aria-label="Reset globe view"
-    on:click={() => resetGlobe?.()}
-  >Reset</button>
+  <div class="globe-controls" aria-label="Globe controls">
+    <button
+      type="button"
+      aria-label="Zoom in"
+      on:click={() => zoomGlobe?.(1 / 1.5)}
+    >+</button>
+    <button
+      type="button"
+      aria-label="Zoom out"
+      on:click={() => zoomGlobe?.(1.5)}
+    >−</button>
+    <button
+      type="button"
+      aria-label="Fit globe to visitor focus"
+      on:click={() => resetGlobe?.()}
+    >Fit</button>
+  </div>
 
   {#if tooltipVisible}
     <div
@@ -983,7 +1173,7 @@
 
   .globe-meta,
   .globe-help,
-  .globe-reset,
+  .globe-controls,
   .globe-tooltip {
     position: absolute;
     z-index: 2;
@@ -1023,28 +1213,48 @@
     backdrop-filter: blur(8px);
   }
 
-  .globe-reset {
+  .globe-controls {
     top: clamp(1rem, 2.4vw, 1.5rem);
     right: clamp(1rem, 2.4vw, 1.5rem);
-    appearance: none;
-    padding: 0.42rem 0.62rem;
+    display: flex;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
     border: 1px solid var(--line);
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    color: var(--text);
-    font: inherit;
-    font-size: 0.75rem;
-    cursor: pointer;
-    backdrop-filter: blur(8px);
+    border-radius: 999px;
+    backdrop-filter: blur(0.45rem);
   }
 
-  .globe-shell[data-embedded='true'] .globe-reset {
+  .globe-shell[data-embedded='true'] .globe-controls {
     top: 0.75rem;
     right: 0.75rem;
-    border-radius: 999px;
   }
 
-  .globe-reset:hover {
-    border-color: var(--text);
+  .globe-controls button {
+    display: grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-right: 1px solid var(--line);
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+    transition: none !important;
+  }
+
+  .globe-controls button:last-child {
+    width: auto;
+    padding-inline: 0.8rem;
+    border-right: 0;
+    font-size: 0.72rem;
+  }
+
+  .globe-controls button:hover,
+  .globe-controls button:focus-visible {
+    background: var(--accent-soft);
   }
 
   .globe-tooltip {

@@ -131,7 +131,6 @@ export const projects = [
     result:
       'The portfolio now acts as both a professional showcase and an ongoing playground for animation, interface design, and modular front-end architecture.',
     links: [
-      { label: 'Visit live site', href: '/' },
       { label: 'View source', href: 'https://github.com/Hecate946/hecate946.com' },
     ],
   },

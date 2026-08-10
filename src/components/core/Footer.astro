@@ -1,4 +1,5 @@
 ---
+import FooterSearchButton from '@/components/islands/FooterSearchButton.svelte';
 import { withBase } from '@/lib/paths';
 import '@/styles/footer.css';
 
@@ -7,6 +8,8 @@ const year = new Date().getFullYear();
 
 <footer class="site-footer" data-default-only>
   <div class="footer-tools" aria-label="Site controls">
+    <FooterSearchButton client:idle />
+
     <button
       class="footer-icon-link footer-sound-toggle"
       type="button"

@@ -15,8 +15,9 @@ export const headerNavigation = [
   {
     label: 'Projects',
     href: '/projects/',
-    match: ['/code/', '/clarinet/', '/piano/', '/lab/'],
+    match: ['/code/', '/clarinet/', '/piano/'],
   },
+  { label: 'Lab', href: '/lab/' },
   { label: 'Contact', href: '/contact/' },
   { label: 'Stats', href: '/stats/' },
 ] as const satisfies readonly HeaderNavItem[];

@@ -11,9 +11,11 @@
   type GraphTheme = 'light' | 'dark';
 
   const GRAPH_THEME_STORAGE_KEY = 'hecate946:graph-theme';
+  const GRAPH_RETURN_STORAGE_KEY = 'hecate946:graph-return';
 
   let graph: { resetView: () => void } | null = null;
   let graphTheme: GraphTheme | null = null;
+  let resolvedCloseHref = closeHref;
 
   function currentSiteTheme(): GraphTheme {
     return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
@@ -40,6 +42,25 @@
     graphTheme = storedTheme === 'light' || storedTheme === 'dark'
       ? storedTheme
       : currentSiteTheme();
+
+    try {
+      const storedReturn = sessionStorage.getItem(GRAPH_RETURN_STORAGE_KEY);
+      if (storedReturn?.startsWith('/')) {
+        const returnUrl = new URL(storedReturn, window.location.origin);
+        const normalizedReturnPath = returnUrl.pathname.replace(/\/+$/, '') || '/';
+        const normalizedCurrentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+
+        if (
+          returnUrl.origin === window.location.origin &&
+          !normalizedReturnPath.endsWith('/graph') &&
+          normalizedReturnPath !== normalizedCurrentPath
+        ) {
+          resolvedCloseHref = `${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`;
+        }
+      }
+    } catch {
+      resolvedCloseHref = closeHref;
+    }
   });
 </script>
 
@@ -57,7 +78,7 @@
     theme={graphTheme}
   />
 
-  <a class="website-graph__control website-graph__close" href={closeHref} aria-label="Close graph" title="Close graph">
+  <a class="website-graph__control website-graph__close" href={resolvedCloseHref} aria-label="Close graph" title="Close graph">
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M6 6l12 12M18 6L6 18"></path>
     </svg>

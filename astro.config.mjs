@@ -7,10 +7,7 @@ export default defineConfig({
   output: 'static',
   integrations: [
     svelte(),
-    sitemap({
-      filter: (page) =>
-        !page.endsWith('/navigation/') && !page.endsWith('/pdfs/'),
-    }),
+    sitemap(),
   ],
   devToolbar: {
     enabled: false,

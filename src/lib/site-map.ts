@@ -74,6 +74,16 @@ const PAGE_METADATA: Record<
     description: 'Live site and activity statistics',
     category: 'profile',
   },
+  '/lab/': {
+    label: 'Lab',
+    description: 'Experiments, prototypes, and immersive side paths',
+    category: 'experiments',
+  },
+  '/globe/': {
+    label: 'Visitor Globe',
+    description: 'Draggable three-dimensional visitor map prototype',
+    category: 'experiments',
+  },
   '/projects/': {
     label: 'Projects',
     description: 'Selected software and design work',
@@ -114,11 +124,6 @@ const PAGE_METADATA: Record<
     description: 'Seasonal house exterior preview',
     category: 'experiments',
   },
-  '/pdfs/': {
-    label: 'PDFs',
-    description: 'Unlisted document index',
-    category: 'experiments',
-  },
   '/shower/': {
     label: 'Seasonal Shower',
     description: 'Seasonal animation showcase',
@@ -127,11 +132,6 @@ const PAGE_METADATA: Record<
   '/chess-board/': {
     label: 'Chess Board',
     description: 'Interactive chess-board study',
-    category: 'experiments',
-  },
-  '/pickleball/': {
-    label: 'Pickleball',
-    description: 'Pickleball interaction study',
     category: 'experiments',
   },
 };
@@ -314,7 +314,7 @@ export function buildSiteMapGraph({
 
   const nodes: NetworkNode[] = routes.map((route, index) => {
     const depth = routeDepth(route.href);
-    const isSection = ['/projects/', '/rooms/', '/halls/'].includes(route.href);
+    const isSection = ['/projects/', '/lab/', '/rooms/', '/halls/'].includes(route.href);
     const isCurrent = route.href === normalizedCurrentPath;
     const group = categoryRoutes.get(route.category) ?? [];
 

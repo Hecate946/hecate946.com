@@ -10,7 +10,6 @@ interface Props {
 const { project, priority = false } = Astro.props;
 const href = withBase(`/projects/${project.slug}/`);
 const image = withBase(project.image);
-const displayUrl = `hecate946.com/projects/${project.slug}`;
 ---
 
 <li class="project-window-item">
@@ -35,7 +34,6 @@ const displayUrl = `hecate946.com/projects/${project.slug}`;
 
     <footer class="project-window__caption">
       <p><small>{project.category} · {project.period}</small></p>
-      <p><span class="project-window__url">{displayUrl}</span></p>
     </footer>
   </article>
 </li>

@@ -122,6 +122,13 @@
     minute: '2-digit',
   });
 
+
+  function prewarmGlobePreview() {
+    const base = String(import.meta.env.BASE_URL ?? '/').replace(/\/?$/, '/');
+    const image = new Image();
+    image.decoding = 'async';
+    image.src = `${base}generated/globe-world-mask-4096.png`;
+  }
   function formatNumber(value: number, compact = false) {
     return (compact ? compactFormatter : numberFormatter).format(value ?? 0);
   }
@@ -262,9 +269,21 @@
     loadYourStats();
     window.addEventListener('hecate:local-stats-updated', loadYourStats);
     void refresh();
+
+    // Warm the small globe texture while the default 2D map is being viewed.
+    // This makes the first 2D → 3D switch feel immediate without loading the
+    // much larger HD texture until the globe is actually requested.
+    let globePrewarmTimer: number | null = null;
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(prewarmGlobePreview, { timeout: 1_200 });
+    } else {
+      globePrewarmTimer = window.setTimeout(prewarmGlobePreview, 250);
+    }
+
     const interval = window.setInterval(() => void loadLiveStats(), 15_000);
     return () => {
       window.clearInterval(interval);
+      if (globePrewarmTimer !== null) window.clearTimeout(globePrewarmTimer);
       window.removeEventListener('hecate:local-stats-updated', loadYourStats);
     };
   });
@@ -355,8 +374,8 @@
           <h3>Where people visit from</h3>
           <p>
             {mapView === '2d'
-              ? 'One anonymous dot per visitor; nearby dots separate as you zoom.'
-              : 'Grab and drag the globe; scroll or pinch to zoom.'}
+              ? 'Visitor lights coalesce by approximate location; drag or scroll to explore.'
+              : 'The same visitor lights on a draggable globe; scroll or pinch to zoom.'}
           </p>
         </div>
 

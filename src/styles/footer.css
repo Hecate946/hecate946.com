@@ -97,6 +97,14 @@ body:has(> .site-footer) > main {
   overflow: visible;
 }
 
+.footer-search-icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
 .footer-code-icon {
   display: block;
   width: 1.82rem !important;

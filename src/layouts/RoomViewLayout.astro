@@ -46,8 +46,8 @@ const plainTitle = title.split('|')[0].trim();
   <body class="room-view-page" data-html-page="interior">
     <HtmlSiteTree {currentPath} />
 
-    <main id="main-content" data-default-only class="room-view-shell">
-      <div class="room-view-scene">
+    <main id="main-content" class="room-view-shell">
+      <div class="room-view-scene" data-default-only>
         <RenderedWorld
           client:load
           {manifestUrl}
@@ -57,13 +57,12 @@ const plainTitle = title.split('|')[0].trim();
         />
       </div>
 
-      <a class="room-view-back" href={resolvedBackHref}>{backLabel}</a>
-    </main>
+      <section data-html-only hidden class="room-view-html">
+        <h1>{plainTitle}</h1>
+        <p>{description}</p>
+      </section>
 
-    <main data-html-only hidden class="room-view-html">
-      <p><a href={resolvedBackHref}>{backLabel}</a></p>
-      <h1>{plainTitle}</h1>
-      <p>{description}</p>
+      <a class="room-view-back" href={resolvedBackHref}>{backLabel}</a>
     </main>
 
     <script>

@@ -4,7 +4,6 @@ import { headerNavigation, type HeaderNavItem } from '@/config/navigation';
 import { isCurrentPath, withBase } from '@/lib/paths';
 
 import ColorModeToggle from '@/components/islands/ColorModeToggle.svelte';
-import CommandMenuButton from '@/components/islands/CommandMenuButton.svelte';
 import SeasonSelector from '@/components/islands/SeasonSelector.svelte';
 
 import '@/styles/layout.css';
@@ -19,7 +18,7 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
 }
 ---
 
-<header class="site-header" data-site-header data-scrolled="false" data-default-only>
+<header class="site-header" data-site-header data-scrolled="false">
   <div class="header-grid">
     <a
       class="brand"
@@ -28,7 +27,6 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
       data-astro-prefetch
     >
       <span class="brand-full">{siteConfig.name}</span>
-      <span class="brand-short" aria-hidden="true">Cyrus</span>
     </a>
 
     <nav class="primary-nav" aria-label="Primary navigation">
@@ -48,10 +46,6 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
         }
       </ul>
     </nav>
-
-    <div class="command-slot header-region">
-      <CommandMenuButton client:idle />
-    </div>
 
     <div class="mode-slot header-region">
       <ColorModeToggle client:idle />

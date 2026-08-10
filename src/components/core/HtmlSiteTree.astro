@@ -1,6 +1,4 @@
 ---
-import { headerNavigation } from '@/config/navigation';
-import { htmlSiteRoutes } from '@/lib/site-routes';
 import { withBase } from '@/lib/paths';
 
 interface Props {
@@ -15,8 +13,6 @@ const normalizePath = (value: string) => {
 };
 
 const isHome = normalizePath(currentPath) === normalizePath(withBase('/'));
-const routeHref = (href: string) =>
-  href === '/404.html' ? withBase('/404.html') : withBase(href);
 ---
 
 {
@@ -28,45 +24,10 @@ const routeHref = (href: string) =>
         <p>software engineer + classical musician</p>
       </header>
 
-      <nav aria-label="Primary site navigation">
-        <h2>Navigation</h2>
-        <ul>
-          {headerNavigation.map((page) => (
-            <li>
-              <a href={withBase(page.href)} data-astro-prefetch>
-                {page.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <section aria-labelledby="all-routes-heading">
-        <h2 id="all-routes-heading">All routes</h2>
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Path</th>
-              <th scope="col">Page</th>
-              <th scope="col">Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {htmlSiteRoutes.map((route) => (
-              <tr>
-                <td>
-                  <code>{route.href}</code>
-                </td>
-                <td>
-                  <a href={routeHref(route.href)} data-astro-prefetch>
-                    {route.label}
-                  </a>
-                </td>
-                <td>{route.description ?? ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <section aria-labelledby="lab-index-heading">
+        <h2 id="lab-index-heading">Lab</h2>
+        <p>Experiments, prototypes, immersive rooms, and other public side paths live in one index.</p>
+        <p><a href={withBase('/lab/')} data-astro-prefetch>Open the Lab</a></p>
       </section>
 
       <nav aria-label="External links">

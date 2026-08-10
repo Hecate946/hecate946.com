@@ -21,6 +21,7 @@ export const headerNavigation = [
   { label: 'About', href: '/about/' },
   { label: 'Resume', href: '/resume/' },
   { label: 'Projects', href: '/projects/' },
+  { label: 'Lab', href: '/lab/' },
   { label: 'Contact', href: '/contact/' },
   { label: 'Stats', href: '/stats/' },
 ] as const;
@@ -35,9 +36,8 @@ export const navigation = [
   // { label: 'Clarinet', href: '/clarinet/' },
   // { label: 'Piano', href: '/piano/' },
   // { label: 'Chess', href: '/chess/' },
-  // { label: 'Pickleball', href: '/pickleball/' },
-  // { label: 'Lab', href: '/lab/' },
   { label: 'Projects', href: '/projects/' },
+  { label: 'Lab', href: '/lab/' },
   { label: 'Contact', href: '/contact/' },
   { label: 'Stats', href: '/stats/' },
   { label: 'About', href: '/about/' },
@@ -85,7 +85,7 @@ export const interests = [
     eyebrow: 'Movement & reaction',
     description:
       'Strategy, training notes, match data, and motion experiments.',
-    href: '/pickleball/',
+    href: '/about/#pickleball-heading',
     symbol: '◉',
   },
 ] as const;

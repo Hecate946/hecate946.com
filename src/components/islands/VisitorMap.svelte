@@ -19,8 +19,8 @@
   interface ProjectedVisitorLocation extends VisitorLocation {
     x: number;
     y: number;
-    offsetX: number;
-    offsetY: number;
+    count: number;
+    label: string;
   }
 
   interface Point {
@@ -43,6 +43,10 @@
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 12;
   const WORLD_COPIES = [-1, 0, 1] as const;
+  const LIGHT_CORE_CLOSE_PX = 4.4;
+  const LIGHT_CORE_FAR_PX = 6.8;
+  const LIGHT_GLOW_CLOSE_PX = 11.5;
+  const LIGHT_GLOW_FAR_PX = 18;
 
   let mapElement!: SVGSVGElement;
   let projectedLocations: ProjectedVisitorLocation[] = [];
@@ -54,6 +58,7 @@
   let centerY = HEIGHT / 2;
   let visibleWidthAtZoomOne = WIDTH;
   let visibleHeightAtZoomOne = HEIGHT;
+  let viewUnitsPerCssPixel = 1;
   let dragging = false;
   let pinching = false;
   let previousPointer: Point | null = null;
@@ -62,26 +67,11 @@
 
   const activePointers = new Map<number, Point>();
 
-  $: projectedLocations = locations
-    .filter(
-      (location) =>
-        Number.isFinite(location.latitude) &&
-        Number.isFinite(location.longitude),
-    )
-    .map((location) => {
-      const offset = separatePoint(
-        location.pointIndex ?? 0,
-        location.pointCount ?? 1,
-      );
-
-      return {
-        ...location,
-        x: wrapX(((location.longitude + 180) / 360) * WIDTH),
-        y: ((90 - location.latitude) / 180) * HEIGHT,
-        offsetX: offset.x,
-        offsetY: offset.y,
-      };
-    });
+  $: projectedLocations = groupLocations(locations).map((location) => ({
+    ...location,
+    x: wrapX(((location.longitude + 180) / 360) * WIDTH),
+    y: ((90 - location.latitude) / 180) * HEIGHT,
+  }));
 
   $: visitorScaleBucket = Math.floor(
     Math.log2(Math.max(1, totalVisitors)),
@@ -90,7 +80,7 @@
   $: locationSignature = `${projectedLocations
     .map(
       (location) =>
-        `${location.latitude}:${location.longitude}:${location.pointIndex ?? 0}:${location.pointCount ?? 1}`,
+        `${location.latitude}:${location.longitude}:${location.count}`,
     )
     .sort()
     .join('|')}|visitors:${visitorScaleBucket}`;
@@ -123,36 +113,41 @@
     return ((value % WIDTH) + WIDTH) % WIDTH;
   }
 
-  function separatePoint(index: number, count: number): Point {
-    if (count <= 1 || index <= 0) return { x: 0, y: 0 };
-
-    // A deterministic sunflower pattern keeps individual visitors distinct
-    // without exposing any more precise geographic information.
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-    const radius = 11.5 * Math.sqrt(index);
-    const angle = index * goldenAngle;
-
-    return {
-      x: Math.cos(angle) * radius,
-      y: Math.sin(angle) * radius,
-    };
+  function locationLabel(location: VisitorLocation) {
+    return [location.city, location.region, location.country]
+      .filter(Boolean)
+      .join(', ') || 'Approximate visitor location';
   }
 
-  function pointSpread(currentZoom: number) {
-    // At world scale, visitors from the same approximate location overlap at
-    // their real map coordinate instead of being visually pushed into oceans.
-    // As the user zooms in, smoothly reveal the privacy-preserving sunflower
-    // separation so individual anonymous visitors remain distinguishable.
-    const startZoom = 1.35;
-    const fullSpreadZoom = 4.25;
-    const progress = clamp(
-      (currentZoom - startZoom) / (fullSpreadZoom - startZoom),
-      0,
-      1,
-    );
+  function groupLocations(values: VisitorLocation[]) {
+    const groups = new Map<string, ProjectedVisitorLocation>();
 
-    // Smoothstep avoids a visible pop when the separation begins.
-    return progress * progress * (3 - 2 * progress);
+    for (const location of values) {
+      if (
+        !Number.isFinite(location.latitude) ||
+        !Number.isFinite(location.longitude)
+      ) {
+        continue;
+      }
+
+      const key = `${location.latitude.toFixed(5)}:${location.longitude.toFixed(5)}`;
+      const existing = groups.get(key);
+
+      if (existing) {
+        existing.count += 1;
+        continue;
+      }
+
+      groups.set(key, {
+        ...location,
+        x: 0,
+        y: 0,
+        count: 1,
+        label: locationLabel(location),
+      });
+    }
+
+    return [...groups.values()];
   }
 
   function updateVisibleDimensions() {
@@ -162,6 +157,7 @@
     if (bounds.width <= 0 || bounds.height <= 0) return;
 
     const aspect = bounds.width / bounds.height;
+    viewUnitsPerCssPixel = WIDTH / bounds.width;
 
     // The SVG uses xMidYMid slice. These are the world dimensions visible at 1×.
     visibleWidthAtZoomOne = Math.min(WIDTH, HEIGHT * aspect);
@@ -412,14 +408,18 @@
     previousPointer = null;
   }
 
-  function dotRadius() {
-    return 4.75 / zoom;
+  function lightScale(count: number) {
+    return 1 + Math.min(0.65, Math.log2(Math.max(1, count)) * 0.16);
   }
 
-  function locationName(location: VisitorLocation) {
-    return [location.city, location.region, location.country]
-      .filter(Boolean)
-      .join(', ');
+  function lightDiameter(closePx: number, farPx: number) {
+    const progress = clamp((zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM), 0, 1);
+    return farPx + (closePx - farPx) * progress;
+  }
+
+  function lightRadius(closePx: number, farPx: number, count: number) {
+    const diameterPx = lightDiameter(closePx, farPx) * lightScale(count);
+    return (diameterPx * 0.5 * viewUnitsPerCssPixel) / zoom;
   }
 </script>
 
@@ -431,13 +431,28 @@
     viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
     preserveAspectRatio="xMidYMid slice"
     role="img"
-    aria-label="Zoomable, horizontally wrapping map of individual anonymous visitor locations"
+    aria-label="Zoomable, horizontally wrapping map of approximate visitor lights"
     on:wheel|preventDefault={handleWheel}
     on:pointerdown={handlePointerDown}
     on:pointermove={handlePointerMove}
     on:pointerup={endPointer}
     on:pointercancel={endPointer}
   >
+    <defs>
+      <radialGradient id="visitor-light-core" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="var(--accent-strong)" stop-opacity="1" />
+        <stop offset="45%" stop-color="var(--accent-strong)" stop-opacity="1" />
+        <stop offset="72%" stop-color="var(--accent-strong)" stop-opacity="0.8" />
+        <stop offset="100%" stop-color="var(--accent-strong)" stop-opacity="0" />
+      </radialGradient>
+      <radialGradient id="visitor-light-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="var(--accent-strong)" stop-opacity="0.30" />
+        <stop offset="32%" stop-color="var(--accent-strong)" stop-opacity="0.19" />
+        <stop offset="62%" stop-color="var(--accent-strong)" stop-opacity="0.07" />
+        <stop offset="100%" stop-color="var(--accent-strong)" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+
     <g {transform}>
       {#each WORLD_COPIES as copy}
         <g transform={`translate(${copy * WIDTH} 0)`}>
@@ -448,16 +463,24 @@
           />
 
           {#each projectedLocations as location}
-            <circle
-              class="map-dot"
-              cx={location.x + (location.offsetX * pointSpread(zoom)) / zoom}
-              cy={location.y + (location.offsetY * pointSpread(zoom)) / zoom}
-              r={dotRadius()}
-            >
-              <title>
-                {locationName(location) || 'Approximate location'} — {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)} — one anonymous visitor
-              </title>
-            </circle>
+            <g class="map-light">
+              <circle
+                class="map-light-glow"
+                cx={location.x}
+                cy={location.y}
+                r={lightRadius(LIGHT_GLOW_CLOSE_PX, LIGHT_GLOW_FAR_PX, location.count)}
+              />
+              <circle
+                class="map-light-core"
+                cx={location.x}
+                cy={location.y}
+                r={lightRadius(LIGHT_CORE_CLOSE_PX, LIGHT_CORE_FAR_PX, location.count)}
+              >
+                <title>
+                  {location.label} — {location.count === 1 ? '1 visitor' : `${location.count} visitors`}
+                </title>
+              </circle>
+            </g>
           {/each}
         </g>
       {/each}

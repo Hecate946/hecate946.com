@@ -154,9 +154,26 @@ const commandItems = Array.from(
       import { initializeHtmlMode } from '@/lib/html-mode';
       import { initializeSiteSound } from '@/lib/site-sound';
 
+      const GRAPH_RETURN_STORAGE_KEY = 'hecate946:graph-return';
+
+      const rememberLastNonGraphLocation = () => {
+        const normalizedPath = window.location.pathname.replace(/\/+$/, '') || '/';
+        if (normalizedPath.endsWith('/graph')) return;
+
+        try {
+          sessionStorage.setItem(
+            GRAPH_RETURN_STORAGE_KEY,
+            `${window.location.pathname}${window.location.search}${window.location.hash}`,
+          );
+        } catch {
+          // Navigation still works with the graph's home fallback if storage is unavailable.
+        }
+      };
+
       const initializePersistentControls = () => {
         initializeHtmlMode();
         initializeSiteSound();
+        rememberLastNonGraphLocation();
       };
 
       initializePersistentControls();

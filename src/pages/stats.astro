@@ -120,7 +120,7 @@ const generatedLabel = Number.isNaN(generatedAt.valueOf())
                 <td>{language.name}</td>
                 <td>{language.files}</td>
                 <td>{language.lines}</td>
-                <td>{language.percentage}%</td>
+                <td>{language.percentage.toFixed(1)}%</td>
               </tr>
             )) : (
               <tr><td colspan="4">No generated language statistics yet.</td></tr>

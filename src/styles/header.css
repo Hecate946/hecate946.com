@@ -60,7 +60,7 @@ html:not([data-theme-ready='true']) .site-header * {
   transition: none !important;
 }
 
-/* Desktop: name 2 | nav 6 | command 1 | mode 1 | seasons 2. */
+/* Desktop: name 2 | nav 6 | mode 2 | seasons 2. */
 .header-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -79,7 +79,6 @@ html:not([data-theme-ready='true']) .site-header * {
 
 .brand,
 .primary-nav,
-.command-slot,
 .mode-slot,
 .seasons-slot {
   display: flex;
@@ -96,12 +95,8 @@ html:not([data-theme-ready='true']) .site-header * {
   grid-column: 3 / 9;
 }
 
-.command-slot {
-  grid-column: 9 / 10;
-}
-
 .mode-slot {
-  grid-column: 10 / 11;
+  grid-column: 9 / 11;
 }
 
 .seasons-slot {
@@ -146,9 +141,6 @@ html:not([data-theme-ready='true']) .site-header * {
   text-decoration-color: var(--nav-underline-color);
 }
 
-.brand-short {
-  display: none;
-}
 
 .primary-nav ul {
   display: flex;
@@ -179,7 +171,6 @@ html:not([data-theme-ready='true']) .site-header * {
   white-space: nowrap;
 }
 
-.command-slot > astro-island,
 .mode-slot > astro-island,
 .seasons-slot > astro-island {
   display: flex;
@@ -190,7 +181,7 @@ html:not([data-theme-ready='true']) .site-header * {
   justify-content: center;
 }
 
-/* Search and mode controls remain fixed-size on desktop. */
+/* Mode control remains fixed-size inside its grid region. */
 .header-action {
   display: inline-flex;
   height: var(--control-size);
@@ -217,7 +208,6 @@ html:not([data-theme-ready='true']) .site-header * {
     transform 140ms ease;
 }
 
-.command-control,
 .mode-control {
   display: inline-flex;
   flex: 0 0 auto;
@@ -227,12 +217,10 @@ html:not([data-theme-ready='true']) .site-header * {
   white-space: nowrap;
 }
 
-.command-action,
 .mode-action {
   width: var(--control-size);
 }
 
-.command-label,
 .mode-label {
   display: inline-flex;
   height: var(--control-size);
@@ -265,7 +253,6 @@ html:not([data-theme-ready='true']) .site-header * {
 }
 
 
-.search-icon svg,
 .mode-icon svg {
   width: 1.24rem;
   height: 1.24rem;
@@ -344,7 +331,7 @@ html[data-season='winter'] .season-button.winter {
 
 /*
  * Tablet uses six columns and preserves the desktop row height:
- * row 1: name 2 | search 1 | mode 1 | seasons 2
+ * row 1: name 2 | mode 2 | seasons 2
  * row 2: navigation 6
  */
 @media (min-width: 40rem) and (max-width: 68rem) {
@@ -364,13 +351,8 @@ html[data-season='winter'] .season-button.winter {
     grid-row: 1;
   }
 
-  .command-slot {
-    grid-column: 3 / 4;
-    grid-row: 1;
-  }
-
   .mode-slot {
-    grid-column: 4 / 5;
+    grid-column: 3 / 5;
     grid-row: 1;
   }
 
@@ -416,10 +398,6 @@ html[data-season='winter'] .season-button.winter {
   .brand {
     grid-column: 1 / 4;
     grid-row: 1;
-  }
-
-  .command-slot {
-    display: none;
   }
 
   .mode-slot {
