@@ -163,6 +163,69 @@
   color: var(--text);
 }
 
+.stats-map-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.stats-map-stage .visitor-map-shell,
+.stats-map-stage .globe-shell {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.stats-map-stage .visitor-map {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.stats-map-view-switcher {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 5;
+  display: flex;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  backdrop-filter: blur(0.45rem);
+}
+
+.stats-map-view-switcher button {
+  min-width: 2.5rem;
+  height: 2.25rem;
+  padding: 0 0.72rem;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+}
+
+.stats-map-view-switcher button:last-child {
+  border-right: 0;
+}
+
+.stats-map-view-switcher button:hover,
+.stats-map-view-switcher button:focus-visible,
+.stats-map-view-switcher button.active {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.stats-map-view-switcher button.active {
+  cursor: default;
+}
+
 .visitor-map-shell {
   position: relative;
   overflow: hidden;

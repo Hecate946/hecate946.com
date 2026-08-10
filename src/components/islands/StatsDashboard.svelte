@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import VisitorMap from '@/components/islands/VisitorMap.svelte';
+  import VisitorGlobeClearV2 from '@/components/islands/VisitorGlobeClearV2.svelte';
 
   export let apiBase = '';
   export let codeStatsUrl = '/generated/code-stats.json';
@@ -101,6 +102,8 @@
   let activeTab: StatsTab = 'website';
   let yourStats: YourStats | null = null;
   let refreshing = false;
+  type MapView = '2d' | '3d';
+  let mapView: MapView = '2d';
 
   const numberFormatter = new Intl.NumberFormat('en-US');
   const compactFormatter = new Intl.NumberFormat('en-US', {
@@ -350,14 +353,45 @@
       <article class="stats-panel stats-panel-map">
         <div class="stats-panel-heading">
           <h3>Where people visit from</h3>
-          <p>One anonymous dot per visitor; nearby dots separate as you zoom.</p>
+          <p>
+            {mapView === '2d'
+              ? 'One anonymous dot per visitor; nearby dots separate as you zoom.'
+              : 'Grab and drag the globe; scroll or pinch to zoom.'}
+          </p>
         </div>
 
         {#if liveStats?.locations?.length}
-          <VisitorMap
-            locations={liveStats.locations}
-            totalVisitors={liveStats.summary.estimatedVisitors}
-          />
+          <div class="stats-map-stage" data-view={mapView}>
+            <div class="stats-map-view-switcher" role="group" aria-label="Visitor map view">
+              <button
+                type="button"
+                class:active={mapView === '2d'}
+                aria-pressed={mapView === '2d'}
+                aria-label="Show two-dimensional visitor map"
+                on:click={() => (mapView = '2d')}
+              >2D</button>
+              <button
+                type="button"
+                class:active={mapView === '3d'}
+                aria-pressed={mapView === '3d'}
+                aria-label="Show three-dimensional visitor globe"
+                on:click={() => (mapView = '3d')}
+              >3D</button>
+            </div>
+
+            {#if mapView === '2d'}
+              <VisitorMap
+                locations={liveStats.locations}
+                totalVisitors={liveStats.summary.estimatedVisitors}
+              />
+            {:else}
+              <VisitorGlobeClearV2
+                embedded={true}
+                locations={liveStats.locations}
+                totalVisitors={liveStats.summary.estimatedVisitors}
+              />
+            {/if}
+          </div>
         {:else if liveError}
           <div class="stats-error">{liveError}</div>
         {:else}

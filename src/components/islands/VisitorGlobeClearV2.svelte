@@ -5,6 +5,7 @@
   import { WORLD_INTERNAL_BORDERS_PATH } from '@/data/world-internal-borders';
 
   export let apiBase = '';
+  export let embedded = false;
 
   interface VisitorLocation {
     city: string | null;
@@ -26,6 +27,9 @@
     };
     locations: VisitorLocation[];
   }
+
+  export let locations: VisitorLocation[] = [];
+  export let totalVisitors = 0;
 
   interface GlobeMarker {
     latitude: number;
@@ -72,6 +76,13 @@
   let tooltipText = '';
 
   let resetGlobe: (() => void) | null = null;
+  let applyExternalLocations: ((nextLocations: VisitorLocation[], nextTotalVisitors: number) => void) | null = null;
+  let lastExternalLocations: VisitorLocation[] | null = null;
+
+  $: if (embedded && applyExternalLocations && locations !== lastExternalLocations) {
+    lastExternalLocations = locations;
+    applyExternalLocations(locations, totalVisitors);
+  }
 
   function clamp(value: number, minimum: number, maximum: number) {
     return Math.min(maximum, Math.max(minimum, value));
@@ -485,6 +496,13 @@
       updateMarkerMatrices(camera.position.z, true);
     }
 
+    applyExternalLocations = (nextLocations, nextTotalVisitors) => {
+      visitorCount = nextTotalVisitors;
+      setMarkers(nextLocations ?? []);
+      loading = false;
+      error = '';
+    };
+
     async function updateTheme() {
       try {
         const nextTexture = await makeWorldTexture(renderer);
@@ -823,8 +841,14 @@
     });
 
     void updateTheme();
-    void loadStats();
-    const statsInterval = window.setInterval(() => void loadStats(), 15_000);
+    let statsInterval: number | null = null;
+    if (embedded) {
+      applyExternalLocations?.(locations, totalVisitors);
+      lastExternalLocations = locations;
+    } else {
+      void loadStats();
+      statsInterval = window.setInterval(() => void loadStats(), 15_000);
+    }
 
     let frameId = 0;
     const animate = () => {
@@ -846,7 +870,8 @@
     return () => {
       disposed = true;
       resetGlobe = null;
-      window.clearInterval(statsInterval);
+      applyExternalLocations = null;
+      if (statsInterval !== null) window.clearInterval(statsInterval);
       cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
       themeObserver.disconnect();
@@ -871,7 +896,7 @@
   });
 </script>
 
-<div class="globe-shell" bind:this={shell}>
+<div class="globe-shell" data-embedded={embedded} bind:this={shell}>
   <p class="globe-a11y-description">
     Interactive clear three-dimensional globe showing approximate website visitor locations with transparent oceans. Pointer and touch users can grab the surface directly to rotate it one-to-one and scroll or pinch to zoom.
   </p>
@@ -882,20 +907,22 @@
     aria-hidden="true"
   ></canvas>
 
-  <div class="globe-meta" aria-live="polite">
-    <strong>Visitor globe</strong>
-    <span>
-      {#if loading}
-        Loading locations…
-      {:else if error}
-        {error}
-      {:else}
-        {visitorCount.toLocaleString('en-US')} visitors{updatedAt ? ` · ${readableTime(updatedAt)}` : ''}
-      {/if}
-    </span>
-  </div>
+  {#if !embedded}
+    <div class="globe-meta" aria-live="polite">
+      <strong>Visitor globe</strong>
+      <span>
+        {#if loading}
+          Loading locations…
+        {:else if error}
+          {error}
+        {:else}
+          {visitorCount.toLocaleString('en-US')} visitors{updatedAt ? ` · ${readableTime(updatedAt)}` : ''}
+        {/if}
+      </span>
+    </div>
 
-  <div class="globe-help">Grab and drag 1:1 · scroll or pinch to zoom</div>
+    <div class="globe-help">Grab and drag 1:1 · scroll or pinch to zoom</div>
+  {/if}
 
   <button
     class="globe-reset"
@@ -922,6 +949,11 @@
     min-height: 0;
     overflow: hidden;
     background: var(--bg);
+  }
+
+  .globe-shell[data-embedded='true'] {
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
   }
 
   .globe-a11y-description {
@@ -1003,6 +1035,12 @@
     font-size: 0.75rem;
     cursor: pointer;
     backdrop-filter: blur(8px);
+  }
+
+  .globe-shell[data-embedded='true'] .globe-reset {
+    top: 0.75rem;
+    right: 0.75rem;
+    border-radius: 999px;
   }
 
   .globe-reset:hover {
