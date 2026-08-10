@@ -104,6 +104,7 @@
   let refreshing = false;
   type MapView = '2d' | '3d';
   let mapView: MapView = '2d';
+  const devMode = import.meta.env.DEV;
 
   const numberFormatter = new Intl.NumberFormat('en-US');
   const compactFormatter = new Intl.NumberFormat('en-US', {
@@ -172,6 +173,7 @@
 
   function selectTab(tab: StatsTab, updateUrl = true) {
     activeTab = tab;
+    if (tab === 'code') void loadCodeStats();
     if (!updateUrl) return;
     const url = new URL(window.location.href);
     url.searchParams.set('tab', tab);
@@ -281,8 +283,15 @@
     }
 
     const interval = window.setInterval(() => void loadLiveStats(), 15_000);
+    const codeStatsInterval = devMode
+      ? window.setInterval(() => {
+          if (activeTab === 'code') void loadCodeStats();
+        }, 1_500)
+      : 0;
+
     return () => {
       window.clearInterval(interval);
+      if (codeStatsInterval) window.clearInterval(codeStatsInterval);
       if (globePrewarmTimer !== null) window.clearTimeout(globePrewarmTimer);
       window.removeEventListener('hecate:local-stats-updated', loadYourStats);
     };
@@ -591,7 +600,7 @@
       </div>
 
       <p class="stats-footnote">
-        Code statistics are regenerated during every GitHub Pages deployment.
+        Code statistics are regenerated automatically during local development and every GitHub Pages deployment.
         Build output, dependencies, lockfiles, binaries, and generated analytics
         files are excluded from line counts.
       </p>

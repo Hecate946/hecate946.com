@@ -434,6 +434,10 @@ async function readStats(request, env, url) {
 
   return json(response, 200, request, env, {
     'Cache-Control': 'no-store',
+    // Stats are intentionally public/read-only. A wildcard here makes the Stats
+    // page readable from HTTP, HTTPS, localhost, preview hosts, and local network
+    // development without weakening the stricter POST /api/event origin check.
+    'Access-Control-Allow-Origin': '*',
   });
 }
 
@@ -559,7 +563,43 @@ function allowedOrigins(env) {
 
 function isAllowedOrigin(origin, env) {
   if (!origin) return false;
-  return allowedOrigins(env).includes(origin);
+  if (allowedOrigins(env).includes(origin)) return true;
+
+  let url;
+  try {
+    url = new URL(origin);
+  } catch {
+    return false;
+  }
+
+  // Local Astro can move to another port when 4321 is occupied. Keep local
+  // analytics working on ordinary HTTP without opening event ingestion to
+  // arbitrary remote sites.
+  if (
+    (url.protocol === 'http:' || url.protocol === 'https:') &&
+    (url.hostname === 'localhost' ||
+      url.hostname === '127.0.0.1' ||
+      url.hostname === '[::1]' ||
+      url.hostname === '::1')
+  ) {
+    return true;
+  }
+
+  // Treat http/https as equivalent for explicitly configured site hostnames.
+  // This lets the real site populate analytics even if it is reached over HTTP.
+  return allowedOrigins(env).some((allowedOrigin) => {
+    try {
+      const allowed = new URL(allowedOrigin);
+      return (
+        (url.protocol === 'http:' || url.protocol === 'https:') &&
+        (allowed.protocol === 'http:' || allowed.protocol === 'https:') &&
+        url.hostname === allowed.hostname &&
+        url.port === allowed.port
+      );
+    } catch {
+      return false;
+    }
+  });
 }
 
 function corsHeaders(request, env) {

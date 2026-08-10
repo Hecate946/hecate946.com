@@ -70,10 +70,19 @@ function updateLocalStats(update: (stats: LocalVisitorStats) => void) {
 
 function createId() {
   const cryptoApi = globalThis.crypto;
-  if (typeof cryptoApi.randomUUID === 'function') return cryptoApi.randomUUID();
+  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {
+    return cryptoApi.randomUUID();
+  }
 
-  const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  if (cryptoApi && typeof cryptoApi.getRandomValues === 'function') {
+    const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Analytics IDs are anonymous deduplication tokens, not security credentials.
+  // Keep tracking functional even on older/non-secure HTTP contexts where Web
+  // Crypto may be unavailable.
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
 }
 
 function getStoredId(storage: Storage, key: string) {

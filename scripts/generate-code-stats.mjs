@@ -114,7 +114,7 @@ async function countLines(file) {
   }
 }
 
-const gitFiles = git(['ls-files', '-z']);
+const gitFiles = git(['ls-files', '--cached', '--others', '--exclude-standard', '-z']);
 const discoveredFiles = gitFiles
   ? gitFiles.split('\0').filter(Boolean)
   : await walk(ROOT);
