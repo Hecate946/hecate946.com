@@ -56,6 +56,9 @@
   const LAND_FILL_OPACITY = 0.12;
   const COASTLINE_OPACITY = 0.42;
   const COUNTRY_BORDER_OPACITY = 0.52;
+  const GLOBE_SHELL_BASE_OPACITY = 0.0075;
+  const GLOBE_SHELL_EDGE_OPACITY = 0.082;
+  const GLOBE_SHELL_OUTER_OPACITY = 0.014;
 
   let shell!: HTMLDivElement;
   let canvas!: HTMLCanvasElement;
@@ -302,6 +305,57 @@
     globe.renderOrder = 0;
     globeGroup.add(globe);
 
+    // Keep the transparent-ocean globe, but make the shell feel lighter and
+    // cleaner: almost invisible in the center, then gradually more watery toward
+    // the silhouette, with only a restrained final edge emphasis.
+    const rimGeometry = new THREE.SphereGeometry(GLOBE_RADIUS * 1.006, 192, 128);
+    const rimMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: THREE.FrontSide,
+      uniforms: {
+        rimColor: { value: new THREE.Color(readThemeColors().text) },
+        baseOpacity: { value: GLOBE_SHELL_BASE_OPACITY },
+        edgeOpacity: { value: GLOBE_SHELL_EDGE_OPACITY },
+        outerOpacity: { value: GLOBE_SHELL_OUTER_OPACITY },
+      },
+      vertexShader: `
+        varying vec3 vViewPosition;
+        varying vec3 vViewNormal;
+
+        void main() {
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vViewPosition = -mvPosition.xyz;
+          vViewNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 rimColor;
+        uniform float baseOpacity;
+        uniform float edgeOpacity;
+        uniform float outerOpacity;
+        varying vec3 vViewPosition;
+        varying vec3 vViewNormal;
+
+        void main() {
+          vec3 viewDir = normalize(vViewPosition);
+          float fresnel = 1.0 - max(dot(normalize(vViewNormal), viewDir), 0.0);
+
+          // Keep the middle of the globe almost clear, then let the water shell
+          // build gradually toward the silhouette. A small extra outer term keeps
+          // the rim legible without bringing back hard-looking concentric bands.
+          float shell = smoothstep(0.18, 1.0, pow(clamp(fresnel, 0.0, 1.0), 2.35));
+          float outer = smoothstep(0.82, 1.0, fresnel);
+          float alpha = baseOpacity + shell * edgeOpacity + outer * outerOpacity;
+          gl_FragColor = vec4(rimColor, alpha);
+        }
+      `,
+    });
+    const globeRim = new THREE.Mesh(rimGeometry, rimMaterial);
+    globeRim.renderOrder = -1;
+    globeGroup.add(globeRim);
+
     const markerGeometry = new THREE.CircleGeometry(0.045, 24);
     const markerOutlineGeometry = new THREE.CircleGeometry(0.059, 24);
     let markerMaterial = new THREE.MeshBasicMaterial({
@@ -447,6 +501,7 @@
         const colors = readThemeColors();
         markerMaterial.color.set(colors.accent);
         markerOutlineMaterial.color.set(colors.background);
+        rimMaterial.uniforms.rimColor.value.set(colors.text);
       } catch (textureError) {
         console.error(textureError);
       }
@@ -808,7 +863,9 @@
       markerOutlineMaterial.dispose();
       currentTexture?.dispose();
       globeGeometry.dispose();
+      rimGeometry.dispose();
       globeMaterial.dispose();
+      rimMaterial.dispose();
       renderer.dispose();
     };
   });

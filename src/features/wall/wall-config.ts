@@ -14,35 +14,29 @@ export interface WallDestination {
   painting: WallPainting;
 }
 
-/**
- * Five evenly-spaced destinations form one seamless lap. Using a loop width
- * equal to five frame spacings keeps the gap across the wrap identical to all
- * of the interior gaps. 3840 is also evenly divisible by the 96px brick repeat
- * and 120px floor repeat, so decorative textures cannot jump at the loop seam.
- */
-export const WALL_LOOP_WIDTH = 3_840;
-export const WALL_START_X = 500;
+type WallDestinationDefinition = Omit<WallDestination, 'x' | 'width' | 'height'>;
 
 const FRAME_WIDTH = 340;
 const FRAME_HEIGHT = 420;
-const FRAME_SPACING = 768;
-const FRAME_START_X = 500;
-
-const frameX = (index: number) => FRAME_START_X + FRAME_SPACING * index;
 
 /**
- * Left-to-right wall order and artwork are configured here. Painting assets
- * live in /public/paintings so artwork can be swapped without touching the
- * frame renderer.
+ * Center-to-center frame spacing. Keeping the gap equal to one full-size frame
+ * makes the gallery a little denser without feeling crowded. With five
+ * destinations this also produces a 3360px lap, exactly divisible by both
+ * the 96px brick repeat and 120px floor repeat.
  */
-export const wallDestinations: readonly WallDestination[] = [
+const FRAME_SPACING = 672;
+
+/**
+ * Left-to-right wall order and artwork. The loop width is derived from this
+ * array, so adding/removing a destination automatically resizes one complete
+ * wall lap while preserving perfectly even spacing across the wrap.
+ */
+const destinationDefinitions = [
   {
     id: 'about',
     label: 'About',
     href: '/about/',
-    x: frameX(0),
-    width: FRAME_WIDTH,
-    height: FRAME_HEIGHT,
     painting: {
       src: '/paintings/the-stare.webp',
       name: 'The Stare',
@@ -52,9 +46,6 @@ export const wallDestinations: readonly WallDestination[] = [
     id: 'resume',
     label: 'Resume',
     href: '/resume/',
-    x: frameX(1),
-    width: FRAME_WIDTH,
-    height: FRAME_HEIGHT,
     painting: {
       src: '/paintings/ransom.webp',
       name: 'Ransom',
@@ -64,9 +55,6 @@ export const wallDestinations: readonly WallDestination[] = [
     id: 'projects',
     label: 'Projects',
     href: '/projects/',
-    x: frameX(2),
-    width: FRAME_WIDTH,
-    height: FRAME_HEIGHT,
     painting: {
       src: '/paintings/pastry-chef.webp',
       name: 'Pastry Chef',
@@ -76,9 +64,6 @@ export const wallDestinations: readonly WallDestination[] = [
     id: 'contact',
     label: 'Contact',
     href: '/contact/',
-    x: frameX(3),
-    width: FRAME_WIDTH,
-    height: FRAME_HEIGHT,
     painting: {
       src: '/paintings/rothko.webp',
       name: 'Rothko',
@@ -88,12 +73,24 @@ export const wallDestinations: readonly WallDestination[] = [
     id: 'stats',
     label: 'Stats',
     href: '/stats/',
-    x: frameX(4),
-    width: FRAME_WIDTH,
-    height: FRAME_HEIGHT,
     painting: {
       src: '/paintings/madame-le-peletier.webp',
       name: 'Madame Le Peletier',
     },
   },
-] as const;
+] satisfies readonly WallDestinationDefinition[];
+
+/** One lap is exactly one spacing slot per destination. */
+export const WALL_LOOP_WIDTH = FRAME_SPACING * destinationDefinitions.length;
+
+/** Put the first painting in the exact middle of the first spacing slot. */
+export const WALL_START_X = FRAME_SPACING / 2;
+
+export const wallDestinations: readonly WallDestination[] = destinationDefinitions.map(
+  (destination, index) => ({
+    ...destination,
+    x: WALL_START_X + FRAME_SPACING * index,
+    width: FRAME_WIDTH,
+    height: FRAME_HEIGHT,
+  }),
+);

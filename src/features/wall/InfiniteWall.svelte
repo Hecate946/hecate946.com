@@ -43,13 +43,17 @@
   let programmatic = false;
   let cameraAnimationToken = 0;
   let lastRenderedCameraX = Number.NaN;
+  let lastLoopBase = Number.NaN;
   let renderDevicePixelRatio = 1;
 
   const stageStyle = `--loop-width: ${WALL_LOOP_WIDTH}px;`;
 
-  function wrapCamera() {
-    while (cameraX < 0) cameraX += WALL_LOOP_WIDTH;
-    while (cameraX >= WALL_LOOP_WIDTH) cameraX -= WALL_LOOP_WIDTH;
+  function modulo(value: number, period: number) {
+    return ((value % period) + period) % period;
+  }
+
+  function loopBase(position: number) {
+    return Math.floor(position / WALL_LOOP_WIDTH) * WALL_LOOP_WIDTH;
   }
 
   function markInteracted() {
@@ -67,7 +71,7 @@
   }
 
   function periodicOffset(position: number, period: number) {
-    return -(((position % period) + period) % period);
+    return -modulo(position, period);
   }
 
   function snapToDevicePixel(value: number) {
@@ -77,21 +81,31 @@
   function refreshRenderDevicePixelRatio() {
     renderDevicePixelRatio = Math.max(1, window.devicePixelRatio || 1);
     lastRenderedCameraX = Number.NaN;
+    lastLoopBase = Number.NaN;
     renderCamera(true);
   }
 
   function renderCamera(force = false) {
-    // Keep the physics camera fully precise, but quantize the *rendered* camera
-    // to physical pixels. Slow fractional CSS-pixel transforms make detailed
-    // raster images alternate between sampling phases, which reads as shimmer
-    // or tiny resizing even when their layout box is perfectly stable.
+    // Keep physics fully precise, but quantize only the rendered camera to
+    // physical pixels so detailed paintings do not shimmer between sampling
+    // phases during slow movement.
     const renderedCameraX = snapToDevicePixel(cameraX);
     if (!force && renderedCameraX === lastRenderedCameraX) return;
 
-    // All scene layers use the same snapped camera value. The frame and its
-    // painting therefore remain pixel-locked while the logical camera still
-    // retains smooth, high-resolution velocity/inertia state.
+    // The camera itself never wraps. Instead, the three identical destination
+    // strips are recycled around the current lap. This avoids the large
+    // compositor transform jump that used to happen once per full rotation.
+    const nextLoopBase = loopBase(renderedCameraX);
+    if (force || nextLoopBase !== lastLoopBase) {
+      wallWorld?.style.setProperty('--loop-base', `${nextLoopBase}px`);
+      lastLoopBase = nextLoopBase;
+    }
+
     wallWorld?.style.setProperty('transform', `translate3d(${-renderedCameraX}px, 0, 0)`);
+
+    // Only genuinely repeating texture layers are wrapped at their own small
+    // periods. Static wall/floor lighting stays fixed, so these resets are
+    // visually exact and cannot create a one-frame lighting jump.
     wallTexture?.style.setProperty(
       'transform',
       `translate3d(${periodicOffset(renderedCameraX, WALL_PATTERN_WIDTH)}px, 0, 0)`,
@@ -119,11 +133,10 @@
     cancelCameraAnimation();
     markInteracted();
     cameraX += amount;
-    wrapCamera();
   }
 
   function nearestDelta(targetX: number) {
-    let delta = targetX - cameraX;
+    let delta = targetX - modulo(cameraX, WALL_LOOP_WIDTH);
     if (delta > WALL_LOOP_WIDTH / 2) delta -= WALL_LOOP_WIDTH;
     if (delta < -WALL_LOOP_WIDTH / 2) delta += WALL_LOOP_WIDTH;
     return delta;
@@ -153,7 +166,6 @@
           return;
         }
 
-        wrapCamera();
         programmatic = false;
         velocity = getDriftVelocity();
         resolve();
@@ -258,7 +270,6 @@
     );
     velocity = velocity * 0.58 + sampledVelocity * 0.42;
     updateDriftDirection(velocity);
-    wrapCamera();
   }
 
   function clearPointerDrag(pointerId?: number) {
@@ -322,6 +333,7 @@
     lastFrame = performance.now();
     velocity = getDriftVelocity();
     lastRenderedCameraX = Number.NaN;
+    lastLoopBase = Number.NaN;
     renderCamera(true);
   }
 
@@ -368,7 +380,6 @@
       velocity += (driftVelocity - velocity) * easing;
       if (Math.abs(velocity) < 0.01 && driftVelocity === 0) velocity = 0;
       cameraX += velocity * dt;
-      wrapCamera();
     }
 
     // Render exactly once per display frame. Pointer/wheel events only update
@@ -430,12 +441,13 @@
 >
   <h1 class="visually-hidden">Cyrus Asasi</h1>
 
-  <div
-    bind:this={wallTexture}
-    class="wall-stage__wall-surface"
-    aria-hidden="true"
-    style={`transform: translate3d(${periodicOffset(WALL_START_X, WALL_PATTERN_WIDTH)}px, 0, 0);`}
-  ></div>
+  <div class="wall-stage__wall-surface" aria-hidden="true">
+    <div
+      bind:this={wallTexture}
+      class="wall-stage__brick-pattern"
+      style={`transform: translate3d(${periodicOffset(WALL_START_X, WALL_PATTERN_WIDTH)}px, 0, 0);`}
+    ></div>
+  </div>
 
   <div class="wall-stage__mortar-light" aria-hidden="true"></div>
 
@@ -443,7 +455,7 @@
     bind:this={wallWorld}
     class="wall-world"
     aria-label="Website destinations"
-    style={`transform: translate3d(${-WALL_START_X}px, 0, 0);`}
+    style={`--loop-base: 0px; transform: translate3d(${-WALL_START_X}px, 0, 0);`}
   >
     {#each loopCopies as loopIndex}
       <div
@@ -557,10 +569,8 @@
   .wall-stage__wall-surface {
     position: absolute;
     z-index: 1;
-    top: 0;
-    bottom: 0;
-    left: -96px;
-    width: calc(100% + 192px);
+    inset: 0;
+    overflow: hidden;
     background-color: var(--wall-dark, #010101);
     background-image: linear-gradient(
       180deg,
@@ -569,19 +579,19 @@
       rgb(0 0 0 / 14%) 82%,
       rgb(0 0 0 / 22%)
     );
-    backface-visibility: hidden;
     contain: layout paint style;
     box-shadow:
       inset 0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 0.5%, transparent),
       inset 0 -8rem 12rem rgb(0 0 0 / 32%);
     pointer-events: none;
-    will-change: transform;
   }
 
-  .wall-stage__wall-surface::before {
+  .wall-stage__brick-pattern {
     position: absolute;
-    inset: 0;
+    inset: 0 auto 0 -96px;
+    width: calc(100% + 192px);
     background: color-mix(in srgb, var(--wall-light, #f4f1e9) 22%, transparent);
+    backface-visibility: hidden;
     content: '';
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='48' viewBox='0 0 96 48'%3E%3Cg fill='%23fff'%3E%3Crect x='0' y='0' width='96' height='1'/%3E%3Crect x='0' y='24' width='96' height='1'/%3E%3Crect x='0' y='0' width='1' height='24'/%3E%3Crect x='48' y='0' width='1' height='24'/%3E%3Crect x='24' y='24' width='1' height='24'/%3E%3Crect x='72' y='24' width='1' height='24'/%3E%3C/g%3E%3C/svg%3E");
     -webkit-mask-position: 0 0;
@@ -592,6 +602,7 @@
     mask-repeat: repeat;
     mask-size: 96px 48px;
     pointer-events: none;
+    will-change: transform;
   }
 
   .wall-stage__wall-surface::after {
@@ -638,23 +649,16 @@
     left: -50%;
     width: 200%;
     background-color: var(--wall-dark, #050505);
-    background-image:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--wall-light, #f4f1e9) 8%, transparent),
-        transparent 20% 76%,
-        rgb(0 0 0 / 16%)
-      ),
-      conic-gradient(
-        from 90deg,
-        var(--wall-light, #f4f1e9) 0 25%,
-        var(--wall-dark, #050505) 0 50%,
-        var(--wall-light, #f4f1e9) 0 75%,
-        var(--wall-dark, #050505) 0 100%
-      );
-    background-position: 0 0, 0 0;
-    background-repeat: no-repeat, repeat;
-    background-size: 100% 100%, 120px 120px;
+    background-image: conic-gradient(
+      from 90deg,
+      var(--wall-light, #f4f1e9) 0 25%,
+      var(--wall-dark, #050505) 0 50%,
+      var(--wall-light, #f4f1e9) 0 75%,
+      var(--wall-dark, #050505) 0 100%
+    );
+    background-position: 0 0;
+    background-repeat: repeat;
+    background-size: 120px 120px;
     backface-visibility: hidden;
     box-shadow:
       inset 0 1rem 1.5rem rgb(0 0 0 / 22%),
@@ -668,6 +672,12 @@
     z-index: 1;
     inset: 0;
     background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--wall-light, #f4f1e9) 8%, transparent),
+        transparent 20% 76%,
+        rgb(0 0 0 / 16%)
+      ),
       linear-gradient(108deg, transparent 0 32%, color-mix(in srgb, var(--wall-light, #f4f1e9) 2.4%, transparent) 41%, transparent 50%) 0 0 / 30rem 100% repeat-x,
       linear-gradient(180deg, color-mix(in srgb, var(--wall-light, #f4f1e9) 1.2%, transparent), transparent 45%);
     content: '';
@@ -735,8 +745,9 @@
   .wall-loop {
     position: absolute;
     z-index: 3;
-    inset: 0 auto 0 var(--loop-offset);
+    inset: 0 auto 0 0;
     width: var(--loop-width);
+    transform: translate3d(calc(var(--loop-base, 0px) + var(--loop-offset)), 0, 0);
     pointer-events: none;
   }
 
@@ -753,12 +764,12 @@
   }
 
   .wall-loop__seam--a {
-    left: 340px;
+    left: 10%;
     height: 41%;
   }
 
   .wall-loop__seam--b {
-    left: 3340px;
+    left: 88%;
     height: 55%;
   }
 

@@ -189,27 +189,32 @@ html[data-season='winter'][data-theme='dark'] {
 }
 
 /*
- * Homepage wall palette. These stay deliberately darker than each season's
- * dark-mode page background so the wall remains architectural while still
- * inheriting the active seasonal hue in either color mode.
+ * Homepage wall palette. Dark mode keeps the existing carefully tuned
+ * seasonal wall colors. In light mode, the architectural dark tile becomes a
+ * slightly-darkened version of that season's existing accent while the light
+ * checker/grout color comes directly from the page background.
  */
-html[data-season='spring'] {
+html[data-theme='light'] {
+  --wall-dark: color-mix(in srgb, var(--accent) 88%, black);
+  --wall-light: var(--bg);
+}
+
+html[data-season='spring'][data-theme='dark'] {
   --wall-dark: #0c130f;
   --wall-light: #f8f4ed;
 }
 
-html[data-season='summer'] {
+html[data-season='summer'][data-theme='dark'] {
   --wall-dark: #051417;
   --wall-light: #fff8e8;
 }
 
-html[data-season='autumn'] {
+html[data-season='autumn'][data-theme='dark'] {
   --wall-dark: #140c09;
   --wall-light: #f7ead5;
 }
 
-html[data-season='winter'] {
+html[data-season='winter'][data-theme='dark'] {
   --wall-dark: #0a1016;
   --wall-light: #edf2f6;
 }
-
