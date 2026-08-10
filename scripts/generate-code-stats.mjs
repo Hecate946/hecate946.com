@@ -9,6 +9,7 @@ const OUTPUT = path.join(ROOT, 'public', 'generated', 'code-stats.json');
 const EXCLUDED_PREFIXES = [
   '.git/',
   '.astro/',
+  '.cache/',
   '.wrangler/',
   'dist/',
   'node_modules/',

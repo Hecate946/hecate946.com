@@ -43,10 +43,15 @@
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 12;
   const WORLD_COPIES = [-1, 0, 1] as const;
-  const LIGHT_CORE_CLOSE_PX = 4.4;
-  const LIGHT_CORE_FAR_PX = 6.8;
-  const LIGHT_GLOW_CLOSE_PX = 11.5;
-  const LIGHT_GLOW_FAR_PX = 18;
+  // Marker sizes are expressed in CSS pixels, then converted back into map
+  // units so the SVG camera transform does not make them balloon. World view
+  // deliberately uses larger lights; close zoom resolves them into small points.
+  const LIGHT_CORE_CLOSE_PX = 3.2;
+  const LIGHT_CORE_FAR_PX = 7.6;
+  const LIGHT_GLOW_CLOSE_PX = 8.4;
+  const LIGHT_GLOW_FAR_PX = 21.5;
+  const LIGHT_BLOOM_CLOSE_PX = 13;
+  const LIGHT_BLOOM_FAR_PX = 31;
 
   let mapElement!: SVGSVGElement;
   let projectedLocations: ProjectedVisitorLocation[] = [];
@@ -408,12 +413,27 @@
     previousPointer = null;
   }
 
+  function lightZoomProgress() {
+    // Map zoom is multiplicative, so interpolate marker size logarithmically too.
+    // This makes 1→2→4→8× produce equally natural visual steps instead of most
+    // of the size change being delayed until the extreme end of the zoom range.
+    const raw = clamp(
+      Math.log(zoom / MIN_ZOOM) / Math.log(MAX_ZOOM / MIN_ZOOM),
+      0,
+      1,
+    );
+    return raw * raw * (3 - 2 * raw);
+  }
+
   function lightScale(count: number) {
-    return 1 + Math.min(0.65, Math.log2(Math.max(1, count)) * 0.16);
+    const densityBoost = Math.min(0.62, Math.log2(Math.max(1, count)) * 0.17);
+    // Coalesced lights communicate density most strongly at world scale, then
+    // become less exaggerated as the user zooms in and geography provides context.
+    return 1 + densityBoost * (1 - lightZoomProgress() * 0.32);
   }
 
   function lightDiameter(closePx: number, farPx: number) {
-    const progress = clamp((zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM), 0, 1);
+    const progress = lightZoomProgress();
     return farPx + (closePx - farPx) * progress;
   }
 
@@ -439,16 +459,32 @@
     on:pointercancel={endPointer}
   >
     <defs>
+      <!-- Every layer derives from the active theme accent. The core is only
+           slightly "hotter" toward white; hue and halo remain the accent itself. -->
       <radialGradient id="visitor-light-core" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="var(--accent-strong)" stop-opacity="1" />
-        <stop offset="45%" stop-color="var(--accent-strong)" stop-opacity="1" />
-        <stop offset="72%" stop-color="var(--accent-strong)" stop-opacity="0.8" />
+        <stop
+          offset="0%"
+          style="stop-color:color-mix(in srgb, var(--accent-strong) 72%, white 28%);stop-opacity:1"
+        />
+        <stop
+          offset="34%"
+          style="stop-color:color-mix(in srgb, var(--accent-strong) 88%, white 12%);stop-opacity:1"
+        />
+        <stop offset="66%" stop-color="var(--accent-strong)" stop-opacity="0.94" />
+        <stop offset="86%" stop-color="var(--accent-strong)" stop-opacity="0.52" />
         <stop offset="100%" stop-color="var(--accent-strong)" stop-opacity="0" />
       </radialGradient>
       <radialGradient id="visitor-light-glow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="var(--accent-strong)" stop-opacity="0.30" />
-        <stop offset="32%" stop-color="var(--accent-strong)" stop-opacity="0.19" />
-        <stop offset="62%" stop-color="var(--accent-strong)" stop-opacity="0.07" />
+        <stop offset="0%" stop-color="var(--accent-strong)" stop-opacity="0.36" />
+        <stop offset="28%" stop-color="var(--accent-strong)" stop-opacity="0.24" />
+        <stop offset="58%" stop-color="var(--accent-strong)" stop-opacity="0.10" />
+        <stop offset="82%" stop-color="var(--accent-strong)" stop-opacity="0.035" />
+        <stop offset="100%" stop-color="var(--accent-strong)" stop-opacity="0" />
+      </radialGradient>
+      <radialGradient id="visitor-light-bloom" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="var(--accent-strong)" stop-opacity="0.12" />
+        <stop offset="36%" stop-color="var(--accent-strong)" stop-opacity="0.07" />
+        <stop offset="70%" stop-color="var(--accent-strong)" stop-opacity="0.025" />
         <stop offset="100%" stop-color="var(--accent-strong)" stop-opacity="0" />
       </radialGradient>
     </defs>
@@ -464,6 +500,12 @@
 
           {#each projectedLocations as location}
             <g class="map-light">
+              <circle
+                class="map-light-bloom"
+                cx={location.x}
+                cy={location.y}
+                r={lightRadius(LIGHT_BLOOM_CLOSE_PX, LIGHT_BLOOM_FAR_PX, location.count)}
+              />
               <circle
                 class="map-light-glow"
                 cx={location.x}

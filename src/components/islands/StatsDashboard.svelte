@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import VisitorMap from '@/components/islands/VisitorMap.svelte';
   import VisitorGlobeClearV2 from '@/components/islands/VisitorGlobeClearV2.svelte';
+  import { resolveStatsApiBase } from '@/lib/stats-api';
 
   export let apiBase = '';
   export let codeStatsUrl = '/generated/code-stats.json';
@@ -102,6 +103,7 @@
   let activeTab: StatsTab = 'website';
   let yourStats: YourStats | null = null;
   let refreshing = false;
+  let liveStatsLoading = false;
   type MapView = '2d' | '3d';
   let mapView: MapView = '2d';
   const devMode = import.meta.env.DEV;
@@ -194,7 +196,7 @@
   async function readJson<T>(url: string): Promise<T> {
     const response = await fetch(url, {
       headers: { Accept: 'application/json' },
-      cache: 'no-store',
+      cache: url.includes('/api/stats') ? 'default' : 'no-store',
     });
 
     if (!response.ok) {
@@ -204,21 +206,47 @@
     return response.json() as Promise<T>;
   }
 
+  function locationSignature(locations: VisitorLocation[] = []) {
+    return locations
+      .map((location) =>
+        [
+          location.latitude,
+          location.longitude,
+          location.pointIndex ?? 0,
+          location.pointCount ?? 1,
+        ].join(':'),
+      )
+      .sort()
+      .join('|');
+  }
+
   async function loadLiveStats() {
-    const base = apiBase.trim().replace(/\/$/, '');
+    const base = resolveStatsApiBase(apiBase);
 
-    if (!base) {
-      liveError = 'Live analytics are not configured yet.';
-      return;
-    }
+    if (!base || liveStatsLoading) return;
 
+    liveStatsLoading = true;
     try {
-      liveStats = await readJson<LiveStats>(`${base}/api/stats?days=30`);
+      const next = await readJson<LiveStats>(`${base}/api/stats?days=30`);
+
+      // Preserve the locations array identity when the points did not change.
+      // This prevents the 2D map / 3D globe from rebuilding every time only a
+      // counter or timestamp changes.
+      if (
+        liveStats &&
+        locationSignature(liveStats.locations) === locationSignature(next.locations)
+      ) {
+        next.locations = liveStats.locations;
+      }
+
+      liveStats = next;
       liveError = '';
     } catch (error) {
       liveError = `Live analytics are temporarily unavailable${
         error instanceof Error ? `: ${error.message}` : '.'
       }`;
+    } finally {
+      liveStatsLoading = false;
     }
   }
 
@@ -270,7 +298,8 @@
     if (requestedTab === 'code' || requestedTab === 'you') activeTab = requestedTab;
     loadYourStats();
     window.addEventListener('hecate:local-stats-updated', loadYourStats);
-    void refresh();
+    void loadLiveStats();
+    if (activeTab === 'code') void loadCodeStats();
 
     // Warm the small globe texture while the default 2D map is being viewed.
     // This makes the first 2D → 3D switch feel immediate without loading the
@@ -282,7 +311,11 @@
       globePrewarmTimer = window.setTimeout(prewarmGlobePreview, 250);
     }
 
-    const interval = window.setInterval(() => void loadLiveStats(), 15_000);
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && activeTab === 'website') {
+        void loadLiveStats();
+      }
+    }, 60_000);
     const codeStatsInterval = devMode
       ? window.setInterval(() => {
           if (activeTab === 'code') void loadCodeStats();

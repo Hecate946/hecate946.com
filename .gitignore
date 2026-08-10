@@ -20,3 +20,6 @@ __pycache__/
 # Blender fluid caches and temporary animation frame sequences
 blender/rooms/*/cache/
 blender/rooms/*/water-frames/
+
+# Local development analytics cache
+.cache/

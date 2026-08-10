@@ -3,12 +3,12 @@ import StatsDashboard from '@/components/islands/StatsDashboard.svelte';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import codeStats from '../../public/generated/code-stats.json';
 import { withBase } from '@/lib/paths';
+import { LOCAL_STATS_API_BASE, STATS_API_BASE } from '@/lib/stats-api';
 import '@/styles/stats.css';
 
-const statsApiBase = String(import.meta.env.PUBLIC_STATS_API_URL ?? '').replace(
-  /\/$/,
-  '',
-);
+const statsApiBase = STATS_API_BASE;
+const localStatsApiBase = LOCAL_STATS_API_BASE;
+const devMode = import.meta.env.DEV;
 const codeStatsUrl = withBase('/generated/code-stats.json');
 
 type LanguageStat = {
@@ -120,7 +120,7 @@ const generatedLabel = Number.isNaN(generatedAt.valueOf())
                 <td>{language.name}</td>
                 <td>{language.files}</td>
                 <td>{language.lines}</td>
-                <td>{language.percentage.toFixed(1)}%</td>
+                <td>{language.percentage}%</td>
               </tr>
             )) : (
               <tr><td colspan="4">No generated language statistics yet.</td></tr>
@@ -149,7 +149,7 @@ const generatedLabel = Number.isNaN(generatedAt.valueOf())
   </section>
 </BaseLayout>
 
-<script is:inline define:vars={{ statsApiBase }}>
+<script is:inline define:vars={{ statsApiBase, localStatsApiBase, devMode }}>
   (() => {
     const numberFormatter = new Intl.NumberFormat('en-US');
     const dateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -192,13 +192,16 @@ const generatedLabel = Number.isNaN(generatedAt.valueOf())
     };
 
     const loadLive = async () => {
-      if (!statsApiBase) return;
+      const localHostname = ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(window.location.hostname)
+        || window.location.hostname.endsWith('.localhost');
+      const apiBase = devMode || localHostname ? localStatsApiBase : statsApiBase;
+      if (!apiBase) return;
       const status = document.querySelector('[data-html-live-status]');
 
       try {
-        const response = await fetch(`${statsApiBase}/api/stats?days=30`, {
+        const response = await fetch(`${apiBase}/api/stats?days=30`, {
           headers: { Accept: 'application/json' },
-          cache: 'no-store',
+          cache: 'default',
         });
         if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
         const stats = await response.json();
@@ -244,6 +247,11 @@ const generatedLabel = Number.isNaN(generatedAt.valueOf())
     };
 
     loadLocal();
-    void loadLive();
+
+    // The HTML-only fallback exists for the site's no-CSS/dev presentation.
+    // Do not make a duplicate Worker request while the Svelte dashboard is the
+    // active UI.
+    const htmlOnly = document.querySelector('[data-html-only]');
+    if (htmlOnly && !htmlOnly.hasAttribute('hidden')) void loadLive();
   })();
 </script>

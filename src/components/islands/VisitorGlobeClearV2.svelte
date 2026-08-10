@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import * as THREE from 'three';
+  import { resolveStatsApiBase } from '@/lib/stats-api';
 
   export let apiBase = '';
   export let embedded = false;
@@ -460,6 +461,7 @@
     let inertiaAngle = 0;
     let disposed = false;
     let currentTexture: THREE.Texture | null = null;
+    let lastStandaloneLocationSignature = '';
     let hasUserAdjustedView = false;
     let defaultFocus: GlobeFocus = {
       quaternion: globeGroup.quaternion.clone(),
@@ -689,8 +691,17 @@
       }
     }
 
+    function standaloneLocationSignature(values: VisitorLocation[]) {
+      return values
+        .map((location) =>
+          `${location.latitude}:${location.longitude}:${location.pointIndex ?? 0}:${location.pointCount ?? 1}`,
+        )
+        .sort()
+        .join('|');
+    }
+
     async function loadStats() {
-      const base = apiBase.trim().replace(/\/$/, '');
+      const base = resolveStatsApiBase(apiBase);
       if (!base) {
         loading = false;
         error = 'Live analytics are not configured.';
@@ -700,7 +711,7 @@
       try {
         const response = await fetch(`${base}/api/stats?days=30`, {
           headers: { Accept: 'application/json' },
-          cache: 'no-store',
+          cache: 'default',
         });
         if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
 
@@ -708,7 +719,12 @@
         if (disposed) return;
         visitorCount = data.summary.estimatedVisitors ?? data.locations.length;
         updatedAt = data.summary.updatedAt;
-        setMarkers(data.locations ?? []);
+        const nextLocations = data.locations ?? [];
+        const nextSignature = standaloneLocationSignature(nextLocations);
+        if (nextSignature !== lastStandaloneLocationSignature) {
+          lastStandaloneLocationSignature = nextSignature;
+          setMarkers(nextLocations);
+        }
         error = '';
       } catch (statsError) {
         if (disposed) return;
@@ -1025,7 +1041,9 @@
       lastExternalLocations = locations;
     } else {
       void loadStats();
-      statsInterval = window.setInterval(() => void loadStats(), 15_000);
+      statsInterval = window.setInterval(() => {
+        if (document.visibilityState === 'visible') void loadStats();
+      }, 60_000);
     }
 
     let frameId = 0;

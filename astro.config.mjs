@@ -3,6 +3,7 @@ import path from 'node:path';
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import svelte from '@astrojs/svelte';
+import { localStatsDevPlugin } from './scripts/local-stats-dev.mjs';
 
 function codeStatsDevPlugin() {
   const root = process.cwd();
@@ -46,6 +47,7 @@ function codeStatsDevPlugin() {
       relative.startsWith('node_modules/') ||
       relative.startsWith('.git/') ||
       relative.startsWith('.astro/') ||
+      relative.startsWith('.cache/') ||
       relative.startsWith('dist/') ||
       relative.startsWith('public/generated/')
     );
@@ -74,7 +76,7 @@ export default defineConfig({
     }),
   ],
   vite: {
-    plugins: [codeStatsDevPlugin()],
+    plugins: [codeStatsDevPlugin(), localStatsDevPlugin()],
   },
   devToolbar: {
     enabled: false,

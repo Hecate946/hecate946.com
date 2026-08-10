@@ -17,8 +17,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      PUBLIC_STATS_API_URL: ${{ vars.PUBLIC_STATS_API_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

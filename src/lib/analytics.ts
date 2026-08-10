@@ -1,3 +1,5 @@
+import { resolveStatsApiBase } from '@/lib/stats-api';
+
 type AnalyticsProperties = Record<
   string,
   string | number | boolean | null | undefined
@@ -8,10 +10,6 @@ type AnalyticsWindow = Window & {
   __hecateAnalyticsCleanup?: () => void;
 };
 
-const API_BASE = String(import.meta.env.PUBLIC_STATS_API_URL ?? '').replace(
-  /\/$/,
-  '',
-);
 const VISITOR_KEY = 'hecate946:visitor-id';
 const SESSION_KEY = 'hecate946:session-id';
 const LOCAL_STATS_KEY = 'hecate946:your-stats';
@@ -99,7 +97,7 @@ function getStoredId(storage: Storage, key: string) {
 }
 
 function analyticsDisabled() {
-  if (!API_BASE || typeof window === 'undefined') return true;
+  if (typeof window === 'undefined') return true;
   const legacyDoNotTrack = (window as Window & { doNotTrack?: string })
     .doNotTrack;
   return navigator.doNotTrack === '1' || legacyDoNotTrack === '1';
@@ -123,7 +121,7 @@ export function trackEvent(
     sessionId: getStoredId(window.sessionStorage, SESSION_KEY),
     properties,
   });
-  const endpoint = `${API_BASE}/api/event`;
+  const endpoint = `${resolveStatsApiBase()}/api/event`;
 
   if ('sendBeacon' in navigator) {
     const blob = new Blob([payload], { type: 'text/plain;charset=UTF-8' });
@@ -185,7 +183,7 @@ export function initAnalytics() {
     if (document.visibilityState !== 'visible') return;
     if (sendImmediately) sendHeartbeat();
 
-    heartbeatTimer = window.setInterval(sendHeartbeat, 45_000);
+    heartbeatTimer = window.setInterval(sendHeartbeat, 120_000);
   };
 
   const saveActiveTime = () => {

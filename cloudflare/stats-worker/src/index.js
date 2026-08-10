@@ -16,19 +16,48 @@ const EVENT_NAMES = new Set([
 const BOT_PATTERN =
   /bot|crawler|spider|crawling|headless|preview|facebookexternalhit|slackbot|discordbot|whatsapp|telegrambot|uptimerobot/i;
 
+const LEGACY_LOCAL_MATCH = 'local|%';
+const PUBLIC_SITE_HOSTS = new Set(['hecate946.com', 'www.hecate946.com']);
+
 export default {
   async scheduled(_controller, env, context) {
-    env = withDatabaseBinding(env);
-
     context.waitUntil(
-      env.hecate_stats.batch([
-        env.hecate_stats.prepare(
+      env.DB.batch([
+        // Remove any localhost rows written by the older shared-Worker design.
+        env.DB.prepare(
+          `DELETE FROM visitor_locations WHERE visitor_hash LIKE ?`,
+        ).bind(LEGACY_LOCAL_MATCH),
+        env.DB.prepare(
+          `DELETE FROM location_stats WHERE location_key LIKE ?`,
+        ).bind(LEGACY_LOCAL_MATCH),
+        env.DB.prepare(
+          `DELETE FROM daily_visitors WHERE day LIKE ?`,
+        ).bind(LEGACY_LOCAL_MATCH),
+        env.DB.prepare(
+          `DELETE FROM daily_sessions WHERE day LIKE ?`,
+        ).bind(LEGACY_LOCAL_MATCH),
+        env.DB.prepare(
+          `DELETE FROM daily_stats WHERE day LIKE ?`,
+        ).bind(LEGACY_LOCAL_MATCH),
+        env.DB.prepare(
+          `DELETE FROM page_stats WHERE path LIKE ?`,
+        ).bind(LEGACY_LOCAL_MATCH),
+        env.DB.prepare(
+          `DELETE FROM event_stats WHERE event_name LIKE ?`,
+        ).bind(LEGACY_LOCAL_MATCH),
+        env.DB.prepare(
+          `DELETE FROM sessions WHERE visitor_hash LIKE ?`,
+        ).bind(LEGACY_LOCAL_MATCH),
+        env.DB.prepare(
+          `DELETE FROM visitors WHERE visitor_hash LIKE ?`,
+        ).bind(LEGACY_LOCAL_MATCH),
+        env.DB.prepare(
           `DELETE FROM daily_visitors WHERE day < date('now', '-2 day')`,
         ),
-        env.hecate_stats.prepare(
+        env.DB.prepare(
           `DELETE FROM daily_sessions WHERE day < date('now', '-2 day')`,
         ),
-        env.hecate_stats.prepare(
+        env.DB.prepare(
           `DELETE FROM sessions WHERE last_seen < datetime('now', '-30 day')`,
         ),
       ]),
@@ -36,29 +65,14 @@ export default {
   },
 
   async fetch(request, env) {
-    env = withDatabaseBinding(env);
-
     const url = new URL(request.url);
+    const publicRead = url.pathname === '/api/stats';
 
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
-        headers: corsHeaders(request, env),
+        headers: corsHeaders(request, publicRead),
       });
-    }
-
-    if (url.pathname === '/health' && request.method === 'GET') {
-      return json(
-        {
-          ok: true,
-          service: 'hecate-stats',
-          storage: 'Cloudflare D1',
-          time: new Date().toISOString(),
-        },
-        200,
-        request,
-        env,
-      );
     }
 
     if (url.pathname === '/api/event' && request.method === 'POST') {
@@ -66,48 +80,37 @@ export default {
     }
 
     if (url.pathname === '/api/stats' && request.method === 'GET') {
+      if (!isAllowedReadOrigin(request.headers.get('Origin'))) {
+        return json({ error: 'Origin not allowed' }, 403, request);
+      }
       return readStats(request, env, url);
     }
 
-    return json({ error: 'Not found' }, 404, request, env);
+    return json({ error: 'Not found' }, 404, request);
   },
 };
 
-function withDatabaseBinding(env) {
-  const database = env.hecate_stats ?? env.DB;
-
-  if (!database) {
-    throw new Error(
-      'D1 binding is missing. Set the Wrangler D1 binding to "hecate_stats" or "DB".',
-    );
-  }
-
-  const runtimeEnv = Object.create(env);
-  runtimeEnv.hecate_stats = database;
-  return runtimeEnv;
-}
-
 async function ingestEvent(request, env) {
   const origin = request.headers.get('Origin');
-  if (!isAllowedOrigin(origin, env)) {
-    return json({ error: 'Origin not allowed' }, 403, request, env);
+  if (!isAllowedWriteOrigin(origin)) {
+    return json({ error: 'Origin not allowed' }, 403, request);
   }
 
   const contentLength = Number(request.headers.get('Content-Length') ?? 0);
   if (contentLength > 4096) {
-    return json({ error: 'Payload too large' }, 413, request, env);
+    return json({ error: 'Payload too large' }, 413, request);
   }
 
   const userAgent = request.headers.get('User-Agent') ?? '';
   if (!userAgent || BOT_PATTERN.test(userAgent)) {
-    return json({ accepted: false, reason: 'bot' }, 202, request, env);
+    return json({ accepted: false, reason: 'bot' }, 202, request);
   }
 
   let body;
   try {
     body = JSON.parse(await request.text());
   } catch {
-    return json({ error: 'Invalid JSON' }, 400, request, env);
+    return json({ error: 'Invalid JSON' }, 400, request);
   }
 
   const eventName = sanitizeEventName(body?.name);
@@ -116,68 +119,76 @@ async function ingestEvent(request, env) {
   const sessionId = sanitizeId(body?.sessionId);
 
   if (!eventName || !visitorId || !sessionId) {
-    return json({ error: 'Invalid event' }, 400, request, env);
+    return json({ error: 'Invalid event' }, 400, request);
+  }
+
+  if (eventName === 'page_view' && !path) {
+    return json({ error: 'Page view requires a valid path' }, 400, request);
   }
 
   const now = new Date();
   const timestamp = now.toISOString();
   const day = timestamp.slice(0, 10);
+  const dayKey = day;
+  const eventKey = eventName;
+  const pathKey = path;
+
   const visitorHash = await hashIdentifier(`visitor:${visitorId}`, env);
   const sessionHash = await hashIdentifier(`session:${sessionId}`, env);
 
-  if (eventName === 'page_view' && !path) {
-    return json({ error: 'Page view requires a valid path' }, 400, request, env);
-  }
-
   if (eventName === 'heartbeat') {
-    await env.hecate_stats.batch([
-      env.hecate_stats.prepare(
+    await env.DB.batch([
+      env.DB.prepare(
         `UPDATE visitors
          SET last_seen = ?
          WHERE visitor_hash = ?`,
       ).bind(timestamp, visitorHash),
-      env.hecate_stats.prepare(
+      env.DB.prepare(
         `UPDATE sessions
          SET last_seen = ?
          WHERE session_hash = ? AND visitor_hash = ?`,
       ).bind(timestamp, sessionHash, visitorHash),
     ]);
 
-    return json({ accepted: true }, 202, request, env);
+    return json({ accepted: true }, 202, request);
   }
 
-  await upsertEventCount(env.hecate_stats, eventName, timestamp);
+  await upsertEventCount(env.DB, eventKey, timestamp);
 
   if (eventName !== 'page_view') {
-    await env.hecate_stats.batch([
-      env.hecate_stats.prepare(
+    const statements = [
+      env.DB.prepare(
         `UPDATE visitors
          SET last_seen = ?
          WHERE visitor_hash = ?`,
       ).bind(timestamp, visitorHash),
-      env.hecate_stats.prepare(
+      env.DB.prepare(
         `UPDATE sessions
          SET last_seen = ?
          WHERE session_hash = ? AND visitor_hash = ?`,
       ).bind(timestamp, sessionHash, visitorHash),
-      env.hecate_stats.prepare(
+      env.DB.prepare(
+        `INSERT INTO daily_stats (day, events)
+         VALUES (?, 1)
+         ON CONFLICT(day) DO UPDATE SET events = events + 1`,
+      ).bind(dayKey),
+    ];
+
+    statements.push(
+      env.DB.prepare(
         `UPDATE totals
          SET events = events + 1,
              first_event_at = COALESCE(first_event_at, ?),
              updated_at = ?
          WHERE id = 1`,
       ).bind(timestamp, timestamp),
-      env.hecate_stats.prepare(
-        `INSERT INTO daily_stats (day, events)
-         VALUES (?, 1)
-         ON CONFLICT(day) DO UPDATE SET events = events + 1`,
-      ).bind(day),
-    ]);
+    );
 
-    return json({ accepted: true }, 202, request, env);
+    await env.DB.batch(statements);
+    return json({ accepted: true }, 202, request);
   }
 
-  const newVisitorResult = await env.hecate_stats.prepare(
+  const newVisitorResult = await env.DB.prepare(
     `INSERT OR IGNORE INTO visitors (visitor_hash, first_seen, last_seen)
      VALUES (?, ?, ?)`,
   )
@@ -186,14 +197,14 @@ async function ingestEvent(request, env) {
   const isNewVisitor = changedRows(newVisitorResult) > 0;
 
   if (!isNewVisitor) {
-    await env.hecate_stats.prepare(
+    await env.DB.prepare(
       `UPDATE visitors SET last_seen = ? WHERE visitor_hash = ?`,
     )
       .bind(timestamp, visitorHash)
       .run();
   }
 
-  const newSessionResult = await env.hecate_stats.prepare(
+  const newSessionResult = await env.DB.prepare(
     `INSERT OR IGNORE INTO sessions
       (session_hash, visitor_hash, first_seen, last_seen, page_views)
      VALUES (?, ?, ?, ?, 1)`,
@@ -203,7 +214,7 @@ async function ingestEvent(request, env) {
   const isNewSession = changedRows(newSessionResult) > 0;
 
   if (!isNewSession) {
-    await env.hecate_stats.prepare(
+    await env.DB.prepare(
       `UPDATE sessions
        SET last_seen = ?, page_views = page_views + 1
        WHERE session_hash = ?`,
@@ -212,22 +223,42 @@ async function ingestEvent(request, env) {
       .run();
   }
 
-  const dailyVisitorResult = await env.hecate_stats.prepare(
+  const dailyVisitorResult = await env.DB.prepare(
     `INSERT OR IGNORE INTO daily_visitors (day, visitor_hash) VALUES (?, ?)`,
   )
-    .bind(day, visitorHash)
+    .bind(dayKey, visitorHash)
     .run();
   const isNewDailyVisitor = changedRows(dailyVisitorResult) > 0;
 
-  const dailySessionResult = await env.hecate_stats.prepare(
+  const dailySessionResult = await env.DB.prepare(
     `INSERT OR IGNORE INTO daily_sessions (day, session_hash) VALUES (?, ?)`,
   )
-    .bind(day, sessionHash)
+    .bind(dayKey, sessionHash)
     .run();
   const isNewDailySession = changedRows(dailySessionResult) > 0;
 
-  await env.hecate_stats.batch([
-    env.hecate_stats.prepare(
+  const pageViewStatements = [
+    env.DB.prepare(
+      `INSERT INTO daily_stats
+        (day, page_views, events, estimated_visitors, sessions)
+       VALUES (?, 1, 1, ?, ?)
+       ON CONFLICT(day) DO UPDATE SET
+         page_views = page_views + 1,
+         events = events + 1,
+         estimated_visitors = estimated_visitors + excluded.estimated_visitors,
+         sessions = sessions + excluded.sessions`,
+    ).bind(dayKey, isNewDailyVisitor ? 1 : 0, isNewDailySession ? 1 : 0),
+    env.DB.prepare(
+      `INSERT INTO page_stats (path, page_views, updated_at)
+       VALUES (?, 1, ?)
+       ON CONFLICT(path) DO UPDATE SET
+         page_views = page_views + 1,
+         updated_at = excluded.updated_at`,
+    ).bind(pathKey, timestamp),
+  ];
+
+  pageViewStatements.unshift(
+    env.DB.prepare(
       `UPDATE totals
        SET page_views = page_views + 1,
            events = events + 1,
@@ -242,44 +273,29 @@ async function ingestEvent(request, env) {
       timestamp,
       timestamp,
     ),
-    env.hecate_stats.prepare(
-      `INSERT INTO daily_stats
-        (day, page_views, events, estimated_visitors, sessions)
-       VALUES (?, 1, 1, ?, ?)
-       ON CONFLICT(day) DO UPDATE SET
-         page_views = page_views + 1,
-         events = events + 1,
-         estimated_visitors = estimated_visitors + excluded.estimated_visitors,
-         sessions = sessions + excluded.sessions`,
-    ).bind(day, isNewDailyVisitor ? 1 : 0, isNewDailySession ? 1 : 0),
-    env.hecate_stats.prepare(
-      `INSERT INTO page_stats (path, page_views, updated_at)
-       VALUES (?, 1, ?)
-       ON CONFLICT(path) DO UPDATE SET
-         page_views = page_views + 1,
-         updated_at = excluded.updated_at`,
-    ).bind(path, timestamp),
-  ]);
+  );
+
+  await env.DB.batch(pageViewStatements);
 
   const location = readApproximateLocation(request);
   if (location) {
-    // Keep one current public location mapping per anonymous visitor. This also
-    // removes an older one-decimal mapping after the visitor returns.
-    await env.hecate_stats.prepare(
+    const locationKey = location.key;
+
+    await env.DB.prepare(
       `DELETE FROM visitor_locations
        WHERE visitor_hash = ? AND location_key <> ?`,
     )
-      .bind(visitorHash, location.key)
+      .bind(visitorHash, locationKey)
       .run();
 
-    const newVisitorLocationResult = await env.hecate_stats.prepare(
+    const newVisitorLocationResult = await env.DB.prepare(
       `INSERT OR IGNORE INTO visitor_locations (visitor_hash, location_key)
        VALUES (?, ?)`,
     )
-      .bind(visitorHash, location.key)
+      .bind(visitorHash, locationKey)
       .run();
 
-    await env.hecate_stats.prepare(
+    await env.DB.prepare(
       `INSERT INTO location_stats (
         location_key, city, region, country, country_code,
         latitude, longitude, page_views, estimated_visitors, updated_at
@@ -290,7 +306,7 @@ async function ingestEvent(request, env) {
         updated_at = excluded.updated_at`,
     )
       .bind(
-        location.key,
+        locationKey,
         location.city,
         location.region,
         location.country,
@@ -303,15 +319,84 @@ async function ingestEvent(request, env) {
       .run();
   }
 
-  return json({ accepted: true }, 202, request, env);
+  return json({ accepted: true }, 202, request);
 }
 
 async function readStats(request, env, url) {
   const days = clampInteger(url.searchParams.get('days'), 7, 365, 30);
-  // Each anonymous visitor-location row is public as its own dot.
-  // Raw IP addresses are never stored; Cloudflare's approximate coordinates
-  // are retained to four decimal places.
-  const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+  const totalsQuery = env.DB.prepare('SELECT * FROM totals WHERE id = 1');
+  const activeQuery = env.DB.prepare(
+    `SELECT COUNT(DISTINCT visitor_hash) AS count
+     FROM sessions
+     WHERE visitor_hash NOT LIKE ? AND last_seen >= ?`,
+  ).bind(LEGACY_LOCAL_MATCH, cutoff);
+  const dailyQuery = env.DB.prepare(
+    `SELECT day, page_views, events, estimated_visitors
+     FROM daily_stats
+     WHERE day NOT LIKE ? AND day >= date('now', ?)
+     ORDER BY day ASC`,
+  ).bind(LEGACY_LOCAL_MATCH, `-${days - 1} day`);
+  const pageQuery = env.DB.prepare(
+    `SELECT path AS label, page_views AS value
+     FROM page_stats
+     WHERE path NOT LIKE ?
+     ORDER BY page_views DESC, path ASC
+     LIMIT 10`,
+  ).bind(LEGACY_LOCAL_MATCH);
+  const interactionQuery = env.DB.prepare(
+    `SELECT event_name AS label, total AS value
+     FROM event_stats
+     WHERE event_name NOT LIKE ? AND event_name <> 'page_view'
+     ORDER BY total DESC, event_name ASC
+     LIMIT 10`,
+  ).bind(LEGACY_LOCAL_MATCH);
+  const locationQuery = env.DB.prepare(
+    `WITH point_rows AS (
+       SELECT
+         locations.location_key,
+         locations.city,
+         locations.region,
+         locations.country,
+         locations.country_code,
+         locations.latitude,
+         locations.longitude,
+         locations.updated_at,
+         ROW_NUMBER() OVER (
+           PARTITION BY locations.location_key
+           ORDER BY visitor_locations.visitor_hash
+         ) - 1 AS point_index,
+         COUNT(*) OVER (
+           PARTITION BY locations.location_key
+         ) AS point_count
+       FROM visitor_locations
+       INNER JOIN location_stats AS locations
+         ON locations.location_key = visitor_locations.location_key
+       WHERE visitor_locations.visitor_hash NOT LIKE ?
+     )
+     SELECT
+       city,
+       region,
+       country,
+       country_code,
+       latitude,
+       longitude,
+       point_index,
+       point_count
+     FROM point_rows
+     WHERE point_count >= 1
+     ORDER BY updated_at DESC, location_key ASC, point_index ASC
+     LIMIT 2000`,
+  ).bind(LEGACY_LOCAL_MATCH);
+  const countryQuery = env.DB.prepare(
+    `SELECT COUNT(DISTINCT locations.country_code) AS count
+     FROM visitor_locations
+     INNER JOIN location_stats AS locations
+       ON locations.location_key = visitor_locations.location_key
+     WHERE visitor_locations.visitor_hash NOT LIKE ?
+       AND locations.country_code IS NOT NULL`,
+  ).bind(LEGACY_LOCAL_MATCH);
 
   const [
     totals,
@@ -322,77 +407,13 @@ async function readStats(request, env, url) {
     locationResult,
     countryResult,
   ] = await Promise.all([
-    env.hecate_stats.prepare('SELECT * FROM totals WHERE id = 1').first(),
-    env.hecate_stats.prepare(
-      `SELECT COUNT(DISTINCT visitor_hash) AS count
-       FROM sessions WHERE last_seen >= ?`,
-    )
-      .bind(cutoff)
-      .first(),
-    env.hecate_stats.prepare(
-      `SELECT day, page_views, events, estimated_visitors
-       FROM daily_stats
-       WHERE day >= date('now', ?)
-       ORDER BY day ASC`,
-    )
-      .bind(`-${days - 1} day`)
-      .all(),
-    env.hecate_stats.prepare(
-      `SELECT path AS label, page_views AS value
-       FROM page_stats
-       ORDER BY page_views DESC, path ASC
-       LIMIT 10`,
-    ).all(),
-    env.hecate_stats.prepare(
-      `SELECT event_name AS label, total AS value
-       FROM event_stats
-       WHERE event_name <> 'page_view'
-       ORDER BY total DESC, event_name ASC
-       LIMIT 10`,
-    ).all(),
-    env.hecate_stats.prepare(
-      `WITH point_rows AS (
-         SELECT
-           locations.location_key,
-           locations.city,
-           locations.region,
-           locations.country,
-           locations.country_code,
-           locations.latitude,
-           locations.longitude,
-           locations.updated_at,
-           ROW_NUMBER() OVER (
-             PARTITION BY locations.location_key
-             ORDER BY visitor_locations.visitor_hash
-           ) - 1 AS point_index,
-           COUNT(*) OVER (
-             PARTITION BY locations.location_key
-           ) AS point_count
-         FROM visitor_locations
-         INNER JOIN location_stats AS locations
-           ON locations.location_key = visitor_locations.location_key
-       )
-       SELECT
-         city,
-         region,
-         country,
-         country_code,
-         latitude,
-         longitude,
-         point_index,
-         point_count
-       FROM point_rows
-       WHERE point_count >= 1
-       ORDER BY updated_at DESC, location_key ASC, point_index ASC
-       LIMIT 2000`,
-    ).all(),
-    env.hecate_stats.prepare(
-      `SELECT COUNT(DISTINCT locations.country_code) AS count
-       FROM visitor_locations
-       INNER JOIN location_stats AS locations
-         ON locations.location_key = visitor_locations.location_key
-       WHERE locations.country_code IS NOT NULL`,
-    ).first(),
+    totalsQuery.first(),
+    activeQuery.first(),
+    dailyQuery.all(),
+    pageQuery.all(),
+    interactionQuery.all(),
+    locationQuery.all(),
+    countryQuery.first(),
   ]);
 
   const locations = locationResult.results.map((row) => ({
@@ -432,12 +453,11 @@ async function readStats(request, env, url) {
     locations,
   };
 
-  return json(response, 200, request, env, {
-    'Cache-Control': 'no-store',
-    // Stats are intentionally public/read-only. A wildcard here makes the Stats
-    // page readable from HTTP, HTTPS, localhost, preview hosts, and local network
-    // development without weakening the stricter POST /api/event origin check.
-    'Access-Control-Allow-Origin': '*',
+  const origin = request.headers.get('Origin');
+  return json(response, 200, request, {
+    'Cache-Control': 'public, max-age=20, stale-while-revalidate=40',
+    'Access-Control-Allow-Origin': origin || '*',
+    ...(origin ? { Vary: 'Origin' } : {}),
   });
 }
 
@@ -510,15 +530,69 @@ function readApproximateLocation(request) {
 }
 
 async function hashIdentifier(value, env) {
-  if (!env.VISITOR_SALT) {
-    throw new Error('VISITOR_SALT is not configured.');
-  }
-
-  const bytes = new TextEncoder().encode(`${env.VISITOR_SALT}:${value}`);
+  const salt = env.VISITOR_SALT || 'hecate946-stats-v1';
+  const bytes = new TextEncoder().encode(`${salt}:${value}`);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   return Array.from(new Uint8Array(digest), (byte) =>
     byte.toString(16).padStart(2, '0'),
   ).join('');
+}
+
+function isAllowedReadOrigin(origin) {
+  if (!origin) return true;
+  if (!isHttpOrigin(origin)) return false;
+
+  const url = new URL(origin);
+  return PUBLIC_SITE_HOSTS.has(url.hostname);
+}
+
+function isAllowedWriteOrigin(origin) {
+  if (!isHttpOrigin(origin)) return false;
+
+  const url = new URL(origin);
+  return PUBLIC_SITE_HOSTS.has(url.hostname);
+}
+
+function isHttpOrigin(origin) {
+  if (!origin) return false;
+
+  try {
+    const url = new URL(origin);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function corsHeaders(request, publicRead = false) {
+  const origin = request.headers.get('Origin');
+  const allowedOrigin = publicRead
+    ? isAllowedReadOrigin(origin)
+      ? origin || '*'
+      : 'null'
+    : isAllowedWriteOrigin(origin)
+      ? origin
+      : 'null';
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+    ...(origin ? { Vary: 'Origin' } : {}),
+  };
+}
+
+function json(payload, status, request, extraHeaders = {}) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'X-Content-Type-Options': 'nosniff',
+      ...corsHeaders(request),
+      ...extraHeaders,
+    },
+  });
 }
 
 function sanitizeEventName(value) {
@@ -552,77 +626,4 @@ function clampInteger(value, minimum, maximum, fallback) {
 
 function changedRows(result) {
   return Number(result?.meta?.changes ?? result?.meta?.changed_db ?? 0);
-}
-
-function allowedOrigins(env) {
-  return String(env.ALLOWED_ORIGINS ?? '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-}
-
-function isAllowedOrigin(origin, env) {
-  if (!origin) return false;
-  if (allowedOrigins(env).includes(origin)) return true;
-
-  let url;
-  try {
-    url = new URL(origin);
-  } catch {
-    return false;
-  }
-
-  // Local Astro can move to another port when 4321 is occupied. Keep local
-  // analytics working on ordinary HTTP without opening event ingestion to
-  // arbitrary remote sites.
-  if (
-    (url.protocol === 'http:' || url.protocol === 'https:') &&
-    (url.hostname === 'localhost' ||
-      url.hostname === '127.0.0.1' ||
-      url.hostname === '[::1]' ||
-      url.hostname === '::1')
-  ) {
-    return true;
-  }
-
-  // Treat http/https as equivalent for explicitly configured site hostnames.
-  // This lets the real site populate analytics even if it is reached over HTTP.
-  return allowedOrigins(env).some((allowedOrigin) => {
-    try {
-      const allowed = new URL(allowedOrigin);
-      return (
-        (url.protocol === 'http:' || url.protocol === 'https:') &&
-        (allowed.protocol === 'http:' || allowed.protocol === 'https:') &&
-        url.hostname === allowed.hostname &&
-        url.port === allowed.port
-      );
-    } catch {
-      return false;
-    }
-  });
-}
-
-function corsHeaders(request, env) {
-  const origin = request.headers.get('Origin');
-  const allowedOrigin = isAllowedOrigin(origin, env) ? origin : 'null';
-
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Max-Age': '86400',
-    Vary: 'Origin',
-  };
-}
-
-function json(payload, status, request, env, extraHeaders = {}) {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'X-Content-Type-Options': 'nosniff',
-      ...corsHeaders(request, env),
-      ...extraHeaders,
-    },
-  });
 }
