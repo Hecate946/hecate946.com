@@ -2,6 +2,16 @@
   import { onMount } from 'svelte';
   import { WORLD_MAP_PATH } from '@/data/world-map';
   import { WORLD_INTERNAL_BORDERS_PATH } from '@/data/world-internal-borders';
+  import {
+    VISITOR_LIGHT_CORE_CLOSE_PX,
+    VISITOR_LIGHT_CORE_FAR_PX,
+    VISITOR_LIGHT_CORE_STOPS,
+    VISITOR_LIGHT_GLOW_CLOSE_PX,
+    VISITOR_LIGHT_GLOW_FAR_PX,
+    VISITOR_LIGHT_GLOW_STOPS,
+    visitorLightMapDistanceT,
+    visitorLightSizePx,
+  } from '@/lib/visitor-lights';
 
   interface VisitorLocation {
     city: string | null;
@@ -43,15 +53,6 @@
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 12;
   const WORLD_COPIES = [-1, 0, 1] as const;
-  // Marker sizes are expressed in CSS pixels, then converted back into map
-  // units so the SVG camera transform does not make them balloon. World view
-  // deliberately uses larger lights; close zoom resolves them into small points.
-  const LIGHT_CORE_CLOSE_PX = 3.2;
-  const LIGHT_CORE_FAR_PX = 7.6;
-  const LIGHT_GLOW_CLOSE_PX = 8.4;
-  const LIGHT_GLOW_FAR_PX = 21.5;
-  const LIGHT_BLOOM_CLOSE_PX = 13;
-  const LIGHT_BLOOM_FAR_PX = 31;
 
   let mapElement!: SVGSVGElement;
   let projectedLocations: ProjectedVisitorLocation[] = [];
@@ -162,7 +163,13 @@
     if (bounds.width <= 0 || bounds.height <= 0) return;
 
     const aspect = bounds.width / bounds.height;
-    viewUnitsPerCssPixel = WIDTH / bounds.width;
+    // xMidYMid slice uses the larger CSS scale on each axis, so the inverse
+    // scale is the smaller world-units-per-pixel value. This keeps the shared
+    // light sizes exact even when the panel is not precisely 2:1.
+    viewUnitsPerCssPixel = Math.min(
+      WIDTH / bounds.width,
+      HEIGHT / bounds.height,
+    );
 
     // The SVG uses xMidYMid slice. These are the world dimensions visible at 1×.
     visibleWidthAtZoomOne = Math.min(WIDTH, HEIGHT * aspect);
@@ -413,32 +420,9 @@
     previousPointer = null;
   }
 
-  function lightZoomProgress() {
-    // Map zoom is multiplicative, so interpolate marker size logarithmically too.
-    // This makes 1→2→4→8× produce equally natural visual steps instead of most
-    // of the size change being delayed until the extreme end of the zoom range.
-    const raw = clamp(
-      Math.log(zoom / MIN_ZOOM) / Math.log(MAX_ZOOM / MIN_ZOOM),
-      0,
-      1,
-    );
-    return raw * raw * (3 - 2 * raw);
-  }
-
-  function lightScale(count: number) {
-    const densityBoost = Math.min(0.62, Math.log2(Math.max(1, count)) * 0.17);
-    // Coalesced lights communicate density most strongly at world scale, then
-    // become less exaggerated as the user zooms in and geography provides context.
-    return 1 + densityBoost * (1 - lightZoomProgress() * 0.32);
-  }
-
-  function lightDiameter(closePx: number, farPx: number) {
-    const progress = lightZoomProgress();
-    return farPx + (closePx - farPx) * progress;
-  }
-
   function lightRadius(closePx: number, farPx: number, count: number) {
-    const diameterPx = lightDiameter(closePx, farPx) * lightScale(count);
+    const distanceT = visitorLightMapDistanceT(zoom, MIN_ZOOM, MAX_ZOOM);
+    const diameterPx = visitorLightSizePx(closePx, farPx, distanceT, count);
     return (diameterPx * 0.5 * viewUnitsPerCssPixel) / zoom;
   }
 </script>
@@ -459,33 +443,25 @@
     on:pointercancel={endPointer}
   >
     <defs>
-      <!-- Every layer derives from the active theme accent. The core is only
-           slightly "hotter" toward white; hue and halo remain the accent itself. -->
+      <!-- Sampled from the exact alpha equations used by the 3D point shaders.
+           Both layers use the current theme accent with no separate 2D palette. -->
       <radialGradient id="visitor-light-core" cx="50%" cy="50%" r="50%">
-        <stop
-          offset="0%"
-          style="stop-color:color-mix(in srgb, var(--accent-strong) 72%, white 28%);stop-opacity:1"
-        />
-        <stop
-          offset="34%"
-          style="stop-color:color-mix(in srgb, var(--accent-strong) 88%, white 12%);stop-opacity:1"
-        />
-        <stop offset="66%" stop-color="var(--accent-strong)" stop-opacity="0.94" />
-        <stop offset="86%" stop-color="var(--accent-strong)" stop-opacity="0.52" />
-        <stop offset="100%" stop-color="var(--accent-strong)" stop-opacity="0" />
+        {#each VISITOR_LIGHT_CORE_STOPS as stop}
+          <stop
+            offset={`${stop.offset}%`}
+            stop-color="var(--accent-strong)"
+            stop-opacity={stop.opacity}
+          />
+        {/each}
       </radialGradient>
       <radialGradient id="visitor-light-glow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="var(--accent-strong)" stop-opacity="0.36" />
-        <stop offset="28%" stop-color="var(--accent-strong)" stop-opacity="0.24" />
-        <stop offset="58%" stop-color="var(--accent-strong)" stop-opacity="0.10" />
-        <stop offset="82%" stop-color="var(--accent-strong)" stop-opacity="0.035" />
-        <stop offset="100%" stop-color="var(--accent-strong)" stop-opacity="0" />
-      </radialGradient>
-      <radialGradient id="visitor-light-bloom" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="var(--accent-strong)" stop-opacity="0.12" />
-        <stop offset="36%" stop-color="var(--accent-strong)" stop-opacity="0.07" />
-        <stop offset="70%" stop-color="var(--accent-strong)" stop-opacity="0.025" />
-        <stop offset="100%" stop-color="var(--accent-strong)" stop-opacity="0" />
+        {#each VISITOR_LIGHT_GLOW_STOPS as stop}
+          <stop
+            offset={`${stop.offset}%`}
+            stop-color="var(--accent-strong)"
+            stop-opacity={stop.opacity}
+          />
+        {/each}
       </radialGradient>
     </defs>
 
@@ -501,22 +477,16 @@
           {#each projectedLocations as location}
             <g class="map-light">
               <circle
-                class="map-light-bloom"
-                cx={location.x}
-                cy={location.y}
-                r={lightRadius(LIGHT_BLOOM_CLOSE_PX, LIGHT_BLOOM_FAR_PX, location.count)}
-              />
-              <circle
                 class="map-light-glow"
                 cx={location.x}
                 cy={location.y}
-                r={lightRadius(LIGHT_GLOW_CLOSE_PX, LIGHT_GLOW_FAR_PX, location.count)}
+                r={lightRadius(VISITOR_LIGHT_GLOW_CLOSE_PX, VISITOR_LIGHT_GLOW_FAR_PX, location.count)}
               />
               <circle
                 class="map-light-core"
                 cx={location.x}
                 cy={location.y}
-                r={lightRadius(LIGHT_CORE_CLOSE_PX, LIGHT_CORE_FAR_PX, location.count)}
+                r={lightRadius(VISITOR_LIGHT_CORE_CLOSE_PX, VISITOR_LIGHT_CORE_FAR_PX, location.count)}
               >
                 <title>
                   {location.label} — {location.count === 1 ? '1 visitor' : `${location.count} visitors`}

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import Disclosure from '@/components/core/Disclosure.astro';
 import { withBase } from '@/lib/paths';
 import '@/styles/about.css';
 
@@ -9,6 +10,8 @@ const musicVideoUrl = 'https://youtu.be/EkgH4zzXoNg?si=_W_qwbR1Io_LTUdw';
 const pickleballArticleUrl =
   'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
 const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
+const softwareResumeUrl = withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf');
+const musicResumeUrl = withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf');
 const pigImage256 = withBase('/images/pig-256.webp');
 const pigImage512 = withBase('/images/pig-512.webp');
 const pickleballImage720 = withBase('/images/about/ucla-pickleball-super-regional-720.webp');
@@ -21,44 +24,63 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
 >
   <article class="about-book interior-page interior-page--six" aria-labelledby="about-title">
     <header class="about-masthead interior-page-heading">
-        <h1 id="about-title">About</h1>
-      </header>
+      <h1 id="about-title">About</h1>
+    </header>
 
     <div class="about-intro about-prose interior-page-content">
-        <div class="about-portrait-frame">
-          <img
-            src={pigImage256}
-            srcset={`${pigImage256} 256w, ${pigImage512} 512w`}
-            sizes="(max-width: 680px) 34vw, 11rem"
-            alt="Portrait of Cyrus Asasi"
-            width="512"
-            height="512"
-            decoding="async"
-            fetchpriority="high"
-          />
-        </div>
-
-        <p class="about-opening">
-          <span class="about-drop-cap" aria-hidden="true">H</span><span class="about-opening-rest">i, I'm Cyrus. I'm a software engineer and classical musician who enjoys mastering difficult skills.</span>{' '}
-          Whether it's reverse engineering complex systems, performing concertos, or building interactive web
-          experiences, I'm happiest when I'm learning something challenging.
-        </p>
-
-        <p>
-          Outside of work, you'll usually find me practicing the clarinet or piano, competing in pickleball
-          tournaments, or playing chess.
-        </p>
-
-        <p>
-          I recently completed dual bachelor's degrees in Computer Science and Music Performance at UCLA and am
-          now pursuing a Master's in Music Performance while continuing to build software projects.
-        </p>
+      <div class="about-portrait-frame">
+        <img
+          src={pigImage256}
+          srcset={`${pigImage256} 256w, ${pigImage512} 512w`}
+          sizes="(max-width: 680px) 34vw, 11rem"
+          alt="Portrait of Cyrus Asasi"
+          width="512"
+          height="512"
+          decoding="async"
+          fetchpriority="high"
+        />
       </div>
 
-      <section class="passion-section interior-page-column" aria-labelledby="software-heading">
-        <header class="passion-heading">
-          <h2 id="software-heading">Software</h2>
-        </header>
+      <p class="about-opening">
+        <span class="about-drop-cap" aria-hidden="true">H</span><span class="about-opening-rest">i, I'm Cyrus. I'm a software engineer and classical musician who enjoys mastering difficult skills.</span>{' '}
+        Whether it's reverse engineering complex systems, performing concertos, or building interactive web
+        experiences, I'm happiest when I'm learning something challenging.
+      </p>
+
+      <p>
+        Outside of work, you'll usually find me practicing the clarinet or piano, competing in pickleball
+        tournaments, or playing chess.
+      </p>
+
+      <p>
+        I recently completed dual bachelor's degrees in Computer Science and Music Performance at UCLA and am
+        now pursuing a Master's in Music Performance while continuing to build software projects.
+      </p>
+    </div>
+
+    <aside class="about-resumes interior-page-column" aria-labelledby="about-resumes-heading">
+      <h2 id="about-resumes-heading">Resumes</h2>
+      <ul class="about-resume-list">
+        <li>
+          <a href={softwareResumeUrl} target="_blank" rel="noopener noreferrer">
+            <span>Software Engineering Resume</span>
+            <span class="about-resume-format" aria-hidden="true">PDF ↗</span>
+          </a>
+        </li>
+        <li>
+          <a href={musicResumeUrl} target="_blank" rel="noopener noreferrer">
+            <span>Clarinet Performance Resume</span>
+            <span class="about-resume-format" aria-hidden="true">PDF ↗</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="about-disciplines interior-page-column">
+      <Disclosure class="passion-section" summaryClass="passion-heading">
+        <Fragment slot="summary">
+          <h2>Software</h2>
+        </Fragment>
 
         <div class="passion-content">
           <div class="about-prose">
@@ -91,121 +113,13 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
               dramatically easier for students.
             </p>
           </div>
-
-          <ul class="project-grid" aria-label="Featured software projects" data-default-only>
-            <li class="project-grid__item">
-              <a
-                class="project-card"
-                href={loomiRepoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open Loomi on GitHub"
-              >
-                <header class="project-card__topline">
-                  <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      fill="currentColor"
-                      d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
-                    />
-                  </svg>
-                  <span class="project-card__status">Public repository</span>
-                </header>
-
-                <div class="project-card__body">
-                  <h3>Loomi</h3>
-                  <p>A graph-based space for exploring classical music through connected works, people, and ideas.</p>
-                </div>
-
-                <footer class="project-card__meta">
-                  <span><i class="language-dot" aria-hidden="true"></i>TypeScript</span>
-                  <span class="project-card__action">View on GitHub <span aria-hidden="true">↗︎</span></span>
-                </footer>
-              </a>
-            </li>
-
-            {
-              sunsetRepoUrl ? (
-                <li class="project-grid__item">
-                  <a
-                    class="project-card"
-                    href={sunsetRepoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Open Sunset on GitHub"
-                  >
-                    <header class="project-card__topline">
-                      <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          fill="currentColor"
-                          d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
-                        />
-                      </svg>
-                      <span class="project-card__status">Repository</span>
-                    </header>
-
-                    <div class="project-card__body">
-                      <h3>Sunset</h3>
-                      <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
-                    </div>
-
-                    <footer class="project-card__meta">
-                      <span>Reverse engineering</span>
-                      <span class="project-card__action">View on GitHub <span aria-hidden="true">↗︎</span></span>
-                    </footer>
-                  </a>
-                </li>
-              ) : (
-                <li class="project-grid__item">
-                  <article class="project-card project-card--private" id="sunset-project">
-                  <header class="project-card__topline">
-                    <svg class="project-card__icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        fill="currentColor"
-                        d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.24c-3.23.7-3.91-1.37-3.91-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.58-.29-5.29-1.29-5.29-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.18A10.93 10.93 0 0 1 12 6.08c.98 0 1.94.13 2.86.39 2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.41-2.72 5.39-5.31 5.68.42.36.79 1.07.79 2.16v3.26c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
-                      />
-                    </svg>
-                    <span class="project-card__status">Private repository</span>
-                  </header>
-
-                  <div class="project-card__body">
-                    <h3>Sunset</h3>
-                    <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
-                  </div>
-
-                  <footer class="project-card__meta">
-                    <span>Reverse engineering</span>
-                    <span class="project-card__action project-card__action--muted">Source unavailable</span>
-                  </footer>
-                  </article>
-                </li>
-              )
-            }
-          </ul>
-
-          <section data-html-only hidden aria-labelledby="html-software-projects-heading">
-            <h3 id="html-software-projects-heading">Featured software projects</h3>
-            <ul>
-              <li>
-                <strong>Loomi</strong>
-                <p>A graph-based space for exploring classical music through connected works, people, and ideas.</p>
-                <p>TypeScript</p>
-                <p><a href={loomiRepoUrl} target="_blank" rel="noopener noreferrer">View on GitHub</a></p>
-              </li>
-              <li>
-                <strong>Sunset</strong>
-                <p>A faster, friendlier interface for finding and reserving UCLA campus resources.</p>
-                <p>Reverse engineering</p>
-                <p>Source unavailable</p>
-              </li>
-            </ul>
-          </section>
         </div>
-      </section>
+      </Disclosure>
 
-      <section class="passion-section interior-page-column" aria-labelledby="music-heading">
-        <header class="passion-heading">
-          <h2 id="music-heading">Music</h2>
-        </header>
+      <Disclosure class="passion-section" summaryClass="passion-heading">
+        <Fragment slot="summary">
+          <h2>Music</h2>
+        </Fragment>
 
         <div class="passion-content">
           <div class="about-prose">
@@ -223,7 +137,7 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             </p>
           </div>
 
-          <figure class="media-card video-card" data-default-only>
+          <figure class="media-card video-card">
             <div class="video-frame">
               <iframe
                 src="https://www.youtube-nocookie.com/embed/EkgH4zzXoNg"
@@ -243,17 +157,13 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
               </a>
             </figcaption>
           </figure>
-
-          <p data-html-only hidden>
-            <a href={musicVideoUrl} target="_blank" rel="noopener noreferrer">Watch the featured performance on YouTube</a>
-          </p>
         </div>
-      </section>
+      </Disclosure>
 
-      <section class="passion-section interior-page-column" aria-labelledby="pickleball-heading">
-        <header class="passion-heading">
-          <h2 id="pickleball-heading">Pickleball</h2>
-        </header>
+      <Disclosure class="passion-section" summaryClass="passion-heading">
+        <Fragment slot="summary">
+          <h2>Pickleball</h2>
+        </Fragment>
 
         <div class="passion-content">
           <div class="about-prose">
@@ -275,7 +185,6 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Read the UCLA pickleball tournament recap"
-            data-default-only
           >
             <div class="article-card__image-wrap">
               <img
@@ -297,17 +206,13 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
               <span class="media-card__link">Read the article <span aria-hidden="true">↗︎</span></span>
             </div>
           </a>
-
-          <p data-html-only hidden>
-            <a href={pickleballArticleUrl} target="_blank" rel="noopener noreferrer">Read the UCLA pickleball tournament recap</a>
-          </p>
         </div>
-      </section>
+      </Disclosure>
 
-      <section class="passion-section interior-page-column" aria-labelledby="chess-heading">
-        <header class="passion-heading">
-          <h2 id="chess-heading">Chess</h2>
-        </header>
+      <Disclosure class="passion-section" summaryClass="passion-heading">
+        <Fragment slot="summary">
+          <h2>Chess</h2>
+        </Fragment>
 
         <div class="passion-content">
           <div class="about-prose">
@@ -331,7 +236,6 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             rel="noopener noreferrer"
             aria-label="Open Cyrus2020SD's Chess.com statistics"
             data-chess-card
-            data-default-only
           >
             <div class="chess-card__identity">
               <div class="chess-card__mark" aria-hidden="true">♞</div>
@@ -358,12 +262,9 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
               </div>
             </div>
           </a>
-
-          <p data-html-only hidden>
-            <a href={chessProfileUrl} target="_blank" rel="noopener noreferrer">View the Cyrus2020SD Chess.com profile</a>
-          </p>
         </div>
-      </section>
+      </Disclosure>
+    </div>
   </article>
 </BaseLayout>
 

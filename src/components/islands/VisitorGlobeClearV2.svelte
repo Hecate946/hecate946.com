@@ -2,6 +2,13 @@
   import { onMount } from 'svelte';
   import * as THREE from 'three';
   import { resolveStatsApiBase } from '@/lib/stats-api';
+  import {
+    VISITOR_LIGHT_CORE_CLOSE_PX,
+    VISITOR_LIGHT_CORE_FAR_PX,
+    VISITOR_LIGHT_GLOW_CLOSE_PX,
+    VISITOR_LIGHT_GLOW_FAR_PX,
+    visitorLightDensityScale,
+  } from '@/lib/visitor-lights';
 
   export let apiBase = '';
   export let embedded = false;
@@ -53,7 +60,9 @@
   }
 
   const GLOBE_RADIUS = 2.35;
-  const MARKER_RADIUS = GLOBE_RADIUS + 0.038;
+  // Keep marker centers exactly on the geographic surface. Any radial lift
+  // creates visible parallax at close zoom, especially along coastlines.
+  const MARKER_RADIUS = GLOBE_RADIUS;
   const MIN_CAMERA_Z = 3.55;
   const MAX_CAMERA_Z = 9.5;
   const INITIAL_CAMERA_Z = 6.45;
@@ -63,10 +72,6 @@
   const GLOBE_SHELL_BASE_OPACITY = 0.0075;
   const GLOBE_SHELL_EDGE_OPACITY = 0.082;
   const GLOBE_SHELL_OUTER_OPACITY = 0.014;
-  const MARKER_CORE_CLOSE_PX = 4.4;
-  const MARKER_CORE_FAR_PX = 6.8;
-  const MARKER_GLOW_CLOSE_PX = 11.5;
-  const MARKER_GLOW_FAR_PX = 18.0;
 
   let shell!: HTMLDivElement;
   let canvas!: HTMLCanvasElement;
@@ -364,7 +369,7 @@
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           vec3 viewNormal = normalize(normalMatrix * normalize(position));
           vec3 viewDir = normalize(-mvPosition.xyz);
-          vFacing = smoothstep(-0.01, 0.10, dot(viewNormal, viewDir));
+          vFacing = smoothstep(0.0, 0.10, dot(viewNormal, viewDir));
 
           float zoomT = clamp(
             (cameraZ - ${MIN_CAMERA_Z.toFixed(2)}) / ${(
@@ -373,7 +378,7 @@
             0.0,
             1.0
           );
-          float pointSize = mix(${MARKER_CORE_CLOSE_PX.toFixed(1)}, ${MARKER_CORE_FAR_PX.toFixed(1)}, zoomT);
+          float pointSize = mix(${VISITOR_LIGHT_CORE_CLOSE_PX.toFixed(1)}, ${VISITOR_LIGHT_CORE_FAR_PX.toFixed(1)}, zoomT);
           gl_PointSize = pointSize * markerScale * pixelRatio;
           gl_Position = projectionMatrix * mvPosition;
         }
@@ -414,7 +419,7 @@
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           vec3 viewNormal = normalize(normalMatrix * normalize(position));
           vec3 viewDir = normalize(-mvPosition.xyz);
-          vFacing = smoothstep(-0.02, 0.13, dot(viewNormal, viewDir));
+          vFacing = smoothstep(0.0, 0.13, dot(viewNormal, viewDir));
 
           float zoomT = clamp(
             (cameraZ - ${MIN_CAMERA_Z.toFixed(2)}) / ${(
@@ -423,7 +428,7 @@
             0.0,
             1.0
           );
-          float pointSize = mix(${MARKER_GLOW_CLOSE_PX.toFixed(1)}, ${MARKER_GLOW_FAR_PX.toFixed(1)}, zoomT);
+          float pointSize = mix(${VISITOR_LIGHT_GLOW_CLOSE_PX.toFixed(1)}, ${VISITOR_LIGHT_GLOW_FAR_PX.toFixed(1)}, zoomT);
           gl_PointSize = pointSize * markerScale * pixelRatio;
           gl_Position = projectionMatrix * mvPosition;
         }
@@ -612,8 +617,9 @@
         // Exact same-location visitors become one brighter/larger light. The
         // logarithm keeps dense locations expressive without letting them turn
         // into oversized bubbles.
-        markerScales[index] =
-          1 + Math.min(0.65, Math.log2(Math.max(1, markerMetadata[index].count)) * 0.16);
+        markerScales[index] = visitorLightDensityScale(
+          markerMetadata[index].count,
+        );
       });
 
       markerGeometry.setAttribute(

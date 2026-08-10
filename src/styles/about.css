@@ -1,24 +1,12 @@
 .about-book {
   --about-section-gap: clamp(2.5rem, 5vw, 3.75rem);
   --about-outer-space: var(--interior-content-space);
-  --about-dropdown-space: clamp(3.25rem, 6vw, 4.75rem);
+  --about-dropdown-space: clamp(2.7rem, 5vw, 4rem);
 }
 
 .about-masthead {
   margin: 0;
 }
-
-.media-card__kicker,
-.chess-card__platform,
-.project-card__status {
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-
 
 .about-prose {
   color: color-mix(in srgb, var(--text) 94%, var(--muted));
@@ -68,7 +56,7 @@
   float: left;
   margin: 0.015em 0.075em -0.08em 0;
   color: var(--accent-strong);
-  font-family: 'SydoniaAtramentiquaRegular','Times New Roman',serif;
+  font-family: 'SydoniaAtramentiquaRegular', 'Times New Roman', serif;
   font-size: 5.2em;
   font-weight: 700;
   letter-spacing: -0.055em;
@@ -80,18 +68,94 @@
   vertical-align: baseline;
 }
 
-.passion-section {
-  display: block;
-  padding: clamp(0.58rem, 1vw, 0.76rem) 0;
+/* Resumes stay visible even when every discipline is collapsed. In HTML mode,
+   this degrades naturally to a heading and a two-item list of PDF links. */
+.about-resumes {
+  margin-top: var(--about-dropdown-space);
+  padding-block: clamp(1rem, 2vw, 1.35rem);
   border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
-.passion-section:last-of-type {
+.about-resumes h2 {
+  margin: 0 0 0.9rem;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.about-resume-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-resume-list li {
+  min-width: 0;
+}
+
+.about-resume-list li + li {
+  border-left: 1px solid var(--line);
+}
+
+.about-resume-list a {
+  display: flex;
+  min-height: 2.4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(0.94rem, 1.4vw, 1.04rem);
+  line-height: 1.3;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.about-resume-list li:first-child a {
+  padding-right: clamp(1rem, 3vw, 1.5rem);
+}
+
+.about-resume-list li:last-child a {
+  padding-left: clamp(1rem, 3vw, 1.5rem);
+}
+
+.about-resume-list a:is(:hover, :focus-visible) {
+  color: var(--accent-strong);
+}
+
+.about-resume-format {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.about-disciplines {
+  margin-bottom: var(--about-outer-space);
+}
+
+/* Native details/summary is intentional: the same markup remains a usable,
+   clean disclosure list when HTML mode disables every stylesheet. */
+.passion-section {
+  margin: 0;
   border-bottom: 1px solid var(--line);
 }
 
 .passion-heading {
-  margin-bottom: clamp(1.25rem, 2.5vw, 1.75rem);
+  display: flex;
+  min-height: clamp(4.25rem, 8vw, 5.4rem);
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .passion-heading h2 {
@@ -106,11 +170,8 @@
 
 .passion-content {
   display: grid;
-  gap: clamp(2rem, 4vw, 3.2rem);
-}
-
-.passion-content > .about-prose {
-  width: 100%;
+  gap: clamp(1.8rem, 4vw, 2.8rem);
+  padding: 0 0 clamp(2.4rem, 5vw, 3.35rem);
 }
 
 .inline-project-link {
@@ -128,133 +189,13 @@
   cursor: default;
 }
 
-.project-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.project-grid__item {
-  min-width: 0;
-  margin: 0;
-}
-
-.project-grid__item > .project-card {
-  height: 100%;
-}
-
-.project-card {
-  display: flex;
-  min-height: 16.5rem;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 2rem;
-  padding: clamp(1.3rem, 2.5vw, 1.75rem);
-  border: 1px solid var(--line);
-  border-radius: 1.15rem;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  box-shadow: 0 0.8rem 2.2rem color-mix(in srgb, var(--shadow) 38%, transparent);
-  color: var(--text);
-  cursor: pointer;
-  outline: 2px solid transparent;
-  outline-offset: 3px;
-  text-decoration: none;
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    outline-color 180ms ease,
-    transform 180ms ease;
-}
-
-.project-card:not(.project-card--private):is(:hover, :focus-visible) {
-  border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
-  box-shadow: 0 1rem 2.6rem color-mix(in srgb, var(--shadow) 52%, transparent);
-  color: var(--text);
-  transform: translateY(-2px);
-}
-
-.project-card:focus-visible {
-  outline-color: color-mix(in srgb, var(--accent) 72%, transparent);
-}
-
-.project-card--private {
-  background: color-mix(in srgb, var(--surface) 64%, transparent);
-}
-
-.project-card__topline,
-.project-card__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.project-card__icon {
-  width: 1.45rem;
-  height: 1.45rem;
-  flex: 0 0 auto;
-  color: var(--text);
-}
-
-.project-card__status {
-  color: var(--muted);
-  font-size: 0.62rem;
-  letter-spacing: 0.09em;
-}
-
-.project-card h3 {
-  margin: 0 0 0.65rem;
-  color: var(--accent-strong);
-  font-family: var(--font-display);
-  font-size: clamp(1.45rem, 2vw, 1.8rem);
-  font-weight: 500;
-  letter-spacing: -0.025em;
-}
-
-.project-card p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.94rem;
-  line-height: 1.58;
-}
-
-.project-card__body {
-  display: block;
-}
-
-.project-card__meta {
-  color: var(--muted);
-  font-size: 0.77rem;
-}
-
-.project-card__meta > span:first-child {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.language-dot {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: var(--accent);
-}
-
-.project-card__action {
-  color: var(--text);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.project-card:not(.project-card--private):is(:hover, :focus-visible) .project-card__action {
-  color: var(--accent-strong);
-}
-
-.project-card__action--muted {
-  color: var(--muted);
+.media-card__kicker,
+.chess-card__platform {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .media-card,
@@ -474,12 +415,35 @@
     margin-left: auto;
   }
 
+  .about-resume-list {
+    grid-template-columns: 1fr;
+  }
+
+  .about-resume-list li + li {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .about-resume-list li:first-child a,
+  .about-resume-list li:last-child a {
+    padding: 0.7rem 0;
+  }
+
+  .passion-heading {
+    min-height: 4.2rem;
+  }
+
+  .passion-heading h2 {
+    font-size: clamp(1.3rem, 7vw, 1.62rem);
+  }
+
   .passion-content {
     gap: 2.2rem;
   }
 
-  .project-card {
-    min-height: 15rem;
+  .about-drop-cap {
+    font-size: 4.65em;
+    line-height: 0.67;
   }
 
   .media-card__caption {
@@ -521,47 +485,3 @@
     transition: none;
   }
 }
-
-/* Expanded chapter sections */
-.passion-section {
-  overflow: visible;
-}
-
-.passion-heading {
-  display: block;
-  width: 100%;
-  margin: 0;
-}
-
-.passion-section > .passion-content {
-  padding-top: clamp(0.8rem, 1.6vw, 1.15rem);
-  will-change: opacity, transform;
-}
-
-
-@media (max-width: 680px) {
-  .passion-section {
-    padding: 0.52rem 0;
-  }
-
-  .passion-heading h2 {
-    font-size: clamp(1.3rem, 7vw, 1.62rem);
-  }
-
-  .about-drop-cap {
-    font-size: 4.65em;
-    line-height: 0.67;
-  }
-}
-
-/* Match the outer page rhythm used by the other interior pages. The top
-   divider-to-portrait space equals the final divider-to-footer space, while
-   the expanded chapters get a little more separation from the intro copy. */
-.about-intro + .passion-section {
-  margin-top: var(--about-dropdown-space);
-}
-
-.passion-section:last-of-type {
-  margin-bottom: var(--about-outer-space);
-}
-

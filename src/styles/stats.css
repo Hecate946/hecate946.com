@@ -274,8 +274,7 @@
 }
 
 .visitor-map .map-light-core,
-.visitor-map .map-light-glow,
-.visitor-map .map-light-bloom {
+.visitor-map .map-light-glow {
   pointer-events: none;
 }
 
@@ -288,9 +287,6 @@
   fill: url(#visitor-light-glow);
 }
 
-.visitor-map .map-light-bloom {
-  fill: url(#visitor-light-bloom);
-}
 
 .map-controls {
   position: absolute;
