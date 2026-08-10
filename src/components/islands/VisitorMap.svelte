@@ -11,6 +11,9 @@
     VISITOR_LIGHT_GLOW_STOPS,
     visitorLightMapDistanceT,
     visitorLightSizePx,
+    VISITOR_VIEW_WHEEL_DELTA_CAP,
+    VISITOR_VIEW_WHEEL_RATE,
+    VISITOR_VIEW_ZOOM_EASING,
   } from '@/lib/visitor-lights';
 
   interface VisitorLocation {
@@ -41,6 +44,11 @@
   interface PinchState {
     distance: number;
     zoom: number;
+  }
+
+  interface ZoomAnchor {
+    screenX: number;
+    screenY: number;
     worldX: number;
     worldY: number;
   }
@@ -60,6 +68,7 @@
   let visitorScaleBucket = 0;
   let transform = '';
   let zoom = 1;
+  let targetZoom = 1;
   let centerX = WIDTH / 2;
   let centerY = HEIGHT / 2;
   let visibleWidthAtZoomOne = WIDTH;
@@ -69,6 +78,7 @@
   let pinching = false;
   let previousPointer: Point | null = null;
   let pinchState: PinchState | null = null;
+  let zoomAnchor: ZoomAnchor | null = null;
   let fittedSignature = '';
 
   const activePointers = new Map<number, Point>();
@@ -100,7 +110,7 @@
 
   onMount(() => {
     updateVisibleDimensions();
-    fitLocations();
+    fitLocations(true);
 
     const observer = new ResizeObserver(() => {
       updateVisibleDimensions();
@@ -108,7 +118,36 @@
     });
 
     observer.observe(mapElement);
-    return () => observer.disconnect();
+
+    let frameId = 0;
+    const animate = () => {
+      const zoomDelta = targetZoom - zoom;
+      if (Math.abs(zoomDelta) > 0.00001) {
+        zoom += zoomDelta * VISITOR_VIEW_ZOOM_EASING;
+      } else if (zoom !== targetZoom) {
+        zoom = targetZoom;
+      }
+
+      // When wheel-zooming, keep the geographic point beneath the cursor
+      // pinned beneath that cursor for every eased animation frame. This gives
+      // us the same smooth target-zoom inertia as the globe without the old
+      // snap-to-cursor behavior.
+      if (zoomAnchor) {
+        centerX =
+          zoomAnchor.worldX - (zoomAnchor.screenX - WIDTH / 2) / zoom;
+        centerY =
+          zoomAnchor.worldY - (zoomAnchor.screenY - HEIGHT / 2) / zoom;
+      }
+
+      constrainCamera();
+      frameId = requestAnimationFrame(animate);
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      observer.disconnect();
+    };
   });
 
   function clamp(value: number, minimum: number, maximum: number) {
@@ -219,50 +258,51 @@
     };
   }
 
-  function fitLocations() {
+  function fitLocations(immediate = false) {
+    let nextZoom = 1;
+
     if (projectedLocations.length === 0) {
-      zoom = 1;
       centerX = WIDTH / 2;
       centerY = HEIGHT / 2;
-      constrainCamera();
-      return;
+    } else {
+      const visitorZoomCap = clamp(
+        5.2 - Math.log2(totalVisitors + 1) * 0.22,
+        1.25,
+        5.2,
+      );
+
+      if (projectedLocations.length === 1) {
+        nextZoom = Math.min(4.5, visitorZoomCap);
+        centerX = projectedLocations[0].x;
+        centerY = projectedLocations[0].y;
+      } else {
+        const horizontal = circularHorizontalBounds(
+          projectedLocations.map((location) => location.x),
+        );
+        const ys = projectedLocations.map((location) => location.y);
+        const minimumY = Math.min(...ys);
+        const maximumY = Math.max(...ys);
+        const spanX = Math.max(80, horizontal.span);
+        const spanY = Math.max(45, maximumY - minimumY);
+        const padding = 110;
+
+        nextZoom = clamp(
+          Math.min(
+            Math.max(1, visibleWidthAtZoomOne - padding * 2) / spanX,
+            Math.max(1, visibleHeightAtZoomOne - padding * 2) / spanY,
+            visitorZoomCap,
+          ),
+          MIN_ZOOM,
+          6,
+        );
+        centerX = horizontal.center;
+        centerY = (minimumY + maximumY) / 2;
+      }
     }
 
-    const visitorZoomCap = clamp(
-      5.2 - Math.log2(totalVisitors + 1) * 0.22,
-      1.25,
-      5.2,
-    );
-
-    if (projectedLocations.length === 1) {
-      zoom = Math.min(4.5, visitorZoomCap);
-      centerX = projectedLocations[0].x;
-      centerY = projectedLocations[0].y;
-      constrainCamera();
-      return;
-    }
-
-    const horizontal = circularHorizontalBounds(
-      projectedLocations.map((location) => location.x),
-    );
-    const ys = projectedLocations.map((location) => location.y);
-    const minimumY = Math.min(...ys);
-    const maximumY = Math.max(...ys);
-    const spanX = Math.max(80, horizontal.span);
-    const spanY = Math.max(45, maximumY - minimumY);
-    const padding = 110;
-
-    zoom = clamp(
-      Math.min(
-        Math.max(1, visibleWidthAtZoomOne - padding * 2) / spanX,
-        Math.max(1, visibleHeightAtZoomOne - padding * 2) / spanY,
-        visitorZoomCap,
-      ),
-      MIN_ZOOM,
-      6,
-    );
-    centerX = horizontal.center;
-    centerY = (minimumY + maximumY) / 2;
+    zoomAnchor = null;
+    targetZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+    if (immediate) zoom = targetZoom;
     constrainCamera();
   }
 
@@ -278,21 +318,51 @@
     return { x: transformed.x, y: transformed.y };
   }
 
-  function zoomAt(nextZoom: number, anchorX = WIDTH / 2, anchorY = HEIGHT / 2) {
-    const clampedZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
-    const worldX = centerX + (anchorX - WIDTH / 2) / zoom;
-    const worldY = centerY + (anchorY - HEIGHT / 2) / zoom;
+  function setZoomTarget(nextZoom: number, anchor: ZoomAnchor | null = null) {
+    targetZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+    zoomAnchor = anchor;
+  }
 
-    centerX = worldX - (anchorX - WIDTH / 2) / clampedZoom;
-    centerY = worldY - (anchorY - HEIGHT / 2) / clampedZoom;
-    zoom = clampedZoom;
-    constrainCamera();
+  function zoomByDistanceRatio(
+    ratio: number,
+    anchor: ZoomAnchor | null = null,
+  ) {
+    // The globe multiplies camera-to-surface distance by this ratio. Flat-map
+    // scale is the inverse of that distance, so use the reciprocal here.
+    setZoomTarget(targetZoom / ratio, anchor);
+  }
+
+  function cursorZoomAnchor(clientX: number, clientY: number): ZoomAnchor {
+    const screen = viewBoxPoint(clientX, clientY);
+    return {
+      screenX: screen.x,
+      screenY: screen.y,
+      worldX: wrapX(centerX + (screen.x - WIDTH / 2) / zoom),
+      worldY: centerY + (screen.y - HEIGHT / 2) / zoom,
+    };
   }
 
   function handleWheel(event: WheelEvent) {
-    const point = viewBoxPoint(event.clientX, event.clientY);
-    const factor = Math.exp(-event.deltaY * 0.0014);
-    zoomAt(zoom * factor, point.x, point.y);
+    const pixelDelta =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? event.deltaY * 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? event.deltaY * Math.max(320, mapElement.clientHeight)
+          : event.deltaY;
+    const boundedDelta = clamp(
+      pixelDelta,
+      -VISITOR_VIEW_WHEEL_DELTA_CAP,
+      VISITOR_VIEW_WHEEL_DELTA_CAP,
+    );
+    const zoomRatio = Math.exp(boundedDelta * VISITOR_VIEW_WHEEL_RATE);
+
+    // Zoom toward the geographic point beneath the cursor, but preserve the
+    // globe-matched eased zoom response by moving the center a little on every
+    // animation frame instead of jumping it immediately.
+    zoomByDistanceRatio(
+      zoomRatio,
+      cursorZoomAnchor(event.clientX, event.clientY),
+    );
   }
 
   function pointerPair() {
@@ -303,25 +373,15 @@
     return Math.hypot(second.x - first.x, second.y - first.y);
   }
 
-  function midpoint(first: Point, second: Point): Point {
-    return {
-      x: (first.x + second.x) / 2,
-      y: (first.y + second.y) / 2,
-    };
-  }
-
   function beginPinch() {
     const [first, second] = pointerPair();
     if (!first || !second) return;
 
-    const middle = midpoint(first, second);
     const distance = Math.max(1, distanceBetween(first, second));
 
     pinchState = {
       distance,
-      zoom,
-      worldX: centerX + (middle.x - WIDTH / 2) / zoom,
-      worldY: centerY + (middle.y - HEIGHT / 2) / zoom,
+      zoom: targetZoom,
     };
 
     pinching = true;
@@ -333,26 +393,17 @@
     const [first, second] = pointerPair();
     if (!first || !second || !pinchState) return;
 
-    const middle = midpoint(first, second);
     const distance = Math.max(1, distanceBetween(first, second));
-    const nextZoom = clamp(
+    setZoomTarget(
       pinchState.zoom * (distance / pinchState.distance),
-      MIN_ZOOM,
-      MAX_ZOOM,
     );
-
-    zoom = nextZoom;
-    centerX =
-      pinchState.worldX - (middle.x - WIDTH / 2) / nextZoom;
-    centerY =
-      pinchState.worldY - (middle.y - HEIGHT / 2) / nextZoom;
-    constrainCamera();
   }
 
   function handlePointerDown(event: PointerEvent) {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
 
     event.preventDefault();
+    zoomAnchor = null;
     activePointers.set(
       event.pointerId,
       viewBoxPoint(event.clientX, event.clientY),
@@ -420,10 +471,22 @@
     previousPointer = null;
   }
 
-  function lightRadius(closePx: number, farPx: number, count: number) {
-    const distanceT = visitorLightMapDistanceT(zoom, MIN_ZOOM, MAX_ZOOM);
+  function lightRadius(
+    closePx: number,
+    farPx: number,
+    count: number,
+    currentZoom: number,
+  ) {
+    // currentZoom is passed explicitly from the template. Besides making the
+    // intended screen-space math clear, this gives Svelte a direct reactive
+    // dependency so every eased zoom frame updates the SVG radii.
+    const distanceT = visitorLightMapDistanceT(
+      currentZoom,
+      MIN_ZOOM,
+      MAX_ZOOM,
+    );
     const diameterPx = visitorLightSizePx(closePx, farPx, distanceT, count);
-    return (diameterPx * 0.5 * viewUnitsPerCssPixel) / zoom;
+    return (diameterPx * 0.5 * viewUnitsPerCssPixel) / currentZoom;
   }
 </script>
 
@@ -480,13 +543,13 @@
                 class="map-light-glow"
                 cx={location.x}
                 cy={location.y}
-                r={lightRadius(VISITOR_LIGHT_GLOW_CLOSE_PX, VISITOR_LIGHT_GLOW_FAR_PX, location.count)}
+                r={lightRadius(VISITOR_LIGHT_GLOW_CLOSE_PX, VISITOR_LIGHT_GLOW_FAR_PX, location.count, zoom)}
               />
               <circle
                 class="map-light-core"
                 cx={location.x}
                 cy={location.y}
-                r={lightRadius(VISITOR_LIGHT_CORE_CLOSE_PX, VISITOR_LIGHT_CORE_FAR_PX, location.count)}
+                r={lightRadius(VISITOR_LIGHT_CORE_CLOSE_PX, VISITOR_LIGHT_CORE_FAR_PX, location.count, zoom)}
               >
                 <title>
                   {location.label} — {location.count === 1 ? '1 visitor' : `${location.count} visitors`}
@@ -500,12 +563,12 @@
   </svg>
 
   <div class="map-controls" aria-label="Map controls">
-    <button type="button" aria-label="Zoom in" on:click={() => zoomAt(zoom * 1.5)}>
+    <button type="button" aria-label="Zoom in" on:click={() => zoomByDistanceRatio(1 / 1.5)}>
       +
     </button>
-    <button type="button" aria-label="Zoom out" on:click={() => zoomAt(zoom / 1.5)}>
+    <button type="button" aria-label="Zoom out" on:click={() => zoomByDistanceRatio(1.5)}>
       −
     </button>
-    <button type="button" on:click={fitLocations}>Fit</button>
+    <button type="button" on:click={() => fitLocations(false)}>Fit</button>
   </div>
 </div>

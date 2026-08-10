@@ -6,8 +6,8 @@
  * the browser's normal disclosure behavior.
  */
 .disclosure {
-  --disclosure-duration: 520ms;
-  --disclosure-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --disclosure-duration: 820ms;
+  --disclosure-easing: cubic-bezier(0.45, 0, 0.55, 1);
 }
 
 .disclosure__summary {
@@ -22,16 +22,15 @@
 
 .disclosure__arrow {
   display: grid;
-  width: 0.72rem;
-  height: 0.72rem;
+  width: clamp(2.15rem, 3.8vw, 2.65rem);
+  height: clamp(2.15rem, 3.8vw, 2.65rem);
   flex: 0 0 auto;
   place-items: center;
-  color: var(--muted);
+  color: currentColor;
   transform: rotate(0deg);
   transform-origin: 50% 50%;
-  transition:
-    color 160ms ease,
-    transform var(--disclosure-duration) var(--disclosure-easing);
+  transition: transform var(--disclosure-duration) var(--disclosure-easing);
+  will-change: transform;
 }
 
 .disclosure__arrow svg {
@@ -46,19 +45,15 @@
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.35;
+  stroke-width: 1.7;
   vector-effect: non-scaling-stroke;
 }
 
 /* data-closing keeps <details> open while its body animates to zero. */
 .disclosure[open]:not([data-closing]) > .disclosure__summary .disclosure__arrow {
-  color: var(--accent-strong);
   transform: rotate(90deg);
 }
 
-.disclosure__summary:is(:hover, :focus-visible) .disclosure__arrow {
-  color: var(--accent-strong);
-}
 
 .disclosure__body {
   overflow: clip;

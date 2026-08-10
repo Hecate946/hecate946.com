@@ -1,7 +1,7 @@
 const DISCLOSURE_SELECTOR = '[data-disclosure]';
 const BODY_SELECTOR = '[data-disclosure-body]';
-const DEFAULT_DURATION_MS = 520;
-const DEFAULT_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+const DEFAULT_DURATION_MS = 820;
+const DEFAULT_EASING = 'cubic-bezier(0.45, 0, 0.55, 1)';
 
 const activeAnimations = new WeakMap<HTMLDetailsElement, Animation>();
 
@@ -68,8 +68,8 @@ const animateOpen = (details: HTMLDetailsElement, body: HTMLElement) => {
   const targetHeight = body.scrollHeight;
   const animation = body.animate(
     [
-      { height: `${currentHeight}px`, opacity: currentHeight > 0 ? 1 : 0 },
-      { height: `${targetHeight}px`, opacity: 1 },
+      { height: `${currentHeight}px` },
+      { height: `${targetHeight}px` },
     ],
     animationOptions(details),
   );
@@ -86,8 +86,8 @@ const animateClosed = (details: HTMLDetailsElement, body: HTMLElement) => {
 
   const animation = body.animate(
     [
-      { height: `${currentHeight}px`, opacity: 1 },
-      { height: '0px', opacity: 0 },
+      { height: `${currentHeight}px` },
+      { height: '0px' },
     ],
     animationOptions(details),
   );

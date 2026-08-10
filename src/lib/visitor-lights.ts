@@ -6,6 +6,12 @@ export const VISITOR_LIGHT_GLOW_FAR_PX = 18.0;
 export const VISITOR_LIGHT_DENSITY_CAP = 0.65;
 export const VISITOR_LIGHT_DENSITY_RATE = 0.16;
 
+// Shared navigation constants. Both the flat map and globe use these exact
+// values so wheel zoom and the eased camera response feel identical.
+export const VISITOR_VIEW_ZOOM_EASING = 0.13;
+export const VISITOR_VIEW_WHEEL_RATE = 0.0012;
+export const VISITOR_VIEW_WHEEL_DELTA_CAP = 240;
+
 export interface VisitorLightGradientStop {
   offset: number;
   opacity: number;
@@ -31,11 +37,10 @@ export function visitorLightDensityScale(count: number) {
 }
 
 /**
- * Normalized apparent-distance value shared conceptually by both renderers.
- * 1 = far/world view, 0 = close/detail view.
- *
- * The flat map zoom itself is multiplicative, so use logarithmic progress to
- * make 1→2→4→8× change the lights at perceptually even intervals.
+ * Normalized apparent-distance value for the flat map. 1 = far/world view and
+ * 0 = close/detail view. Map scale is treated as the inverse of camera surface
+ * distance, matching the globe's zoom model: equal wheel input multiplies the
+ * effective distance, and light size follows that same eased distance.
  */
 export function visitorLightMapDistanceT(
   zoom: number,
@@ -45,10 +50,14 @@ export function visitorLightMapDistanceT(
   const safeMinimum = Math.max(0.0001, minimumZoom);
   const safeMaximum = Math.max(safeMinimum + 0.0001, maximumZoom);
   const clampedZoom = clamp(zoom, safeMinimum, safeMaximum);
-  const closeProgress =
-    Math.log(clampedZoom / safeMinimum) /
-    Math.log(safeMaximum / safeMinimum);
-  return 1 - clamp(closeProgress, 0, 1);
+  const farDistance = 1 / safeMinimum;
+  const closeDistance = 1 / safeMaximum;
+  const currentDistance = 1 / clampedZoom;
+  return clamp(
+    (currentDistance - closeDistance) / (farDistance - closeDistance),
+    0,
+    1,
+  );
 }
 
 export function visitorLightSizePx(

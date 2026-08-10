@@ -7,6 +7,9 @@
     VISITOR_LIGHT_CORE_FAR_PX,
     VISITOR_LIGHT_GLOW_CLOSE_PX,
     VISITOR_LIGHT_GLOW_FAR_PX,
+    VISITOR_VIEW_WHEEL_DELTA_CAP,
+    VISITOR_VIEW_WHEEL_RATE,
+    VISITOR_VIEW_ZOOM_EASING,
     visitorLightDensityScale,
   } from '@/lib/visitor-lights';
 
@@ -993,8 +996,12 @@
           : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
             ? event.deltaY * Math.max(320, shell.clientHeight)
             : event.deltaY;
-      const boundedDelta = clamp(pixelDelta, -240, 240);
-      const zoomRatio = Math.exp(boundedDelta * 0.0012);
+      const boundedDelta = clamp(
+        pixelDelta,
+        -VISITOR_VIEW_WHEEL_DELTA_CAP,
+        VISITOR_VIEW_WHEEL_DELTA_CAP,
+      );
+      const zoomRatio = Math.exp(boundedDelta * VISITOR_VIEW_WHEEL_RATE);
       targetCameraZ = zoomFromSurfaceDistance(targetCameraZ, zoomRatio);
       tooltipVisible = false;
     }
@@ -1062,7 +1069,8 @@
         inertiaAngle *= 0.90;
       }
 
-      camera.position.z += (targetCameraZ - camera.position.z) * 0.13;
+      camera.position.z +=
+        (targetCameraZ - camera.position.z) * VISITOR_VIEW_ZOOM_EASING;
       markerCoreMaterial.uniforms.cameraZ.value = camera.position.z;
       markerGlowMaterial.uniforms.cameraZ.value = camera.position.z;
       renderer.render(scene, camera);

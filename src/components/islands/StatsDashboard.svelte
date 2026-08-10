@@ -423,11 +423,6 @@
       <article class="stats-panel stats-panel-map">
         <div class="stats-panel-heading">
           <h3>Where people visit from</h3>
-          <p>
-            {mapView === '2d'
-              ? 'Visitor lights coalesce by approximate location; drag or scroll to explore.'
-              : 'The same visitor lights on a draggable globe; scroll or pinch to zoom.'}
-          </p>
         </div>
 
         {#if liveStats?.locations?.length}

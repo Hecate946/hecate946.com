@@ -68,79 +68,94 @@
   vertical-align: baseline;
 }
 
-/* Resumes stay visible even when every discipline is collapsed. In HTML mode,
-   this degrades naturally to a heading and a two-item list of PDF links. */
+/* Resumes are a first-class About section, not utility chrome. In HTML mode,
+   this remains a simple section heading followed by a numbered list of links. */
 .about-resumes {
   margin-top: var(--about-dropdown-space);
-  padding-block: clamp(1rem, 2vw, 1.35rem);
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  margin-bottom: clamp(2.25rem, 4.5vw, 3.25rem);
 }
 
 .about-resumes h2 {
-  margin: 0 0 0.9rem;
-  color: var(--muted);
-  font-family: var(--font-body);
-  font-size: 0.68rem;
-  font-weight: 650;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  margin: 0 0 clamp(0.85rem, 1.8vw, 1.05rem);
+  color: var(--accent-strong);
+  font-family: var(--font-display);
+  font-size: clamp(1.28rem, 2vw, 1.62rem);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1;
 }
 
 .about-resume-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   list-style: none;
-}
-
-.about-resume-list li {
-  min-width: 0;
+  counter-reset: resume;
 }
 
 .about-resume-list li + li {
-  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
 }
 
 .about-resume-list a {
-  display: flex;
-  min-height: 2.4rem;
+  display: grid;
+  min-height: 3.15rem;
+  grid-template-columns: 2.15rem minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.9rem;
+  gap: clamp(0.75rem, 2vw, 1.2rem);
   color: var(--text);
-  font-family: var(--font-display);
-  font-size: clamp(0.94rem, 1.4vw, 1.04rem);
-  line-height: 1.3;
   text-decoration: none;
-  transition: color 160ms ease;
+  transition: color 180ms ease;
 }
 
-.about-resume-list li:first-child a {
-  padding-right: clamp(1rem, 3vw, 1.5rem);
+.about-resume-list a::before {
+  counter-increment: resume;
+  color: var(--muted);
+  content: counter(resume, decimal-leading-zero);
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  transition: color 180ms ease;
 }
 
-.about-resume-list li:last-child a {
-  padding-left: clamp(1rem, 3vw, 1.5rem);
+.about-resume-title {
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: clamp(0.96rem, 1.45vw, 1.08rem);
+  line-height: 1.2;
+}
+
+.about-resume-format {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
 }
 
 .about-resume-list a:is(:hover, :focus-visible) {
   color: var(--accent-strong);
 }
 
-.about-resume-format {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-family: var(--font-body);
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+.about-resume-list a:is(:hover, :focus-visible)::before,
+.about-resume-list a:is(:hover, :focus-visible) .about-resume-format {
+  color: var(--accent-strong);
+}
+
+.about-resume-list a:is(:hover, :focus-visible) .about-resume-format {
+  transform: translate(0.12rem, -0.08rem);
 }
 
 .about-disciplines {
   margin-bottom: var(--about-outer-space);
+  border-top: 1px solid var(--line);
 }
 
 /* Native details/summary is intentional: the same markup remains a usable,
@@ -152,15 +167,16 @@
 
 .passion-heading {
   display: flex;
-  min-height: clamp(4.25rem, 8vw, 5.4rem);
+  min-height: clamp(3.25rem, 5.6vw, 3.8rem);
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  color: var(--accent-strong);
 }
 
 .passion-heading h2 {
   margin: 0;
-  color: var(--accent-strong);
+  color: inherit;
   font-family: var(--font-display);
   font-size: clamp(1.38rem, 2.2vw, 1.9rem);
   font-weight: 400;
@@ -415,22 +431,18 @@
     margin-left: auto;
   }
 
-  .about-resume-list {
-    grid-template-columns: 1fr;
+  .about-resume-list a {
+    min-height: 3rem;
+    grid-template-columns: 1.8rem minmax(0, 1fr) auto;
+    gap: 0.65rem;
   }
 
-  .about-resume-list li + li {
-    border-top: 1px solid var(--line);
-    border-left: 0;
-  }
-
-  .about-resume-list li:first-child a,
-  .about-resume-list li:last-child a {
-    padding: 0.7rem 0;
+  .about-resume-title {
+    font-size: 0.96rem;
   }
 
   .passion-heading {
-    min-height: 4.2rem;
+    min-height: 3.3rem;
   }
 
   .passion-heading h2 {
