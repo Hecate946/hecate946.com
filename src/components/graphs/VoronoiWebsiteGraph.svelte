@@ -83,7 +83,7 @@
   function groupForNode(node: GraphNode): keyof typeof WEBSITE_GRAPH_GROUP_COLORS {
     const path = node.id.toLowerCase();
     if (path === '/' || path === '/graph/' || path === '/graph') return 'core';
-    if (/^\/(about|resume|contact|stats)\/?$/.test(path)) return 'profile';
+    if (/^\/(about|contact)\/?$/.test(path)) return 'profile';
     if (path.startsWith('/projects/')) return 'projects';
     if (path.startsWith('/rooms/') || path.startsWith('/halls/')) return 'spaces';
     return 'experiments';

@@ -59,19 +59,9 @@ const PAGE_METADATA: Record<
     description: 'Biography and current work',
     category: 'profile',
   },
-  '/resume/': {
-    label: 'Resume',
-    description: 'Software and music experience',
-    category: 'profile',
-  },
   '/contact/': {
     label: 'Contact',
     description: 'Ways to get in touch',
-    category: 'profile',
-  },
-  '/stats/': {
-    label: 'Stats',
-    description: 'Live site and activity statistics',
     category: 'profile',
   },
   '/lab/': {
@@ -129,11 +119,6 @@ const PAGE_METADATA: Record<
     description: 'Seasonal animation showcase',
     category: 'experiments',
   },
-  '/chess-board/': {
-    label: 'Chess Board',
-    description: 'Interactive chess-board study',
-    category: 'experiments',
-  },
 };
 
 const CATEGORY_CENTERS: Record<SiteMapCategory, { x: number; y: number }> = {
@@ -170,7 +155,7 @@ function humanizeSegment(value: string) {
 
 function categoryForPath(path: string): SiteMapCategory {
   if (path === '/') return 'core';
-  if (/^\/(about|resume|contact|stats)\//.test(path)) return 'profile';
+  if (/^\/(about|contact)\//.test(path)) return 'profile';
   if (path.startsWith('/projects/')) return 'projects';
   if (path.startsWith('/rooms/') || path.startsWith('/halls/')) return 'spaces';
   return 'experiments';

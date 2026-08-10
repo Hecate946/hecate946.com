@@ -1,17 +1,18 @@
 ---
+import StatsDashboard from '@/components/islands/StatsDashboard.svelte';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { siteRoutes } from '@/lib/site-routes';
 import { withBase } from '@/lib/paths';
+import { STATS_API_BASE } from '@/lib/stats-api';
 import '@/styles/lab.css';
+import '@/styles/stats.css';
 
 const primaryRoutes = new Set([
   '/',
   '/about/',
-  '/resume/',
   '/projects/',
-  '/lab/',
   '/contact/',
-  '/stats/',
+  '/lab/',
 ]);
 
 const labRoutes = siteRoutes.filter(
@@ -38,12 +39,15 @@ const sections = [
   },
 ].filter((section) => section.routes.length > 0);
 
+const statsApiBase = STATS_API_BASE;
+const codeStatsUrl = withBase('/generated/code-stats.json');
+
 let routeNumber = 0;
 ---
 
 <BaseLayout
   title="Lab"
-  description="Experiments, prototypes, immersive spaces, and side paths from hecate946.com."
+  description="Live site statistics, experiments, prototypes, immersive spaces, and side paths from hecate946.com."
 >
   <section class="lab-page interior-page interior-page--eight" aria-labelledby="lab-title">
     <header class="lab-heading interior-page-heading">
@@ -54,39 +58,65 @@ let routeNumber = 0;
     </header>
 
     <div class="lab-content interior-page-content interior-page-content--balanced">
-      <p class="lab-intro">
-        Experiments, prototypes, rooms, and other things that are allowed to stay a little strange.
-      </p>
+      <section class="lab-stats" aria-labelledby="lab-stats-heading" data-default-only>
+        <header class="lab-section-heading lab-stats-heading">
+          <h2 id="lab-stats-heading">Stats</h2>
+        </header>
+        <StatsDashboard
+          client:visible
+          apiBase={statsApiBase}
+          {codeStatsUrl}
+        />
+      </section>
 
-      <div class="lab-index">
-        {
-          sections.map((section) => (
-            <section class="lab-section" aria-labelledby={`lab-${section.id}`}>
-              <header class="lab-section-heading">
-                <h2 id={`lab-${section.id}`}>{section.label}</h2>
-                <span>{String(section.routes.length).padStart(2, '0')}</span>
-              </header>
+      <section data-html-only hidden aria-labelledby="html-lab-stats-heading">
+        <h2 id="html-lab-stats-heading">Stats</h2>
+        <p>
+          Live website statistics, generated code statistics, and local browser statistics are available in the standard site view.
+        </p>
+      </section>
 
-              <ol class="lab-list">
-                {section.routes.map((route) => {
-                  routeNumber += 1;
-                  const index = String(routeNumber).padStart(2, '0');
-                  return (
-                    <li>
-                      <a href={withBase(route.href)} data-astro-prefetch>
-                        <span class="lab-number" aria-hidden="true">{index}</span>
-                        <span class="lab-name">{route.label}</span>
-                        <span class="lab-description">{route.description ?? route.href}</span>
-                        <span class="lab-arrow" aria-hidden="true">↗</span>
-                      </a>
-                    </li>
-                  );
-                })}
-              </ol>
-            </section>
-          ))
-        }
-      </div>
+      <section class="lab-index-block" aria-labelledby="lab-index-heading">
+        <header class="lab-section-heading lab-index-heading">
+          <h2 id="lab-index-heading">Index</h2>
+          <span>{String(labRoutes.length).padStart(2, '0')}</span>
+        </header>
+
+        <p class="lab-intro">
+          Experiments, prototypes, rooms, and other things that are allowed to stay a little strange.
+        </p>
+
+        <div class="lab-index">
+          {
+            sections.map((section) => (
+              <section class="lab-section" aria-labelledby={`lab-${section.id}`}>
+                <header class="lab-section-heading">
+                  <h3 id={`lab-${section.id}`}>{section.label}</h3>
+                  <span>{String(section.routes.length).padStart(2, '0')}</span>
+                </header>
+
+                <ol class="lab-list">
+                  {section.routes.map((route) => {
+                    routeNumber += 1;
+                    const index = String(routeNumber).padStart(2, '0');
+                    return (
+                      <li>
+                        <a href={withBase(route.href)} data-astro-prefetch>
+                          <span class="lab-number" aria-hidden="true">{index}</span>
+                          <span class="lab-name">{route.label}</span>
+                          <span class="lab-description">{route.description ?? route.href}</span>
+                          <span class="lab-arrow" aria-hidden="true">↗</span>
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            ))
+          }
+        </div>
+      </section>
+
     </div>
   </section>
 </BaseLayout>

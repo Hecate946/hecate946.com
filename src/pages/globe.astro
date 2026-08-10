@@ -18,14 +18,14 @@ const statsApiBase = STATS_API_BASE;
   noindex={true}
 >
   <div class="visitor-globe-page" data-default-only>
-    <a class="visitor-globe-close" href={withBase('/stats/')} aria-label="Back to stats">×</a>
+    <a class="visitor-globe-close" href={withBase('/lab/')} aria-label="Back to Lab">×</a>
     <VisitorGlobeClearV2 client:load apiBase={statsApiBase} />
   </div>
 
   <section class="visitor-globe-html" data-html-only hidden>
     <h1>Visitor Globe</h1>
     <p>The interactive 3D globe is available in the default visual mode.</p>
-    <p><a href={withBase('/stats/')}>Back to Stats</a></p>
+    <p><a href={withBase('/lab/')}>Back to Lab</a></p>
   </section>
 </BaseLayout>
 

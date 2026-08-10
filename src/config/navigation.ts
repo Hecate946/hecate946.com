@@ -5,19 +5,14 @@ export interface HeaderNavItem {
   match?: readonly string[];
 }
 
-/**
- * Add, remove, or reorder navigation tabs here.
- * The header automatically redistributes the available tab space.
- */
+/** Primary navigation order. */
 export const headerNavigation = [
   { label: 'About', href: '/about/' },
-  { label: 'Resume', href: '/resume/' },
   {
     label: 'Projects',
     href: '/projects/',
     match: ['/code/', '/clarinet/', '/piano/'],
   },
-  { label: 'Lab', href: '/lab/' },
   { label: 'Contact', href: '/contact/' },
-  { label: 'Stats', href: '/stats/' },
+  { label: 'Lab', href: '/lab/' },
 ] as const satisfies readonly HeaderNavItem[];

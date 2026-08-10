@@ -13,81 +13,12 @@ export const siteConfig = {
   },
 } as const;
 
-/**
- * The deliberately small navigation shown in the site header.
- * Legacy header navigation mirror retained for components that import this file directly.
- */
-export const headerNavigation = [
-  { label: 'About', href: '/about/' },
-  { label: 'Resume', href: '/resume/' },
-  { label: 'Projects', href: '/projects/' },
-  { label: 'Lab', href: '/lab/' },
-  { label: 'Contact', href: '/contact/' },
-  { label: 'Stats', href: '/stats/' },
-] as const;
-
-/**
- * The complete site map used by the command palette and other discovery UI.
- */
+/** Destinations exposed through the command palette beyond the header tabs. */
 export const navigation = [
   { label: 'Home', href: '/' },
-  { label: 'Graph', href: '/graph/' },
-  // { label: 'Code', href: '/code/' },
-  // { label: 'Clarinet', href: '/clarinet/' },
-  // { label: 'Piano', href: '/piano/' },
-  // { label: 'Chess', href: '/chess/' },
-  { label: 'Projects', href: '/projects/' },
-  { label: 'Lab', href: '/lab/' },
-  { label: 'Contact', href: '/contact/' },
-  { label: 'Stats', href: '/stats/' },
   { label: 'About', href: '/about/' },
+  { label: 'Projects', href: '/projects/' },
+  { label: 'Contact', href: '/contact/' },
+  { label: 'Lab', href: '/lab/' },
+  { label: 'Graph', href: '/graph/' },
 ] as const;
-
-export const interests = [
-  {
-    id: 'code',
-    title: 'Computer Science',
-    eyebrow: 'Systems & experiments',
-    description:
-      'Software projects, technical writing, and interactive prototypes.',
-    href: '/code/',
-    symbol: '</>',
-  },
-  {
-    id: 'clarinet',
-    title: 'Clarinet',
-    eyebrow: 'Air & resonance',
-    description: 'Performances, repertoire, recordings, and musical research.',
-    href: '/clarinet/',
-    symbol: '♩',
-  },
-  {
-    id: 'piano',
-    title: 'Piano',
-    eyebrow: 'Harmony & collaboration',
-    description:
-      'Chamber music, sight-reading, collaborative work, and recordings.',
-    href: '/piano/',
-    symbol: '⌨',
-  },
-  {
-    id: 'chess',
-    title: 'Chess',
-    eyebrow: 'Decisions & lookahead',
-    description:
-      'Games, positions, puzzles, and analysis of thought processes.',
-    href: '/chess/',
-    symbol: '♞',
-  },
-  {
-    id: 'pickleball',
-    title: 'Pickleball',
-    eyebrow: 'Movement & reaction',
-    description:
-      'Strategy, training notes, match data, and motion experiments.',
-    href: '/about/#pickleball-heading',
-    symbol: '◉',
-  },
-] as const;
-
-export type InterestId = (typeof interests)[number]['id'];

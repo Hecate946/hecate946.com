@@ -20,18 +20,13 @@ const FRAME_WIDTH = 340;
 const FRAME_HEIGHT = 420;
 
 /**
- * Center-to-center frame spacing. Keeping the gap equal to one full-size frame
- * makes the gallery a little denser without feeling crowded. With five
- * destinations this also produces a 3360px lap, exactly divisible by both
- * the 96px brick repeat and 120px floor repeat.
+ * Four evenly spaced destinations. A 600px interval keeps the gallery compact
+ * while making the 2400px loop divide cleanly into both the 96px brick repeat
+ * and the 120px floor repeat, so a full revolution remains seamless.
  */
-const FRAME_SPACING = 672;
+const FRAME_SPACING = 600;
 
-/**
- * Left-to-right wall order and artwork. The loop width is derived from this
- * array, so adding/removing a destination automatically resizes one complete
- * wall lap while preserving perfectly even spacing across the wrap.
- */
+/** Primary site order: About → Projects → Contact → Lab. */
 const destinationDefinitions = [
   {
     id: 'about',
@@ -40,15 +35,6 @@ const destinationDefinitions = [
     painting: {
       src: '/paintings/the-stare.webp',
       name: 'The Stare',
-    },
-  },
-  {
-    id: 'resume',
-    label: 'Resume',
-    href: '/resume/',
-    painting: {
-      src: '/paintings/ransom.webp',
-      name: 'Ransom',
     },
   },
   {
@@ -70,9 +56,9 @@ const destinationDefinitions = [
     },
   },
   {
-    id: 'stats',
-    label: 'Stats',
-    href: '/stats/',
+    id: 'lab',
+    label: 'Lab',
+    href: '/lab/',
     painting: {
       src: '/paintings/madame-le-peletier.webp',
       name: 'Madame Le Peletier',

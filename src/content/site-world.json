@@ -21,21 +21,9 @@
       "parent": "home"
     },
     {
-      "id": "resume",
-      "label": "Resume",
-      "href": "/resume/",
-      "parent": "home"
-    },
-    {
       "id": "contact",
       "label": "Contact",
       "href": "/contact/",
-      "parent": "home"
-    },
-    {
-      "id": "stats",
-      "label": "Stats",
-      "href": "/stats/",
       "parent": "home"
     },
     {
@@ -97,12 +85,6 @@
       "label": "The Museum",
       "href": "/halls/museum/",
       "parent": "halls"
-    },
-    {
-      "id": "chess-board",
-      "label": "Chess Board",
-      "href": "/chess-board/",
-      "parent": "green-room"
     }
   ],
   "views": [

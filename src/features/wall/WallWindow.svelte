@@ -11,7 +11,7 @@
   const indexLabel = wallIndex(destination.id);
 
   function wallIndex(id: string) {
-    const order = ['about', 'resume', 'projects', 'contact', 'stats'];
+    const order = ['about', 'projects', 'contact', 'lab'];
     const index = order.indexOf(id);
     return String(index + 1).padStart(2, '0');
   }

@@ -112,7 +112,14 @@ function isSensitive(path) {
   if (alwaysExcludedNames.has(basename)) return true;
   if (basename.startsWith('.env.') && basename !== '.env.example') return true;
   if (/\.(key|pem|p12|pfx)$/i.test(basename)) return true;
-  if (/(^|[-_.])(secret|secrets|credential|credentials|token|tokens)([-_.]|$)/i.test(basename)) {
+
+  // Design-token stylesheets are ordinary source code. Do not confuse
+  // `src/styles/tokens.css` with an authentication token when packaging.
+  const isDesignTokenStylesheet = basename === 'tokens.css';
+  if (
+    !isDesignTokenStylesheet &&
+    /(^|[-_.])(secret|secrets|credential|credentials|token|tokens)([-_.]|$)/i.test(basename)
+  ) {
     return true;
   }
   return false;

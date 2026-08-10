@@ -15,7 +15,22 @@
 
 .lab-content {
   display: grid;
-  gap: clamp(2.5rem, 5vw, 4.75rem);
+  gap: clamp(3.5rem, 7vw, 6.5rem);
+}
+
+.lab-stats,
+.lab-index-block {
+  display: grid;
+  min-width: 0;
+  gap: clamp(2rem, 4vw, 3.25rem);
+}
+
+.lab-stats-heading {
+  margin-bottom: -0.35rem;
+}
+
+.lab-index-heading {
+  margin-bottom: -1rem;
 }
 
 .lab-intro {
@@ -45,6 +60,7 @@
 }
 
 .lab-section-heading h2,
+.lab-section-heading h3,
 .lab-section-heading span {
   margin: 0;
   font-family: var(--font-mono);
