@@ -60,6 +60,4 @@
       </svg>
     </span>
   </button>
-
-  <span class="mode-label"><span class="ui-text">Mode</span></span>
 </div>

@@ -109,13 +109,6 @@ const commandItems = Array.from(
     {!hideFooter && <Footer />}
     <CommandPalette client:idle items={commandItems} />
 
-    <div
-      class="site-sound-toast"
-      data-site-sound-toast
-      data-default-only
-      role="status"
-      aria-live="polite"
-    ></div>
 
     <script>
       import { initializeHtmlMode } from '@/lib/html-mode';

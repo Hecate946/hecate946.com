@@ -125,6 +125,14 @@
       }
     };
 
+    const readPercentPreference = (key) => {
+      const raw = readPreference(key);
+      if (raw === null) return 0;
+      const value = Number(raw);
+      if (!Number.isFinite(value)) return 0;
+      return Math.min(100, Math.max(0, Math.round(value)));
+    };
+
     const resolvePreferences = () => {
       const savedSeason = readPreference('season-preference');
       const seasonPreference = seasonNames.includes(savedSeason)
@@ -144,20 +152,24 @@
         seasonPreference,
         season,
         theme,
-        soundEnabled: readPreference('site-sound') === 'on',
+        musicVolume: readPercentPreference('site-audio:music-volume'),
+        sfxVolume: readPercentPreference('site-audio:sfx-volume'),
         htmlMode: readPreference('html-mode') === 'html',
       };
     };
 
     const applyPreferences = (targetDocument = document) => {
-      const { seasonPreference, season, theme, soundEnabled, htmlMode } =
+      const { seasonPreference, season, theme, musicVolume, sfxVolume, htmlMode } =
         resolvePreferences();
       const root = targetDocument.documentElement;
 
       root.dataset.seasonPreference = seasonPreference;
       root.dataset.season = season;
       root.dataset.theme = theme;
-      root.dataset.soundEnabled = String(soundEnabled);
+      root.dataset.musicVolume = String(musicVolume);
+      root.dataset.sfxVolume = String(sfxVolume);
+      root.dataset.soundEnabled = String(sfxVolume > 0);
+      root.dataset.audioActive = String(musicVolume > 0 || sfxVolume > 0);
       root.dataset.themeReady = 'true';
       root.style.colorScheme = htmlMode ? 'light' : theme;
       applyHtmlPresentation(targetDocument, htmlMode);

@@ -1,6 +1,4 @@
-const SOUND_STORAGE_KEY = 'site-sound';
-const SOUND_ENABLED_VALUE = 'on';
-const SOUND_DISABLED_VALUE = 'off';
+import { getSfxGain, initializeSiteAudio } from '@/lib/site-audio';
 
 type SoundKind =
   | 'click'
@@ -18,7 +16,6 @@ type WebkitWindow = Window &
 
 let audioContext: AudioContext | null = null;
 let pageTurnAudio: HTMLAudioElement | null = null;
-let toastTimer: number | undefined;
 let collisionNoteIndex = 0;
 let nextCollisionNoteTime = 0;
 
@@ -35,16 +32,7 @@ type SiteSoundWindow = Window &
     __hecateSiteSoundInstalled?: boolean;
   };
 
-const readStoredSoundPreference = () => {
-  try {
-    return localStorage.getItem(SOUND_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-};
-
-const isEnabled = () =>
-  document.documentElement.dataset.soundEnabled === 'true';
+const isEnabled = () => getSfxGain() > 0;
 
 const getAudioContext = () => {
   if (audioContext) return audioContext;
@@ -70,7 +58,7 @@ const createNoiseBuffer = (context: AudioContext, seconds: number) => {
 
 const connectMaster = (context: AudioContext, volume: number) => {
   const gain = context.createGain();
-  gain.gain.value = volume;
+  gain.gain.value = volume * getSfxGain();
   gain.connect(context.destination);
   return gain;
 };
@@ -179,14 +167,14 @@ const getPageTurnAudio = () => {
 
   pageTurnAudio = new Audio('/audio/sounds/page-turn.mp3');
   pageTurnAudio.preload = 'auto';
-  pageTurnAudio.volume = 0.55;
+  pageTurnAudio.volume = 0.55 * getSfxGain();
   return pageTurnAudio;
 };
 
 const playPageTurn = () => {
   const template = getPageTurnAudio();
   const sound = template.cloneNode(true) as HTMLAudioElement;
-  sound.volume = 0.55;
+  sound.volume = 0.55 * getSfxGain();
   void sound.play().catch(() => undefined);
 };
 
@@ -279,98 +267,6 @@ const playSound = async (kind: SoundKind) => {
   else playClick(context, now);
 };
 
-let toastSequence = 0;
-
-const animateToast = (
-  toast: HTMLElement,
-  keyframes: Keyframe[],
-  options: KeyframeAnimationOptions,
-) => {
-  toast.getAnimations().forEach((animation) => animation.cancel());
-  return toast.animate(keyframes, options);
-};
-
-const showToast = (message: string) => {
-  const toast = document.querySelector<HTMLElement>('[data-site-sound-toast]');
-  if (!toast) return;
-
-  window.clearTimeout(toastTimer);
-  const sequence = ++toastSequence;
-  const computed = window.getComputedStyle(toast);
-  const currentOpacity = Number.parseFloat(computed.opacity) || 0;
-  const currentTransform = computed.transform === 'none'
-    ? 'translate(-50%, calc(-50% + 0.45rem))'
-    : computed.transform;
-
-  const revealMessage = () => {
-    if (sequence !== toastSequence) return;
-
-    toast.textContent = message;
-    toast.dataset.visible = 'true';
-    toast.style.opacity = '0';
-    toast.style.transform = 'translate(-50%, calc(-50% + 0.35rem))';
-
-    const entrance = animateToast(
-      toast,
-      [
-        { opacity: 0, transform: 'translate(-50%, calc(-50% + 0.35rem))' },
-        { opacity: 1, transform: 'translate(-50%, -50%)' },
-      ],
-      { duration: 460, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
-    );
-
-    entrance.onfinish = () => {
-      if (sequence !== toastSequence) return;
-      toast.style.opacity = '1';
-      toast.style.transform = 'translate(-50%, -50%)';
-    };
-
-    toastTimer = window.setTimeout(() => {
-      if (sequence !== toastSequence) return;
-      const exit = animateToast(
-        toast,
-        [
-          { opacity: 1, transform: 'translate(-50%, -50%)' },
-          { opacity: 0, transform: 'translate(-50%, calc(-50% - 0.2rem))' },
-        ],
-        { duration: 560, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
-      );
-
-      exit.onfinish = () => {
-        if (sequence !== toastSequence) return;
-        toast.dataset.visible = 'false';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translate(-50%, calc(-50% + 0.45rem))';
-      };
-    }, 3_250);
-  };
-
-  if (currentOpacity > 0.03) {
-    const transitionOut = animateToast(
-      toast,
-      [
-        { opacity: currentOpacity, transform: currentTransform },
-        { opacity: 0, transform: 'translate(-50%, calc(-50% - 0.12rem))' },
-      ],
-      { duration: 190, easing: 'ease-out', fill: 'forwards' },
-    );
-    transitionOut.onfinish = revealMessage;
-  } else {
-    revealMessage();
-  }
-};
-
-const updateToggle = (enabled = isEnabled()) => {
-  document.querySelectorAll<HTMLButtonElement>('[data-sound-toggle]').forEach((toggle) => {
-    const label = enabled ? 'Disable sounds' : 'Enable sounds';
-    toggle.setAttribute('aria-pressed', String(enabled));
-    toggle.setAttribute('aria-label', label);
-    toggle.dataset.label = label;
-    const text = toggle.querySelector<HTMLElement>('[data-sound-toggle-text]');
-    if (text) text.textContent = label;
-  });
-};
-
 const isExternalLink = (anchor: HTMLAnchorElement) => {
   const href = anchor.getAttribute('href') ?? '';
   if (/^(mailto:|tel:|sms:)/i.test(href)) return true;
@@ -408,30 +304,6 @@ const handleClick = (event: MouseEvent) => {
   const target = event.target;
   if (!(target instanceof Element)) return;
   if (target.closest('[data-site-sound-silent]')) return;
-
-  const toggle = target.closest<HTMLButtonElement>('[data-sound-toggle]');
-  if (toggle) {
-    const enabled = !isEnabled();
-    document.documentElement.dataset.soundEnabled = String(enabled);
-    updateToggle(enabled);
-
-    try {
-      localStorage.setItem(
-        SOUND_STORAGE_KEY,
-        enabled ? SOUND_ENABLED_VALUE : SOUND_DISABLED_VALUE,
-      );
-    } catch {
-      // Sound still changes for the current page if storage is unavailable.
-    }
-
-    if (enabled) {
-      void playSound('click');
-      showToast('Sounds are enabled, click again to disable');
-    } else {
-      showToast('Sounds are disabled');
-    }
-    return;
-  }
 
   if (!isEnabled()) return;
 
@@ -493,19 +365,13 @@ export const playNetworkCollisionNote = async () => {
   playCollisionNote(context, startTime);
 };
 
-const applyStoredSoundPreference = () => {
-  const enabled = readStoredSoundPreference() === SOUND_ENABLED_VALUE;
-  document.documentElement.dataset.soundEnabled = String(enabled);
-  updateToggle(enabled);
-};
-
 export const initializeSiteSound = () => {
-  applyStoredSoundPreference();
-  getPageTurnAudio().load();
+  initializeSiteAudio();
 
   const siteSoundWindow = window as SiteSoundWindow;
   if (siteSoundWindow.__hecateSiteSoundInstalled) return;
 
+  getPageTurnAudio().load();
   siteSoundWindow.__hecateSiteSoundInstalled = true;
   document.addEventListener('click', handleClick, { capture: true });
   document.addEventListener('change', handleChange, { capture: true });

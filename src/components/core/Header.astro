@@ -4,6 +4,7 @@ import { headerNavigation, type HeaderNavItem } from '@/config/navigation';
 import { isCurrentPath, withBase } from '@/lib/paths';
 
 import ColorModeToggle from '@/components/islands/ColorModeToggle.svelte';
+import SoundSettings from '@/components/islands/SoundSettings.svelte';
 import SeasonSelector from '@/components/islands/SeasonSelector.svelte';
 
 import '@/styles/layout.css';
@@ -48,7 +49,10 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
     </nav>
 
     <div class="mode-slot header-region">
-      <ColorModeToggle client:idle />
+      <div class="header-control-pair">
+        <SoundSettings client:load />
+        <ColorModeToggle client:idle />
+      </div>
     </div>
 
     <div class="seasons-slot header-region">
