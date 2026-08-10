@@ -20,7 +20,7 @@ const EVENT_NAMES = new Set([
 
 function emptyStore() {
   return {
-    version: 1,
+    version: 2,
     firstEventAt: null,
     updatedAt: null,
     visitors: {},
@@ -28,6 +28,88 @@ function emptyStore() {
     daily: {},
     pages: {},
     events: {},
+    visitorLocations: {},
+  };
+}
+
+const LOCAL_TIMEZONE_POINTS = new Map([
+  ['America/Los_Angeles', [37.0, -120.0, 'Pacific Time']],
+  ['America/Vancouver', [49.25, -123.1, 'Pacific Time']],
+  ['America/Phoenix', [33.45, -112.07, 'Arizona Time']],
+  ['America/Denver', [39.0, -106.0, 'Mountain Time']],
+  ['America/Chicago', [39.0, -97.0, 'Central Time']],
+  ['America/New_York', [39.0, -77.0, 'Eastern Time']],
+  ['America/Toronto', [43.65, -79.38, 'Eastern Time']],
+  ['America/Anchorage', [61.2, -149.9, 'Alaska Time']],
+  ['Pacific/Honolulu', [21.31, -157.86, 'Hawaii Time']],
+  ['America/Mexico_City', [19.43, -99.13, 'Central Mexico Time']],
+  ['America/Sao_Paulo', [-23.55, -46.63, 'Brasília Time']],
+  ['America/Buenos_Aires', [-34.6, -58.38, 'Argentina Time']],
+  ['Europe/London', [51.51, -0.13, 'UK Time']],
+  ['Europe/Paris', [48.86, 2.35, 'Central European Time']],
+  ['Europe/Berlin', [52.52, 13.4, 'Central European Time']],
+  ['Europe/Madrid', [40.42, -3.7, 'Central European Time']],
+  ['Europe/Rome', [41.9, 12.5, 'Central European Time']],
+  ['Europe/Amsterdam', [52.37, 4.9, 'Central European Time']],
+  ['Europe/Warsaw', [52.23, 21.01, 'Central European Time']],
+  ['Europe/Moscow', [55.76, 37.62, 'Moscow Time']],
+  ['Asia/Jerusalem', [31.78, 35.22, 'Israel Time']],
+  ['Asia/Dubai', [25.2, 55.27, 'Gulf Time']],
+  ['Asia/Kolkata', [22.57, 88.36, 'India Time']],
+  ['Asia/Singapore', [1.35, 103.82, 'Singapore Time']],
+  ['Asia/Hong_Kong', [22.32, 114.17, 'Hong Kong Time']],
+  ['Asia/Shanghai', [31.23, 121.47, 'China Time']],
+  ['Asia/Seoul', [37.57, 126.98, 'Korea Time']],
+  ['Asia/Tokyo', [35.68, 139.76, 'Japan Time']],
+  ['Australia/Perth', [-31.95, 115.86, 'Western Australia Time']],
+  ['Australia/Adelaide', [-34.93, 138.6, 'Central Australia Time']],
+  ['Australia/Sydney', [-33.87, 151.21, 'Eastern Australia Time']],
+  ['Australia/Melbourne', [-37.81, 144.96, 'Eastern Australia Time']],
+  ['Pacific/Auckland', [-36.85, 174.76, 'New Zealand Time']],
+  ['Africa/Cairo', [30.04, 31.24, 'Egypt Time']],
+  ['Africa/Johannesburg', [-26.2, 28.05, 'South Africa Time']],
+  ['Africa/Lagos', [6.52, 3.38, 'West Africa Time']],
+  ['Africa/Nairobi', [-1.29, 36.82, 'East Africa Time']],
+  ['Etc/UTC', [0, 0, 'UTC']],
+  ['UTC', [0, 0, 'UTC']],
+]);
+
+const LOCAL_TIMEZONE_FALLBACKS = [
+  ['America/', [39, -98, 'Americas timezone']],
+  ['Europe/', [50, 10, 'European timezone']],
+  ['Africa/', [3, 20, 'African timezone']],
+  ['Asia/', [34, 100, 'Asian timezone']],
+  ['Australia/', [-25, 134, 'Australian timezone']],
+  ['Pacific/', [-12, 170, 'Pacific timezone']],
+  ['Indian/', [-12, 75, 'Indian Ocean timezone']],
+];
+
+function readLocalApproximateLocation(body) {
+  const rawTimeZone = body?.properties?.__localTimeZone;
+  if (typeof rawTimeZone !== 'string') return null;
+
+  const timeZone = rawTimeZone.trim().slice(0, 80);
+  if (!/^[A-Za-z0-9_+\-/]+$/.test(timeZone)) return null;
+
+  let point = LOCAL_TIMEZONE_POINTS.get(timeZone);
+  if (!point) {
+    const fallback = LOCAL_TIMEZONE_FALLBACKS.find(([prefix]) =>
+      timeZone.startsWith(prefix),
+    );
+    point = fallback?.[1];
+  }
+  if (!point) return null;
+
+  const [latitude, longitude, label] = point;
+  return {
+    key: `timezone:${timeZone}`,
+    city: null,
+    region: `${label} · local`,
+    country: 'Local development',
+    countryCode: null,
+    latitude,
+    longitude,
+    timeZone,
   };
 }
 
@@ -124,6 +206,17 @@ function recordEvent(store, body) {
 
   touchIdentity(store, visitorHash, sessionHash, timestamp, eventName === 'page_view');
 
+  if (eventName === 'page_view') {
+    const approximateLocation = readLocalApproximateLocation(body);
+    if (approximateLocation) {
+      store.visitorLocations ??= {};
+      store.visitorLocations[visitorHash] = {
+        ...approximateLocation,
+        updatedAt: timestamp,
+      };
+    }
+  }
+
   store.firstEventAt ??= timestamp;
   store.updatedAt = timestamp;
   store.events[eventName] = (store.events[eventName] ?? 0) + 1;
@@ -173,6 +266,59 @@ function rankedEntries(record, mapper, limit = 10) {
     .slice(0, limit);
 }
 
+function buildLocalLocations(store) {
+  const groups = new Map();
+
+  for (const [visitorHash, location] of Object.entries(store.visitorLocations ?? {})) {
+    if (!store.visitors?.[visitorHash]) continue;
+    if (!Number.isFinite(location?.latitude) || !Number.isFinite(location?.longitude)) {
+      continue;
+    }
+
+    const key = location.key ?? `${location.latitude}:${location.longitude}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.visitors += 1;
+      continue;
+    }
+
+    groups.set(key, {
+      city: location.city ?? null,
+      region: location.region ?? null,
+      country: location.country ?? null,
+      countryCode: location.countryCode ?? null,
+      latitude: Number(location.latitude),
+      longitude: Number(location.longitude),
+      visitors: 1,
+      updatedAt: location.updatedAt ?? null,
+    });
+  }
+
+  const rows = [];
+  const sortedGroups = [...groups.values()].sort((a, b) =>
+    String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')),
+  );
+
+  for (const group of sortedGroups) {
+    for (let pointIndex = 0; pointIndex < group.visitors; pointIndex += 1) {
+      rows.push({
+        city: group.city,
+        region: group.region,
+        country: group.country,
+        countryCode: group.countryCode,
+        latitude: group.latitude,
+        longitude: group.longitude,
+        pageViews: 1,
+        estimatedVisitors: 1,
+        pointIndex,
+        pointCount: group.visitors,
+      });
+    }
+  }
+
+  return rows;
+}
+
 function statsResponse(store, days) {
   const activeCutoff = Date.now() - 5 * 60 * 1000;
   const activeVisitors = new Set();
@@ -202,6 +348,7 @@ function statsResponse(store, days) {
     (sum, value) => sum + Number(value ?? 0),
     0,
   );
+  const locations = buildLocalLocations(store);
 
   return {
     summary: {
@@ -209,8 +356,10 @@ function statsResponse(store, days) {
       estimatedVisitors: Object.keys(store.visitors).length,
       sessions: Object.keys(store.sessions).length,
       trackedRequests,
+      // Local coordinates are deliberately coarse browser-timezone points, not
+      // IP geolocation, so they are not presented as real country analytics.
       countries: 0,
-      visibleLocations: 0,
+      visibleLocations: locations.length,
       activeVisitors: activeVisitors.size,
       firstEventAt: store.firstEventAt,
       updatedAt: store.updatedAt,
@@ -218,9 +367,7 @@ function statsResponse(store, days) {
     daily: fillDailyRows(store, days),
     pages,
     interactions,
-    // Local development deliberately does not geolocate the developer. Doing so
-    // would either require a permission prompt or an external production service.
-    locations: [],
+    locations,
   };
 }
 
@@ -264,7 +411,13 @@ export function localStatsDevPlugin() {
       await mkdir(cacheDir, { recursive: true });
       try {
         const raw = await readFile(dataFile, 'utf8');
-        store = { ...emptyStore(), ...JSON.parse(raw) };
+        const parsed = JSON.parse(raw);
+        store = {
+          ...emptyStore(),
+          ...parsed,
+          visitorLocations: parsed?.visitorLocations ?? {},
+          version: 2,
+        };
       } catch (error) {
         if (error?.code !== 'ENOENT') {
           console.warn('[local-stats] Could not read local cache; starting fresh.');

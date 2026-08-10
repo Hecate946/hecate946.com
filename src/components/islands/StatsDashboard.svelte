@@ -297,7 +297,12 @@
     const requestedTab = new URL(window.location.href).searchParams.get('tab');
     if (requestedTab === 'code' || requestedTab === 'you') activeTab = requestedTab;
     loadYourStats();
+    const handleLocalBackendStatsUpdated = () => void loadLiveStats();
     window.addEventListener('hecate:local-stats-updated', loadYourStats);
+    window.addEventListener(
+      'hecate:local-backend-stats-updated',
+      handleLocalBackendStatsUpdated,
+    );
     void loadLiveStats();
     if (activeTab === 'code') void loadCodeStats();
 
@@ -327,6 +332,10 @@
       if (codeStatsInterval) window.clearInterval(codeStatsInterval);
       if (globePrewarmTimer !== null) window.clearTimeout(globePrewarmTimer);
       window.removeEventListener('hecate:local-stats-updated', loadYourStats);
+      window.removeEventListener(
+        'hecate:local-backend-stats-updated',
+        handleLocalBackendStatsUpdated,
+      );
     };
   });
 </script>

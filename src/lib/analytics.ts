@@ -114,28 +114,65 @@ export function trackEvent(
 
   if (analyticsDisabled()) return;
 
+  const apiBase = resolveStatsApiBase();
+  let eventProperties = properties;
+
+  // Local analytics has no IP/Cloudflare context. Give only the local dev
+  // backend a coarse browser-timezone hint so its visitor map can render a
+  // meaningful test light without contacting production or prompting for
+  // geolocation permission.
+  if (apiBase.startsWith('/')) {
+    let localTimeZone = '';
+    try {
+      localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
+    } catch {
+      localTimeZone = '';
+    }
+
+    if (localTimeZone) {
+      eventProperties = { ...properties, __localTimeZone: localTimeZone };
+    }
+  }
+
   const payload = JSON.stringify({
     name,
     path: window.location.pathname,
     visitorId: getStoredId(window.localStorage, VISITOR_KEY),
     sessionId: getStoredId(window.sessionStorage, SESSION_KEY),
-    properties,
+    properties: eventProperties,
   });
-  const endpoint = `${resolveStatsApiBase()}/api/event`;
-
-  if ('sendBeacon' in navigator) {
-    const blob = new Blob([payload], { type: 'text/plain;charset=UTF-8' });
-    if (navigator.sendBeacon(endpoint, blob)) return;
-  }
-
-  void fetch(endpoint, {
+  const endpoint = `${apiBase}/api/event`;
+  const requestInit: RequestInit = {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
     body: payload,
     keepalive: true,
     mode: 'cors',
     credentials: 'omit',
-  }).catch(() => {
+  };
+
+  // The local endpoint is same-origin and cheap. Await its completion in the
+  // background so the Stats page can refresh immediately after its own page
+  // view is stored instead of briefly showing an empty map for up to a minute.
+  if (apiBase.startsWith('/')) {
+    void fetch(endpoint, requestInit)
+      .then((response) => {
+        if (response.ok && name === 'page_view') {
+          window.dispatchEvent(new CustomEvent('hecate:local-backend-stats-updated'));
+        }
+      })
+      .catch(() => {
+        // Local analytics is optional and must never interfere with dev.
+      });
+    return;
+  }
+
+  if ('sendBeacon' in navigator) {
+    const blob = new Blob([payload], { type: 'text/plain;charset=UTF-8' });
+    if (navigator.sendBeacon(endpoint, blob)) return;
+  }
+
+  void fetch(endpoint, requestInit).catch(() => {
     // Analytics must never interfere with the website itself.
   });
 }
