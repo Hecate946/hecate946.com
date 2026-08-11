@@ -13,6 +13,7 @@ const BOT_PATTERN =
 
 const LEGACY_LOCAL_MATCH = 'local|%';
 const PUBLIC_SITE_HOSTS = new Set(['hecate946.com', 'www.hecate946.com']);
+const PUBLIC_SITE_PROTOCOLS = new Set(['http:', 'https:']);
 
 export default {
   async scheduled(_controller, env, context) {
@@ -579,7 +580,11 @@ function isAllowedSiteOrigin(origin) {
 
   try {
     const url = new URL(origin);
-    return url.protocol === 'https:' && PUBLIC_SITE_HOSTS.has(url.hostname);
+    return (
+      PUBLIC_SITE_PROTOCOLS.has(url.protocol) &&
+      PUBLIC_SITE_HOSTS.has(url.hostname) &&
+      url.port === ''
+    );
   } catch {
     return false;
   }

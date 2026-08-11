@@ -63,6 +63,27 @@ const structuredData = {
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Canonicalize the public site as early as possible. GitHub Pages normally
+     performs the HTTP -> HTTPS redirect before this document is served, but
+     this is a defensive fallback for caches/proxies and also collapses the
+     www host onto the canonical apex origin. Path, query, and hash survive. -->
+<script is:inline>
+  (() => {
+    const url = new URL(window.location.href);
+    const isPublicHost = url.hostname === 'hecate946.com' || url.hostname === 'www.hecate946.com';
+    if (!isPublicHost) return;
+
+    const needsHttps = url.protocol === 'http:';
+    const needsCanonicalHost = url.hostname === 'www.hecate946.com';
+    if (!needsHttps && !needsCanonicalHost) return;
+
+    url.protocol = 'https:';
+    url.hostname = 'hecate946.com';
+    url.port = '';
+    window.location.replace(url.toString());
+  })();
+</script>
 <meta name="description" content={description} />
 <meta name="application-name" content={siteConfig.name} />
 <meta name="apple-mobile-web-app-title" content={siteConfig.shortName} />
