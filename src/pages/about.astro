@@ -4,8 +4,6 @@ import Disclosure from '@/components/core/Disclosure.astro';
 import { withBase } from '@/lib/paths';
 import '@/styles/about.css';
 
-const loomiRepoUrl = 'https://github.com/Hecate946/Loomi';
-const sunsetRepoUrl = '';
 const musicVideoUrl = 'https://youtu.be/EkgH4zzXoNg?si=_W_qwbR1Io_LTUdw';
 const pickleballArticleUrl =
   'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
@@ -92,26 +90,6 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
               applications, developer tools, and whatever projects solve problems I encounter.
             </p>
 
-            <p>
-              Right now I'm building{' '}
-              <a class="inline-project-link" href={loomiRepoUrl} target="_blank" rel="noopener noreferrer">Loomi</a>,
-              a graph-based platform for exploring classical music, while continuing to improve{' '}
-              {
-                sunsetRepoUrl ? (
-                  <a
-                    class="inline-project-link"
-                    href={sunsetRepoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Sunset
-                  </a>
-                ) : (
-                  <span class="inline-project-link inline-project-link--static">Sunset</span>
-                )
-              }, a project that reverse engineered UCLA reservation systems to make booking campus resources
-              dramatically easier for students.
-            </p>
           </div>
         </div>
       </Disclosure>

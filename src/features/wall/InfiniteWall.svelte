@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import WallWindow from './WallWindow.svelte';
+  import { playNavigationSound } from '@/lib/site-sound';
   import {
     WALL_LOOP_WIDTH,
     WALL_START_X,
     wallDestinations,
     type WallDestination,
   } from './wall-config';
-  import { withBase } from '@/lib/paths';
 
   const loopCopies = [-1, 0, 1] as const;
   const DRAG_THRESHOLD = 7;
@@ -180,14 +180,23 @@
     markInteracted();
   }
 
-  function enterDestination(event: MouseEvent, destination: WallDestination) {
-    event.preventDefault();
+  function enterDestination(event: MouseEvent, _destination: WallDestination) {
+    // A drag must never accidentally activate the underlying link. For a real
+    // click, however, leave the anchor alone so Astro's ClientRouter handles
+    // it exactly like the links in the navbar. A hard location.assign() reload
+    // destroyed the persistent music element and cut off in-flight SFX.
+    if (dragDistance > DRAG_THRESHOLD) {
+      event.preventDefault();
+      return;
+    }
 
-    if (dragDistance > DRAG_THRESHOLD) return;
-
+    // Wall links opt out of the global capture-phase sound handler because
+    // that handler fires before this component can distinguish a click from a
+    // drag. Trigger the same redirect SFX only after the gesture is confirmed
+    // as a real navigation click.
+    playNavigationSound('redirect');
     markInteracted();
     clearPointerDrag();
-    window.location.assign(withBase(destination.href));
   }
 
   function onWheel(event: WheelEvent) {
@@ -485,10 +494,10 @@
       class="wall-floor__surface"
       style={`transform: translate3d(${periodicOffset(WALL_START_X, FLOOR_TILE_SIZE)}px, 0, 0) rotateX(64deg) scaleY(1.28) translateY(14%);`}
     ></div>
-    <div class="wall-floor__baseboard"></div>
   </div>
 
   <div class="wall-stage__vignette" aria-hidden="true"></div>
+  <div class="wall-floor__baseboard" aria-hidden="true"></div>
 
 
   <button
@@ -687,24 +696,23 @@
 
   .wall-floor__baseboard {
     position: absolute;
-    z-index: 2;
-    top: 0;
+    z-index: 11;
+    top: calc(100% - var(--floor-height) + var(--floor-top-offset, 0rem) - 0.14rem);
     right: -1px;
     left: -1px;
     height: calc(var(--baseboard-height) + 0.7rem);
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--wall-dark, #050505) 86%, black) 0%,
-      color-mix(in srgb, var(--wall-dark, #050505) 94%, black) 34%,
-      color-mix(in srgb, var(--wall-dark, #050505) 100%, black) 100%
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 92%, var(--wall-light, #f4f1e9)) 0%,
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 96%, black) 38%,
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 90%, black) 100%
     );
-    border-top: 1px solid color-mix(in srgb, var(--wall-light, #f4f1e9) 10%, transparent);
-    border-bottom: 1px solid rgb(0 0 0 / 72%);
+    border-top: 1px solid var(--wall-trim-line-soft, rgb(255 255 255 / 7%));
+    border-bottom: 1px solid var(--wall-trim-shadow, rgb(0 0 0 / 42%));
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.04),
-      inset 0 -1px 0 rgb(0 0 0 / 0.6),
-      0 0.75rem 1rem rgb(0 0 0 / 0.22);
-    transform: translateY(-0.14rem);
+      inset 0 1px 0 var(--wall-trim-highlight, rgb(255 255 255 / 4%)),
+      inset 0 -1px 0 var(--wall-trim-shadow, rgb(0 0 0 / 42%)),
+      0 0.75rem 1rem rgb(0 0 0 / 0.2);
   }
 
   .wall-floor__baseboard::before {
@@ -715,16 +723,18 @@
     height: 0.38rem;
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--wall-dark, #050505) 74%, var(--wall-light, #f4f1e9)) 0%,
-      color-mix(in srgb, var(--wall-dark, #050505) 88%, black) 58%,
-      color-mix(in srgb, var(--wall-dark, #050505) 100%, black) 100%
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 91%, var(--wall-light, #f4f1e9)) 0%,
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 97%, var(--wall-light, #f4f1e9)) 30%,
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 97%, black) 68%,
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 90%, black) 100%
     );
-    border: 1px solid rgb(0 0 0 / 0.56);
-    border-bottom-color: rgb(0 0 0 / 0.72);
+    border: 1px solid var(--wall-trim-line-soft, rgb(255 255 255 / 6%));
+    border-top-color: var(--wall-trim-line, rgb(255 255 255 / 10%));
+    border-bottom-color: var(--wall-trim-shadow, rgb(0 0 0 / 42%));
     border-radius: 0;
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.05),
-      0 0.08rem 0.14rem rgb(0 0 0 / 0.12);
+      inset 0 1px 0 var(--wall-trim-highlight, rgb(255 255 255 / 4%)),
+      0 0.08rem 0.14rem rgb(0 0 0 / 0.16);
     content: '';
   }
 
@@ -736,12 +746,14 @@
     left: -1px;
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--wall-dark, #050505) 88%, var(--wall-light, #f4f1e9)) 0%,
-      color-mix(in srgb, var(--wall-dark, #050505) 96%, black) 24%,
-      color-mix(in srgb, var(--wall-dark, #050505) 100%, black) 100%
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 95%, var(--wall-light, #f4f1e9)) 0%,
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 99%, black) 28%,
+      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 93%, black) 100%
     );
-    border: 1px solid rgb(0 0 0 / 0.58);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.006);
+    border: 1px solid var(--wall-trim-line-soft, rgb(255 255 255 / 6%));
+    border-top-color: var(--wall-trim-line, rgb(255 255 255 / 10%));
+    border-bottom-color: var(--wall-trim-shadow, rgb(0 0 0 / 42%));
+    box-shadow: inset 0 1px 0 var(--wall-trim-highlight, rgb(255 255 255 / 4%));
     content: '';
   }
 
@@ -854,6 +866,7 @@
     .wall-stage {
       --floor-height: 6.4rem;
       --baseboard-height: 0.78rem;
+      --floor-top-offset: -0.25rem;
       --window-width: 248px;
       --window-height: 308px;
       --window-offset-x: -124px;

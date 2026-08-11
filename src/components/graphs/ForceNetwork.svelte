@@ -39,6 +39,8 @@
     kind: 'primary' | 'secondary';
     d: string;
     accent: string;
+    directed: boolean;
+    weight: number;
     x1: number;
     y1: number;
     x2: number;
@@ -1227,9 +1229,12 @@
 
     if (moved) {
       suppressedClickId = node.id;
+      const anchor = event.currentTarget as SVGAElement;
+      anchor.dataset.siteSoundSuppressClick = 'true';
       if (suppressTimer) clearTimeout(suppressTimer);
       suppressTimer = setTimeout(() => {
         suppressedClickId = null;
+        delete anchor.dataset.siteSoundSuppressClick;
       }, 220);
     }
 
@@ -1287,9 +1292,30 @@
     const distance = Math.max(0.001, Math.hypot(dx, dy));
     const curve = link.curve ?? 0;
 
-    // Edges are intentionally drawn center-to-center. Because the edge group is
-    // behind the node group, each solid node masks the portion beneath it and
-    // the visible line appears to terminate exactly at the node boundary.
+    // Ordinary links remain center-to-center because the node surfaces mask the
+    // hidden portions. Directed links stop just outside each node so the arrow
+    // tip remains visible instead of disappearing underneath the target circle.
+    if (link.directed) {
+      const unitX = dx / distance;
+      const unitY = dy / distance;
+      const sourcePadding = source.radius + 3;
+      const targetPadding = target.radius + 8;
+      const startX = sourceX + unitX * sourcePadding;
+      const startY = sourceY + unitY * sourcePadding;
+      const endX = targetX - unitX * targetPadding;
+      const endY = targetY - unitY * targetPadding;
+
+      if (Math.abs(curve) < 0.1) {
+        return `M ${startX} ${startY} L ${endX} ${endY}`;
+      }
+
+      const midpointX = (startX + endX) / 2;
+      const midpointY = (startY + endY) / 2;
+      const normalX = -dy / distance;
+      const normalY = dx / distance;
+      return `M ${startX} ${startY} Q ${midpointX + normalX * curve} ${midpointY + normalY * curve} ${endX} ${endY}`;
+    }
+
     if (Math.abs(curve) < 0.1) {
       return `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
     }
@@ -1321,6 +1347,8 @@
           kind: link.kind ?? 'primary',
           d,
           accent: target ? nodeAccent(target) : 'var(--accent, #8b7cff)',
+          directed: Boolean(link.directed),
+          weight: clamp(Number(link.weight ?? 0), 0, 1),
           x1: source?.x ?? source?.anchorX ?? width / 2,
           y1: source?.y ?? source?.anchorY ?? heightPixels / 2,
           x2: target?.x ?? target?.anchorX ?? width / 2,
@@ -1443,6 +1471,22 @@
           <stop offset="100%" stop-color={link.accent} stop-opacity="0.88" />
         </linearGradient>
       {/each}
+
+
+      {#each (appearance === 'default' ? renderedLinks.filter((link) => link.directed) : []) as link (link.key)}
+        <marker
+          id={`${idPrefix}-${safeId(link.key)}-arrow`}
+          viewBox="0 0 8 8"
+          refX="7.2"
+          refY="4"
+          markerWidth={5.2 + link.weight * 2.2}
+          markerHeight={5.2 + link.weight * 2.2}
+          markerUnits="userSpaceOnUse"
+          orient="auto"
+        >
+          <path d="M0 0 8 4 0 8Z" fill={link.accent} />
+        </marker>
+      {/each}
     </defs>
 
     <g
@@ -1470,11 +1514,16 @@
             d={link.d}
             class:force-network__link--primary={link.kind === 'primary'}
             class:force-network__link--secondary={link.kind === 'secondary'}
+            class:force-network__link--weighted={link.weight > 0}
+            class:force-network__link--directed={link.directed}
             class:force-network__link--active={isLinkActive(link)}
             class:force-network__link--muted={activeNodeId !== null &&
               !isLinkActive(link)}
             class="force-network__link"
-            style={`--link-accent: ${link.accent}; stroke: url(#${idPrefix}-${safeId(link.key)}-gradient);`}
+            marker-end={link.directed
+              ? `url(#${idPrefix}-${safeId(link.key)}-arrow)`
+              : undefined}
+            style={`--link-accent: ${link.accent}; --link-weight: ${link.weight}; --link-width: ${1.15 + link.weight * 2.65}px; --link-active-width: ${1.9 + link.weight * 3}px; --link-opacity: ${0.42 + link.weight * 0.48}; stroke: url(#${idPrefix}-${safeId(link.key)}-gradient);`}
           />
         {/if}
       {/each}
@@ -1706,6 +1755,17 @@
   .force-network__link--primary {
     stroke-width: 2.5;
     opacity: 0.78;
+  }
+
+
+  .force-network__link--weighted {
+    stroke-width: var(--link-width, 1.15px);
+    opacity: var(--link-opacity, 0.42);
+  }
+
+  .force-network__link--weighted.force-network__link--active {
+    stroke-width: var(--link-active-width, 1.9px);
+    opacity: 1;
   }
 
   .force-network__link--secondary {

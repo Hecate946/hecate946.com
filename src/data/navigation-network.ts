@@ -7,6 +7,23 @@ import { withBase } from '@/lib/paths';
 
 const icon = (...paths: string[]): NetworkIcon => ({ paths });
 
+
+/** Shared observatory palette: Home keeps the current site accent. */
+export const navigationRainbowAccents: Readonly<Record<string, string>> = {
+  about: '#d75a5a',
+  projects: '#d9863f',
+  contact: '#c4a12e',
+  lab: '#4f9864',
+  graph: '#4c7fbd',
+  stats: '#8266c2',
+};
+
+export function navigationRainbowAccent(id: string, fallback?: string) {
+  return id === 'home'
+    ? fallback ?? 'var(--accent, #8b7cff)'
+    : navigationRainbowAccents[id] ?? fallback ?? 'var(--accent, #8b7cff)';
+}
+
 const icons = {
   about: icon('M20 21a8 8 0 0 0-16 0', 'M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8'),
   contact: icon('M4 5h16v14H4Z', 'm4 7 8 6 8-6'),

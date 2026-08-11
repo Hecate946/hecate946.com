@@ -17,7 +17,8 @@
   let musicAvailable: boolean | null = null;
   let editing: Channel | null = null;
   let draft: number | undefined = 0;
-  let editInput: HTMLInputElement | null = null;
+  let musicEditInput: HTMLInputElement | null = null;
+  let sfxEditInput: HTMLInputElement | null = null;
 
   const clampPercent = (value: number) => {
     if (!Number.isFinite(value)) return 0;
@@ -85,12 +86,16 @@
   }
 
   function startEditing(channel: Channel) {
-    editing = channel;
     draft = channel === 'music' ? music : sfx;
-    requestAnimationFrame(() => {
-      editInput?.focus();
-      editInput?.select();
-    });
+    editing = channel;
+
+    // Both editors stay mounted (but visually clipped while inactive). Focusing
+    // synchronously inside the tap/click gesture is important on iOS/Android:
+    // deferring focus until the next frame can prevent the virtual keyboard
+    // from opening even though the field becomes visible.
+    const input = channel === 'music' ? musicEditInput : sfxEditInput;
+    input?.focus({ preventScroll: true });
+    input?.select();
   }
 
   function commitEditing() {
@@ -117,7 +122,6 @@
       commitEditing();
     }
   }
-
 </script>
 
 <div class="audio-settings" bind:this={root} data-open={open}>
@@ -154,96 +158,129 @@
         type="button"
         aria-label="Close audio settings"
         onclick={closePanel}
-      >×</button>
+      >
+        <svg viewBox="0 0 10 10" aria-hidden="true" focusable="false">
+          <path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5" />
+        </svg>
+      </button>
     </div>
 
-    <div class="audio-channel" data-channel="music">
-      <div class="audio-channel-heading">
-        <label for="site-music-volume" class="ui-text">Music</label>
-        {#if editing === 'music'}
-          <span class="audio-percent-editor">
-            <input
-              bind:this={editInput}
-              type="number"
-              min="0"
-              max="100"
-              step="1"
-              inputmode="numeric"
-              aria-label="Music volume percentage"
-              bind:value={draft}
-              onkeydown={handleNumberKey}
-              onblur={commitEditing}
-            />
-            <span aria-hidden="true">%</span>
-          </span>
-        {:else}
-          <button
-            class="audio-percent"
-            type="button"
-            aria-label={`Set music volume. Current volume ${music}%`}
-            onclick={() => startEditing('music')}
-          >{music}%</button>
-        {/if}
-      </div>
-      <input
-        id="site-music-volume"
-        class="audio-slider"
-        type="range"
-        min="0"
-        max="100"
-        step="1"
-        value={music}
-        style={`--audio-level: ${music}%`}
-        aria-valuetext={`${music}%`}
-        oninput={(event) => handleRangeInput('music', event)}
-        onchange={(event) => handleRangeCommit('music', event)}
-      />
-      {#if musicAvailable === false}
-        <p class="audio-channel-note">Music file unavailable</p>
-      {/if}
-    </div>
+    <div class="audio-channels">
+      <div class="audio-channel" data-channel="music">
+        <div class="audio-channel-heading">
+          <label for="site-music-volume" class="ui-text">Music</label>
+          <div class="audio-percent-control">
+            <button
+              class="audio-percent"
+              class:audio-percent-hidden={editing === 'music'}
+              type="button"
+              aria-label={`Set music volume. Current volume ${music}%`}
+              aria-hidden={editing === 'music'}
+              tabindex={editing === 'music' ? -1 : 0}
+              onclick={() => startEditing('music')}
+            >{music}%</button>
+            <span
+              class="audio-percent-editor"
+              class:audio-percent-editor-active={editing === 'music'}
+              aria-hidden={editing !== 'music'}
+            >
+              <input
+                bind:this={musicEditInput}
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                enterkeyhint="done"
+                aria-label="Music volume percentage"
+                tabindex={editing === 'music' ? 0 : -1}
+                bind:value={draft}
+                onkeydown={handleNumberKey}
+                onblur={() => editing === 'music' && commitEditing()}
+              />
+              <span aria-hidden="true">%</span>
+            </span>
+          </div>
+        </div>
 
-    <div class="audio-channel" data-channel="sfx">
-      <div class="audio-channel-heading">
-        <label for="site-sfx-volume" class="ui-text">SFX</label>
-        {#if editing === 'sfx'}
-          <span class="audio-percent-editor">
-            <input
-              bind:this={editInput}
-              type="number"
-              min="0"
-              max="100"
-              step="1"
-              inputmode="numeric"
-              aria-label="Sound effects volume percentage"
-              bind:value={draft}
-              onkeydown={handleNumberKey}
-              onblur={commitEditing}
-            />
-            <span aria-hidden="true">%</span>
-          </span>
-        {:else}
-          <button
-            class="audio-percent"
-            type="button"
-            aria-label={`Set sound effects volume. Current volume ${sfx}%`}
-            onclick={() => startEditing('sfx')}
-          >{sfx}%</button>
+        <div class="audio-slider-well">
+          <input
+            id="site-music-volume"
+            class="audio-slider"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={music}
+            style={`--audio-level: ${music}%`}
+            aria-label="Music volume"
+            aria-valuetext={`${music}%`}
+            oninput={(event) => handleRangeInput('music', event)}
+            onchange={(event) => handleRangeCommit('music', event)}
+          />
+        </div>
+
+        {#if musicAvailable === false}
+          <p class="audio-channel-note">Unavailable</p>
         {/if}
       </div>
-      <input
-        id="site-sfx-volume"
-        class="audio-slider"
-        type="range"
-        min="0"
-        max="100"
-        step="1"
-        value={sfx}
-        style={`--audio-level: ${sfx}%`}
-        aria-valuetext={`${sfx}%`}
-        oninput={(event) => handleRangeInput('sfx', event)}
-        onchange={(event) => handleRangeCommit('sfx', event)}
-      />
+
+      <div class="audio-channel" data-channel="sfx">
+        <div class="audio-channel-heading">
+          <label for="site-sfx-volume" class="ui-text">SFX</label>
+          <div class="audio-percent-control">
+            <button
+              class="audio-percent"
+              class:audio-percent-hidden={editing === 'sfx'}
+              type="button"
+              aria-label={`Set sound effects volume. Current volume ${sfx}%`}
+              aria-hidden={editing === 'sfx'}
+              tabindex={editing === 'sfx' ? -1 : 0}
+              onclick={() => startEditing('sfx')}
+            >{sfx}%</button>
+            <span
+              class="audio-percent-editor"
+              class:audio-percent-editor-active={editing === 'sfx'}
+              aria-hidden={editing !== 'sfx'}
+            >
+              <input
+                bind:this={sfxEditInput}
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                enterkeyhint="done"
+                aria-label="Sound effects volume percentage"
+                tabindex={editing === 'sfx' ? 0 : -1}
+                bind:value={draft}
+                onkeydown={handleNumberKey}
+                onblur={() => editing === 'sfx' && commitEditing()}
+              />
+              <span aria-hidden="true">%</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="audio-slider-well">
+          <input
+            id="site-sfx-volume"
+            class="audio-slider"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={sfx}
+            style={`--audio-level: ${sfx}%`}
+            aria-label="Sound effects volume"
+            aria-valuetext={`${sfx}%`}
+            oninput={(event) => handleRangeInput('sfx', event)}
+            onchange={(event) => handleRangeCommit('sfx', event)}
+          />
+        </div>
+      </div>
     </div>
   </div>
 </div>

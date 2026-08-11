@@ -304,6 +304,9 @@ const handleClick = (event: MouseEvent) => {
   const target = event.target;
   if (!(target instanceof Element)) return;
   if (target.closest('[data-site-sound-silent]')) return;
+  // Force-graph drags still produce a browser click event after pointerup.
+  // Suppress only that synthetic post-drag click; a true click remains audible.
+  if (target.closest('[data-site-sound-suppress-click="true"]')) return;
 
   if (!isEnabled()) return;
 

@@ -199,21 +199,6 @@
   padding: 0 0 clamp(2.4rem, 5vw, 3.35rem);
 }
 
-.inline-project-link {
-  color: var(--accent-strong);
-  text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent);
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.16em;
-}
-
-.inline-project-link:hover {
-  text-decoration-color: currentColor;
-}
-
-.inline-project-link--static {
-  cursor: default;
-}
-
 .media-card__kicker,
 .chess-card__platform {
   font-family: var(--font-body);

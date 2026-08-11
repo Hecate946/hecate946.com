@@ -7,6 +7,7 @@
   import {
     navigationNetworkLinks,
     navigationNetworkNodes,
+    navigationRainbowAccent,
   } from '@/data/navigation-network';
   import { resolveStatsApiBase } from '@/lib/stats-api';
 
@@ -67,9 +68,7 @@
   let liveStats: LiveStats | null = null;
   let liveError = '';
   let earthView: EarthView = '2d';
-  let selectedHour = 12;
   let hoveredHour: number | null = null;
-  let hourInitialized = false;
   let refreshing = false;
   let utcOffsetMinutes = 0;
 
@@ -81,22 +80,25 @@
   $: histogramStep = niceHistogramStep(peakHour.value);
   $: histogramMaximum = histogramStep * 4;
   $: histogramTicks = [4, 3, 2, 1, 0].map((multiple) => multiple * histogramStep);
-  $: displayedHour = hoveredHour ?? selectedHour;
-  $: if (!hourInitialized && peakHour.value > 0) {
-    selectedHour = peakHour.hour;
-    hourInitialized = true;
-  }
+  // Keep the API payload itself in the reactive dependency graph. Svelte's
+  // legacy `$:` analysis cannot see reads hidden inside helper functions, which
+  // previously left every network node stuck at the pre-fetch value of zero.
+  $: pageViewsByPath = buildPageViewLookup(liveStats?.pages ?? []);
   $: maxPageViews = Math.max(
     1,
-    ...navigationNetworkNodes.map((node) => valueForPath(pathFromHref(node.href ?? '/'))),
+    ...navigationNetworkNodes.map((node) =>
+      pageViewsByPath.get(canonicalPagePath(pathFromHref(node.href ?? '/'))) ?? 0,
+    ),
   );
   $: trafficGraphNodes = navigationNetworkNodes.map((node) => {
-    const pageViews = valueForPath(pathFromHref(node.href ?? '/'));
+    const pageViews =
+      pageViewsByPath.get(canonicalPagePath(pathFromHref(node.href ?? '/'))) ?? 0;
     const relative = Math.sqrt(pageViews / maxPageViews);
     return {
       ...node,
+      accent: navigationRainbowAccent(node.id, node.accent),
       radius: node.id === 'home' ? 58 : 31 + relative * 10,
-      description: `${formatNumber(pageViews)} ${pageViews === 1 ? 'visit' : 'visits'}`,
+      description: `${formatNumber(pageViews)} page ${pageViews === 1 ? 'view' : 'views'}`,
       descriptionAlwaysVisible: true,
     };
   });
@@ -161,13 +163,23 @@
     }
   }
 
-  function valueForPath(path: string) {
-    const normalized = path === '/' ? '/' : `${path.replace(/\/+$/, '')}/`;
-    const exact = liveStats?.pages.find((item) => {
-      const itemPath = item.label === '/' ? '/' : `${item.label.replace(/\/+$/, '')}/`;
-      return itemPath === normalized;
-    })?.value;
-    return exact ?? 0;
+  function canonicalPagePath(path: string) {
+    const raw = String(path || '/').trim().split('?')[0].split('#')[0] || '/';
+    let normalized = raw.startsWith('/') ? raw : `/${raw}`;
+
+    if (normalized === '/index.html') return '/';
+    normalized = normalized.replace(/\/index\.html$/i, '/');
+    normalized = normalized.replace(/\/+$/, '');
+    return normalized || '/';
+  }
+
+  function buildPageViewLookup(pages: RankedStat[]) {
+    const lookup = new Map<string, number>();
+    for (const item of pages) {
+      const path = canonicalPagePath(item.label);
+      lookup.set(path, (lookup.get(path) ?? 0) + Math.max(0, Number(item.value) || 0));
+    }
+    return lookup;
   }
 
   function prewarmGlobePreview() {
@@ -291,35 +303,44 @@
     </div>
   </section>
 
-  <section class="observatory-section observatory-traffic" aria-labelledby="page-traffic-title">
-    <header class="observatory-section-header">
-      <h2 id="page-traffic-title">Page traffic</h2>
-    </header>
+  <div class="observatory-network-pair">
+    <section class="observatory-network-panel" aria-labelledby="page-traffic-title">
+      <header class="observatory-section-header">
+        <h2 id="page-traffic-title">Page traffic</h2>
+      </header>
 
-    <div class="traffic-force-stage">
-      <ForceNetwork
-        nodes={trafficGraphNodes}
-        links={navigationNetworkLinks}
-        centerNodeId="home"
-        idPrefix="stats-traffic-network"
-        ariaLabel="Interactive website traffic network with visit totals"
-        height="min(62svh, 40rem)"
-        showHint={false}
-        collisionSounds={false}
-        settings={{
-          layout: 'radial',
-          radialRadius: 0.33,
-          radialStartAngle: -Math.PI / 2,
-          entranceRadius: 0,
-          chargeStrength: -205,
-          anchorStrength: 0.19,
-          centerAnchorStrength: 0.42,
-          collisionPadding: 18,
-          linkStrength: 0.2,
-        }}
-      />
-    </div>
-  </section>
+      <div class="network-force-stage traffic-force-stage">
+        <ForceNetwork
+          nodes={trafficGraphNodes}
+          links={navigationNetworkLinks}
+          centerNodeId="home"
+          idPrefix="stats-traffic-network"
+          ariaLabel="Interactive website traffic network with page-view totals"
+          height="min(52svh, 32rem)"
+          showHint={false}
+          collisionSounds={false}
+          settings={{
+            layout: 'radial',
+            radialRadius: 0.33,
+            radialStartAngle: -Math.PI / 2,
+            entranceRadius: 0,
+            chargeStrength: -205,
+            anchorStrength: 0.19,
+            centerAnchorStrength: 0.42,
+            collisionPadding: 18,
+            linkStrength: 0.2,
+          }}
+        />
+      </div>
+    </section>
+
+    <section class="observatory-network-panel observatory-path" aria-labelledby="your-path-title">
+      <header class="observatory-section-header">
+        <h2 id="your-path-title">Your path</h2>
+      </header>
+      <YourPathGraph />
+    </section>
+  </div>
 
   <section class="observatory-section observatory-histogram" aria-labelledby="visit-time-title">
     <header class="observatory-section-header">
@@ -345,14 +366,13 @@
           {#each hourly as item}
             <button
               type="button"
-              class:active={displayedHour === item.hour}
-              aria-pressed={selectedHour === item.hour}
+              class:active={hoveredHour === item.hour}
               aria-label={`${formatLocalHour(item.hour, true)}: ${formatNumber(item.value)} visits`}
+              on:mousedown={(event) => event.preventDefault()}
               on:mouseenter={() => (hoveredHour = item.hour)}
               on:mouseleave={() => (hoveredHour = null)}
               on:focus={() => (hoveredHour = item.hour)}
               on:blur={() => (hoveredHour = null)}
-              on:click={() => (selectedHour = item.hour)}
             >
               <span class="histogram-bar-track">
                 <span
@@ -364,7 +384,7 @@
                   style={`--bar-height:${histogramHeight(item.value)}%`}
                 ></span>
 
-                {#if displayedHour === item.hour}
+                {#if hoveredHour === item.hour}
                   <span
                     class="histogram-bar-tooltip"
                     style={`--bar-height:${histogramHeight(item.value)}%`}
@@ -383,12 +403,5 @@
 
       <div class="histogram-x-axis" aria-hidden="true">Local hour</div>
     </div>
-  </section>
-
-  <section class="observatory-section observatory-path" aria-labelledby="your-path-title">
-    <header class="observatory-section-header">
-      <h2 id="your-path-title">Your path</h2>
-    </header>
-    <YourPathGraph />
   </section>
 </div>

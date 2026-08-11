@@ -35,6 +35,10 @@ export type NetworkLink = {
   distance?: number;
   strength?: number;
   curve?: number;
+  /** Draw an arrow toward target. */
+  directed?: boolean;
+  /** Normalized 0–1 visual weight, used for weighted directed edges. */
+  weight?: number;
 };
 
 export type ForceNetworkSettings = {

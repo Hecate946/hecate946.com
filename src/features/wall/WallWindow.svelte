@@ -23,6 +23,8 @@
   href={withBase(destination.href)}
   aria-label={`Enter ${destination.label}`}
   data-wall-window={destination.id}
+  data-site-sound-silent
+  data-astro-prefetch
   draggable="false"
   tabindex={keyboardAccessible ? undefined : -1}
   onfocus={() => keyboardAccessible && onFocus(destination)}
