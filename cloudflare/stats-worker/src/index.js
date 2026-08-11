@@ -1,5 +1,6 @@
 const EVENT_NAMES = new Set([
   'page_view',
+  'heartbeat',
   'resume_download',
   'command_palette_opened',
   'site_map_opened',
@@ -129,6 +130,22 @@ async function ingestEvent(request, env) {
 
   const visitorHash = await hashIdentifier(`visitor:${visitorId}`, env);
   const sessionHash = await hashIdentifier(`session:${sessionId}`, env);
+
+  if (eventName === 'heartbeat') {
+    await env.DB.batch([
+      env.DB.prepare(
+        `UPDATE visitors
+         SET last_seen = ?
+         WHERE visitor_hash = ?`,
+      ).bind(timestamp, visitorHash),
+      env.DB.prepare(
+        `UPDATE sessions
+         SET last_seen = ?
+         WHERE session_hash = ? AND visitor_hash = ?`,
+      ).bind(timestamp, sessionHash, visitorHash),
+    ]);
+    return json({ accepted: true }, 202, request);
+  }
 
   await upsertEventCount(env.DB, eventKey, timestamp);
 
@@ -301,7 +318,14 @@ async function ingestEvent(request, env) {
 
 async function readStats(request, env, url) {
   const days = clampInteger(url.searchParams.get('days'), 7, 365, 30);
-  const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const utcOffsetMinutes = clampInteger(
+    url.searchParams.get('utcOffsetMinutes'),
+    -840,
+    840,
+    0,
+  );
+  const localTimeModifier = `${utcOffsetMinutes >= 0 ? '+' : ''}${utcOffsetMinutes} minutes`;
+  const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
 
   const totalsQuery = env.DB.prepare('SELECT * FROM totals WHERE id = 1');
   const activeQuery = env.DB.prepare(
@@ -315,12 +339,15 @@ async function readStats(request, env, url) {
      WHERE day NOT LIKE ? AND day >= date('now', ?)
      ORDER BY day ASC`,
   ).bind(LEGACY_LOCAL_MATCH, `-${days - 1} day`);
+  // Return the complete route inventory. The observatory renders counts on
+  // specific navigation nodes (including /graph/ and /stats/), so a top-10
+  // truncation makes legitimate lower-traffic routes look like zero views.
   const pageQuery = env.DB.prepare(
     `SELECT path AS label, page_views AS value
      FROM page_stats
      WHERE path NOT LIKE ?
      ORDER BY page_views DESC, path ASC
-     LIMIT 10`,
+     LIMIT 250`,
   ).bind(LEGACY_LOCAL_MATCH);
   const interactionQuery = env.DB.prepare(
     `SELECT event_name AS label, total AS value
@@ -329,6 +356,14 @@ async function readStats(request, env, url) {
      ORDER BY total DESC, event_name ASC
      LIMIT 10`,
   ).bind(LEGACY_LOCAL_MATCH);
+  const hourlyQuery = env.DB.prepare(
+    `SELECT CAST(strftime('%H', first_seen, ?) AS INTEGER) AS hour,
+            COUNT(*) AS value
+     FROM sessions
+     WHERE visitor_hash NOT LIKE ?
+     GROUP BY hour
+     ORDER BY hour ASC`,
+  ).bind(localTimeModifier, LEGACY_LOCAL_MATCH);
   const locationQuery = env.DB.prepare(
     `WITH point_rows AS (
        SELECT
@@ -367,13 +402,12 @@ async function readStats(request, env, url) {
      LIMIT 2000`,
   ).bind(LEGACY_LOCAL_MATCH);
   const countryQuery = env.DB.prepare(
-    `SELECT COUNT(DISTINCT locations.country_code) AS count
-     FROM visitor_locations
-     INNER JOIN location_stats AS locations
-       ON locations.location_key = visitor_locations.location_key
-     WHERE visitor_locations.visitor_hash NOT LIKE ?
-       AND locations.country_code IS NOT NULL`,
-  ).bind(LEGACY_LOCAL_MATCH);
+    `SELECT COUNT(DISTINCT country_code) AS count
+     FROM location_stats
+     WHERE country_code IS NOT NULL
+       AND country_code <> ''
+       AND estimated_visitors > 0`,
+  );
 
   const [
     totals,
@@ -381,6 +415,7 @@ async function readStats(request, env, url) {
     dailyResult,
     pageResult,
     interactionResult,
+    hourlyResult,
     locationResult,
     countryResult,
   ] = await Promise.all([
@@ -389,6 +424,7 @@ async function readStats(request, env, url) {
     dailyQuery.all(),
     pageQuery.all(),
     interactionQuery.all(),
+    hourlyQuery.all(),
     locationQuery.all(),
     countryQuery.first(),
   ]);
@@ -427,6 +463,7 @@ async function readStats(request, env, url) {
       label: row.label,
       value: Number(row.value ?? 0),
     })),
+    hours: fillHourlyRows(hourlyResult.results),
     locations,
   };
 
@@ -436,6 +473,17 @@ async function readStats(request, env, url) {
     'Access-Control-Allow-Origin': origin || '*',
     ...(origin ? { Vary: 'Origin' } : {}),
   });
+}
+
+function fillHourlyRows(rows) {
+  const byHour = new Map(
+    rows.map((row) => [Number(row.hour), Number(row.value ?? 0)]),
+  );
+
+  return Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    value: byHour.get(hour) ?? 0,
+  }));
 }
 
 function fillDailyRows(rows, days) {

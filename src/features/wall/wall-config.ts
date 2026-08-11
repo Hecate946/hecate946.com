@@ -26,7 +26,7 @@ const FRAME_HEIGHT = 420;
  */
 const FRAME_SPACING = 600;
 
-/** Primary site order: About → Projects → Contact → Lab. */
+/** Primary site order: About → Projects → Contact → Stats. */
 const destinationDefinitions = [
   {
     id: 'about',
@@ -51,17 +51,17 @@ const destinationDefinitions = [
     label: 'Contact',
     href: '/contact/',
     painting: {
-      src: '/paintings/rothko.webp',
-      name: 'Rothko',
+      src: '/paintings/madame-le-peletier.webp',
+      name: 'Madame Le Peletier',
     },
   },
   {
-    id: 'lab',
-    label: 'Lab',
-    href: '/lab/',
+    id: 'stats',
+    label: 'Stats',
+    href: '/stats/',
     painting: {
-      src: '/paintings/madame-le-peletier.webp',
-      name: 'Madame Le Peletier',
+      src: '/paintings/stats-portrait.webp',
+      name: 'Seated Portrait',
     },
   },
 ] satisfies readonly WallDestinationDefinition[];

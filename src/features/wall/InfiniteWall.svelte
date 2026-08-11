@@ -689,8 +689,8 @@
     position: absolute;
     z-index: 2;
     top: 0;
-    right: 0;
-    left: 0;
+    right: -1px;
+    left: -1px;
     height: calc(var(--baseboard-height) + 0.7rem);
     background: linear-gradient(
       180deg,
@@ -710,8 +710,8 @@
   .wall-floor__baseboard::before {
     position: absolute;
     top: -0.12rem;
-    right: -0.05rem;
-    left: -0.05rem;
+    right: 0;
+    left: 0;
     height: 0.38rem;
     background: linear-gradient(
       180deg,
@@ -721,7 +721,7 @@
     );
     border: 1px solid rgb(0 0 0 / 0.56);
     border-bottom-color: rgb(0 0 0 / 0.72);
-    border-radius: 999px / 0.34rem;
+    border-radius: 0;
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.05),
       0 0.08rem 0.14rem rgb(0 0 0 / 0.12);
@@ -730,7 +730,10 @@
 
   .wall-floor__baseboard::after {
     position: absolute;
-    inset: 0.5rem 0.4rem 0.18rem;
+    top: 0.5rem;
+    right: -1px;
+    bottom: 0.18rem;
+    left: -1px;
     background: linear-gradient(
       180deg,
       color-mix(in srgb, var(--wall-dark, #050505) 88%, var(--wall-light, #f4f1e9)) 0%,

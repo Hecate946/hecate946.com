@@ -1,0 +1,45 @@
+---
+import StatsDashboard from '@/components/islands/StatsDashboard.svelte';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { withBase } from '@/lib/paths';
+import { STATS_API_BASE } from '@/lib/stats-api';
+import '@/styles/lab.css';
+import '@/styles/stats.css';
+
+const statsApiBase = STATS_API_BASE;
+const codeStatsUrl = withBase('/generated/code-stats.json');
+---
+
+<BaseLayout
+  title="Raw Stats — Lab"
+  description="The original data dashboard for website, code, and local browser statistics."
+>
+  <section class="lab-page interior-page interior-page--eight" aria-labelledby="raw-stats-title">
+    <header class="lab-heading interior-page-heading">
+      <div>
+        <p class="lab-kicker">Lab / Data console</p>
+        <h1 id="raw-stats-title">Raw Stats</h1>
+      </div>
+    </header>
+
+    <div class="lab-content interior-page-content interior-page-content--balanced">
+      <section class="lab-stats" aria-labelledby="raw-stats-dashboard-heading" data-default-only>
+        <header class="lab-section-heading lab-stats-heading">
+          <h2 id="raw-stats-dashboard-heading">Dashboard</h2>
+        </header>
+        <StatsDashboard
+          client:visible
+          apiBase={statsApiBase}
+          {codeStatsUrl}
+        />
+      </section>
+
+      <section data-html-only hidden aria-labelledby="html-raw-stats-heading">
+        <h2 id="html-raw-stats-heading">Raw stats</h2>
+        <p>
+          The standard site view contains the original website, code, and local browser statistics dashboard.
+        </p>
+      </section>
+    </div>
+  </section>
+</BaseLayout>

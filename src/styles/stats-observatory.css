@@ -1,0 +1,624 @@
+.stats-observatory-content {
+  padding-block: 0;
+}
+
+.stats-observatory {
+  width: 100%;
+}
+
+.observatory-section {
+  position: relative;
+  min-width: 0;
+  padding-block: clamp(2.75rem, 5vw, 4rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.observatory-section:last-child {
+  border-bottom: 0;
+}
+
+.observatory-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.observatory-section-header h2 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+/* Visitor geography ---------------------------------------------------------- */
+.observatory-earth-stage {
+  position: relative;
+  width: 100%;
+  min-height: 20rem;
+  overflow: hidden;
+  background-color: var(--bg);
+  aspect-ratio: 2 / 1;
+}
+
+/* The flat map never shares the globe's radial/Fresnel treatment. */
+.observatory-earth-stage[data-view='2d'] {
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 10% 20%, 10% 20%;
+}
+
+.observatory-earth-stage[data-view='3d'] {
+  background-image: radial-gradient(circle at 50% 52%, var(--accent-soft), transparent 46%);
+}
+
+.observatory-earth-stage > .visitor-map-shell,
+.observatory-earth-stage > .globe-shell {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0 !important;
+}
+
+.observatory-earth-stage > .visitor-map-shell {
+  background: transparent !important;
+}
+
+.observatory-earth-stage .visitor-map {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.earth-switcher {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 8;
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(0.45rem);
+}
+
+.earth-switcher button {
+  display: grid;
+  min-width: 2.5rem;
+  height: 2.25rem;
+  place-items: center;
+  padding: 0 0.72rem;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.earth-switcher button:last-child {
+  border-right: 0;
+}
+
+.earth-switcher button.active,
+.earth-switcher button:hover,
+.earth-switcher button:focus-visible {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.observatory-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.8rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.observatory-orbit {
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 1px solid var(--line);
+  border-top-color: var(--accent-strong);
+  border-radius: 50%;
+  animation: observatory-spin 1.4s linear infinite;
+}
+
+.earth-caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.55rem;
+  padding-top: 1.25rem;
+  text-align: center;
+}
+
+.earth-caption strong {
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 3vw, 2.4rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.earth-caption span,
+.earth-caption i {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: normal;
+}
+
+/* Page traffic --------------------------------------------------------------- */
+.traffic-force-stage {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.traffic-force-stage .force-network {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Local-time histogram ------------------------------------------------------- */
+.visit-histogram {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3.15rem minmax(0, 1fr);
+  grid-template-rows: minmax(22rem, auto) 2.25rem;
+  width: 100%;
+  min-height: 24rem;
+  background: var(--bg);
+}
+
+.histogram-y-axis {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  min-height: 0;
+  padding-block: 3.65rem 2.65rem;
+}
+
+.histogram-y-title,
+.histogram-x-axis,
+.histogram-y-ticks,
+.histogram-bars small {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.histogram-y-title {
+  align-self: center;
+  justify-self: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.histogram-y-ticks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-right: 0.48rem;
+  letter-spacing: 0.02em;
+}
+
+.histogram-plot {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 22rem;
+  overflow: visible;
+}
+
+.histogram-grid {
+  position: absolute;
+  top: 3.65rem;
+  right: 0;
+  bottom: 2.65rem;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.histogram-grid span {
+  width: 100%;
+  border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+}
+
+.histogram-bars {
+  position: absolute;
+  top: 3.65rem;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: clamp(0.12rem, 0.55vw, 0.42rem);
+  padding-inline: clamp(0.12rem, 0.45vw, 0.38rem);
+}
+
+.histogram-bars button {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-rows: 1fr 2.65rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: crosshair;
+}
+
+.histogram-bar-track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  align-self: stretch;
+  overflow: visible;
+  background: color-mix(in srgb, var(--text) 2.5%, transparent);
+}
+
+.histogram-bar-fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--bar-height);
+  min-height: 0;
+  background: color-mix(in srgb, var(--text) 38%, transparent);
+  transform-origin: bottom;
+  transition:
+    height 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
+}
+
+.histogram-bar-cap {
+  position: absolute;
+  right: 0;
+  bottom: var(--bar-height);
+  left: 0;
+  height: 1px;
+  background: color-mix(in srgb, var(--text) 62%, transparent);
+  transform: translateY(1px);
+  transition: background var(--duration-fast) ease;
+}
+
+.histogram-bars button:hover .histogram-bar-fill,
+.histogram-bars button:focus-visible .histogram-bar-fill,
+.histogram-bars button.active .histogram-bar-fill {
+  background: color-mix(in srgb, var(--accent) 72%, transparent);
+}
+
+.histogram-bars button:hover .histogram-bar-cap,
+.histogram-bars button:focus-visible .histogram-bar-cap,
+.histogram-bars button.active .histogram-bar-cap {
+  height: 2px;
+  background: var(--accent-strong);
+  box-shadow: 0 0 0.7rem color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.histogram-bars button.active .histogram-bar-track {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 2%, transparent),
+    color-mix(in srgb, var(--accent) 8%, transparent)
+  );
+}
+
+.histogram-bars small {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  color: inherit;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.histogram-bars button.active small,
+.histogram-bars button:hover small,
+.histogram-bars button:focus-visible small {
+  color: var(--text);
+}
+
+.histogram-bar-tooltip {
+  position: absolute;
+  bottom: calc(var(--bar-height) + 0.55rem);
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  min-width: 6.2rem;
+  justify-items: center;
+  gap: 0.12rem;
+  padding: 0.38rem 0.5rem;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.histogram-bar-tooltip strong {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+.histogram-bar-tooltip span {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  line-height: 1;
+}
+
+.histogram-x-axis {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
+  justify-self: center;
+  padding-bottom: 0.25rem;
+}
+
+/* Directed personal navigation graph ---------------------------------------- */
+.path-graph-shell {
+  position: relative;
+  width: 100%;
+  min-height: 23rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--line) 68%, transparent) 0.7px, transparent 0.8px)
+    0 0 / 22px 22px;
+}
+
+.path-clear {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 6;
+  padding: 0.42rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(0.35rem);
+}
+
+.path-clear:hover,
+.path-clear:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  color: var(--text);
+}
+
+.path-graph {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 23rem;
+}
+
+.path-graph__edges path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 52%, var(--line));
+  stroke-width: calc(0.75px + var(--edge-weight) * 3.1px);
+  stroke-linecap: round;
+  opacity: calc(0.28 + var(--edge-weight) * 0.56);
+  vector-effect: non-scaling-stroke;
+}
+
+.path-graph__arrow {
+  fill: color-mix(in srgb, var(--text) 58%, var(--line));
+}
+
+.path-graph__node {
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.path-graph__node circle {
+  fill: color-mix(in srgb, var(--bg) 96%, var(--text));
+  stroke: color-mix(in srgb, var(--text) 58%, var(--line));
+  stroke-width: calc(1px + var(--node-weight) * 0.8px);
+  transition:
+    fill var(--duration-fast) ease,
+    stroke var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.path-graph__node:hover circle,
+.path-graph__node:focus-visible circle {
+  fill: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  stroke: var(--accent-strong);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 28%, transparent));
+}
+
+.path-graph__node--current circle {
+  fill: var(--accent-strong);
+  stroke: var(--accent-strong);
+}
+
+.path-graph__count,
+.path-graph__label {
+  font-family: var(--font-mono);
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.path-graph__count {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.path-graph__node--current .path-graph__count {
+  fill: var(--bg);
+}
+
+.path-graph__label {
+  fill: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.055em;
+}
+
+.path-graph__node:hover .path-graph__label,
+.path-graph__node:focus-visible .path-graph__label,
+.path-graph__node--current .path-graph__label {
+  fill: var(--text);
+}
+
+.path-graph-tooltip {
+  position: absolute;
+  z-index: 7;
+  display: grid;
+  min-width: 8rem;
+  gap: 0.16rem;
+  max-width: min(17rem, calc(100% - 2rem));
+  padding: 0.38rem 0.5rem;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  transform: translate(-50%, calc(-100% - var(--node-radius) - 0.65rem));
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.path-graph-tooltip strong {
+  font-weight: 500;
+}
+
+.path-graph-tooltip span {
+  color: var(--muted);
+}
+
+.path-graph-empty {
+  display: grid;
+  min-height: 23rem;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+@keyframes observatory-spin {
+  to { transform: rotate(1turn); }
+}
+
+@media (max-width: 39.999rem) {
+  .observatory-section {
+    padding-block: 2.5rem;
+  }
+
+  .observatory-earth-stage {
+    min-height: 15rem;
+    aspect-ratio: 1.35 / 1;
+  }
+
+  .earth-switcher {
+    top: 0.6rem;
+    left: 0.6rem;
+  }
+
+  .earth-caption {
+    flex-wrap: wrap;
+  }
+
+  .visit-histogram {
+    grid-template-columns: 2.65rem minmax(0, 1fr);
+    grid-template-rows: minmax(19rem, auto) 2.1rem;
+    min-height: 21rem;
+  }
+
+  .histogram-y-axis {
+    padding-block: 3.45rem 2.45rem;
+  }
+
+  .histogram-plot {
+    min-height: 19rem;
+  }
+
+  .histogram-grid,
+  .histogram-bars {
+    top: 3.45rem;
+  }
+
+  .histogram-grid {
+    bottom: 2.45rem;
+  }
+
+  .histogram-bars {
+    gap: 0.07rem;
+    padding-inline: 0.08rem;
+  }
+
+  .histogram-bars button {
+    grid-template-rows: 1fr 2.45rem;
+  }
+
+  .histogram-bars small,
+  .histogram-y-title,
+  .histogram-x-axis,
+  .histogram-y-ticks {
+    font-size: 0.5rem;
+  }
+
+  .histogram-bar-tooltip {
+    min-width: 5.4rem;
+    padding-inline: 0.38rem;
+  }
+
+  .path-graph-shell,
+  .path-graph,
+  .path-graph-empty {
+    min-height: 20rem;
+  }
+
+  .path-clear {
+    top: 0.55rem;
+    right: 0.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .observatory-orbit {
+    animation: none;
+  }
+
+  .histogram-bar-fill,
+  .histogram-bar-cap,
+  .path-graph__node circle {
+    transition: none;
+  }
+}

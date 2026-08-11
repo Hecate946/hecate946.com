@@ -17,9 +17,11 @@ const icons = {
     'M10 12v2h4v-2',
   ),
   lab: icon('M9 3h6', 'M10 3v5l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3', 'M8 14h8'),
+  graph: icon('M6 7.5 12 4l6 3.5', 'M6 7.5v8L12 20l6-4.5v-8', 'M6 15.5 12 12l6 3.5', 'M12 4v8'),
+  stats: icon('M5 19V11', 'M10 19V6', 'M15 19v-5', 'M20 19V9'),
 };
 
-/** In radial layout mode, outer nodes run clockwise: About → Projects → Contact → Lab. */
+/** In radial layout mode, outer nodes run clockwise around Home. */
 export const navigationNetworkNodes: NetworkNode[] = [
   {
     id: 'home',
@@ -61,10 +63,28 @@ export const navigationNetworkNodes: NetworkNode[] = [
   {
     id: 'lab',
     label: 'Lab',
-    description: 'Stats, experiments & spaces',
+    description: 'Experiments & spaces',
     href: withBase('/lab/'),
     icon: icons.lab,
     accent: '#8274e8',
+    radius: 36,
+  },
+  {
+    id: 'graph',
+    label: 'Graph',
+    description: 'Website graph',
+    href: withBase('/graph/'),
+    icon: icons.graph,
+    accent: '#5c9ca8',
+    radius: 36,
+  },
+  {
+    id: 'stats',
+    label: 'Stats',
+    description: 'Website observed',
+    href: withBase('/stats/'),
+    icon: icons.stats,
+    accent: '#9b7f68',
     radius: 36,
   },
 ];
@@ -81,4 +101,6 @@ export const navigationNetworkLinks: NetworkLink[] = [
   primary('projects'),
   primary('contact'),
   primary('lab'),
+  primary('graph'),
+  primary('stats'),
 ];

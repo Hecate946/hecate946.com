@@ -1570,8 +1570,8 @@
           {#if appearance !== 'obsidian' && node.description}
             <text
               class="force-network__description"
-              class:force-network__description--visible={activeNodeId ===
-                node.id}
+              class:force-network__description--visible={node.descriptionAlwaysVisible ||
+                activeNodeId === node.id}
               y={descriptionY(node)}
             >
               {node.description}

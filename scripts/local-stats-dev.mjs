@@ -3,8 +3,10 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const API_PREFIX = '/__local-stats';
+const PRODUCTION_STATS_URL = 'https://hecate-stats.hecate946.workers.dev/api/stats';
 const EVENT_NAMES = new Set([
   'page_view',
+  'heartbeat',
   'resume_download',
   'command_palette_opened',
   'color_theme_changed',
@@ -312,8 +314,21 @@ function buildLocalLocations(store) {
   return rows;
 }
 
-function statsResponse(store, days) {
-  const activeCutoff = Date.now() - 5 * 60 * 1000;
+function fillHourlyRows(store, utcOffsetMinutes = 0) {
+  const hours = Array.from({ length: 24 }, (_, hour) => ({ hour, value: 0 }));
+  const offsetMs = utcOffsetMinutes * 60 * 1000;
+
+  for (const session of Object.values(store.sessions)) {
+    const timestamp = Date.parse(session.firstSeen ?? '');
+    if (!Number.isFinite(timestamp)) continue;
+    hours[new Date(timestamp + offsetMs).getUTCHours()].value += 1;
+  }
+
+  return hours;
+}
+
+function statsResponse(store, days, utcOffsetMinutes = 0) {
+  const activeCutoff = Date.now() - 2 * 60 * 1000;
   const activeVisitors = new Set();
 
   for (const session of Object.values(store.sessions)) {
@@ -326,6 +341,7 @@ function statsResponse(store, days) {
   const pages = rankedEntries(
     store.pages,
     ([label, value]) => ({ label, value: Number(value?.pageViews ?? 0) }),
+    250,
   );
   const interactions = Object.entries(store.events)
     .filter(([label]) => label !== 'page_view')
@@ -360,6 +376,7 @@ function statsResponse(store, days) {
     daily: fillDailyRows(store, days),
     pages,
     interactions,
+    hours: fillHourlyRows(store, utcOffsetMinutes),
     locations,
   };
 }
@@ -450,9 +467,45 @@ export function localStatsDevPlugin() {
 
         await ensureLoaded();
 
+
+        if (requestUrl.pathname === `${API_PREFIX}/api/public-stats` && req.method === 'GET') {
+          const days = clampInteger(requestUrl.searchParams.get('days'), 7, 365, 30);
+          const utcOffsetMinutes = clampInteger(
+            requestUrl.searchParams.get('utcOffsetMinutes'),
+            -840,
+            840,
+            0,
+          );
+          try {
+            const productionUrl = new URL(PRODUCTION_STATS_URL);
+            productionUrl.searchParams.set('days', String(days));
+            productionUrl.searchParams.set('utcOffsetMinutes', String(utcOffsetMinutes));
+            const response = await fetch(productionUrl, {
+              headers: { Accept: 'application/json' },
+            });
+            const body = await response.text();
+            res.statusCode = response.status;
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.setHeader('Cache-Control', 'no-store');
+            res.setHeader('X-Content-Type-Options', 'nosniff');
+            res.end(body);
+          } catch (error) {
+            sendJson(res, 502, {
+              error: `Could not read production stats: ${error instanceof Error ? error.message : String(error)}`,
+            });
+          }
+          return;
+        }
+
         if (requestUrl.pathname === `${API_PREFIX}/api/stats` && req.method === 'GET') {
           const days = clampInteger(requestUrl.searchParams.get('days'), 7, 365, 30);
-          sendJson(res, 200, statsResponse(store, days));
+          const utcOffsetMinutes = clampInteger(
+            requestUrl.searchParams.get('utcOffsetMinutes'),
+            -840,
+            840,
+            0,
+          );
+          sendJson(res, 200, statsResponse(store, days, utcOffsetMinutes));
           return;
         }
 

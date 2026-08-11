@@ -1,5 +1,5 @@
-export const VISITOR_LIGHT_CLOSE_PX = 12.0;
-export const VISITOR_LIGHT_FAR_PX = 16.0;
+export const VISITOR_LIGHT_CLOSE_PX = 14.0;
+export const VISITOR_LIGHT_FAR_PX = 18.0;
 
 // Interaction is intentionally decoupled from the rendered light. A marker can
 // stay visually restrained while still meeting a comfortable pointer target.

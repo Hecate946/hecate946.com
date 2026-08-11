@@ -15,6 +15,13 @@ type AnalyticsWindow = Window & {
  * or browser/device profile. */
 const SESSION_KEY = 'hecate946:analytics-session';
 const LOCAL_STATS_KEY = 'hecate946:your-stats';
+const LOCAL_PATH_HISTORY_LIMIT = 160;
+
+interface LocalPathEntry {
+  path: string;
+  at: string;
+  session: string;
+}
 
 interface LocalVisitorStats {
   firstVisitAt: string;
@@ -27,6 +34,7 @@ interface LocalVisitorStats {
   events: Record<string, number>;
   colorTheme: string;
   season: string;
+  pathHistory: LocalPathEntry[];
 }
 
 function readLocalStats(): LocalVisitorStats {
@@ -42,6 +50,7 @@ function readLocalStats(): LocalVisitorStats {
     events: {},
     colorTheme: 'system',
     season: 'auto',
+    pathHistory: [],
   };
 
   try {
@@ -191,13 +200,32 @@ export function initAnalytics() {
     if (path === lastTrackedPath) return;
     lastTrackedPath = path;
 
+    const sessionId = getSessionId(SESSION_KEY);
+    const visitedAt = new Date().toISOString();
+
     updateLocalStats((stats) => {
       stats.pageViews += 1;
       stats.pages[path] = (stats.pages[path] ?? 0) + 1;
+
+      if (!Array.isArray(stats.pathHistory)) stats.pathHistory = [];
+      const previous = stats.pathHistory.at(-1);
+      if (!previous || previous.path !== path || previous.session !== sessionId) {
+        stats.pathHistory.push({ path, at: visitedAt, session: sessionId });
+        if (stats.pathHistory.length > LOCAL_PATH_HISTORY_LIMIT) {
+          stats.pathHistory = stats.pathHistory.slice(-LOCAL_PATH_HISTORY_LIMIT);
+        }
+      }
     });
 
     sendRemoteEvent('page_view');
   };
+
+  const sendPresenceHeartbeat = () => {
+    if (document.visibilityState !== 'visible') return;
+    sendRemoteEvent('heartbeat');
+  };
+
+  const presenceInterval = window.setInterval(sendPresenceHeartbeat, 60_000);
 
   const saveActiveTime = () => {
     if (!activeStartedAt) return;
@@ -213,6 +241,7 @@ export function initAnalytics() {
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
       activeStartedAt = Date.now();
+      sendPresenceHeartbeat();
     } else {
       saveActiveTime();
     }
@@ -253,6 +282,7 @@ export function initAnalytics() {
   trackPage();
 
   analyticsWindow.__hecateAnalyticsCleanup = () => {
+    window.clearInterval(presenceInterval);
     document.removeEventListener('astro:page-load', trackPage);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     document.removeEventListener('click', handleClick);

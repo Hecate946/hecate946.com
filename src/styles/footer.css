@@ -78,6 +78,8 @@ body:has(> .site-footer) > main {
   border-radius: 0.56rem;
   outline: 2px solid transparent;
   outline-offset: 1px;
+  appearance: none;
+  -webkit-appearance: none;
   background: transparent;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
   --link-hover-color: var(--header-text);
@@ -97,7 +99,10 @@ body:has(> .site-footer) > main {
   overflow: visible;
 }
 
-.footer-search-icon {
+.footer-ui-icon {
+  display: block;
+  width: 1.7rem;
+  height: 1.7rem;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;

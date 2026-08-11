@@ -8,6 +8,20 @@ const year = new Date().getFullYear();
 
 <footer class="site-footer" data-default-only>
   <div class="footer-tools" aria-label="Site controls">
+    <a
+      class="footer-icon-link footer-lab-link"
+      href={withBase('/lab/')}
+      aria-label="Lab"
+      data-label="Lab"
+      data-astro-prefetch
+    >
+      <svg class="footer-lab-icon footer-ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M10 3.75h4" />
+        <path d="M11.25 3.75v4.4L5.7 18.3a1.8 1.8 0 0 0 1.56 2.7h9.48a1.8 1.8 0 0 0 1.56-2.7L12.75 8.15v-4.4" />
+        <path d="M8.2 14.3h7.6" />
+      </svg>
+    </a>
+
     <FooterSearchButton client:idle />
 
     <button

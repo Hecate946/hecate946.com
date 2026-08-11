@@ -59,6 +59,11 @@
   const WORLD_COPIES = [-1, 0, 1] as const;
 
   let mapElement!: SVGSVGElement;
+  let mapShellElement!: HTMLDivElement;
+  let tooltipVisible = false;
+  let tooltipX = 0;
+  let tooltipY = 0;
+  let tooltipText = '';
   let projectedLocations: ProjectedVisitorLocation[] = [];
   let locationSignature = '';
   let visitorScaleBucket = 0;
@@ -314,6 +319,51 @@
     return { x: transformed.x, y: transformed.y };
   }
 
+
+  function locationAtClientPoint(clientX: number, clientY: number) {
+    const screen = viewBoxPoint(clientX, clientY);
+    const worldX = wrapX(centerX + (screen.x - WIDTH / 2) / zoom);
+    const worldY = centerY + (screen.y - HEIGHT / 2) / zoom;
+    const radius = hitRadius(zoom);
+    const radiusSq = radius * radius;
+    let best: ProjectedVisitorLocation | null = null;
+    let bestDistanceSq = radiusSq;
+
+    for (const location of projectedLocations) {
+      let dx = location.x - worldX;
+      if (dx > WIDTH / 2) dx -= WIDTH;
+      if (dx < -WIDTH / 2) dx += WIDTH;
+      const dy = location.y - worldY;
+      const distanceSq = dx * dx + dy * dy;
+
+      if (distanceSq <= bestDistanceSq) {
+        bestDistanceSq = distanceSq;
+        best = location;
+      }
+    }
+
+    return best;
+  }
+
+  function updateTooltip(event: PointerEvent) {
+    if (dragging || pinching || activePointers.size > 0 || event.buttons !== 0) {
+      tooltipVisible = false;
+      return;
+    }
+
+    const location = locationAtClientPoint(event.clientX, event.clientY);
+    if (!location) {
+      tooltipVisible = false;
+      return;
+    }
+
+    const bounds = mapShellElement.getBoundingClientRect();
+    tooltipText = `${location.label}${location.count > 1 ? ` · ${location.count} visitors` : ''}`;
+    tooltipX = event.clientX - bounds.left;
+    tooltipY = event.clientY - bounds.top;
+    tooltipVisible = true;
+  }
+
   function setZoomTarget(nextZoom: number, anchor: ZoomAnchor | null = null) {
     targetZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
     zoomAnchor = anchor;
@@ -398,6 +448,7 @@
   function handlePointerDown(event: PointerEvent) {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
 
+    tooltipVisible = false;
     event.preventDefault();
     zoomAnchor = null;
     activePointers.set(
@@ -423,8 +474,12 @@
   }
 
   function handlePointerMove(event: PointerEvent) {
-    if (!activePointers.has(event.pointerId)) return;
+    if (!activePointers.has(event.pointerId)) {
+      updateTooltip(event);
+      return;
+    }
 
+    tooltipVisible = false;
     const current = viewBoxPoint(event.clientX, event.clientY);
     activePointers.set(event.pointerId, current);
 
@@ -465,6 +520,7 @@
 
     dragging = false;
     previousPointer = null;
+    updateTooltip(event);
   }
 
   function lightRadius(count: number, currentZoom: number) {
@@ -486,7 +542,7 @@
   }
 </script>
 
-<div class="visitor-map-shell">
+<div class="visitor-map-shell" bind:this={mapShellElement}>
   <svg
     bind:this={mapElement}
     class="visitor-map"
@@ -500,6 +556,7 @@
     on:pointermove={handlePointerMove}
     on:pointerup={endPointer}
     on:pointercancel={endPointer}
+    on:pointerleave={() => (tooltipVisible = false)}
   >
     <defs>
       <!-- One continuous accent-colored light profile. A single radial falloff
@@ -537,11 +594,7 @@
                 cx={location.x}
                 cy={location.y}
                 r={hitRadius(zoom)}
-              >
-                <title>
-                  {location.label} — {location.count === 1 ? '1 visitor' : `${location.count} visitors`}
-                </title>
-              </circle>
+              />
             </g>
           {/each}
         </g>
@@ -558,4 +611,28 @@
     </button>
     <button type="button" on:click={() => fitLocations(false)}>Fit</button>
   </div>
+
+  {#if tooltipVisible}
+    <div
+      class="map-tooltip"
+      style={`left:${tooltipX}px;top:${tooltipY}px;`}
+      aria-hidden="true"
+    >{tooltipText}</div>
+  {/if}
 </div>
+
+<style>
+  .map-tooltip {
+    position: absolute;
+    z-index: 2;
+    max-width: min(17rem, calc(100% - 2rem));
+    padding: 0.38rem 0.5rem;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.72rem;
+    line-height: 1.35;
+    transform: translate(0.7rem, calc(-100% - 0.7rem));
+    pointer-events: none;
+  }
+</style>

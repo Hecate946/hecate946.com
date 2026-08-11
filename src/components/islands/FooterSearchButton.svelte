@@ -10,10 +10,9 @@
   aria-label="Open site search"
   aria-keyshortcuts="Meta+K Control+K"
   data-label="Search"
-  title="Open search — Ctrl/⌘ K"
   onclick={openCommandPalette}
 >
-  <svg class="footer-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+  <svg class="footer-search-icon footer-ui-icon" viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="11" cy="11" r="6.5"></circle>
     <path d="m16 16 4 4"></path>
   </svg>

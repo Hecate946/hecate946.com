@@ -1,17 +1,15 @@
 ---
-import StatsDashboard from '@/components/islands/StatsDashboard.svelte';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { siteRoutes } from '@/lib/site-routes';
 import { withBase } from '@/lib/paths';
-import { STATS_API_BASE } from '@/lib/stats-api';
 import '@/styles/lab.css';
-import '@/styles/stats.css';
 
 const primaryRoutes = new Set([
   '/',
   '/about/',
   '/projects/',
   '/contact/',
+  '/stats/',
   '/lab/',
 ]);
 
@@ -39,15 +37,12 @@ const sections = [
   },
 ].filter((section) => section.routes.length > 0);
 
-const statsApiBase = STATS_API_BASE;
-const codeStatsUrl = withBase('/generated/code-stats.json');
-
 let routeNumber = 0;
 ---
 
 <BaseLayout
   title="Lab"
-  description="Live site statistics, experiments, prototypes, immersive spaces, and side paths from hecate946.com."
+  description="Experiments, prototypes, immersive spaces, and side paths from hecate946.com."
 >
   <section class="lab-page interior-page interior-page--eight" aria-labelledby="lab-title">
     <header class="lab-heading interior-page-heading">
@@ -58,24 +53,6 @@ let routeNumber = 0;
     </header>
 
     <div class="lab-content interior-page-content interior-page-content--balanced">
-      <section class="lab-stats" aria-labelledby="lab-stats-heading" data-default-only>
-        <header class="lab-section-heading lab-stats-heading">
-          <h2 id="lab-stats-heading">Stats</h2>
-        </header>
-        <StatsDashboard
-          client:visible
-          apiBase={statsApiBase}
-          {codeStatsUrl}
-        />
-      </section>
-
-      <section data-html-only hidden aria-labelledby="html-lab-stats-heading">
-        <h2 id="html-lab-stats-heading">Stats</h2>
-        <p>
-          Live website statistics, generated code statistics, and local browser statistics are available in the standard site view.
-        </p>
-      </section>
-
       <section class="lab-index-block" aria-labelledby="lab-index-heading">
         <header class="lab-section-heading lab-index-heading">
           <h2 id="lab-index-heading">Index</h2>

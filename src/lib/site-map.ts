@@ -69,6 +69,16 @@ const PAGE_METADATA: Record<
     description: 'Experiments, prototypes, and immersive side paths',
     category: 'experiments',
   },
+  '/stats/': {
+    label: 'Stats',
+    description: 'Interactive observatory for visitors, traffic, and site activity',
+    category: 'profile',
+  },
+  '/lab/stats/': {
+    label: 'Raw Stats',
+    description: 'Original website, code, and browser data dashboard',
+    category: 'experiments',
+  },
   '/globe/': {
     label: 'Visitor Globe',
     description: 'Draggable three-dimensional visitor map prototype',

@@ -14,5 +14,5 @@ export const headerNavigation = [
     match: ['/code/', '/clarinet/', '/piano/'],
   },
   { label: 'Contact', href: '/contact/' },
-  { label: 'Lab', href: '/lab/' },
+  { label: 'Stats', href: '/stats/' },
 ] as const satisfies readonly HeaderNavItem[];

@@ -14,6 +14,8 @@ export type NetworkNode = {
   id: string;
   label: string;
   description?: string;
+  /** Keep the secondary description visible instead of revealing it only on hover/focus. */
+  descriptionAlwaysVisible?: boolean;
   href?: string;
   external?: boolean;
   imageSrc?: string;

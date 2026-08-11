@@ -1,0 +1,32 @@
+---
+import StatsObservatory from '@/components/islands/StatsObservatory.svelte';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { STATS_API_BASE } from '@/lib/stats-api';
+import '@/styles/stats.css';
+import '@/styles/stats-observatory.css';
+
+const statsApiBase = STATS_API_BASE;
+const rawStatsUrl = '/lab/stats/';
+---
+
+<BaseLayout
+  title="Stats — Cyrus Asasi"
+  description="The website, observed: a live interactive view of visitors, traffic, time, and browsing paths on hecate946.com."
+>
+  <section class="stats-observatory-page interior-page interior-page--eight" aria-labelledby="stats-title">
+    <header class="interior-page-heading">
+      <h1 id="stats-title">Stats</h1>
+    </header>
+
+    <div class="stats-observatory-content interior-page-content">
+      <div data-default-only>
+        <StatsObservatory client:visible apiBase={statsApiBase} />
+      </div>
+
+      <section data-html-only hidden>
+        <h2>Stats</h2>
+        <p><a href={rawStatsUrl}>Raw statistics</a></p>
+      </section>
+    </div>
+  </section>
+</BaseLayout>
