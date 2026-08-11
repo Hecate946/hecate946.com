@@ -507,6 +507,7 @@
           <WallWindow
             {destination}
             keyboardAccessible={loopIndex === 0}
+            semantic={loopIndex === 0}
             entering={enteringId === destination.id}
             onFocus={focusDestination}
             onEnter={enterDestination}

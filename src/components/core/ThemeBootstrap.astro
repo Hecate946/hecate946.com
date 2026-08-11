@@ -4,14 +4,17 @@
     const themeNames = ['light', 'dark'];
     const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    /* HTML mode is intentionally literal: it disables author stylesheets and
-       removes inline style attributes, but it never changes element visibility
-       or substitutes alternate/hidden content. Native HTML attributes such as
-       `hidden`, `open`, `alt`, `width`, and `height` keep their normal browser
-       meaning. */
+    /* HTML mode is intentionally literal: it disables author CSS and authored
+       inline styles on the real page DOM. Before doing that, it snapshots
+       anything the styled page is currently hiding and preserves that state
+       with the native `hidden` attribute. This prevents CSS-only helper text,
+       alternate icons, overlays, or accessibility labels from suddenly
+       becoming visible just because the stylesheet was turned off. */
     const styleNodeState = new WeakMap();
     const inlineStyleState = new WeakMap();
     const inlineStyleElements = new Set();
+    const htmlHiddenState = new WeakMap();
+    const htmlHiddenElements = new Set();
 
     const isStyleNode = (node) =>
       node instanceof HTMLStyleElement ||
@@ -61,22 +64,95 @@
       }
     };
 
+    const rememberHtmlHidden = (element) => {
+      if (!(element instanceof HTMLElement) || element.hidden) return;
+      if (!htmlHiddenState.has(element)) htmlHiddenState.set(element, false);
+      htmlHiddenElements.add(element);
+      element.hidden = true;
+    };
+
+    const restoreHtmlHidden = (targetDocument) => {
+      for (const element of Array.from(htmlHiddenElements)) {
+        if (element.ownerDocument !== targetDocument) continue;
+
+        if (!targetDocument.documentElement.contains(element)) {
+          htmlHiddenState.delete(element);
+          htmlHiddenElements.delete(element);
+          continue;
+        }
+
+        if (htmlHiddenState.get(element) === false) element.hidden = false;
+        htmlHiddenState.delete(element);
+        htmlHiddenElements.delete(element);
+      }
+    };
+
+    const preserveStyledVisibility = (targetDocument) => {
+      if (targetDocument !== document || !targetDocument.body) return;
+
+      for (const element of targetDocument.body.querySelectorAll('*')) {
+        if (!(element instanceof HTMLElement)) continue;
+        if (element.hidden || element.closest('[hidden]')) continue;
+        if (['SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT'].includes(element.tagName)) continue;
+
+        const styles = getComputedStyle(element);
+        const opacity = Number.parseFloat(styles.opacity);
+        const hiddenByAuthorStyles =
+          styles.display === 'none' ||
+          styles.visibility === 'hidden' ||
+          styles.visibility === 'collapse' ||
+          opacity === 0 ||
+          element.getAttribute('aria-hidden') === 'true' ||
+          element.classList.contains('visually-hidden');
+
+        if (hiddenByAuthorStyles) rememberHtmlHidden(element);
+      }
+    };
+
+    const preserveExplicitHiddenContent = (node) => {
+      if (!(node instanceof Element)) return;
+      if (node.matches('.visually-hidden, [aria-hidden="true"]')) rememberHtmlHidden(node);
+      node
+        .querySelectorAll?.('.visually-hidden, [aria-hidden="true"]')
+        .forEach(rememberHtmlHidden);
+    };
+
     const applyHtmlPresentation = (targetDocument, htmlMode) => {
       const root = targetDocument.documentElement;
-      root.dataset.htmlMode = String(htmlMode);
-
-      targetDocument
-        .querySelectorAll('style, link[rel~="stylesheet"]')
-        .forEach((node) => setStyleNodeDisabled(node, htmlMode));
 
       if (htmlMode) {
+        // Measure the normal styled presentation first, even when HTML mode is
+        // being restored after an Astro navigation. This makes HTML mode show
+        // only content that the real styled page would expose.
+        targetDocument
+          .querySelectorAll('style, link[rel~="stylesheet"]')
+          .forEach((node) => setStyleNodeDisabled(node, false));
+        restoreInlineStyles(targetDocument);
+        restoreHtmlHidden(targetDocument);
+
+        const previousMode = root.dataset.htmlMode;
+        root.dataset.htmlMode = 'false';
+        preserveStyledVisibility(targetDocument);
+        root.dataset.htmlMode = previousMode ?? 'true';
+
         targetDocument
           .querySelectorAll('[style]')
           .forEach((element) => syncInlineStyle(element, true));
         syncInlineStyle(root, true);
-      } else {
-        restoreInlineStyles(targetDocument);
+        root.dataset.htmlMode = 'true';
+
+        targetDocument
+          .querySelectorAll('style, link[rel~="stylesheet"]')
+          .forEach((node) => setStyleNodeDisabled(node, true));
+        return;
       }
+
+      targetDocument
+        .querySelectorAll('style, link[rel~="stylesheet"]')
+        .forEach((node) => setStyleNodeDisabled(node, false));
+      restoreInlineStyles(targetDocument);
+      restoreHtmlHidden(targetDocument);
+      root.dataset.htmlMode = 'false';
     };
 
     window.__hecateApplyHtmlPresentation = applyHtmlPresentation;
@@ -130,7 +206,10 @@
       };
     };
 
-    const applyPreferences = (targetDocument = document) => {
+    const applyPreferences = (
+      targetDocument = document,
+      applyPresentation = targetDocument === document && Boolean(targetDocument.body),
+    ) => {
       const { seasonPreference, season, theme, musicVolume, sfxVolume, htmlMode } =
         resolvePreferences();
       const root = targetDocument.documentElement;
@@ -144,7 +223,8 @@
       root.dataset.audioActive = String(musicVolume > 0 || sfxVolume > 0);
       root.dataset.themeReady = 'true';
 
-      applyHtmlPresentation(targetDocument, htmlMode);
+      if (applyPresentation) applyHtmlPresentation(targetDocument, htmlMode);
+      else root.dataset.htmlMode = String(htmlMode);
       if (!htmlMode) root.style.colorScheme = theme;
     };
 
@@ -193,6 +273,7 @@
 
             if (isStyleNode(node)) setStyleNodeDisabled(node, true);
             syncInlineStyle(node, true);
+            preserveExplicitHiddenContent(node);
 
             node
               .querySelectorAll('style, link[rel~="stylesheet"]')
@@ -212,7 +293,7 @@
       });
 
       document.addEventListener('astro:before-swap', (event) => {
-        applyPreferences(event.newDocument);
+        applyPreferences(event.newDocument, false);
       });
 
       document.addEventListener('astro:after-swap', () => {

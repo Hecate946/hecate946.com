@@ -5,6 +5,7 @@
   export let destination: WallDestination;
   export let entering = false;
   export let keyboardAccessible = true;
+  export let semantic = true;
   export let onFocus: (destination: WallDestination) => void;
   export let onEnter: (event: MouseEvent, destination: WallDestination) => void;
 
@@ -24,10 +25,11 @@
   class:wall-window--entering={entering}
   class="wall-window"
   href={withBase(destination.href)}
-  aria-label={`Enter ${destination.label}`}
+  aria-label={semantic ? `Enter ${destination.label}` : undefined}
+  aria-hidden={semantic ? undefined : 'true'}
   data-wall-window={destination.id}
   data-site-sound-silent
-  data-astro-prefetch
+  data-astro-prefetch={semantic ? true : undefined}
   draggable="false"
   tabindex={keyboardAccessible ? undefined : -1}
   onfocus={() => keyboardAccessible && onFocus(destination)}
@@ -53,9 +55,14 @@
   </span>
 
   <span class="wall-window__sill" aria-hidden="true"></span>
-  <span class="wall-window__label">
-    <span class="wall-window__index">{indexLabel}</span>
-    <span class="wall-window__name">{destination.label}</span>
+  <span class:wall-window__label--clone={!semantic} class="wall-window__label">
+    {#if semantic}
+      <span class="wall-window__index">{indexLabel}</span>
+      <span class="wall-window__name">{destination.label}</span>
+    {:else}
+      <span class="wall-window__index" data-display-text={indexLabel}></span>
+      <span class="wall-window__name" data-display-text={destination.label}></span>
+    {/if}
     <span class="wall-window__arrow" aria-hidden="true">
       <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
         <path d="M4 12 12 4M6.25 4H12v5.75" />
@@ -187,6 +194,14 @@
   .wall-window__index {
     color: color-mix(in srgb, var(--wall-light, #f4f1e9) 30%, transparent);
     font-variant-numeric: tabular-nums;
+  }
+
+  /* The off-screen loop copies are visual/infinite-scroll replicas, not extra
+     document content. Their labels are painted from data attributes so search
+     engines and assistive technology encounter one canonical navigation set. */
+  .wall-window__label--clone .wall-window__index::before,
+  .wall-window__label--clone .wall-window__name::before {
+    content: attr(data-display-text);
   }
 
   .wall-window__arrow {

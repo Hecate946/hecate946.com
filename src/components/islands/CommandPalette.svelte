@@ -5,8 +5,9 @@
 
   export let items: ReadonlyArray<{ label: string; href: string }> = [];
 
-  let dialog: HTMLDialogElement;
-  let input: HTMLInputElement;
+  let dialog: HTMLDialogElement | undefined;
+  let input: HTMLInputElement | undefined;
+  let rendered = false;
   let query = '';
   let selectedIndex = 0;
 
@@ -19,10 +20,14 @@
   }
 
   async function open() {
-    if (!dialog || dialog.open) return;
+    if (dialog?.open) return;
 
     query = '';
     resetSelection();
+    rendered = true;
+    await tick();
+
+    if (!dialog) return;
     dialog.showModal();
     await tick();
     input?.focus();
@@ -31,6 +36,11 @@
 
   function close() {
     if (dialog?.open) dialog.close();
+    else rendered = false;
+  }
+
+  function handleDialogClose() {
+    rendered = false;
   }
 
   function navigateToSelected() {
@@ -103,11 +113,13 @@
   });
 </script>
 
+{#if rendered}
 <dialog
   bind:this={dialog}
   aria-label="Site search"
   on:click={(event) => event.target === dialog && close()}
   on:keydown={handlePaletteKeydown}
+  on:close={handleDialogClose}
 >
   <section aria-label="Site search">
     <div class="search-row">
@@ -161,6 +173,7 @@
     </ul>
   </section>
 </dialog>
+{/if}
 
 <style>
   dialog {
