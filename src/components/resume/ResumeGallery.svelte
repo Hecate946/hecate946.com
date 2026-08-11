@@ -6,7 +6,6 @@
     shortLabel: string;
     pdfUrl: string;
     previewUrl: string;
-    previewSrcset: string;
     previewWidth: number;
     previewHeight: number;
   }
@@ -18,6 +17,7 @@
   {#each resumes as resume (resume.id)}
     <a
       class="resume-frame"
+      data-resume-id={resume.id}
       href={resume.pdfUrl}
       target="_blank"
       rel="noopener noreferrer"
@@ -28,8 +28,6 @@
           <img
             class="resume-frame__preview"
             src={resume.previewUrl}
-            srcset={resume.previewSrcset}
-            sizes="(max-width: 48rem) min(88vw, 38rem), min(42vw, 34rem)"
             alt=""
             width={resume.previewWidth}
             height={resume.previewHeight}

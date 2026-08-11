@@ -2,12 +2,12 @@
   import { onMount } from 'svelte';
   import WallWindow from './WallWindow.svelte';
   import WallRoom from './WallRoom.svelte';
+  import type { WallDestination } from './wall-config';
   import {
-    WALL_LOOP_WIDTH,
-    WALL_START_X,
-    wallDestinations,
-    type WallDestination,
-  } from './wall-config';
+    PROJECT_LOOP_WIDTH,
+    PROJECT_START_X,
+    projectDestinations,
+  } from './project-wall-config';
 
   const loopCopies = [-1, 0, 1] as const;
   const DRAG_THRESHOLD = 7;
@@ -21,7 +21,7 @@
 
   let stage: HTMLElement;
   let wallWorld: HTMLElement;
-  let cameraX = WALL_START_X;
+  let cameraX = PROJECT_START_X;
   let velocity = 0;
   let driftDirection = 1;
   let isPaused = false;
@@ -43,14 +43,14 @@
   let lastLoopBase = Number.NaN;
   let renderDevicePixelRatio = 1;
 
-  const stageStyle = `--loop-width: ${WALL_LOOP_WIDTH}px; --wall-room-brick-x: ${periodicOffset(WALL_START_X, WALL_PATTERN_WIDTH)}px; --wall-room-floor-x: ${periodicOffset(WALL_START_X, FLOOR_TILE_SIZE)}px;`;
+  const stageStyle = `--loop-width: ${PROJECT_LOOP_WIDTH}px; --wall-room-brick-x: ${periodicOffset(PROJECT_START_X, WALL_PATTERN_WIDTH)}px; --wall-room-floor-x: ${periodicOffset(PROJECT_START_X, FLOOR_TILE_SIZE)}px;`;
 
   function modulo(value: number, period: number) {
     return ((value % period) + period) % period;
   }
 
   function loopBase(position: number) {
-    return Math.floor(position / WALL_LOOP_WIDTH) * WALL_LOOP_WIDTH;
+    return Math.floor(position / PROJECT_LOOP_WIDTH) * PROJECT_LOOP_WIDTH;
   }
 
   function markInteracted() {
@@ -141,9 +141,9 @@
   }
 
   function nearestDelta(targetX: number) {
-    let delta = targetX - modulo(cameraX, WALL_LOOP_WIDTH);
-    if (delta > WALL_LOOP_WIDTH / 2) delta -= WALL_LOOP_WIDTH;
-    if (delta < -WALL_LOOP_WIDTH / 2) delta += WALL_LOOP_WIDTH;
+    let delta = targetX - modulo(cameraX, PROJECT_LOOP_WIDTH);
+    if (delta > PROJECT_LOOP_WIDTH / 2) delta -= PROJECT_LOOP_WIDTH;
+    if (delta < -PROJECT_LOOP_WIDTH / 2) delta += PROJECT_LOOP_WIDTH;
     return delta;
   }
 
@@ -379,7 +379,7 @@
     } else if (event.key === 'Home') {
       event.preventDefault();
       markInteracted();
-      void animateCameraTo(WALL_START_X, 420);
+      void animateCameraTo(PROJECT_START_X, 420);
     }
   }
 
@@ -460,28 +460,28 @@
   class:wall-stage--entering={Boolean(enteringId)}
   class="wall-stage wall-room-host"
   style={stageStyle}
-  aria-label="Infinite navigation wall. Drag or scroll horizontally, then select a lit window to enter a page."
+  aria-label="Infinite project conveyor. Drag, swipe, or scroll horizontally, then select a framed project."
 >
-  <h1 class="visually-hidden">Cyrus Asasi</h1>
+  <h1 class="visually-hidden">Projects</h1>
 
   <WallRoom />
 
   <div
     bind:this={wallWorld}
     class="wall-world"
-    aria-label="Website destinations"
-    style={`--loop-base: 0px; transform: translate3d(${-WALL_START_X}px, 0, 0);`}
+    aria-label="Selected projects"
+    style={`--loop-base: 0px; transform: translate3d(${-PROJECT_START_X}px, 0, 0);`}
   >
     {#each loopCopies as loopIndex}
       <div
         class="wall-loop"
         aria-hidden={loopIndex !== 0 ? 'true' : undefined}
-        style={`--loop-offset: ${loopIndex * WALL_LOOP_WIDTH}px;`}
+        style={`--loop-offset: ${loopIndex * PROJECT_LOOP_WIDTH}px;`}
       >
         <div class="wall-loop__seam wall-loop__seam--a" aria-hidden="true"></div>
         <div class="wall-loop__seam wall-loop__seam--b" aria-hidden="true"></div>
 
-        {#each wallDestinations as destination (destination.id)}
+        {#each projectDestinations as destination, destinationIndex (destination.id)}
           <WallWindow
             {destination}
             keyboardAccessible={loopIndex === 0}
@@ -489,6 +489,7 @@
             entering={enteringId === destination.id}
             onFocus={focusDestination}
             onEnter={enterDestination}
+            indexLabel={String(destinationIndex + 1).padStart(2, '0')}
           />
         {/each}
       </div>

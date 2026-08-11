@@ -1,35 +1,46 @@
 .resume-page {
+  --resume-floor-height: clamp(5.2rem, 18dvh, 9.8rem);
+
+  position: relative;
   min-height: calc(100dvh - var(--header-height));
+  padding-inline: clamp(1rem, 4vw, 4rem);
 }
 
-/* The title stays on the shared page grid. The frames themselves use a wider
-   centered span so both documents can be large enough to read at a glance. */
+/* On desktop the gallery is centered against the usable brick wall itself:
+   from the top of the page down to the baseboard/floor boundary. The title is
+   independent of that centering, so changing its size does not push the
+   frames off the visual center of the wall. */
 .resume-content {
-  grid-column: 2 / 12;
+  position: absolute;
+  inset: 0 0 var(--resume-floor-height);
+  display: grid;
+  place-items: center;
   width: 100%;
-  max-width: 74rem;
-  justify-self: center;
-  padding-block: clamp(2.5rem, 4.5vw, 4rem) clamp(4rem, 8vw, 7rem);
+  padding: clamp(4.75rem, 9vh, 7rem) clamp(1.25rem, 4vw, 4rem) 0;
+  pointer-events: none;
 }
 
 .resume-gallery {
   display: grid;
+  width: min(100%, 60rem);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  gap: clamp(2rem, 4vw, 4rem);
-  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6rem, 9vw, 8rem);
   margin-inline: auto;
+  pointer-events: auto;
 }
 
-/* Match the homepage painting construction exactly: black recess, inset glass,
-   physical sill, numbered uppercase label, and the same light-up hover state. */
+/* Resume frames deliberately use the exact material language of the homepage
+   gallery: black recess, inset glass, sill, reflection, label and hover glow.
+   Both frames share one portrait opening so their outer dimensions match exactly. */
 .resume-frame {
   --room-light-hot: var(--wall-light, #f4f1e9);
+  --resume-frame-width: 20.5rem;
 
   position: relative;
   display: block;
-  width: min(100%, 34rem);
-  aspect-ratio: 2160 / 3200;
+  width: min(100%, var(--resume-frame-width));
   justify-self: center;
   color: color-mix(in srgb, var(--wall-light, #f4f1e9) 72%, transparent);
   outline: none;
@@ -38,12 +49,15 @@
   -webkit-user-drag: none;
 }
 
+
 .resume-frame__recess {
-  position: absolute;
-  inset: 0 0 2.25rem;
+  position: relative;
+  display: block;
   box-sizing: border-box;
+  width: 100%;
   overflow: hidden;
   contain: paint;
+  padding: 0.3rem;
   border: 0.7rem solid #050505;
   background: #020202;
   box-shadow:
@@ -58,24 +72,26 @@
 }
 
 .resume-frame__glass {
-  position: absolute;
-  inset: 0.3rem;
+  position: relative;
+  display: block;
   box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 71 / 100;
   overflow: hidden;
   contain: paint;
-  background: #f2f0eb;
+  background: #0b0b0a;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 8%, transparent);
 }
 
 .resume-frame__preview {
-  position: relative;
+  position: absolute;
   z-index: 1;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: top center;
-  background: #fff;
+  object-fit: cover;
+  object-position: 50% 50%;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -103,22 +119,20 @@
 }
 
 .resume-frame__sill {
-  position: absolute;
-  right: -0.65rem;
-  bottom: 2rem;
-  left: -0.65rem;
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3rem);
   height: 0.55rem;
+  margin: -0.1rem -0.65rem 0;
   background: #050505;
   border-top: 1px solid color-mix(in srgb, var(--wall-light, #f4f1e9) 7%, transparent);
   box-shadow: 0 0.5rem 0.65rem rgb(0 0 0 / 58%);
 }
 
 .resume-frame__label {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  position: relative;
   display: grid;
+  margin-top: 1.45rem;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.7rem;
@@ -127,7 +141,10 @@
   font-size: 0.7rem;
   font-weight: 400;
   letter-spacing: 0.16em;
-  line-height: 1;
+  /* Give the small uppercase face enough vertical room for its cap/ascender
+     metrics. A 1.0 line box combined with the name's overflow clipping was
+     shaving the tops off letters such as S, E and C. */
+  line-height: 1.35;
   text-transform: uppercase;
   transition: color 260ms ease;
 }
@@ -138,6 +155,8 @@
 }
 
 .resume-frame__name {
+  min-width: 0;
+  padding-block: 0.08em 0.12em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -202,17 +221,25 @@
 }
 
 @media (max-width: 48rem) {
+  .resume-page {
+    min-height: calc(100dvh - var(--header-height));
+  }
+
   .resume-content {
-    grid-column: 1 / -1;
+    position: static;
+    display: block;
+    padding: 2rem 0 clamp(8rem, 18vh, 10rem);
+    pointer-events: auto;
   }
 
   .resume-gallery {
+    width: 100%;
     grid-template-columns: 1fr;
-    gap: 3.5rem;
+    gap: 3.25rem;
   }
 
   .resume-frame {
-    width: min(88vw, 38rem);
+    --resume-frame-width: min(82vw, 20.5rem);
   }
 
   .resume-frame__label {

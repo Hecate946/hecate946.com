@@ -67,3 +67,12 @@ html[data-theme='dark'] {
   --page-noise-opacity: 0; /* 0.075 */
   --page-noise-contrast: 128%;
 }
+
+/* On phones the navigation becomes two architectural rows. Each row remains
+   exactly two brick courses tall, so the header stays locked to the wall's
+   mortar rhythm while doubling its overall height. */
+@media (max-width: 40rem) {
+  :root {
+    --header-height: calc(var(--brick-course-height) * 4);
+  }
+}

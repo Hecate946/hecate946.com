@@ -12,7 +12,7 @@
   /* The floor is projected in 3D. These source dimensions are intentionally
      depth-compensated so the projected cells read as square ceramic tiles,
      not tall rectangles. Keep this geometry shared by every room. */
-  --floor-tile-width: 68px;
+  --floor-tile-width: 84px;
   --floor-tile-depth: 118px;
 
   position: relative;

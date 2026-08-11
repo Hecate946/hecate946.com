@@ -1,0 +1,47 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ResumeGallery from '@/components/resume/ResumeGallery.svelte';
+import { withBase } from '@/lib/paths';
+import '@/styles/resume.css';
+
+const softwareResumeUrl = withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf');
+const musicResumeUrl = withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf');
+
+const resumes = [
+  {
+    id: 'software',
+    number: '01',
+    label: 'Software Engineering',
+    shortLabel: 'Software Engineering',
+    pdfUrl: softwareResumeUrl,
+    previewUrl: withBase('/images/resume/cyrus-asasi-software-engineering-resume.webp'),
+    previewWidth: 1454,
+    previewHeight: 2048,
+  },
+  {
+    id: 'clarinet',
+    number: '02',
+    label: 'Clarinet Performance',
+    shortLabel: 'Clarinet Performance',
+    pdfUrl: musicResumeUrl,
+    previewUrl: withBase('/images/resume/cyrus-asasi-clarinet-performance-resume.webp'),
+    previewWidth: 1338,
+    previewHeight: 1885,
+  },
+] as const;
+---
+
+<BaseLayout
+  title="Resumes — Cyrus Asasi"
+  description="Software engineering and clarinet performance resumes for Cyrus Asasi."
+>
+  <section class="resume-page interior-page interior-page--open" aria-labelledby="resumes-title">
+    <header class="resume-heading interior-page-heading">
+      <h1 id="resumes-title">Resumes</h1>
+    </header>
+
+    <div class="resume-content interior-page-content">
+      <ResumeGallery {resumes} />
+    </div>
+  </section>
+</BaseLayout>

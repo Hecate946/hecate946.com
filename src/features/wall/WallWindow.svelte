@@ -6,10 +6,11 @@
   export let entering = false;
   export let keyboardAccessible = true;
   export let semantic = true;
+  export let indexLabel: string | undefined = undefined;
   export let onFocus: (destination: WallDestination) => void;
   export let onEnter: (event: MouseEvent, destination: WallDestination) => void;
 
-  const indexLabel = wallIndex(destination.id);
+  const displayIndex = indexLabel ?? wallIndex(destination.id);
   const paintingSrcset = destination.painting.sources
     ?.map((source) => `${withBase(source.src)} ${source.width}w`)
     .join(', ');
@@ -56,10 +57,10 @@
   <span class="wall-window__sill" aria-hidden="true"></span>
   <span class:wall-window__label--clone={!semantic} class="wall-window__label">
     {#if semantic}
-      <span class="wall-window__index">{indexLabel}</span>
+      <span class="wall-window__index">{displayIndex}</span>
       <span class="wall-window__name">{destination.label}</span>
     {:else}
-      <span class="wall-window__index" data-display-text={indexLabel}></span>
+      <span class="wall-window__index" data-display-text={displayIndex}></span>
       <span class="wall-window__name" data-display-text={destination.label}></span>
     {/if}
     <span class="wall-window__arrow" aria-hidden="true">

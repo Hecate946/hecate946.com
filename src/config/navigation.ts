@@ -7,6 +7,6 @@ export interface HeaderNavItem {
 export const headerNavigation = [
   { label: 'About', href: '/about/' },
   { label: 'Projects', href: '/projects/' },
-  { label: 'Resume', href: '/resume/' },
+  { label: 'Resumes', href: '/resumes/' },
   { label: 'Contact', href: '/contact/' },
 ] as const satisfies readonly HeaderNavItem[];

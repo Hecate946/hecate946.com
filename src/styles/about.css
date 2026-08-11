@@ -1,43 +1,40 @@
 /*
- * ABOUT ROOM
- * ----------
- * The About page now uses the exact same physical room shell as the homepage.
- * Only the room palette and content layout differ; brick geometry, lighting,
- * floor perspective, checker pattern and baseboard are shared by WallRoom.
+ * ABOUT PAGE — WALL + PAPER
+ * -------------------------
+ * Same architectural room as the homepage, but the content feels like curated
+ * papers pinned onto the wall: framed portrait, parchment sheets, and clean
+ * gallery-style scroll headers.
  */
 
 body.about-room-page {
-  /* About is the warm room in the building: a burnt architectural orange in
-     light mode, deep ember in dark mode, with the same cream contrast as Home. */
-  --wall-dark: #ad5522;
-  --wall-light: #fff8e8;
-  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 89%, #251008);
-  --wall-trim-line: color-mix(in srgb, var(--wall-light) 18%, transparent);
-  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 9%, transparent);
-  --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 7%, transparent);
-  --wall-trim-shadow: rgb(40 15 4 / 38%);
+  --wall-dark: #a65b1e;
+  --wall-light: #fff5e2;
+  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 90%, #241006);
+  --wall-trim-line: color-mix(in srgb, var(--wall-light) 16%, transparent);
+  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 8%, transparent);
+  --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 6%, transparent);
+  --wall-trim-shadow: rgb(44 20 8 / 40%);
 
-  --about-panel: color-mix(in srgb, var(--wall-dark) 76%, #2c1207);
-  --about-panel-soft: color-mix(in srgb, var(--wall-dark) 68%, transparent);
-  --about-panel-strong: color-mix(in srgb, var(--wall-dark) 78%, #1e0d05);
-  --about-ink: var(--wall-light);
-  --about-muted: color-mix(in srgb, var(--wall-light) 72%, var(--wall-dark));
-  --about-line: color-mix(in srgb, var(--wall-light) 18%, transparent);
-  --about-accent: #ffd0a3;
-  --about-accent-soft: rgb(255 208 163 / 12%);
+  --paper: #fbf0d8;
+  --paper-soft: #f6ead3;
+  --paper-edge: #e1ccab;
+  --paper-ink: #38281c;
+  --paper-muted: #7b6250;
+  --paper-accent: #8c4c1f;
+  --paper-shadow: 0 1rem 2.6rem rgb(48 19 6 / 18%), 0 0.16rem 0.45rem rgb(31 10 3 / 12%);
 
   --bg: var(--wall-dark);
-  --surface: var(--about-panel-soft);
-  --surface-strong: var(--about-panel-strong);
-  --text: var(--about-ink);
-  --muted: var(--about-muted);
-  --line: var(--about-line);
-  --accent: var(--about-accent);
-  --accent-strong: var(--about-accent);
-  --accent-soft: var(--about-accent-soft);
-  --shadow: 0 1.25rem 3rem rgb(48 17 4 / 24%);
+  --surface: color-mix(in srgb, var(--paper) 95%, transparent);
+  --surface-strong: var(--paper);
+  --text: var(--paper-ink);
+  --muted: var(--paper-muted);
+  --line: var(--paper-edge);
+  --accent: var(--paper-accent);
+  --accent-strong: var(--paper-accent);
+  --accent-soft: color-mix(in srgb, var(--paper-accent) 10%, transparent);
+  --shadow: var(--paper-shadow);
   --header-text: var(--wall-light);
-  --header-muted: color-mix(in srgb, var(--wall-light) 74%, transparent);
+  --header-muted: color-mix(in srgb, var(--wall-light) 78%, transparent);
   --header-line: rgb(255 255 255 / 62%);
   --header-accent: var(--wall-light);
 
@@ -45,31 +42,38 @@ body.about-room-page {
 }
 
 html[data-theme='dark'] body.about-room-page {
-  --wall-dark: #1c0c04;
-  --wall-light: #fff8e8;
+  --wall-dark: #271206;
+  --wall-light: #fff5e2;
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 95%, #050201);
   --wall-trim-line: color-mix(in srgb, var(--wall-light) 10%, transparent);
-  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 5.5%, transparent);
+  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 5%, transparent);
   --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 4%, transparent);
   --wall-trim-shadow: rgb(0 0 0 / 48%);
 
-  --about-panel: rgb(28 12 4 / 86%);
-  --about-panel-soft: rgb(28 12 4 / 72%);
-  --about-panel-strong: #241006;
-  --about-ink: var(--wall-light);
-  --about-muted: #d7bca7;
-  --about-line: rgb(255 248 232 / 14%);
-  --about-accent: #eab37f;
-  --about-accent-soft: rgb(234 179 127 / 11%);
-  --shadow: 0 1.25rem 3rem rgb(0 0 0 / 36%);
+  --paper: #f0dfbd;
+  --paper-soft: #e8d7b3;
+  --paper-edge: #c5ae85;
+  --paper-ink: #23180f;
+  --paper-muted: #6d5543;
+  --paper-accent: #8f5727;
+  --paper-shadow: 0 1.15rem 2.85rem rgb(0 0 0 / 26%), 0 0.16rem 0.45rem rgb(0 0 0 / 14%);
+
+  --bg: var(--wall-dark);
+  --surface: var(--paper);
+  --surface-strong: var(--paper);
+  --text: var(--paper-ink);
+  --muted: var(--paper-muted);
+  --line: var(--paper-edge);
+  --accent: var(--paper-accent);
+  --accent-strong: var(--paper-accent);
+  --accent-soft: color-mix(in srgb, var(--paper-accent) 10%, transparent);
+  --shadow: var(--paper-shadow);
   --header-text: var(--wall-light);
-  --header-muted: color-mix(in srgb, var(--wall-light) 72%, transparent);
+  --header-muted: color-mix(in srgb, var(--wall-light) 76%, transparent);
   --header-line: rgb(255 255 255 / 62%);
-  --header-accent: var(--about-accent);
+  --header-accent: var(--wall-light);
 }
 
-/* Pull the room underneath the transparent sticky header so the same bricks
-   are visible through the navigation, just like the homepage. */
 .about-room-page main {
   min-height: 0;
   padding: 0;
@@ -88,29 +92,26 @@ html[data-theme='dark'] body.about-room-page {
   }
 }
 
-/* A static room has no camera movement, so avoid promoting these layers to
-   dedicated compositor surfaces unnecessarily. The visual CSS is identical. */
 .about-room .wall-stage__brick-pattern,
 .about-room .wall-floor__surface {
   will-change: auto;
 }
 
 .about-book {
-  --about-edge: clamp(1rem, 4.25vw, 5.5rem);
-  --about-max: 94rem;
+  --about-edge: clamp(1rem, 4.25vw, 5rem);
+  --about-max: 88rem;
 
   position: relative;
   z-index: 4;
   box-sizing: border-box;
   width: min(100%, var(--about-max));
+  display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: clamp(0.75rem, 1.5vw, 1.6rem);
+  column-gap: clamp(0.8rem, 1.6vw, 1.5rem);
   margin-inline: auto;
-  padding: 0 var(--about-edge) calc(var(--floor-height) + clamp(3.5rem, 7vw, 6rem));
+  padding: 0 var(--about-edge) calc(var(--floor-height) + clamp(3rem, 6vw, 5rem));
 }
 
-/* Break out of the narrow generic interior-page column. Every About section
-   owns the full room grid and decides where its content should sit. */
 .about-book > .about-masthead,
 .about-book > .about-intro,
 .about-book > .about-disciplines {
@@ -120,49 +121,54 @@ html[data-theme='dark'] body.about-room-page {
 
 .about-masthead {
   display: flex;
-  min-height: clamp(10rem, 22vh, 15rem);
   align-items: flex-end;
   justify-content: flex-start;
-  padding: clamp(3.5rem, 8vh, 6rem) 0 clamp(1.5rem, 3vw, 2.25rem);
-  border-bottom: 1px solid var(--header-line);
-  text-align: left;
+  padding: clamp(1.8rem, 3.25vw, 2.5rem) 0 clamp(1.1rem, 2vw, 1.4rem);
 }
 
 .about-masthead h1 {
   margin: 0;
   color: var(--wall-light);
   font-family: var(--font-display);
-  font-size: clamp(4rem, 8vw, 7.5rem);
+  font-size: clamp(1.55rem, 2.45vw, 2.05rem);
   font-weight: 400;
-  letter-spacing: -0.015em;
-  line-height: 0.83;
+  letter-spacing: 0.08em;
+  line-height: 1;
   text-transform: uppercase;
-  text-shadow: 0 0.2rem 1.5rem rgb(48 17 4 / 18%);
 }
 
-/* Hero: portrait on the left, all introductory copy on the right. This uses
-   desktop width instead of forcing a portrait and three paragraphs through a
-   six-column reading strip. */
 .about-intro {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: clamp(0.75rem, 1.5vw, 1.6rem);
-  row-gap: 0;
-  padding-block: clamp(3rem, 7vw, 6.5rem);
+  column-gap: clamp(0.8rem, 1.6vw, 1.5rem);
+  align-items: start;
+  padding-block: clamp(1.2rem, 3vw, 2rem) clamp(2.75rem, 5vw, 4rem);
 }
 
 .about-portrait-frame {
-  grid-column: 1 / 6;
-  grid-row: 1 / span 3;
-  width: min(100%, 27rem);
-  aspect-ratio: 1;
-  overflow: hidden;
-  align-self: start;
+  position: relative;
+  grid-column: 1 / 5;
+  width: min(100%, 22rem);
+  aspect-ratio: 4 / 5;
   justify-self: start;
-  margin: 0;
-  border: 1px solid color-mix(in srgb, var(--wall-light) 28%, transparent);
-  background: var(--about-panel-strong);
-  box-shadow: 0 1.4rem 3.5rem rgb(48 17 4 / 22%);
+  overflow: hidden;
+  border: 0.72rem solid #050505;
+  background: #050505;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--wall-light) 10%, transparent),
+    0 0 0 0.3rem #10100f,
+    0.7rem 0.95rem 1.35rem rgb(0 0 0 / 42%),
+    inset 0 0 1.4rem rgb(0 0 0 / 46%);
+}
+
+.about-portrait-frame::after {
+  position: absolute;
+  inset: 0.28rem;
+  background:
+    linear-gradient(112deg, transparent 12%, color-mix(in srgb, var(--wall-light) 10%, transparent) 27%, transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--wall-light) 4%, transparent), transparent 38%);
+  content: '';
+  pointer-events: none;
 }
 
 .about-portrait-frame img {
@@ -173,85 +179,112 @@ html[data-theme='dark'] body.about-room-page {
   object-position: center;
 }
 
+.about-intro__paper {
+  grid-column: 5 / 13;
+  align-self: center;
+}
+
+.about-paper {
+  position: relative;
+  box-sizing: border-box;
+  padding: clamp(1.35rem, 2.4vw, 2rem) clamp(1.45rem, 2.6vw, 2.3rem);
+  border: 1px solid var(--paper-edge);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 26%), transparent 16%),
+    linear-gradient(180deg, color-mix(in srgb, var(--paper-ink) 3.5%, transparent), transparent 18%),
+    linear-gradient(0deg, color-mix(in srgb, var(--paper-ink) 2.25%, transparent), transparent 14%),
+    linear-gradient(180deg, var(--paper), var(--paper-soft));
+  box-shadow: var(--paper-shadow);
+  color: var(--paper-ink);
+}
+
+.about-paper::before {
+  position: absolute;
+  inset: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 64%, transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.about-paper::after {
+  position: absolute;
+  top: -0.55rem;
+  right: clamp(1rem, 2vw, 1.8rem);
+  width: 4.2rem;
+  height: 1rem;
+  background: linear-gradient(180deg, rgb(255 251 239 / 86%), rgb(232 212 179 / 78%));
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 52%, transparent);
+  box-shadow: 0 0.16rem 0.35rem rgb(0 0 0 / 8%);
+  opacity: 0.88;
+  content: '';
+  transform: rotate(1.8deg);
+}
+
 .about-prose {
-  color: var(--about-ink);
+  color: var(--paper-ink);
   font-family: var(--font-display);
-  font-size: clamp(1.06rem, 1.25vw, 1.22rem);
-  font-weight: 400;
-  letter-spacing: 0.002em;
-  line-height: 1.72;
+  font-size: clamp(1.02rem, 1.22vw, 1.14rem);
+  line-height: 1.76;
   text-wrap: pretty;
 }
 
-.about-intro > p {
-  grid-column: 7 / 13;
-  box-sizing: border-box;
+.about-prose p {
   margin: 0;
-  padding-inline: clamp(1.35rem, 2.4vw, 2.25rem);
-  background: var(--about-panel);
 }
 
-.about-intro > p:first-of-type {
-  padding-top: clamp(1.5rem, 2.8vw, 2.4rem);
-  border: 1px solid var(--about-line);
-  border-bottom: 0;
-}
-
-.about-intro > p:nth-of-type(2) {
-  padding-top: 1.3em;
-  border-right: 1px solid var(--about-line);
-  border-left: 1px solid var(--about-line);
-}
-
-.about-intro > p:last-of-type {
-  padding-top: 1.3em;
-  padding-bottom: clamp(1.5rem, 2.8vw, 2.4rem);
-  border: 1px solid var(--about-line);
-  border-top: 0;
+.about-prose p + p {
+  margin-top: 1.25em;
 }
 
 .about-opening::first-letter {
   float: left;
-  margin: 0.015em 0.075em -0.08em 0;
-  color: var(--about-accent);
+  margin: 0.02em 0.075em -0.08em 0;
+  color: var(--paper-accent);
   font-family: 'SydoniaAtramentiquaRegular', 'Times New Roman', serif;
-  font-size: 5.2em;
+  font-size: 4.85em;
   font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.62;
 }
 
-/* The four interests become broad architectural bands across the wall. The
-   content still uses the existing native disclosure behavior. */
 .about-disciplines {
-  margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
-  border-top: 1px solid var(--header-line);
+  display: grid;
+  gap: clamp(1.25rem, 2vw, 1.65rem);
+  margin-bottom: clamp(2.75rem, 5vw, 4.5rem);
   counter-reset: discipline;
 }
 
 .passion-section {
   margin: 0;
-  border-bottom: 1px solid var(--header-line);
   counter-increment: discipline;
 }
 
+.passion-section .disclosure__body {
+  padding-top: clamp(1rem, 1.8vw, 1.35rem);
+}
+
 .passion-heading {
+  position: relative;
   display: grid;
-  min-height: clamp(5rem, 8vw, 7rem);
-  grid-template-columns: 4.25rem minmax(0, 1fr) 2.5rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: clamp(0.85rem, 2vw, 1.5rem);
-  padding: 0;
-  color: var(--wall-light);
+  gap: 1rem;
+  padding: 0.95rem 1.1rem 0.95rem 1.35rem;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 26%), transparent 18%),
+    linear-gradient(180deg, var(--paper), var(--paper-soft));
+  border: 1px solid var(--paper-edge);
+  box-shadow: var(--paper-shadow);
+  color: var(--paper-ink);
 }
 
 .passion-heading::before {
-  color: color-mix(in srgb, var(--wall-light) 58%, transparent);
+  color: color-mix(in srgb, var(--paper-ink) 66%, transparent);
   content: '0' counter(discipline);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.66rem;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
 }
 
 .passion-heading h2 {
@@ -259,80 +292,67 @@ html[data-theme='dark'] body.about-room-page {
   margin: 0;
   color: inherit;
   font-family: var(--font-display);
-  font-size: clamp(2.1rem, 4.2vw, 4rem);
+  font-size: clamp(1.45rem, 2.4vw, 2.05rem);
   font-weight: 400;
-  letter-spacing: -0.045em;
+  letter-spacing: 0.06em;
   line-height: 1;
+  text-transform: uppercase;
 }
 
 .passion-heading .disclosure__arrow {
-  width: 2.5rem;
-  height: 2.5rem;
-  color: color-mix(in srgb, var(--wall-light) 72%, transparent);
+  width: 2rem;
+  height: 2rem;
+  color: color-mix(in srgb, var(--paper-ink) 72%, transparent);
 }
 
 .passion-content {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: clamp(0.75rem, 1.5vw, 1.6rem);
-  row-gap: clamp(1.6rem, 3vw, 2.6rem);
-  padding: 0 0 clamp(3.2rem, 6vw, 5.5rem) 5.75rem;
+  column-gap: clamp(0.8rem, 1.6vw, 1.5rem);
+  row-gap: clamp(1.25rem, 2.8vw, 2rem);
+  padding: 0 0 clamp(1.25rem, 2vw, 1.5rem);
 }
 
-.passion-content > .about-prose {
-  grid-column: 1 / 7;
-  box-sizing: border-box;
+.passion-content > .about-paper,
+.passion-content > .media-card,
+.passion-content > .chess-card {
   align-self: start;
-  padding: clamp(1.35rem, 2.6vw, 2.25rem);
-  border: 1px solid var(--about-line);
-  background: var(--about-panel);
 }
 
-.passion-content > .about-prose p {
-  margin: 0;
-}
-
-.passion-content > .about-prose p + p {
-  margin-top: 1.35em;
+.passion-content > .about-paper {
+  grid-column: 1 / 7;
 }
 
 .passion-content > .media-card,
 .passion-content > .chess-card {
   grid-column: 7 / 13;
-  align-self: start;
 }
 
-/* Software has no media object, so let its text use the available room. */
-.passion-section:first-child .passion-content > .about-prose {
+.passion-section:first-child .passion-content > .about-paper {
   grid-column: 1 / 10;
 }
 
-.media-card__kicker,
-.chess-card__platform {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.media-card,
-.chess-card {
+.about-paper-card {
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--about-line);
-  border-radius: 0;
-  outline: 2px solid transparent;
-  outline-offset: 3px;
-  background: var(--about-panel);
-  box-shadow: 0 1.25rem 3rem rgb(56 12 15 / 18%);
-  color: var(--about-ink);
+  border: 1px solid var(--paper-edge);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 24%), transparent 14%),
+    linear-gradient(180deg, var(--paper), var(--paper-soft));
+  box-shadow: var(--paper-shadow);
+  color: var(--paper-ink);
   text-decoration: none;
   transition:
-    border-color 180ms ease,
     box-shadow 180ms ease,
-    outline-color 180ms ease,
-    transform 180ms ease;
+    transform 180ms ease,
+    border-color 180ms ease;
+}
+
+.about-paper-card:hover,
+.about-paper-card:focus-visible {
+  border-color: color-mix(in srgb, var(--paper-accent) 50%, var(--paper-edge));
+  box-shadow: 0 1.15rem 2.8rem rgb(48 19 6 / 22%), 0 0.22rem 0.55rem rgb(31 10 3 / 12%);
+  transform: translateY(-2px);
 }
 
 .video-card {
@@ -355,8 +375,8 @@ html[data-theme='dark'] body.about-room-page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
-  padding: clamp(1.1rem, 2.4vw, 1.5rem);
+  gap: 1.25rem;
+  padding: clamp(1rem, 2vw, 1.35rem);
 }
 
 .media-card__caption > div {
@@ -368,13 +388,18 @@ html[data-theme='dark'] body.about-room-page {
 .chess-card__platform,
 .chess-card__live,
 .chess-stat__label {
-  color: var(--about-muted);
+  color: var(--paper-muted);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .media-card__caption strong {
-  color: var(--about-ink);
+  color: var(--paper-ink);
   font-family: var(--font-display);
-  font-size: clamp(1rem, 1.6vw, 1.22rem);
+  font-size: clamp(1rem, 1.5vw, 1.18rem);
   font-weight: 500;
   line-height: 1.3;
 }
@@ -382,41 +407,22 @@ html[data-theme='dark'] body.about-room-page {
 .media-card__caption a,
 .media-card__link,
 .chess-card__arrow {
-  color: var(--about-accent);
+  color: var(--paper-accent);
   text-decoration: none;
 }
 
 .media-card__caption a,
 .media-card__link {
   flex: 0 0 auto;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   white-space: nowrap;
-}
-
-.article-card,
-.chess-card {
-  display: block;
-  cursor: pointer;
-}
-
-.article-card:is(:hover, :focus-visible),
-.chess-card:is(:hover, :focus-visible) {
-  border-color: color-mix(in srgb, var(--about-accent) 58%, var(--about-line));
-  box-shadow: 0 1.4rem 3.3rem rgb(56 12 15 / 25%);
-  color: var(--about-ink);
-  transform: translateY(-2px);
-}
-
-.article-card:focus-visible,
-.chess-card:focus-visible {
-  outline-color: color-mix(in srgb, var(--about-accent) 68%, transparent);
 }
 
 .article-card__image-wrap {
   aspect-ratio: 3 / 2;
   overflow: hidden;
-  background: var(--about-panel-strong);
+  background: #0d0c0a;
 }
 
 .article-card__image-wrap img {
@@ -433,8 +439,10 @@ html[data-theme='dark'] body.about-room-page {
 }
 
 .chess-card {
+  display: block;
   box-sizing: border-box;
-  padding: clamp(1.3rem, 2.8vw, 1.85rem);
+  padding: clamp(1.2rem, 2.4vw, 1.6rem);
+  cursor: pointer;
 }
 
 .chess-card__identity {
@@ -442,51 +450,49 @@ html[data-theme='dark'] body.about-room-page {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 1rem;
-  padding-bottom: 1.4rem;
+  padding-bottom: 1.2rem;
 }
 
 .chess-card__mark {
   display: grid;
-  width: 3.3rem;
-  height: 3.3rem;
+  width: 3.1rem;
+  height: 3.1rem;
   place-items: center;
-  border: 1px solid var(--about-line);
-  border-radius: 0;
-  background: var(--about-panel-strong);
-  color: var(--about-accent);
+  border: 1px solid var(--paper-edge);
+  background: color-mix(in srgb, var(--paper) 96%, white);
+  color: var(--paper-accent);
   font-family: Georgia, serif;
-  font-size: 2rem;
+  font-size: 1.9rem;
   line-height: 1;
 }
 
 .chess-card__platform {
   display: block;
   margin-bottom: 0.2rem;
-  font-size: 0.61rem;
 }
 
 .chess-card h3 {
   margin: 0;
-  color: var(--about-ink);
+  color: var(--paper-ink);
   font-family: var(--font-display);
-  font-size: clamp(1.35rem, 2vw, 1.7rem);
+  font-size: clamp(1.28rem, 1.8vw, 1.55rem);
   font-weight: 500;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
 }
 
 .chess-card__live {
   display: block;
   margin-top: 0.2rem;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
 }
 
 .chess-card:is([data-loaded='true'], [data-loaded='cached']) .chess-card__live::before {
   display: inline-block;
-  width: 0.42rem;
-  height: 0.42rem;
-  margin-right: 0.38rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-right: 0.36rem;
   border-radius: 50%;
-  background: var(--about-accent);
+  background: var(--paper-accent);
   content: '';
   vertical-align: 0.08em;
 }
@@ -499,24 +505,25 @@ html[data-theme='dark'] body.about-room-page {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   overflow: hidden;
-  border: 1px solid var(--about-line);
+  border: 1px solid var(--paper-edge);
+  background: color-mix(in srgb, var(--paper) 97%, white);
 }
 
 .chess-stat {
   display: grid;
   gap: 0.3rem;
-  padding: 1rem;
+  padding: 0.95rem;
   text-align: center;
 }
 
 .chess-stat + .chess-stat {
-  border-left: 1px solid var(--about-line);
+  border-left: 1px solid var(--paper-edge);
 }
 
 .chess-stat strong {
-  color: var(--about-accent);
+  color: var(--paper-accent);
   font-family: var(--font-display);
-  font-size: clamp(1.25rem, 2.5vw, 1.65rem);
+  font-size: clamp(1.2rem, 2.1vw, 1.5rem);
   font-variant-numeric: tabular-nums;
   font-weight: 500;
 }
@@ -528,81 +535,53 @@ html[data-theme='dark'] body.about-room-page {
   }
 }
 
-@media (max-width: 68rem) {
+@media (max-width: 64rem) {
   .about-book {
-    --about-edge: clamp(1rem, 3.5vw, 2.25rem);
+    --about-edge: clamp(1rem, 3.5vw, 2.2rem);
   }
 
   .about-portrait-frame {
-    grid-column: 1 / 6;
+    grid-column: 1 / 5;
   }
 
-  .about-intro > p {
-    grid-column: 6 / 13;
-  }
-
-  .passion-content {
-    padding-left: 0;
+  .about-intro__paper {
+    grid-column: 5 / 13;
   }
 }
 
 @media (max-width: 48rem) {
-  /* global.css pads ordinary mobile mains; this room owns its own full-bleed
-     brick background and therefore handles its content edge itself. */
   .about-room-page main {
     padding-inline: 0;
   }
 
   .about-masthead {
-    min-height: 9rem;
-    padding-top: 3rem;
-  }
-
-  .about-masthead h1 {
-    font-size: clamp(3.5rem, 16vw, 5rem);
+    padding-top: 2.4rem;
   }
 
   .about-intro {
     grid-template-columns: 1fr;
-    gap: 1.3rem;
-    padding-block: 2.5rem 3.5rem;
+    gap: 1.4rem;
+    padding-block: 1rem 2.5rem;
   }
 
   .about-portrait-frame,
-  .about-intro > p {
+  .about-intro__paper {
     grid-column: 1;
   }
 
   .about-portrait-frame {
-    grid-row: auto;
-    width: min(72vw, 19rem);
+    width: min(72vw, 18rem);
     justify-self: center;
-    margin-bottom: 0.8rem;
-  }
-
-  .about-intro > p {
-    border-right: 1px solid var(--about-line);
-    border-left: 1px solid var(--about-line);
-  }
-
-  .passion-heading {
-    min-height: 5rem;
-    grid-template-columns: 2.8rem minmax(0, 1fr) 2.35rem;
-  }
-
-  .passion-heading h2 {
-    font-size: clamp(2rem, 9vw, 3rem);
   }
 
   .passion-content {
     grid-template-columns: 1fr;
-    padding-bottom: 3.25rem;
   }
 
-  .passion-content > .about-prose,
+  .passion-content > .about-paper,
   .passion-content > .media-card,
   .passion-content > .chess-card,
-  .passion-section:first-child .passion-content > .about-prose {
+  .passion-section:first-child .passion-content > .about-paper {
     grid-column: 1;
   }
 
@@ -618,16 +597,19 @@ html[data-theme='dark'] body.about-room-page {
 }
 
 @media (max-width: 30rem) {
-
-
   .passion-heading {
-    grid-template-columns: 2.35rem minmax(0, 1fr) 2.1rem;
+    gap: 0.7rem;
+    padding-inline: 0.95rem;
+  }
+
+  .passion-heading h2 {
+    font-size: clamp(1.15rem, 6vw, 1.55rem);
   }
 
   .chess-card__mark {
-    width: 2.8rem;
-    height: 2.8rem;
-    font-size: 1.65rem;
+    width: 2.7rem;
+    height: 2.7rem;
+    font-size: 1.55rem;
   }
 
   .chess-card__stats {
@@ -641,15 +623,14 @@ html[data-theme='dark'] body.about-room-page {
   }
 
   .chess-stat + .chess-stat {
-    border-top: 1px solid var(--about-line);
     border-left: 0;
+    border-top: 1px solid var(--paper-edge);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .article-card__image-wrap img,
-  .media-card,
-  .chess-card {
+  .about-paper-card {
     transition: none;
   }
 }

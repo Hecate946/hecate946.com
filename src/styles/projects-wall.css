@@ -1,8 +1,9 @@
 /*
- * The homepage is one full-viewport room. The transparent header sits over
- * the scene so the moving wall remains visible through the navigation.
+ * The Projects index is a second full-viewport gallery room. It deliberately
+ * uses the same moving-wall interaction and physical frame system as Home;
+ * only the room palette and framed destinations differ.
  */
-body.wall-home-page {
+body.projects-wall-page {
   position: relative;
   display: block !important;
   width: 100%;
@@ -11,7 +12,6 @@ body.wall-home-page {
   overflow: hidden;
   overscroll-behavior: none;
 
-  /* Navigation chrome must stay legible over both light and dark wall modes. */
   --header-text: var(--wall-light);
   --header-muted: color-mix(in srgb, var(--wall-light) 72%, transparent);
   --header-line: color-mix(in srgb, var(--wall-light) 22%, transparent);
@@ -19,35 +19,31 @@ body.wall-home-page {
 }
 
 @supports (height: 100svh) {
-  body.wall-home-page {
+  body.projects-wall-page {
     height: 100svh;
     min-height: 100svh;
   }
 }
 
 @supports (height: 100dvh) {
-  body.wall-home-page {
+  body.projects-wall-page {
     height: 100dvh;
     min-height: 100dvh;
   }
 }
 
-body.wall-home-page > .site-header {
+body.projects-wall-page > .site-header {
   position: fixed;
+  z-index: 50;
+  top: 0;
   right: 0;
   left: 0;
-  z-index: 50;
   background: transparent !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 
-body.wall-home-page > .site-header {
-  top: 0;
-}
-
-
-.wall-home-main {
+.projects-wall-main {
   position: absolute;
   inset: 0;
   display: block;
@@ -59,20 +55,19 @@ body.wall-home-page > .site-header {
   padding: 0 !important;
 }
 
-.wall-home-main > astro-island {
+.projects-wall-main > astro-island {
   display: block;
   width: 100%;
   height: 100%;
   min-height: 0;
 }
 
-/* With no footer chrome, the motion control can sit directly above the floor edge. */
-body.wall-home-page .wall-motion-toggle {
+body.projects-wall-page .wall-motion-toggle {
   bottom: 0.8rem;
 }
 
 @media (max-width: 40rem) {
-  body.wall-home-page .wall-motion-toggle {
+  body.projects-wall-page .wall-motion-toggle {
     bottom: 0.6rem;
   }
 }

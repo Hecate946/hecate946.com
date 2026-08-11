@@ -7,7 +7,7 @@ dist/
 .DS_Store
 *.log
 
-hecate946-source.zip
+hecate946-source*.zip
 secrets.txt
 
 # Local development analytics cache

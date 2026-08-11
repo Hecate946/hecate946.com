@@ -1,49 +1,22 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import ResumeGallery from '@/components/resume/ResumeGallery.svelte';
 import { withBase } from '@/lib/paths';
-import '@/styles/resume.css';
 
-const softwareResumeUrl = withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf');
-const musicResumeUrl = withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf');
-
-const resumes = [
-  {
-    id: 'software',
-    number: '01',
-    label: 'Software Engineering',
-    shortLabel: 'Software Engineering',
-    pdfUrl: softwareResumeUrl,
-    previewUrl: withBase('/images/resume/software-2160.webp'),
-    previewSrcset: `${withBase('/images/resume/software-1440.webp')} 1440w, ${withBase('/images/resume/software-2160.webp')} 2160w`,
-    previewWidth: 2160,
-    previewHeight: 3055,
-  },
-  {
-    id: 'clarinet',
-    number: '02',
-    label: 'Clarinet Performance',
-    shortLabel: 'Clarinet Performance',
-    pdfUrl: musicResumeUrl,
-    previewUrl: withBase('/images/resume/clarinet-2160.webp'),
-    previewSrcset: `${withBase('/images/resume/clarinet-1440.webp')} 1440w, ${withBase('/images/resume/clarinet-2160.webp')} 2160w`,
-    previewWidth: 2160,
-    previewHeight: 3055,
-  },
-] as const;
+const destination = withBase('/resumes/');
+const canonical = new URL(destination, Astro.site ?? Astro.url).href;
 ---
 
-<BaseLayout
-  title="Resume — Cyrus Asasi"
-  description="Software engineering and clarinet performance resumes for Cyrus Asasi."
->
-  <section class="resume-page interior-page interior-page--eight" aria-labelledby="resume-title">
-    <header class="resume-heading interior-page-heading">
-      <h1 id="resume-title">Resume</h1>
-    </header>
-
-    <div class="resume-content interior-page-content">
-      <ResumeGallery {resumes} />
-    </div>
-  </section>
-</BaseLayout>
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content={`0;url=${destination}`} />
+    <link rel="canonical" href={canonical} />
+    <title>Resumes — Cyrus Asasi</title>
+  </head>
+  <body>
+    <p>
+      This page moved to <a href={destination}>Resumes</a>.
+    </p>
+  </body>
+</html>

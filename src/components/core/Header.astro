@@ -13,12 +13,13 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
 }
 ---
 
-<header class="site-header">
+<header class="site-header" transition:persist="site-header">
   <div class="header-grid">
     <a
       class="brand"
       href={withBase('/')}
       aria-label={`${siteConfig.name} home`}
+      data-nav-route={withBase('/')}
       data-astro-prefetch
     >
       <span class="brand-full ui-text">{siteConfig.name}</span>
@@ -32,6 +33,7 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
               <a
                 href={withBase(item.href)}
                 aria-current={isHeaderItemCurrent(item) ? 'page' : undefined}
+                data-nav-route={withBase(item.href)}
                 data-astro-prefetch
               >
                 <span class="ui-text">{item.label}</span>

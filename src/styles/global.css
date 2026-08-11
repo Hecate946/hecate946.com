@@ -7,10 +7,106 @@
   navigation: auto;
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 280ms;
-  animation-timing-function: var(--ease-standard);
+/*
+ * Route changes behave like vertically stacked rooms. Only the dedicated room
+ * stage participates in the transition; the fixed navigation lives outside it
+ * and therefore remains a stable architectural overlay while rooms move below.
+ */
+:root {
+  --room-transition-distance: 100vh;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --room-transition-distance: 100dvh;
+  }
+}
+
+.room-transition-stage {
+  position: relative;
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding-top: var(--header-height);
+}
+
+@supports (min-height: 100dvh) {
+  .room-transition-stage {
+    min-height: 100dvh;
+  }
+}
+
+::view-transition-image-pair(room-stage) {
+  isolation: isolate;
+}
+
+::view-transition-old(room-stage),
+::view-transition-new(room-stage) {
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(room-stage) {
+  z-index: 2;
+  box-shadow: 0 1.35rem 2.8rem rgb(0 0 0 / 28%);
+}
+
+::view-transition-new(room-stage) {
+  z-index: 1;
+}
+
+/* The navigation belongs to the building, not to any individual room. Astro
+ * carries this exact header node across route swaps, and its independent view
+ * transition layer stays stationary above the moving room snapshots. */
+::view-transition-group(site-header) {
+  z-index: 100;
+  animation: none;
+}
+
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@keyframes room-lift-out {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, calc(-1 * var(--room-transition-distance)), 0);
+  }
+}
+
+@keyframes room-rise-in {
+  from {
+    transform: translate3d(0, var(--room-transition-distance), 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes room-drop-out {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, var(--room-transition-distance), 0);
+  }
+}
+
+@keyframes room-descend-in {
+  from {
+    transform: translate3d(0, calc(-1 * var(--room-transition-distance)), 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 html {
@@ -202,6 +298,29 @@ main {
   padding-block: var(--interior-content-space);
 }
 
+/* Top-level room pages can opt out of the old middle-column constraint while
+   keeping the 12-column grid available for their own internal composition. */
+.interior-page--open > .interior-page-heading,
+.interior-page--open > .interior-page-content,
+.interior-page--open > .interior-page-column {
+  grid-column: 1 / -1;
+  width: 100%;
+  justify-self: stretch;
+}
+
+.interior-page--open > .interior-page-heading {
+  padding-block: clamp(1.8rem, 3.5vw, 2.75rem);
+  border-bottom: 0;
+  text-align: left;
+}
+
+.interior-page--open > .interior-page-heading h1 {
+  font-size: clamp(1.65rem, 2.75vw, 2.35rem);
+  letter-spacing: 0.015em;
+  line-height: 1;
+  text-align: left;
+}
+
 @media (max-width: 39.999rem) {
   /* Keep the fixed header and footer full-bleed; pad only page content. */
   main {
@@ -335,6 +454,11 @@ main {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
   *,
   *::before,
   *::after {

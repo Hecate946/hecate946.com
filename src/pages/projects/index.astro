@@ -1,60 +1,14 @@
 ---
-import ProjectCard from '@/components/projects/ProjectCard.astro';
-import { projects } from '@/data/projects';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { withBase } from '@/lib/paths';
-import '@/styles/projects-index.css';
-
-const statsHref = withBase('/stats/');
-const statsImage480 = withBase('/paintings/stats-portrait-480.webp');
-const statsImage720 = withBase('/paintings/stats-portrait-720.webp');
-const statsImage960 = withBase('/paintings/stats-portrait.webp');
+import ProjectWall from '@/features/wall/ProjectWall.svelte';
+import '@/styles/projects-wall.css';
 ---
 
 <BaseLayout
-  title="Projects"
-  description="Selected software projects and live site statistics by Cyrus Asasi."
+  title="Projects — Cyrus Asasi"
+  description="Selected software projects by Cyrus Asasi."
+  mainClass="projects-wall-main"
+  bodyClass="projects-wall-page"
 >
-  <section class="projects-page interior-page interior-page--six" aria-labelledby="projects-title">
-    <header class="projects-heading interior-page-heading">
-      <h1 id="projects-title">Projects</h1>
-    </header>
-
-    <div class="projects-content interior-page-content">
-      <ul class="project-window-list" aria-label="Selected projects and site statistics">
-        {
-          projects.map((project, index) => (
-            <ProjectCard project={project} priority={index === 0} />
-          ))
-        }
-        <li class="project-window-item">
-          <article class="project-window">
-            <div class="project-window__image">
-              <img
-                src={statsImage960}
-                srcset={`${statsImage480} 480w, ${statsImage720} 720w, ${statsImage960} 960w`}
-                sizes="(max-width: 39.999rem) calc(100vw - 2rem), 50vw"
-                alt=""
-                width="960"
-                height="1203"
-                loading="lazy"
-                fetchpriority="low"
-                decoding="async"
-              />
-              <a class="project-window__link" href={statsHref} aria-label="View live site statistics">
-                <h2 class="project-window__title">Stats</h2>
-              </a>
-              <span class="project-window__open" aria-hidden="true">
-                <span class="ui-text">View stats</span><span class="ui-text">↗</span>
-              </span>
-            </div>
-
-            <footer class="project-window__caption">
-              <p><small>Live site analytics · Current</small></p>
-            </footer>
-          </article>
-        </li>
-      </ul>
-    </div>
-  </section>
+  <ProjectWall client:load />
 </BaseLayout>

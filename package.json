@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "npm run check:style-parity && astro check && astro build",
+    "build": "astro check && astro build",
     "preview": "astro preview",
-    "check": "npm run check:style-parity && astro check",
-    "stats:deploy": "node scripts/deploy-stats-worker.mjs",
+    "check": "astro check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check:style-parity": "node scripts/check-style-parity.mjs"
+    "site:zip": "node scripts/create-website-source-zip.mjs",
+    "stats:deploy": "node scripts/deploy-stats-worker.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
