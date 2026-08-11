@@ -4,7 +4,7 @@ import Disclosure from '@/components/core/Disclosure.astro';
 import { withBase } from '@/lib/paths';
 import '@/styles/about.css';
 
-const musicVideoUrl = 'https://youtu.be/EkgH4zzXoNg?si=_W_qwbR1Io_LTUdw';
+const musicVideoUrl = 'https://www.youtube.com/watch?v=EkgH4zzXoNg';
 const pickleballArticleUrl =
   'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
 const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
@@ -119,6 +119,7 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
             <div class="video-frame">
               <iframe
                 src="https://www.youtube-nocookie.com/embed/EkgH4zzXoNg"
+                referrerpolicy="strict-origin-when-cross-origin"
                 title="Cyrus Asasi performing with the UCLA Philharmonia"
                 loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

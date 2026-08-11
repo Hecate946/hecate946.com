@@ -23,11 +23,11 @@
   let wallWorld: HTMLElement;
   let wallTexture: HTMLElement;
   let floorSurface: HTMLElement;
+  let motionToggle: HTMLButtonElement;
   let cameraX = WALL_START_X;
   let velocity = 0;
   let driftDirection = 1;
   let isPaused = false;
-  let prefersReducedMotion = false;
   let dragging = false;
   let activePointerId: number | null = null;
   let pointerX = 0;
@@ -67,7 +67,11 @@
   }
 
   function getDriftVelocity() {
-    return isPaused || prefersReducedMotion ? 0 : driftDirection * IDLE_DRIFT_SPEED;
+    // The homepage wall is an explicit interactive feature, so its own Play /
+    // Pause control is the single source of truth for idle motion. Relying on
+    // the OS reduced-motion media query here could leave the wall permanently
+    // stationary while the control still appeared to be in its playing state.
+    return isPaused ? 0 : driftDirection * IDLE_DRIFT_SPEED;
   }
 
   function periodicOffset(position: number, period: number) {
@@ -120,7 +124,17 @@
 
   function toggleMotion() {
     isPaused = !isPaused;
-    velocity = isPaused ? 0 : getDriftVelocity();
+
+    if (isPaused) {
+      velocity = 0;
+      return;
+    }
+
+    // Resume immediately instead of waiting for the inertia easing to crawl
+    // back toward the idle speed. Resetting the frame clock also prevents a
+    // stale elapsed interval after a backgrounded tab or an Astro page swap.
+    velocity = driftDirection * IDLE_DRIFT_SPEED;
+    lastFrame = performance.now();
   }
 
   function cancelCameraAnimation() {
@@ -218,6 +232,13 @@
 
   function onPointerDown(event: PointerEvent) {
     if (enteringId || event.button !== 0) return;
+
+    // Svelte 5 delegates event handlers while this scene also uses native
+    // pointer listeners for low-latency dragging. Ignore the motion button at
+    // the scene level so a tap/click can never be mistaken for the beginning
+    // of a wall drag before the delegated button handler runs.
+    if (event.target instanceof Element && event.target.closest('.wall-motion-toggle')) return;
+
     cancelCameraAnimation();
     dragging = true;
     activePointerId = event.pointerId;
@@ -398,14 +419,21 @@
   }
 
   onMount(() => {
-    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const onReducedMotionChange = () => {
-      prefersReducedMotion = reducedMotionQuery.matches;
-      if (prefersReducedMotion) velocity = 0;
+    const stopMotionTogglePointer = (event: PointerEvent) => {
+      // Keep a button press from ever entering the wall-drag gesture.
+      event.stopPropagation();
     };
-    prefersReducedMotion = reducedMotionQuery.matches;
-    reducedMotionQuery.addEventListener('change', onReducedMotionChange);
-    velocity = getDriftVelocity();
+    const handleMotionToggleClick = (event: MouseEvent) => {
+      event.stopPropagation();
+      toggleMotion();
+    };
+
+    // Always begin in the moving state. The visible control is the only thing
+    // that pauses this scene, which avoids browser/OS preference mismatches
+    // producing a frozen wall with a nonfunctional-looking Pause button.
+    isPaused = false;
+    velocity = driftDirection * IDLE_DRIFT_SPEED;
+    lastFrame = performance.now();
     refreshRenderDevicePixelRatio();
 
     stage.addEventListener('wheel', onWheel, { passive: false });
@@ -414,6 +442,8 @@
     stage.addEventListener('pointerup', finishPointer);
     stage.addEventListener('pointercancel', finishPointer);
     stage.addEventListener('pointerleave', onPointerLeave);
+    motionToggle.addEventListener('pointerdown', stopMotionTogglePointer);
+    motionToggle.addEventListener('click', handleMotionToggleClick);
     window.addEventListener('keydown', onKeydown);
     window.addEventListener('blur', onWindowBlur);
     window.addEventListener('resize', refreshRenderDevicePixelRatio, { passive: true });
@@ -422,13 +452,14 @@
     rafId = requestAnimationFrame(animationFrame);
 
     return () => {
-      reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
       stage.removeEventListener('wheel', onWheel);
       stage.removeEventListener('pointerdown', onPointerDown);
       stage.removeEventListener('pointermove', onPointerMove);
       stage.removeEventListener('pointerup', finishPointer);
       stage.removeEventListener('pointercancel', finishPointer);
       stage.removeEventListener('pointerleave', onPointerLeave);
+      motionToggle.removeEventListener('pointerdown', stopMotionTogglePointer);
+      motionToggle.removeEventListener('click', handleMotionToggleClick);
       window.removeEventListener('keydown', onKeydown);
       window.removeEventListener('blur', onWindowBlur);
       window.removeEventListener('resize', refreshRenderDevicePixelRatio);
@@ -437,6 +468,7 @@
       cancelAnimationFrame(rafId);
     };
   });
+
 </script>
 
 <section
@@ -501,16 +533,12 @@
 
 
   <button
+    bind:this={motionToggle}
     class="wall-motion-toggle"
     type="button"
     aria-label={isPaused ? 'Play wall animation' : 'Pause wall animation'}
     aria-pressed={isPaused}
     title={isPaused ? 'Play wall animation' : 'Pause wall animation'}
-    onpointerdown={(event) => event.stopPropagation()}
-    onclick={(event) => {
-      event.stopPropagation();
-      toggleMotion();
-    }}
   >
     {#if isPaused}
       <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">

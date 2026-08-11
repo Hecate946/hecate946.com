@@ -789,12 +789,12 @@ html[data-season='winter'] .season-button.winter {
   text-align: center;
 }
 
-/* On two-row headers the Audio control lives in row one. The panel begins at
-   the bottom edge of the complete navbar. The one-pixel overlap masks the
-   original bottom-border segment so that segment appears to drop with it. */
+/* On tablet/two-row headers, reveal Audio directly from its own first-row
+   cell just like mobile. Keeping the panel anchored to the Audio button avoids
+   the detached dropdown that otherwise begins below the navigation row. */
 @media (min-width: 40rem) and (max-width: 68rem) {
   .audio-panel {
-    top: calc(100% + var(--header-height) - 1px);
+    top: calc(100% - 1px);
   }
 }
 
