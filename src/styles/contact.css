@@ -14,9 +14,6 @@
   }
 }
 
-/* Center against the usable wall only: from directly below the navbar to the
-   top of the floor/baseboard. This is the same visual center used by the
-   homepage paintings and the resume frames. */
 .contact-wall {
   position: absolute;
   inset: 0 0 var(--contact-floor-height);
@@ -37,8 +34,6 @@
   aspect-ratio: 8 / 5;
 }
 
-/* Keep the homepage painting-frame material language, but the chalkboard is
-   not behind glass: there are intentionally no reflection/Fresnel overlays. */
 .contact-chalkboard__recess {
   position: absolute;
   inset: 0 0 0.55rem;
@@ -73,8 +68,6 @@
   background: #14221d;
 }
 
-/* The board surface is a raster image. No gradients, procedural grain,
-   vignettes, lighting bands, Fresnel bands, or synthetic texture sit on top. */
 .contact-chalkboard__texture {
   position: absolute;
   z-index: 0;
@@ -96,7 +89,6 @@
   inset: 0;
 }
 
-/* Reserved for a future canvas/Svelte freehand drawing island. */
 .contact-chalkboard__drawing-layer {
   z-index: 1;
   pointer-events: none;
@@ -130,17 +122,16 @@
 
 .chalk-link {
   --chalk-color: #f0ede1;
-  --chalk-rotation: 0deg;
 
   position: absolute;
   display: grid;
-  width: clamp(3.25rem, 4.8vw, 4.25rem);
+  width: clamp(4.25rem, 6vw, 5.35rem);
   aspect-ratio: 1;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 0.95rem;
   color: var(--chalk-color);
   text-decoration: none;
-  transform: translate(-50%, -50%) rotate(var(--chalk-rotation));
+  transform: translate(-50%, -50%);
   transform-origin: 50% 50%;
   transition:
     transform 180ms cubic-bezier(0.2, 0.72, 0.24, 1),
@@ -150,8 +141,8 @@
 
 .chalk-link::before {
   position: absolute;
-  inset: -0.45rem;
-  border-radius: 50%;
+  inset: -0.4rem;
+  border-radius: 1.1rem;
   content: '';
 }
 
@@ -159,7 +150,7 @@
 .chalk-link:focus-visible {
   z-index: 5;
   filter: drop-shadow(0 0 0.22rem rgb(245 244 233 / 13%));
-  transform: translate(-50%, calc(-50% - 0.08rem)) rotate(0deg) scale(1.055);
+  transform: translate(-50%, calc(-50% - 0.08rem)) scale(1.05);
 }
 
 .chalk-link:focus-visible {
@@ -169,10 +160,10 @@
 
 .chalk-link__mark {
   display: grid;
-  width: 78%;
-  height: 78%;
+  width: 84%;
+  height: 84%;
   place-items: center;
-  opacity: 0.86;
+  opacity: 0.88;
   mix-blend-mode: screen;
 }
 
@@ -181,38 +172,37 @@
   width: 100%;
   height: 100%;
   overflow: visible;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3.3;
   filter: url('#contact-chalk-rough');
 }
 
 .chalk-segment {
   vector-effect: non-scaling-stroke;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.7;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  stroke-opacity: 0.82;
+  stroke-opacity: 0.84;
   opacity: 0;
-  animation: chalk-draw 860ms cubic-bezier(0.22, 0.7, 0.2, 1) forwards;
+  animation: chalk-draw 760ms cubic-bezier(0.22, 0.7, 0.2, 1) forwards;
   animation-delay: calc(var(--draw-delay) + var(--segment-delay, 0ms));
 }
 
 .chalk-segment--soft {
-  stroke-width: 2.85;
-  stroke-opacity: 0.56;
+  stroke-width: 2.25;
+  stroke-opacity: 0.62;
 }
 
 .chalk-link:hover .chalk-segment,
 .chalk-link:focus-visible .chalk-segment {
-  stroke-width: 3.5;
-  stroke-opacity: 0.9;
+  stroke-opacity: 0.92;
 }
 
 .chalk-link__label {
   position: absolute;
-  top: calc(100% + 0.05rem);
+  top: calc(100% + 0.12rem);
   left: 50%;
   min-width: max-content;
   color: #eeeadd;
@@ -239,42 +229,33 @@
 }
 
 .chalk-link--github {
-  --chalk-rotation: -2.2deg;
   left: 23%;
   top: 29%;
 }
 
 .chalk-link--linkedin {
-  --chalk-rotation: 1.5deg;
-  --chalk-color: #e6eadf;
   left: 50%;
-  top: 25%;
+  top: 29%;
 }
 
 .chalk-link--email {
-  --chalk-rotation: 2deg;
   left: 77%;
-  top: 30%;
+  top: 29%;
 }
 
 .chalk-link--chess {
-  --chalk-rotation: 1.6deg;
-  --chalk-color: #e7eadf;
-  left: 24%;
-  top: 70%;
+  left: 23%;
+  top: 71%;
 }
 
 .chalk-link--spotify {
-  --chalk-rotation: -1.4deg;
   left: 50%;
-  top: 73%;
+  top: 71%;
 }
 
 .chalk-link--coffee {
-  --chalk-rotation: -1.9deg;
-  --chalk-color: #eee8d9;
   left: 77%;
-  top: 69%;
+  top: 71%;
 }
 
 @keyframes chalk-draw {
@@ -283,21 +264,17 @@
     opacity: 0;
   }
 
-  7% {
-    opacity: 0.28;
+  8% {
+    opacity: 0.24;
   }
 
-  45% {
-    opacity: 0.72;
-  }
-
-  76% {
-    opacity: 0.88;
+  48% {
+    opacity: 0.76;
   }
 
   100% {
     stroke-dashoffset: 0;
-    opacity: 0.86;
+    opacity: 0.88;
   }
 }
 
@@ -312,7 +289,6 @@
     padding-inline: clamp(0.8rem, 4vw, 1.15rem);
   }
 
-
   .contact-chalkboard-wrap {
     width: min(84vw, 32rem);
     max-width: calc(100vw - 2rem);
@@ -320,12 +296,12 @@
   }
 
   .chalk-link {
-    width: clamp(2.9rem, 12.5vw, 3.8rem);
+    width: clamp(3.4rem, 13vw, 4.1rem);
   }
 
   .chalk-link--github {
     left: 28%;
-    top: 22%;
+    top: 23%;
   }
 
   .chalk-link--linkedin {
@@ -335,7 +311,7 @@
 
   .chalk-link--email {
     left: 28%;
-    top: 49%;
+    top: 50%;
   }
 
   .chalk-link--chess {
@@ -344,16 +320,15 @@
   }
 
   .chalk-link--spotify {
-    left: 29%;
-    top: 76%;
+    left: 28%;
+    top: 77%;
   }
 
   .chalk-link--coffee {
     left: 72%;
-    top: 76%;
+    top: 77%;
   }
 }
-
 
 @media (max-width: 40rem) {
   .contact-page {
@@ -375,14 +350,14 @@
   }
 
   .chalk-link {
-    width: clamp(2.75rem, 14vw, 3.45rem);
+    width: clamp(3rem, 14vw, 3.7rem);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .chalk-segment {
     animation: none;
-    opacity: 0.86;
+    opacity: 0.88;
     stroke-dashoffset: 0;
   }
 
