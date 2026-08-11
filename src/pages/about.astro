@@ -10,6 +10,10 @@ const pickleballArticleUrl =
   'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
 const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
 const resumesUrl = withBase('/resumes/');
+const portraitUrl = withBase('/images/about/cyrus-portrait.webp');
+const softwareImageUrl = withBase('/images/projects/portfolio-960.webp');
+const musicImageUrl = withBase('/images/resume/cyrus-asasi-clarinet-performance-resume.webp');
+const pickleballImageUrl = withBase('/images/about/ucla-pickleball-super-regional-1200.webp');
 ---
 
 <BaseLayout
@@ -19,6 +23,16 @@ const resumesUrl = withBase('/resumes/');
 >
   <div class="about-room wall-room-host">
     <WallRoom />
-    <AboutPageStack client:load {musicVideoUrl} {pickleballArticleUrl} {chessProfileUrl} {resumesUrl} />
+    <AboutPageStack
+      client:load
+      {musicVideoUrl}
+      {pickleballArticleUrl}
+      {chessProfileUrl}
+      {resumesUrl}
+      {portraitUrl}
+      {softwareImageUrl}
+      {musicImageUrl}
+      {pickleballImageUrl}
+    />
   </div>
 </BaseLayout>

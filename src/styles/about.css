@@ -1,9 +1,10 @@
 /*
- * ABOUT — TURNING PAPER STACK
- * ---------------------------
- * One quiet physical object in the room: a stack of archival paper centered
- * between the navbar and baseboard. The active sheet can be scrubbed by touch
- * or pointer, then completes a 3D page turn with a visible paper underside.
+ * ABOUT — OPEN BOOK
+ * -----------------
+ * A single open archival book centered between the persistent navbar and the
+ * baseboard. Every spread keeps an image/object on the left and writing on the
+ * right. The right leaf physically crosses the gutter when moving forward;
+ * reversing the gesture pulls the previous leaf back from the left side.
  */
 
 body.about-room-page {
@@ -23,6 +24,7 @@ body.about-room-page {
   --paper-muted: #726052;
   --paper-accent: #73401f;
   --paper-shadow: rgb(20 8 3 / 34%);
+  --book-board: #2c160d;
 
   --bg: var(--wall-dark);
   --text: var(--paper-ink);
@@ -55,6 +57,7 @@ html[data-theme='dark'] body.about-room-page {
   --paper-muted: #655140;
   --paper-accent: #70421f;
   --paper-shadow: rgb(0 0 0 / 48%);
+  --book-board: #130905;
 }
 
 .about-room-page main {
@@ -62,17 +65,23 @@ html[data-theme='dark'] body.about-room-page {
   padding: 0;
 }
 
+/* BaseLayout places main below the sticky header. Pull the room back underneath
+ * that header, then give it a full viewport of its own. The old
+ * `100dvh - header` height left exactly one header-height of background showing
+ * below the projected floor. */
 .about-room {
   position: relative;
-  min-height: calc(100svh - var(--header-height));
+  height: 100svh;
+  min-height: 100svh;
   margin-top: calc(0px - var(--header-height));
   padding-top: var(--header-height);
   overflow: hidden;
 }
 
-@supports (min-height: 100dvh) {
+@supports (height: 100dvh) {
   .about-room {
-    min-height: calc(100dvh - var(--header-height));
+    height: 100dvh;
+    min-height: 100dvh;
   }
 }
 
@@ -90,103 +99,58 @@ html[data-theme='dark'] body.about-room-page {
   left: 0;
   display: grid;
   place-items: center;
-  perspective: 90rem;
+  perspective: 110rem;
   pointer-events: none;
 }
 
-.about-stack {
-  --sheet-width: clamp(18.5rem, 30vw, 25rem);
-  --sheet-ratio: 0.735;
+.about-book {
+  --book-width: clamp(36rem, 46vw, 49rem);
+  --book-ratio: 1.47;
 
   position: relative;
-  width: min(var(--sheet-width), calc(100vw - 3rem));
-  aspect-ratio: var(--sheet-ratio);
+  width: min(var(--book-width), calc(100vw - 4rem));
+  aspect-ratio: var(--book-ratio);
   outline: none;
-  perspective: 78rem;
+  perspective: 92rem;
   pointer-events: auto;
   cursor: grab;
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
+  filter: drop-shadow(0 1.35rem 1.55rem rgb(22 8 3 / 22%));
 }
 
-.about-stack.is-dragging {
+.about-book.is-dragging {
   cursor: grabbing;
 }
 
-.about-stack:focus-visible::after {
+.about-book__board {
   position: absolute;
-  z-index: 80;
-  inset: -0.45rem;
-  border: 1px solid color-mix(in srgb, var(--wall-light) 64%, transparent);
-  content: '';
+  z-index: 0;
+  inset: -0.42rem -0.5rem -0.55rem;
+  border: 1px solid rgb(255 255 255 / 5%);
+  border-radius: 0.18rem 0.22rem 0.28rem 0.2rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--book-board) 88%, #6d3a22), var(--book-board));
+  box-shadow:
+    0 0.25rem 0.35rem rgb(0 0 0 / 28%),
+    inset 0 1px 0 rgb(255 255 255 / 6%);
+  transform: perspective(72rem) rotateX(0.7deg);
   pointer-events: none;
 }
 
-.about-sheet {
+.book-page,
+.book-leaf {
   position: absolute;
-  inset: 0;
-  z-index: calc(20 - var(--stack-depth));
-  transform: translate3d(var(--stack-x), var(--stack-y), var(--stack-z)) scale(var(--stack-scale));
-  transform-origin: 0 50%;
-  transform-style: preserve-3d;
-  transition:
-    transform 560ms cubic-bezier(0.33, 0.02, 0.16, 1),
-    filter 560ms ease,
-    visibility 0s linear 560ms;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  color: var(--paper-ink);
 }
 
-.about-sheet.is-current {
-  z-index: 40;
-}
-
-.about-sheet.is-past {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.about-sheet.is-turning {
-  visibility: visible;
-  pointer-events: none;
-  transition:
-    transform 560ms cubic-bezier(0.33, 0.02, 0.16, 1),
-    filter 560ms ease,
-    visibility 0s linear 0s;
-  will-change: transform;
-}
-
-.about-sheet.is-turning-forward {
-  z-index: 52;
-  filter: drop-shadow(var(--forward-shadow-x) 0.5rem 1.15rem rgb(0 0 0 / 23%));
-  transform: perspective(78rem) translate3d(var(--forward-x), var(--forward-y), 0)
-    rotateY(var(--forward-angle)) rotateZ(var(--forward-tilt));
-}
-
-.about-sheet.is-turning-backward {
-  z-index: 54;
-  filter: drop-shadow(var(--backward-shadow-x) 0.5rem 1.15rem rgb(0 0 0 / 23%));
-  transform: perspective(78rem) translate3d(var(--backward-x), var(--backward-y), 0)
-    rotateY(var(--backward-angle)) rotateZ(var(--backward-tilt));
-}
-
-.about-stack.is-dragging .about-sheet.is-turning {
-  transition: none;
-}
-
-.about-sheet__front,
-.about-sheet__back {
-  position: absolute;
-  inset: 0;
+.book-page {
+  z-index: 3;
   overflow: hidden;
   border: 1px solid var(--paper-edge);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.about-sheet__front {
-  display: grid;
-  box-sizing: border-box;
-  place-items: stretch;
   background-color: var(--paper);
   background-image:
     linear-gradient(180deg, rgb(255 255 255 / 24%), transparent 11%, rgb(69 42 19 / 2.5%) 92%),
@@ -196,51 +160,114 @@ html[data-theme='dark'] body.about-room-page {
     linear-gradient(180deg, var(--paper-bright), var(--paper) 42%, var(--paper-warm));
   background-size: auto, 4.4rem 4.4rem, 5.2rem 5.2rem, 8rem 8rem, auto;
   box-shadow:
-    0 1.2rem 2.3rem var(--paper-shadow),
-    0 0.14rem 0.34rem rgb(31 12 4 / 16%),
-    inset 0 0 0 1px rgb(255 255 255 / 24%);
-  color: var(--paper-ink);
+    0 0.16rem 0.3rem rgb(31 12 4 / 12%),
+    inset 0 0 0 1px rgb(255 255 255 / 20%);
 }
 
-.about-sheet__front::before {
+.book-page::after,
+.book-leaf__face::after {
   position: absolute;
+  z-index: 20;
   inset: 0;
-  border: 1px solid rgb(255 255 255 / 20%);
-  box-shadow:
-    inset 0.08rem 0 0 rgb(255 255 255 / 10%),
-    inset -0.08rem 0 0 rgb(75 42 17 / 6%);
+  border: 1px solid rgb(255 255 255 / 16%);
   content: '';
   pointer-events: none;
 }
 
-.about-sheet__back {
-  background:
-    linear-gradient(90deg, rgb(49 28 14 / 10%), transparent 16% 76%, rgb(255 255 255 / 13%)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.13'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, var(--paper-warm), var(--paper));
-  box-shadow: inset 0 0 1.5rem rgb(59 35 17 / 10%);
-  transform: rotateY(180deg);
+.book-page--left {
+  left: 0;
+  border-right: 0;
+  border-radius: 0.14rem 0 0 0.2rem;
+  box-shadow:
+    inset -1.2rem 0 1.5rem rgb(72 42 18 / 7%),
+    inset 0.08rem 0 0 rgb(255 255 255 / 12%);
 }
 
-.sheet-back-shadow {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgb(42 21 8 / 22%), transparent 26%),
-    linear-gradient(145deg, transparent 52%, rgb(255 255 255 / 7%));
+.book-page--right {
+  right: 0;
+  border-left: 0;
+  border-radius: 0 0.14rem 0.2rem 0;
+  box-shadow:
+    inset 1.2rem 0 1.5rem rgb(72 42 18 / 7%),
+    inset -0.08rem 0 0 rgb(73 42 18 / 7%);
 }
 
-.sheet-turn-shade {
+.book-gutter {
   position: absolute;
   z-index: 8;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 42%, rgb(54 28 10 / 26%) 100%);
-  opacity: var(--turn-shade-opacity);
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1.7rem;
+  background:
+    linear-gradient(90deg, rgb(52 27 11 / 17%), transparent 44% 56%, rgb(52 27 11 / 13%));
+  box-shadow: inset 0 0 0.7rem rgb(37 17 6 / 8%);
+  opacity: 0.72;
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
-.sheet-cover,
-.sheet-content {
+.book-leaf {
+  z-index: 15;
+  left: 50%;
+  transform: perspective(92rem) translateY(calc(-1 * var(--leaf-lift))) rotateY(var(--leaf-angle)) rotateZ(var(--leaf-skew));
+  transform-origin: 0 50%;
+  transform-style: preserve-3d;
+  transition: transform 620ms cubic-bezier(0.32, 0.01, 0.16, 1);
+  will-change: transform;
+}
+
+.about-book.is-dragging .book-leaf {
+  transition: none;
+}
+
+.book-leaf__face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid var(--paper-edge);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / 24%), transparent 11%, rgb(69 42 19 / 2.5%) 92%),
+    radial-gradient(circle at 18% 12%, rgb(255 255 255 / 16%) 0 0.09rem, transparent 0.1rem),
+    radial-gradient(circle at 73% 64%, rgb(74 43 20 / 3.5%) 0 0.075rem, transparent 0.08rem),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--paper-bright), var(--paper) 42%, var(--paper-warm));
+  background-size: auto, 4.4rem 4.4rem, 5.2rem 5.2rem, 8rem 8rem, auto;
+}
+
+.book-leaf__front {
+  border-left: 0;
+  box-shadow:
+    inset 1.15rem 0 1.45rem rgb(72 42 18 / 8%),
+    -0.12rem 0.25rem 0.7rem rgb(24 9 3 / var(--leaf-shadow-opacity));
+}
+
+.book-leaf__back {
+  border-right: 0;
+  box-shadow:
+    inset -1.15rem 0 1.45rem rgb(72 42 18 / 8%),
+    0.12rem 0.25rem 0.7rem rgb(24 9 3 / var(--leaf-shadow-opacity));
+  transform: rotateY(180deg);
+}
+
+.book-leaf__edge {
+  position: absolute;
+  z-index: 40;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  width: 2px;
+  background: color-mix(in srgb, var(--paper-edge) 80%, white);
+  box-shadow: 0 0 0.35rem rgb(255 244 220 / 18%);
+  opacity: var(--leaf-edge-opacity);
+  pointer-events: none;
+}
+
+.book-visual,
+.book-copy-page {
   position: relative;
   z-index: 2;
   box-sizing: border-box;
@@ -248,82 +275,118 @@ html[data-theme='dark'] body.about-room-page {
   height: 100%;
 }
 
-.sheet-cover {
+.book-visual {
   display: flex;
-  align-items: center;
   flex-direction: column;
-  justify-content: center;
-  padding: 12% 11% 17%;
-  text-align: center;
+  padding: clamp(1.6rem, 7%, 2.4rem) clamp(1.5rem, 7.5%, 2.3rem) clamp(2.4rem, 10%, 3.3rem);
+}
+
+.book-visual__frame {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 82%, var(--paper-ink));
+  background: color-mix(in srgb, var(--paper-warm) 88%, var(--paper-ink));
+  box-shadow:
+    0 0.18rem 0.5rem rgb(45 25 11 / 12%),
+    inset 0 0 0 0.28rem color-mix(in srgb, var(--paper) 93%, transparent);
+}
+
+.book-visual__frame::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(255 247 229 / 5%), transparent 65%, rgb(30 12 5 / 10%));
+  content: '';
+  pointer-events: none;
+}
+
+.book-visual__frame img {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.book-visual--portrait .book-visual__frame {
+  margin: 9% 8% 12%;
+  aspect-ratio: 1;
+  flex: 0 1 auto;
+  border-width: 0;
+  background: transparent;
+  box-shadow: 0 0.45rem 0.9rem rgb(40 20 8 / 15%);
+}
+
+.book-visual--portrait .book-visual__frame img {
+  object-fit: cover;
+}
+
+.book-visual--screen .book-visual__frame img,
+.book-visual--photo .book-visual__frame img {
+  object-fit: cover;
+}
+
+.book-visual--screen .book-visual__frame img {
+  object-position: 50% 50%;
+}
+
+.book-visual--document .book-visual__frame {
+  background: #e9e2d5;
+}
+
+.book-visual--document .book-visual__frame img {
+  padding: 5%;
+  object-fit: contain;
+  filter: saturate(0.8) contrast(0.97);
+}
+
+.book-visual__caption-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.9rem;
+  color: var(--paper-muted);
+  font-family: var(--font-mono);
+  font-size: clamp(0.48rem, 0.55vw, 0.58rem);
+  letter-spacing: 0.11em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.book-copy-page {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  padding: clamp(2rem, 7.8%, 2.8rem) clamp(1.9rem, 8.8%, 3rem) clamp(3.2rem, 11%, 4.2rem);
 }
 
 .sheet-eyebrow {
-  margin: 0 0 clamp(1rem, 2vh, 1.45rem);
+  margin: 0 0 clamp(1rem, 4%, 1.45rem);
   color: var(--paper-muted);
   font-family: var(--font-mono);
-  font-size: clamp(0.52rem, 0.62vw, 0.64rem);
+  font-size: clamp(0.48rem, 0.57vw, 0.6rem);
   font-weight: 500;
   letter-spacing: 0.2em;
   line-height: 1;
   text-transform: uppercase;
 }
 
-.sheet-cover .sheet-eyebrow {
-  position: absolute;
-  top: 8.5%;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.sheet-cover h1 {
-  margin: 0;
+.book-copy-page h1 {
+  width: 96%;
+  margin: 0 0 clamp(1.25rem, 5%, 1.85rem);
   color: var(--paper-ink);
   font-family: var(--font-display);
-  font-size: clamp(1.65rem, 2.65vw, 2.25rem);
+  font-size: clamp(1.5rem, 2.15vw, 2rem);
   font-weight: 400;
-  letter-spacing: 0.18em;
-  line-height: 1.05;
-  text-indent: 0.18em;
-}
-
-.sheet-subtitle,
-.sheet-location {
-  margin: 0;
-  color: var(--paper-muted);
-  font-family: var(--font-display);
-  font-size: clamp(0.82rem, 1.05vw, 0.98rem);
-  line-height: 1.3;
-}
-
-.sheet-subtitle {
-  margin-top: 1.25rem;
-  font-style: italic;
-  letter-spacing: 0.08em;
-}
-
-.sheet-location {
-  margin-top: 0.7rem;
-  letter-spacing: 0.08em;
-}
-
-.sheet-content {
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  justify-content: flex-start;
-  padding: clamp(2.2rem, 7%, 3rem) clamp(2rem, 8.5%, 3rem) clamp(3.8rem, 13%, 4.8rem);
-}
-
-.sheet-content h2 {
-  width: 92%;
-  margin: 0 0 clamp(1.4rem, 4.2%, 2rem);
-  color: var(--paper-ink);
-  font-family: var(--font-display);
-  font-size: clamp(1.55rem, 2.35vw, 2.05rem);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.08;
+  letter-spacing: -0.025em;
+  line-height: 1.07;
   text-wrap: balance;
+}
+
+.book-copy-page h1:not(.is-section-title) {
+  font-size: clamp(1.7rem, 2.35vw, 2.2rem);
 }
 
 .sheet-copy {
@@ -331,8 +394,8 @@ html[data-theme='dark'] body.about-room-page {
   gap: 1em;
   color: var(--paper-ink);
   font-family: var(--font-display);
-  font-size: clamp(0.88rem, 1.02vw, 1.02rem);
-  line-height: 1.54;
+  font-size: clamp(0.76rem, 0.83vw, 0.92rem);
+  line-height: 1.5;
   text-wrap: pretty;
 }
 
@@ -342,12 +405,13 @@ html[data-theme='dark'] body.about-room-page {
 }
 
 .sheet-link,
-.interest-note a {
+.interest-note a,
+.interest-note__ghost-link {
   position: relative;
-  z-index: 12;
+  z-index: 24;
   color: var(--paper-accent);
   font-family: var(--font-mono);
-  font-size: clamp(0.61rem, 0.7vw, 0.7rem);
+  font-size: clamp(0.54rem, 0.6vw, 0.63rem);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-decoration: none;
@@ -356,9 +420,14 @@ html[data-theme='dark'] body.about-room-page {
   -webkit-user-select: auto;
 }
 
+.interest-note__ghost-link,
+.sheet-link--ghost {
+  pointer-events: none;
+}
+
 .sheet-link {
   margin-top: auto;
-  padding-top: 1.15rem;
+  padding-top: 1rem;
 }
 
 .sheet-link:hover,
@@ -370,15 +439,15 @@ html[data-theme='dark'] body.about-room-page {
   text-underline-offset: 0.22em;
 }
 
-.sheet-content--interests h2 {
-  margin-bottom: clamp(1.2rem, 4%, 1.7rem);
+.interest-list {
+  width: 100%;
 }
 
 .interest-note {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 0.8rem;
-  padding: 1rem 0;
+  gap: 0.7rem;
+  padding: 0.85rem 0;
   border-top: 1px solid color-mix(in srgb, var(--paper-edge) 78%, transparent);
 }
 
@@ -387,100 +456,61 @@ html[data-theme='dark'] body.about-room-page {
 }
 
 .interest-note__number {
-  padding-top: 0.13rem;
+  padding-top: 0.12rem;
   color: var(--paper-muted);
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.5rem;
   letter-spacing: 0.1em;
 }
 
-.interest-note h3 {
-  margin: 0 0 0.42rem;
+.interest-note h2 {
+  margin: 0 0 0.35rem;
   color: var(--paper-ink);
   font-family: var(--font-display);
-  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  font-size: clamp(0.9rem, 1vw, 1.08rem);
   font-weight: 500;
   letter-spacing: 0.02em;
+  line-height: 1.2;
 }
 
 .interest-note p {
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.48rem;
   color: var(--paper-ink);
   font-family: var(--font-display);
-  font-size: clamp(0.76rem, 0.87vw, 0.88rem);
-  line-height: 1.42;
+  font-size: clamp(0.67rem, 0.73vw, 0.78rem);
+  line-height: 1.38;
 }
 
-.sheet-number {
+.book-page-number {
   position: absolute;
-  z-index: 10;
-  bottom: 5.5%;
-  left: 50%;
-  color: color-mix(in srgb, var(--paper-muted) 86%, transparent);
+  z-index: 12;
+  bottom: 4.8%;
+  color: color-mix(in srgb, var(--paper-muted) 80%, transparent);
   font-family: var(--font-mono);
-  font-size: clamp(0.5rem, 0.58vw, 0.59rem);
+  font-size: clamp(0.46rem, 0.52vw, 0.55rem);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.16em;
   line-height: 1;
-  transform: translateX(-50%);
 }
 
-.sheet-corner {
-  position: absolute;
-  z-index: 15;
-  right: -1px;
-  bottom: -1px;
-  width: clamp(3rem, 17%, 4.3rem);
-  aspect-ratio: 1;
-  overflow: hidden;
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
-  filter: drop-shadow(-0.3rem -0.2rem 0.42rem rgb(34 16 5 / 20%));
-  pointer-events: none;
-  transition: width 260ms ease, filter 260ms ease;
+.book-page-number--left {
+  left: 8.5%;
 }
 
-.sheet-corner::before {
-  position: absolute;
-  right: -21%;
-  bottom: -21%;
-  width: 142%;
-  height: 142%;
-  border-radius: 50% 0 0;
-  background: linear-gradient(138deg, transparent 42%, rgb(55 29 12 / 24%) 48%, transparent 53%);
-  content: '';
-}
-
-.sheet-corner__paper {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  background:
-    linear-gradient(135deg, transparent 0 46%, rgb(71 42 20 / 18%) 47% 49%, transparent 50%),
-    linear-gradient(135deg, transparent 0 50%, #d8c7ab 50% 74%, #bca686 100%);
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
-}
-
-.about-stack:hover .about-sheet.is-current:not(.is-turning) .sheet-corner {
-  width: clamp(3.35rem, 19%, 4.8rem);
-  filter: drop-shadow(-0.42rem -0.3rem 0.56rem rgb(34 16 5 / 25%));
-}
-
-.about-sheet.is-turning .sheet-corner {
-  opacity: 0;
+.book-page-number--right {
+  right: 8.5%;
 }
 
 .page-turn-hint {
   position: absolute;
   right: 0;
-  bottom: clamp(0.45rem, 1.4vh, 0.9rem);
+  bottom: clamp(0.4rem, 1.2vh, 0.8rem);
   left: 0;
   margin: 0;
   color: color-mix(in srgb, var(--wall-light) 74%, transparent);
   font-family: var(--font-mono);
-  font-size: clamp(0.5rem, 0.68vw, 0.63rem);
-  letter-spacing: 0.16em;
+  font-size: clamp(0.48rem, 0.6vw, 0.59rem);
+  letter-spacing: 0.15em;
   line-height: 1;
   text-align: center;
   text-transform: lowercase;
@@ -491,10 +521,54 @@ html[data-theme='dark'] body.about-room-page {
   display: none;
 }
 
-@media (max-height: 48rem) and (min-width: 40.001rem) {
-  .about-stack {
+@media (max-height: 49rem) and (min-width: 40.001rem) {
+  .about-book {
     width: auto;
-    height: min(34rem, calc(100svh - var(--header-height) - var(--floor-height) - 3rem));
+    height: min(31rem, calc(100svh - var(--header-height) - var(--floor-height) - 2.8rem));
+  }
+}
+
+@media (max-width: 52rem) {
+  .about-book {
+    --book-width: calc(100vw - 2rem);
+    width: var(--book-width);
+  }
+
+  .book-copy-page {
+    padding: 1.45rem 1.3rem 2.6rem;
+  }
+
+  .book-visual {
+    padding: 1.3rem 1.2rem 2.4rem;
+  }
+
+  .book-copy-page h1,
+  .book-copy-page h1:not(.is-section-title) {
+    margin-bottom: 0.85rem;
+    font-size: clamp(1.1rem, 3.7vw, 1.55rem);
+  }
+
+  .sheet-eyebrow {
+    margin-bottom: 0.75rem;
+  }
+
+  .sheet-copy {
+    gap: 0.72em;
+    font-size: clamp(0.65rem, 2.15vw, 0.78rem);
+    line-height: 1.38;
+  }
+
+  .interest-note {
+    gap: 0.5rem;
+    padding: 0.6rem 0;
+  }
+
+  .interest-note p {
+    font-size: clamp(0.58rem, 1.95vw, 0.7rem);
+  }
+
+  .book-visual__caption-row {
+    font-size: clamp(0.42rem, 1.55vw, 0.52rem);
   }
 }
 
@@ -506,42 +580,76 @@ html[data-theme='dark'] body.about-room-page {
   .about-page-turner {
     top: var(--header-height);
     bottom: var(--floor-height);
-    padding-inline: 0.8rem;
+    padding-inline: 0.45rem;
   }
 
-  .about-stack {
-    --sheet-width: min(20rem, calc(100vw - 2rem));
-    width: var(--sheet-width);
-    max-width: calc(100vw - 2rem);
+  .about-book {
+    --book-width: calc(100vw - 0.9rem);
+    width: var(--book-width);
+    max-width: calc(100vw - 0.9rem);
   }
 
-  .sheet-content {
-    padding: 1.75rem 1.65rem 3.2rem;
+  .about-book__board {
+    inset: -0.22rem -0.25rem -0.28rem;
   }
 
-  .sheet-content h2 {
-    margin-bottom: 1.05rem;
-    font-size: clamp(1.35rem, 6.2vw, 1.7rem);
+  .book-copy-page {
+    padding: 0.9rem 0.8rem 1.8rem;
+  }
+
+  .book-visual {
+    padding: 0.85rem 0.72rem 1.65rem;
+  }
+
+  .book-visual--portrait .book-visual__frame {
+    margin: 5% 4% 8%;
+  }
+
+  .book-copy-page h1,
+  .book-copy-page h1:not(.is-section-title) {
+    margin-bottom: 0.6rem;
+    font-size: clamp(0.88rem, 4vw, 1.15rem);
+    line-height: 1.05;
+  }
+
+  .sheet-eyebrow {
+    margin-bottom: 0.48rem;
+    font-size: clamp(0.36rem, 1.7vw, 0.46rem);
   }
 
   .sheet-copy {
-    gap: 0.82em;
-    font-size: clamp(0.78rem, 3.45vw, 0.9rem);
-    line-height: 1.43;
+    gap: 0.55em;
+    font-size: clamp(0.49rem, 2.25vw, 0.64rem);
+    line-height: 1.32;
   }
 
-  .sheet-content--interests {
-    padding-inline: 1.45rem;
+  .sheet-link,
+  .interest-note a {
+    font-size: clamp(0.4rem, 1.8vw, 0.5rem);
   }
 
   .interest-note {
-    gap: 0.6rem;
-    padding: 0.72rem 0;
+    gap: 0.36rem;
+    padding: 0.42rem 0;
+  }
+
+  .interest-note h2 {
+    margin-bottom: 0.2rem;
+    font-size: clamp(0.68rem, 3vw, 0.85rem);
   }
 
   .interest-note p {
-    font-size: clamp(0.68rem, 3vw, 0.78rem);
-    line-height: 1.35;
+    margin-bottom: 0.25rem;
+    font-size: clamp(0.46rem, 2.05vw, 0.57rem);
+    line-height: 1.25;
+  }
+
+  .interest-note__number {
+    font-size: 0.36rem;
+  }
+
+  .book-page-number {
+    font-size: 0.38rem;
   }
 
   .page-turn-hint__desktop {
@@ -554,19 +662,19 @@ html[data-theme='dark'] body.about-room-page {
 }
 
 @media (max-height: 40rem) {
-  .about-stack {
+  .about-book {
     width: auto;
-    height: max(13rem, calc(100svh - var(--header-height) - var(--floor-height) - 1.5rem));
-    max-width: calc(100vw - 2rem);
+    height: max(12rem, calc(100svh - var(--header-height) - var(--floor-height) - 1.4rem));
+    max-width: calc(100vw - 1.2rem);
   }
 }
 
-@media (max-width: 24rem), (max-height: 40rem) {
+@media (max-width: 28rem), (max-height: 36rem) {
   .sheet-copy p:nth-child(2) {
     display: none;
   }
 
-  .sheet-content--interests .interest-note p {
+  .interest-note p {
     display: -webkit-box;
     overflow: hidden;
     -webkit-box-orient: vertical;
@@ -575,9 +683,7 @@ html[data-theme='dark'] body.about-room-page {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .about-sheet,
-  .about-sheet.is-turning,
-  .sheet-corner {
+  .book-leaf {
     transition-duration: 1ms !important;
   }
 }
