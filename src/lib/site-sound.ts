@@ -349,6 +349,10 @@ const handleChange = (event: Event) => {
   if (target instanceof HTMLSelectElement) void playSound('dropdown-close');
 };
 
+export const playNavigationSound = (kind: 'page' | 'redirect' = 'redirect') => {
+  void playSound(kind);
+};
+
 export const unlockSiteSound = () => {
   if (!isEnabled()) return;
 

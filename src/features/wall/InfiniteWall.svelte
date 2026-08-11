@@ -23,7 +23,6 @@
   let wallWorld: HTMLElement;
   let wallTexture: HTMLElement;
   let floorSurface: HTMLElement;
-  let motionToggle: HTMLButtonElement;
   let cameraX = WALL_START_X;
   let velocity = 0;
   let driftDirection = 1;
@@ -418,16 +417,17 @@
     rafId = requestAnimationFrame(animationFrame);
   }
 
-  onMount(() => {
-    const stopMotionTogglePointer = (event: PointerEvent) => {
-      // Keep a button press from ever entering the wall-drag gesture.
-      event.stopPropagation();
-    };
-    const handleMotionToggleClick = (event: MouseEvent) => {
-      event.stopPropagation();
-      toggleMotion();
-    };
+  function handleMotionTogglePointerDown(event: PointerEvent) {
+    // Keep a button press from ever entering the wall-drag gesture.
+    event.stopPropagation();
+  }
 
+  function handleMotionToggleClick(event: MouseEvent) {
+    event.stopPropagation();
+    toggleMotion();
+  }
+
+  onMount(() => {
     // Always begin in the moving state. The visible control is the only thing
     // that pauses this scene, which avoids browser/OS preference mismatches
     // producing a frozen wall with a nonfunctional-looking Pause button.
@@ -442,8 +442,6 @@
     stage.addEventListener('pointerup', finishPointer);
     stage.addEventListener('pointercancel', finishPointer);
     stage.addEventListener('pointerleave', onPointerLeave);
-    motionToggle.addEventListener('pointerdown', stopMotionTogglePointer);
-    motionToggle.addEventListener('click', handleMotionToggleClick);
     window.addEventListener('keydown', onKeydown);
     window.addEventListener('blur', onWindowBlur);
     window.addEventListener('resize', refreshRenderDevicePixelRatio, { passive: true });
@@ -458,8 +456,6 @@
       stage.removeEventListener('pointerup', finishPointer);
       stage.removeEventListener('pointercancel', finishPointer);
       stage.removeEventListener('pointerleave', onPointerLeave);
-      motionToggle.removeEventListener('pointerdown', stopMotionTogglePointer);
-      motionToggle.removeEventListener('click', handleMotionToggleClick);
       window.removeEventListener('keydown', onKeydown);
       window.removeEventListener('blur', onWindowBlur);
       window.removeEventListener('resize', refreshRenderDevicePixelRatio);
@@ -533,12 +529,13 @@
 
 
   <button
-    bind:this={motionToggle}
     class="wall-motion-toggle"
     type="button"
     aria-label={isPaused ? 'Play wall animation' : 'Pause wall animation'}
     aria-pressed={isPaused}
     title={isPaused ? 'Play wall animation' : 'Pause wall animation'}
+    onpointerdown={handleMotionTogglePointerDown}
+    onclick={handleMotionToggleClick}
   >
     {#if isPaused}
       <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
