@@ -21,7 +21,6 @@
   const MAX_ENTRIES = 200;
 
   let entries: PathEntry[] = [];
-  let currentPath = '/';
   let graphNodes: NetworkNode[] = [];
   let graphLinks: NetworkLink[] = [];
 
@@ -133,20 +132,26 @@
     }
 
     const maxVisits = Math.max(1, ...visitCounts.values());
-    const activeNodeId = primaryNodeId(currentPath);
+    const visitedNodeIds = new Set(
+      Array.from(visitCounts.entries())
+        .filter(([, count]) => count > 0)
+        .map(([id]) => id),
+    );
 
-    graphNodes = navigationNetworkNodes.map((node) => {
-      const visits = visitCounts.get(node.id) ?? 0;
-      const relative = Math.sqrt(visits / maxVisits);
-      return {
-        ...node,
-        accent: navigationRainbowAccent(node.id, node.accent),
-        radius: node.id === 'home' ? 52 + relative * 7 : 29 + relative * 10,
-        description: `${visits} ${visits === 1 ? 'visit' : 'visits'}`,
-        descriptionAlwaysVisible: true,
-        current: node.id === activeNodeId,
-      };
-    });
+    graphNodes = navigationNetworkNodes
+      .filter((node) => visitedNodeIds.has(node.id))
+      .map((node) => {
+        const visits = visitCounts.get(node.id) ?? 0;
+        const relative = Math.sqrt(visits / maxVisits);
+        return {
+          ...node,
+          accent: navigationRainbowAccent(node.id, node.accent),
+          radius: node.id === 'home' ? 52 + relative * 7 : 29 + relative * 10,
+          description: `${visits} ${visits === 1 ? 'visit' : 'visits'}`,
+          descriptionAlwaysVisible: true,
+          current: false,
+        };
+      });
 
     const maxTransitions = Math.max(1, ...edgeCounts.values());
     graphLinks = Array.from(edgeCounts.entries(), ([key, count]) => {
@@ -154,7 +159,12 @@
       const reverseKey = `${target}\u0000${source}`;
       const reciprocal = edgeCounts.has(reverseKey);
       const normalizedWeight = Math.sqrt(count / maxTransitions);
-      const curve = reciprocal ? (source < target ? 28 : -28) : 0;
+
+      // Every personal transition is a directed arc: no straight connector
+      // bars. Reciprocal transitions intentionally share the same curve sign.
+      // Because reversing source/target also reverses the path normal, the two
+      // arrows then bow to opposite sides of the pair, visually like `( )`.
+      const curve = reciprocal ? 54 : 40;
 
       return {
         source,
@@ -163,18 +173,20 @@
         directed: true,
         weight: normalizedWeight,
         curve,
-        distance: 150 - normalizedWeight * 18,
-        strength: 0.12 + normalizedWeight * 0.12,
+        distance: 205 - normalizedWeight * 16,
+        strength: 0.09 + normalizedWeight * 0.08,
       } satisfies NetworkLink;
-    });
+    }).filter(
+      (link) =>
+        visitedNodeIds.has(String(link.source)) &&
+        visitedNodeIds.has(String(link.target)),
+    );
   }
 
   onMount(() => {
-    currentPath = window.location.pathname;
     readEntries();
 
     const handleUpdate = () => {
-      currentPath = window.location.pathname;
       readEntries();
     };
 
@@ -207,14 +219,15 @@
       collisionSounds={false}
       settings={{
         layout: 'radial',
-        radialRadius: 0.33,
+        radialRadius: 0.41,
         radialStartAngle: -Math.PI / 2,
         entranceRadius: 0,
-        chargeStrength: -205,
-        anchorStrength: 0.19,
-        centerAnchorStrength: 0.42,
-        collisionPadding: 18,
-        linkStrength: 0.2,
+        chargeStrength: -315,
+        centerChargeMultiplier: 1.7,
+        anchorStrength: 0.13,
+        centerAnchorStrength: 0.28,
+        collisionPadding: 28,
+        linkStrength: 0.12,
       }}
     />
   </div>

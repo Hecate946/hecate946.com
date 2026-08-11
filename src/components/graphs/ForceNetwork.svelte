@@ -1298,8 +1298,10 @@
     if (link.directed) {
       const unitX = dx / distance;
       const unitY = dy / distance;
-      const sourcePadding = source.radius + 3;
-      const targetPadding = target.radius + 8;
+      const sourcePadding = source.radius + 4;
+      // Keep a deliberate gap between the target node and arrowhead. This makes
+      // direction legible even when several weighted paths converge on one node.
+      const targetPadding = target.radius + 7;
       const startX = sourceX + unitX * sourcePadding;
       const startY = sourceY + unitY * sourcePadding;
       const endX = targetX - unitX * targetPadding;
@@ -1466,9 +1468,9 @@
           <stop
             offset="0%"
             stop-color="var(--network-edge-start)"
-            stop-opacity="0.72"
+            stop-opacity={link.directed ? 0.88 : 0.72}
           />
-          <stop offset="100%" stop-color={link.accent} stop-opacity="0.88" />
+          <stop offset="100%" stop-color={link.accent} stop-opacity={link.directed ? 1 : 0.88} />
         </linearGradient>
       {/each}
 
@@ -1476,15 +1478,15 @@
       {#each (appearance === 'default' ? renderedLinks.filter((link) => link.directed) : []) as link (link.key)}
         <marker
           id={`${idPrefix}-${safeId(link.key)}-arrow`}
-          viewBox="0 0 8 8"
-          refX="7.2"
-          refY="4"
-          markerWidth={5.2 + link.weight * 2.2}
-          markerHeight={5.2 + link.weight * 2.2}
+          viewBox="0 0 10 10"
+          refX="9.2"
+          refY="5"
+          markerWidth={6.2 + link.weight * 1.8}
+          markerHeight={6.2 + link.weight * 1.8}
           markerUnits="userSpaceOnUse"
           orient="auto"
         >
-          <path d="M0 0 8 4 0 8Z" fill={link.accent} />
+          <path d="M0 0 10 5 0 10 2.2 5Z" fill={link.accent} />
         </marker>
       {/each}
     </defs>
@@ -1523,7 +1525,7 @@
             marker-end={link.directed
               ? `url(#${idPrefix}-${safeId(link.key)}-arrow)`
               : undefined}
-            style={`--link-accent: ${link.accent}; --link-weight: ${link.weight}; --link-width: ${1.15 + link.weight * 2.65}px; --link-active-width: ${1.9 + link.weight * 3}px; --link-opacity: ${0.42 + link.weight * 0.48}; stroke: url(#${idPrefix}-${safeId(link.key)}-gradient);`}
+            style={`--link-accent: ${link.accent}; --link-weight: ${link.weight}; --link-width: ${link.directed ? 0.85 + link.weight * 1.15 : 1.15 + link.weight * 2.65}px; --link-active-width: ${link.directed ? 1.25 + link.weight * 1.45 : 1.9 + link.weight * 3}px; --link-opacity: ${link.directed ? 0.66 + link.weight * 0.24 : 0.42 + link.weight * 0.48}; stroke: url(#${idPrefix}-${safeId(link.key)}-gradient);`}
           />
         {/if}
       {/each}
@@ -1761,6 +1763,11 @@
   .force-network__link--weighted {
     stroke-width: var(--link-width, 1.15px);
     opacity: var(--link-opacity, 0.42);
+  }
+
+  .force-network__link--directed {
+    stroke-linecap: butt;
+    opacity: var(--link-opacity, 0.72);
   }
 
   .force-network__link--weighted.force-network__link--active {
