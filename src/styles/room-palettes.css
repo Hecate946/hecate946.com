@@ -14,13 +14,13 @@
   pointer-events: none;
 }
 
-body:has(> .room-transition-stage > .site-room-backdrop) {
+body:has(> .site-room-backdrop) {
   position: relative;
   isolation: isolate;
   background: var(--wall-dark);
 }
 
-body:has(> .room-transition-stage > .site-room-backdrop) > .room-transition-stage > main {
+body:has(> .site-room-backdrop) > main {
   position: relative;
   z-index: 1;
 }

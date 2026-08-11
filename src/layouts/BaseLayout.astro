@@ -54,28 +54,28 @@ const roomLiftTransition = {
   forwards: {
     old: {
       name: 'room-lift-out',
-      duration: '1120ms',
-      easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+      duration: '1250ms',
+      easing: 'linear',
       fillMode: 'both',
     },
     new: {
       name: 'room-rise-in',
-      duration: '1120ms',
-      easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+      duration: '1250ms',
+      easing: 'linear',
       fillMode: 'both',
     },
   },
   backwards: {
     old: {
       name: 'room-drop-out',
-      duration: '1120ms',
-      easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+      duration: '1250ms',
+      easing: 'linear',
       fillMode: 'both',
     },
     new: {
       name: 'room-descend-in',
-      duration: '1120ms',
-      easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+      duration: '1250ms',
+      easing: 'linear',
       fillMode: 'both',
     },
   },
@@ -83,7 +83,12 @@ const roomLiftTransition = {
 ---
 
 <!doctype html>
-<html lang="en-US" data-theme="light">
+<html
+  lang="en-US"
+  data-theme="light"
+  transition:name="root"
+  transition:animate={roomLiftTransition}
+>
   <head>
     <ThemeBootstrap />
     <BaseHead {title} {description} {image} {imageAlt} {imageWidth} {imageHeight} {imageType} {noindex} />
@@ -92,24 +97,17 @@ const roomLiftTransition = {
   </head>
 
   <body class:list={[bodyClass, roomThemeClass]}>
+    {!isDedicatedRoom && (
+      <div class="site-room-backdrop wall-room-host" aria-hidden="true">
+        <WallRoom />
+      </div>
+    )}
     <SkipLink />
     <Header />
 
-    <div
-      class="room-transition-stage"
-      transition:name="room-stage"
-      transition:animate={roomLiftTransition}
-    >
-      {!isDedicatedRoom && (
-        <div class="site-room-backdrop wall-room-host" aria-hidden="true">
-          <WallRoom />
-        </div>
-      )}
-
-      <main id="main-content" class={mainClass}>
-        <slot />
-      </main>
-    </div>
+    <main id="main-content" class={mainClass}>
+      <slot />
+    </main>
 
     <script>
       import type { TransitionBeforePreparationEvent } from 'astro:transitions/client';
@@ -177,34 +175,10 @@ const roomLiftTransition = {
         if (isCurrentPage) event.preventDefault();
       };
 
-      const syncPersistentHeader = () => {
-        const currentPath = normalizePath(window.location.pathname);
-
-        for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-nav-route]')) {
-          const route = link.dataset.navRoute;
-          if (!route) continue;
-
-          const targetPath = normalizePath(new URL(route, window.location.origin).pathname);
-          const isCurrent =
-            targetPath === '/'
-              ? currentPath === '/'
-              : currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
-
-          if (isCurrent && targetPath !== '/') {
-            link.setAttribute('aria-current', 'page');
-          } else {
-            link.removeAttribute('aria-current');
-          }
-        }
-      };
-
       document.addEventListener('astro:before-preparation', setRoomTransitionDirection);
       // Capture first so Astro's router never starts a transition for a link that
       // points to the exact page already on screen. Modified clicks stay native.
       document.addEventListener('click', preventRedundantNavigation, { capture: true });
-      // The header itself is persisted across route swaps, so refresh only its
-      // route-dependent aria-current state after the URL has changed.
-      document.addEventListener('astro:page-load', syncPersistentHeader);
     </script>
 
     <script>

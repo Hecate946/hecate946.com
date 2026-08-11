@@ -33,7 +33,7 @@ body.projects-wall-page {
 }
 
 body.projects-wall-page > .site-header {
-  position: fixed;
+  position: absolute;
   z-index: 50;
   top: 0;
   right: 0;

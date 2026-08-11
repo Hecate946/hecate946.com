@@ -8,9 +8,10 @@
 }
 
 /*
- * Route changes behave like vertically stacked rooms. Only the dedicated room
- * stage participates in the transition; the fixed navigation lives outside it
- * and therefore remains a stable architectural overlay while rooms move below.
+ * Route changes behave like vertically stacked rooms. Astro's ClientRouter
+ * captures both documents, then the transition directive on <html> moves them
+ * by exactly one viewport on the same curve. The outgoing floor and incoming
+ * ceiling therefore share one continuous edge instead of cross-fading.
  */
 :root {
   --room-transition-distance: 100vh;
@@ -22,51 +23,24 @@
   }
 }
 
-.room-transition-stage {
-  position: relative;
-  box-sizing: border-box;
-  min-height: 100vh;
-  padding-top: var(--header-height);
-}
-
-@supports (min-height: 100dvh) {
-  .room-transition-stage {
-    min-height: 100dvh;
-  }
-}
-
-::view-transition-image-pair(room-stage) {
+::view-transition-image-pair(root) {
   isolation: isolate;
 }
 
-::view-transition-old(room-stage),
-::view-transition-new(room-stage) {
+::view-transition-old(root),
+::view-transition-new(root) {
   width: 100%;
   height: 100%;
   mix-blend-mode: normal;
 }
 
-::view-transition-old(room-stage) {
+::view-transition-old(root) {
   z-index: 2;
   box-shadow: 0 1.35rem 2.8rem rgb(0 0 0 / 28%);
 }
 
-::view-transition-new(room-stage) {
+::view-transition-new(root) {
   z-index: 1;
-}
-
-/* The navigation belongs to the building, not to any individual room. Astro
- * carries this exact header node across route swaps, and its independent view
- * transition layer stays stationary above the moving room snapshots. */
-::view-transition-group(site-header) {
-  z-index: 100;
-  animation: none;
-}
-
-::view-transition-old(site-header),
-::view-transition-new(site-header) {
-  animation: none;
-  mix-blend-mode: normal;
 }
 
 @keyframes room-lift-out {

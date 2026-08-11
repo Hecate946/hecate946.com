@@ -106,11 +106,41 @@ const links: ContactLink[] = [
 
 <div class="contact-chalkboard-wrap">
   <svg class="contact-chalkboard__filters" aria-hidden="true" focusable="false">
-    <filter id="contact-chalk-rough" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="2" seed="11" result="noise" />
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0.72" xChannelSelector="R" yChannelSelector="G" result="rough" />
-      <feGaussianBlur in="rough" stdDeviation="0.16" result="dust" />
-      <feBlend in="rough" in2="dust" mode="screen" />
+    <filter id="contact-chalk-rough" x="-28%" y="-28%" width="156%" height="156%" color-interpolation-filters="sRGB">
+      <!-- One noise field gently wobbles the hand-drawn edge; another breaks
+           the stroke into uneven chalk deposits instead of a solid vector line. -->
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.78 0.46"
+        numOctaves="3"
+        seed="17"
+        result="edgeNoise"
+      />
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="edgeNoise"
+        scale="0.95"
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result="wobbled"
+      />
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="1.15"
+        numOctaves="4"
+        seed="29"
+        result="chalkNoise"
+      />
+      <feColorMatrix in="chalkNoise" type="luminanceToAlpha" result="chalkLuma" />
+      <feComponentTransfer in="chalkLuma" result="chalkMask">
+        <feFuncA type="table" tableValues="0.12 0.38 0.68 0.96" />
+      </feComponentTransfer>
+      <feComposite in="wobbled" in2="chalkMask" operator="in" result="grainyStroke" />
+      <feGaussianBlur in="wobbled" stdDeviation="0.48" result="softDust" />
+      <feComponentTransfer in="softDust" result="faintDust">
+        <feFuncA type="linear" slope="0.16" />
+      </feComponentTransfer>
+      <feBlend in="grainyStroke" in2="faintDust" mode="screen" />
     </filter>
   </svg>
 

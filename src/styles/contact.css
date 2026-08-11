@@ -3,7 +3,6 @@
 
   box-sizing: border-box;
   position: relative;
-  display: block;
   min-height: calc(100svh - var(--header-height));
   padding-inline: clamp(1rem, 3.6vw, 3.75rem);
   overflow: hidden;
@@ -13,16 +12,6 @@
   .contact-page {
     min-height: calc(100dvh - var(--header-height));
   }
-}
-
-.contact-heading {
-  position: absolute;
-  top: clamp(1.8rem, 3.5vw, 2.75rem);
-  left: clamp(1rem, 3.6vw, 3.75rem);
-  z-index: 12;
-  width: auto;
-  margin: 0;
-  pointer-events: none;
 }
 
 /* Center against the usable wall only: from directly below the navbar to the
@@ -43,7 +32,7 @@
   --room-light-hot: var(--wall-light, #f4f1e9);
 
   position: relative;
-  width: min(40vw, 31rem);
+  width: min(52vw, 42rem);
   max-width: calc(100vw - 3rem);
   aspect-ratio: 8 / 5;
 }
@@ -183,7 +172,7 @@
   width: 78%;
   height: 78%;
   place-items: center;
-  opacity: 0.93;
+  opacity: 0.86;
   mix-blend-mode: screen;
 }
 
@@ -196,29 +185,29 @@
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 3.15;
-  filter: url('#contact-chalk-rough') drop-shadow(0.03rem 0.02rem 0 rgb(255 255 255 / 8%));
+  stroke-width: 3.3;
+  filter: url('#contact-chalk-rough');
 }
 
 .chalk-segment {
   vector-effect: non-scaling-stroke;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  stroke-opacity: 0.9;
+  stroke-opacity: 0.82;
   opacity: 0;
   animation: chalk-draw 860ms cubic-bezier(0.22, 0.7, 0.2, 1) forwards;
   animation-delay: calc(var(--draw-delay) + var(--segment-delay, 0ms));
 }
 
 .chalk-segment--soft {
-  stroke-width: 2.7;
-  stroke-opacity: 0.68;
+  stroke-width: 2.85;
+  stroke-opacity: 0.56;
 }
 
 .chalk-link:hover .chalk-segment,
 .chalk-link:focus-visible .chalk-segment {
-  stroke-width: 3.35;
-  stroke-opacity: 0.98;
+  stroke-width: 3.5;
+  stroke-opacity: 0.9;
 }
 
 .chalk-link__label {
@@ -308,13 +297,13 @@
 
   100% {
     stroke-dashoffset: 0;
-    opacity: 0.93;
+    opacity: 0.86;
   }
 }
 
 @media (max-height: 42rem) and (min-width: 40.001rem) {
   .contact-chalkboard-wrap {
-    width: min(38vw, 28rem);
+    width: min(47vw, 36rem);
   }
 }
 
@@ -323,12 +312,9 @@
     padding-inline: clamp(0.8rem, 4vw, 1.15rem);
   }
 
-  .contact-heading {
-    left: clamp(0.8rem, 4vw, 1.15rem);
-  }
 
   .contact-chalkboard-wrap {
-    width: min(78vw, 28rem);
+    width: min(84vw, 32rem);
     max-width: calc(100vw - 2rem);
     aspect-ratio: 1.38;
   }
@@ -377,7 +363,7 @@
 
 @media (max-width: 30rem) {
   .contact-chalkboard-wrap {
-    width: 76vw;
+    width: 82vw;
   }
 
   .contact-chalkboard__recess {
@@ -396,7 +382,7 @@
 @media (prefers-reduced-motion: reduce) {
   .chalk-segment {
     animation: none;
-    opacity: 0.93;
+    opacity: 0.86;
     stroke-dashoffset: 0;
   }
 
