@@ -1017,19 +1017,13 @@
     canvas.addEventListener('wheel', onWheel, { passive: false });
 
     const themeObserver = new MutationObserver((records) => {
-      if (
-        records.some(
-          (record) =>
-            record.attributeName === 'data-theme' ||
-            record.attributeName === 'data-season',
-        )
-      ) {
+      if (records.some((record) => record.attributeName === 'data-theme')) {
         applyTheme();
       }
     });
     themeObserver.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme', 'data-season'],
+      attributeFilter: ['data-theme'],
     });
 
     applyTheme();

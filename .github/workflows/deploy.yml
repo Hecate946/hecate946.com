@@ -20,9 +20,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          # The stats generator needs the complete history for an accurate count.
-          fetch-depth: 0
 
       - name: Build Astro site
         uses: withastro/action@v6
@@ -30,7 +27,7 @@ jobs:
           path: .
           node-version: 22
           package-manager: npm
-          build-cmd: bash scripts/cleanup-retired-routes.sh && rm -rf dist && node scripts/generate-code-stats.mjs && npm run build
+          build-cmd: npm run build
 
   deploy:
     needs: build

@@ -12,7 +12,6 @@
     type SimulationLinkDatum,
     type SimulationNodeDatum,
   } from 'd3-force';
-  import { playNetworkCollisionNote, unlockSiteSound } from '@/lib/site-sound';
   import type { ForceNetworkSettings, NetworkLink, NetworkNode } from './types';
 
   type SimulationNode = NetworkNode &
@@ -78,7 +77,6 @@
   export let idPrefix = 'force-network';
   export let showHint = true;
   export let appearance: 'default' | 'obsidian' = 'default';
-  export let collisionSounds = false;
   export let zoomable = false;
   export let showResetControl = true;
   export let settings: ForceNetworkSettings = {};
@@ -142,8 +140,6 @@
   let mounted = false;
   let lastSignature = '';
   let dataSignature = '';
-  let activeCollisionPairs = new Set<string>();
-  let collisionSoundsArmed = false;
   let zoomScale = 1;
   let panX = 0;
   let panY = 0;
@@ -341,52 +337,6 @@
       originalTarget: link.target,
       order,
     }));
-  }
-
-  const collisionPairKey = (firstId: string, secondId: string) =>
-    firstId < secondId ? `${firstId}:${secondId}` : `${secondId}:${firstId}`;
-
-  function detectNodeCollisions() {
-    if (!collisionSounds) {
-      activeCollisionPairs.clear();
-      return;
-    }
-
-    const nextCollisionPairs = new Set<string>();
-
-    for (let firstIndex = 0; firstIndex < simulationNodes.length; firstIndex += 1) {
-      const firstNode = simulationNodes[firstIndex];
-      const firstX = firstNode.x ?? firstNode.anchorX;
-      const firstY = firstNode.y ?? firstNode.anchorY;
-
-      for (
-        let secondIndex = firstIndex + 1;
-        secondIndex < simulationNodes.length;
-        secondIndex += 1
-      ) {
-        const secondNode = simulationNodes[secondIndex];
-        const secondX = secondNode.x ?? secondNode.anchorX;
-        const secondY = secondNode.y ?? secondNode.anchorY;
-        const collisionDistance =
-          firstNode.radius +
-          secondNode.radius +
-          config.collisionPadding * 2;
-        const distance = Math.hypot(secondX - firstX, secondY - firstY);
-        const pairKey = collisionPairKey(firstNode.id, secondNode.id);
-        const wasColliding = activeCollisionPairs.has(pairKey);
-        const separationTolerance = wasColliding ? 9 : 1.5;
-
-        if (distance > collisionDistance + separationTolerance) continue;
-
-        nextCollisionPairs.add(pairKey);
-
-        if (collisionSounds && collisionSoundsArmed && !wasColliding) {
-          void playNetworkCollisionNote();
-        }
-      }
-    }
-
-    activeCollisionPairs = nextCollisionPairs;
   }
 
   function linkRestDistance(link: SimulationLink) {
@@ -599,7 +549,6 @@
         // A zoomable Obsidian-style graph is an unbounded plane. Clamping it to
         // the initial viewport makes clusters bunch up against invisible walls.
         if (!(appearance === 'obsidian' && zoomable)) keepNodesInBounds();
-        detectNodeCollisions();
         syncRenderedState();
       })
       .on('end', () => {
@@ -618,8 +567,6 @@
     labelVisibilityNeedsCommit = false;
     viewportHasBeenFitted = false;
     viewportWasTouched = false;
-    activeCollisionPairs = new Set();
-    collisionSoundsArmed = false;
     createSimulationNodes(animateEntrance);
     simulation = forceSimulation<SimulationNode, SimulationLink>(
       simulationNodes,
@@ -1148,8 +1095,6 @@
 
   function startDrag(event: PointerEvent, node: SimulationNode) {
     if (event.button !== 0) return;
-    collisionSoundsArmed = collisionSounds;
-    if (collisionSounds) unlockSiteSound();
     dragState = {
       nodeId: node.id,
       pointerId: event.pointerId,
@@ -1419,7 +1364,6 @@
       viewportAnimationFrame = null;
     }
     resizeObserver?.disconnect();
-    activeCollisionPairs.clear();
     viewportPointers.clear();
     if (suppressTimer) clearTimeout(suppressTimer);
     if (fitViewportTimer) clearTimeout(fitViewportTimer);

@@ -1,51 +1,60 @@
 /*
- * The moving-wall homepage is a closed viewport shell in standard mode:
- * header + scene + footer always fit inside the browser's visible viewport.
- *
- * Do not size the scene by subtracting assumed header/footer row counts. The
- * header and footer already know their real responsive heights, so flexbox
- * lets the scene consume exactly the space that remains on desktop, tablet,
- * mobile, landscape, and after an orientation/browser-chrome change.
+ * The homepage is one full-viewport room. The transparent header sits over
+ * the scene so the moving wall remains visible through the navigation.
  */
-html[data-html-mode='false'] body.wall-home-page {
-  display: flex;
+body.wall-home-page {
+  position: relative;
+  display: block !important;
   width: 100%;
   height: 100vh;
   min-height: 100vh;
-  flex-direction: column;
   overflow: hidden;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
+
+  /* Navigation chrome must stay legible over both light and dark wall modes. */
+  --header-text: var(--wall-light);
+  --header-muted: color-mix(in srgb, var(--wall-light) 72%, transparent);
+  --header-line: color-mix(in srgb, var(--wall-light) 22%, transparent);
+  --header-accent: var(--wall-light);
 }
 
-/* Small viewport units avoid the classic mobile 100vh/browser-toolbar gap.
-   Dynamic viewport units, where available, keep the footer attached to the
-   actually visible edge as Safari/Chrome UI or device orientation changes. */
 @supports (height: 100svh) {
-  html[data-html-mode='false'] body.wall-home-page {
+  body.wall-home-page {
     height: 100svh;
     min-height: 100svh;
   }
 }
 
 @supports (height: 100dvh) {
-  html[data-html-mode='false'] body.wall-home-page {
+  body.wall-home-page {
     height: 100dvh;
     min-height: 100dvh;
   }
 }
 
-html[data-html-mode='false'] body.wall-home-page > .site-header,
-html[data-html-mode='false'] body.wall-home-page > .site-footer {
-  flex: 0 0 auto;
+body.wall-home-page > .site-header {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 50;
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
+body.wall-home-page > .site-header {
+  top: 0;
+}
+
+
 .wall-home-main {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   min-width: 0;
-  height: auto;
+  height: 100%;
   min-height: 0 !important;
-  flex: 1 1 0 !important;
   overflow: hidden;
   padding: 0 !important;
 }
@@ -57,12 +66,13 @@ html[data-html-mode='false'] body.wall-home-page > .site-footer {
   min-height: 0;
 }
 
-/* HTML mode intentionally falls back to the normal document flow so the
-   route index remains fully scrollable even though this page uses a viewport
-   shell in the standard visual mode. */
-html[data-html-mode='true'] body.wall-home-page {
-  height: auto;
-  min-height: 100vh;
-  overflow: visible;
-  overscroll-behavior-y: auto;
+/* With no footer chrome, the motion control can sit directly above the floor edge. */
+body.wall-home-page .wall-motion-toggle {
+  bottom: 0.8rem;
+}
+
+@media (max-width: 40rem) {
+  body.wall-home-page .wall-motion-toggle {
+    bottom: 0.6rem;
+  }
 }

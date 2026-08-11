@@ -1,5 +1,5 @@
 :root {
-  /* Desktop site grid: 12 columns. Header uses 2 / 6 / 1 / 1 / 2. */
+  /* Desktop site grid: 12 columns. Header uses name 2 / navigation 8 / theme 2. */
   --site-grid-columns: 12;
   --site-gutter: clamp(0.75rem, 1.4vw, 1.5rem);
   --site-edge: clamp(1rem, 3.5vw, 4rem);
@@ -33,11 +33,10 @@
 
 @media (max-width: 68rem) {
   :root {
-    /* Mobile header and page grid use the same eight-column division. */
+    /* Mobile page grid uses the same eight-column division as the minimal header. */
     --site-grid-columns: 8;
     --site-edge: 1rem;
     --site-gutter: 0.75rem;
-    --header-height: 4.9rem;
   }
 
   .grid-content,

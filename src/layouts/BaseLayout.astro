@@ -1,15 +1,9 @@
 ---
 import BaseHead from '@/components/core/BaseHead.astro';
-import Footer from '@/components/core/Footer.astro';
 import Header from '@/components/core/Header.astro';
 import SkipLink from '@/components/core/SkipLink.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
-import SeasonalShower from '@/components/islands/SeasonalShower.svelte';
-import CommandPalette from '@/components/islands/CommandPalette.svelte';
-import { headerNavigation } from '@/config/navigation';
-import { shouldShowSeasonalShower } from '@/config/seasonal-shower';
-import { navigation } from '@/config/site';
-import { withBase } from '@/lib/paths';
+import WallRoom from '@/features/wall/WallRoom.svelte';
 import { ClientRouter } from 'astro:transitions';
 import '@/styles/global.css';
 
@@ -21,11 +15,8 @@ interface Props {
   imageWidth?: number;
   imageHeight?: number;
   imageType?: string;
-  hideFooter?: boolean;
-  suppressSeasonalShower?: boolean;
   mainClass?: string;
   bodyClass?: string;
-  soundSilent?: boolean;
   noindex?: boolean;
 }
 
@@ -37,39 +28,29 @@ const {
   imageWidth,
   imageHeight,
   imageType,
-  hideFooter = false,
-  suppressSeasonalShower = false,
   mainClass,
   bodyClass,
-  soundSilent = false,
   noindex = false,
 } = Astro.props;
 
-const showSeasonalShower =
-  !suppressSeasonalShower && shouldShowSeasonalShower(Astro.url.pathname);
-
-const commandItems = Array.from(
-  new Map(
-    [...headerNavigation, ...navigation].map((item) => [
-      item.href,
-      {
-        label: item.label,
-        href: withBase(item.href),
-      },
-    ]),
-  ).values(),
-);
-
+const pathname = Astro.url.pathname;
+const isDedicatedRoom = pathname === '/' || pathname === '/about/' || pathname === '/about';
+const roomThemeClass = pathname.startsWith('/projects')
+  ? 'room-theme-projects'
+  : pathname.startsWith('/resume')
+    ? 'room-theme-resume'
+    : pathname.startsWith('/contact')
+      ? 'room-theme-contact'
+      : pathname.startsWith('/stats')
+        ? 'room-theme-stats'
+        : undefined;
 ---
 
 <!doctype html>
 <html
   lang="en-US"
   transition:animate="none"
-  data-season="summer"
-  data-season-preference="auto"
   data-theme="light"
-  data-html-mode="false"
 >
   <head>
     <ThemeBootstrap />
@@ -78,21 +59,13 @@ const commandItems = Array.from(
     <ClientRouter fallback="swap" />
   </head>
 
-  <body
-    class={bodyClass}
-    data-site-sound-silent={soundSilent ? true : undefined}
-  >
+  <body class:list={[bodyClass, roomThemeClass]}>
+    {!isDedicatedRoom && (
+      <div class="site-room-backdrop wall-room-host" aria-hidden="true">
+        <WallRoom />
+      </div>
+    )}
     <SkipLink />
-
-    {
-      showSeasonalShower && (
-        <SeasonalShower
-          client:idle
-          transition:persist="seasonal-shower"
-        />
-      )
-    }
-
     <Header />
 
     <main id="main-content" class={mainClass}>
@@ -100,40 +73,7 @@ const commandItems = Array.from(
     </main>
 
 
-    {!hideFooter && <Footer />}
-    <CommandPalette client:idle items={commandItems} />
-
-
     <script>
-      import { initializeHtmlMode } from '@/lib/html-mode';
-      import { initializeSiteSound } from '@/lib/site-sound';
-
-      const GRAPH_RETURN_STORAGE_KEY = 'hecate946:graph-return';
-
-      const rememberLastNonGraphLocation = () => {
-        const normalizedPath = window.location.pathname.replace(/\/+$/, '') || '/';
-        if (normalizedPath.endsWith('/graph')) return;
-
-        try {
-          sessionStorage.setItem(
-            GRAPH_RETURN_STORAGE_KEY,
-            `${window.location.pathname}${window.location.search}${window.location.hash}`,
-          );
-        } catch {
-          // Navigation still works with the graph's home fallback if storage is unavailable.
-        }
-      };
-
-      const initializePersistentControls = () => {
-        initializeHtmlMode();
-        initializeSiteSound();
-        rememberLastNonGraphLocation();
-      };
-
-      initializePersistentControls();
-
-      document.addEventListener('astro:page-load', initializePersistentControls);
-
       const startAnalytics = () => {
         void import('@/lib/analytics').then(({ initAnalytics }) => {
           initAnalytics();

@@ -45,7 +45,7 @@
     return normalized || '/';
   }
 
-  /** Collapse the browser trail to the same six primary destinations + Home. */
+  /** Collapse the browser trail to the current primary destinations + Home. */
   function primaryNodeId(path: string) {
     const normalized = canonicalPath(path);
     if (normalized === '/') return 'home';
@@ -216,7 +216,6 @@
       ariaLabel="Directed weighted graph of this browser's navigation among the primary pages"
       height="min(52svh, 32rem)"
       showHint={false}
-      collisionSounds={false}
       settings={{
         layout: 'radial',
         radialRadius: 0.41,

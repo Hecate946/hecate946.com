@@ -333,7 +333,6 @@
           ariaLabel="Interactive website traffic network with page-view totals"
           height="min(52svh, 32rem)"
           showHint={false}
-          collisionSounds={false}
           settings={{
             layout: 'radial',
             radialRadius: 0.33,

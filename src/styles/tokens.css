@@ -29,7 +29,11 @@
 
   --content-width: 72rem;
   --reading-width: 46rem;
-  --header-height: 3rem;
+
+  /* The navigation is deliberately exactly two courses of the shared 24px
+     brick module. This keeps its top and bottom rails on mortar lines. */
+  --brick-course-height: 24px;
+  --header-height: calc(var(--brick-course-height) * 2);
 
   --duration-fast: 140ms;
   --duration-medium: 280ms;
@@ -51,16 +55,10 @@
   --accent: #0f7773;
   --accent-strong: #07524f;
   --accent-soft: rgba(15, 119, 115, 0.13);
-  --season-1: #1b8c81;
-  --season-2: #f2b84a;
-  --season-3: #ef7766;
   --shadow: 0 1.25rem 3rem rgba(44, 73, 64, 0.12);
-  --header-bg: #dff1e9;
   --header-text: #174b45;
   --header-muted: #2f6861;
   --header-line: rgba(23, 75, 69, 0.25);
-  --header-hover: rgba(255, 255, 255, 0.38);
-  --header-active-text: #063f3b;
   --header-accent: #e76e5d;
 }
 

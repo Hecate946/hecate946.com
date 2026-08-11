@@ -1,205 +1,28 @@
 /*
- * Eight complete palettes: four seasons × light/dark.
- * Components consume semantic variables, so future animation systems can use
- * --season-1/2/3 without knowing anything about the selected color mode.
+ * One definitive visual system, expressed in two modes. The palette is based
+ * on the site's existing summer theme so the moving-wall homepage keeps its
+ * established identity without carrying a seasonal theme engine.
  */
-
-html[data-season='spring'][data-theme='light'] {
-  --bg: #f8f4ed;
-  --surface: rgba(255, 252, 247, 0.78);
-  --surface-strong: #fffdf8;
-  --text: #263b30;
-  --muted: #6b7d71;
-  --line: rgba(61, 101, 76, 0.19);
-  --accent: #b75d7a;
-  --accent-strong: #783d57;
-  --accent-soft: rgba(183, 93, 122, 0.14);
-  --season-1: #71a37e;
-  --season-2: #e0a2b5;
-  --season-3: #f0c985;
-  --shadow: 0 1.25rem 3rem rgba(67, 86, 71, 0.11);
-  --header-bg: #e7f0e5;
-  --header-text: #315843;
-  --header-muted: #557461;
-  --header-line: rgba(49, 88, 67, 0.24);
-  --header-hover: rgba(255, 255, 255, 0.42);
-  --header-active-text: #71364f;
-  --header-accent: #e6819f;
-}
-
-html[data-season='spring'][data-theme='dark'] {
-  --bg: #101813;
-  --surface: rgba(25, 37, 29, 0.8);
-  --surface-strong: #1b2920;
-  --text: #eef4ed;
-  --muted: #aab9ad;
-  --line: rgba(221, 238, 225, 0.15);
-  --accent: #ee9db7;
-  --accent-strong: #ffc1d2;
-  --accent-soft: rgba(238, 157, 183, 0.16);
-  --season-1: #79b98a;
-  --season-2: #d9799b;
-  --season-3: #d8b361;
-  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.31);
-  --header-bg: #17271d;
-  --header-text: #e9f3e9;
-  --header-muted: #b8cbbd;
-  --header-line: rgba(222, 241, 225, 0.16);
-  --header-hover: rgba(238, 157, 183, 0.1);
-  --header-active-text: #ffc1d2;
-  --header-accent: #ee86a5;
-}
-
-html[data-season='summer'][data-theme='light'] {
+html[data-theme='light'] {
   --bg: #fff8e8;
-  --surface: rgba(255, 253, 245, 0.78);
+  --surface: rgb(255 253 245 / 78%);
   --surface-strong: #fffdf5;
   --text: #173d3b;
   --muted: #607874;
-  --line: rgba(24, 92, 87, 0.2);
+  --line: rgb(24 92 87 / 20%);
   --accent: #0f7773;
   --accent-strong: #07524f;
-  --accent-soft: rgba(15, 119, 115, 0.13);
-  --season-1: #1b8c81;
-  --season-2: #f2b84a;
-  --season-3: #ef7766;
-  --shadow: 0 1.25rem 3rem rgba(44, 73, 64, 0.12);
-  --header-bg: #dff1e9;
+  --accent-soft: rgb(15 119 115 / 13%);
+  --shadow: 0 1.25rem 3rem rgb(44 73 64 / 12%);
+
   --header-text: #174b45;
   --header-muted: #2f6861;
-  --header-line: rgba(23, 75, 69, 0.25);
-  --header-hover: rgba(255, 255, 255, 0.4);
-  --header-active-text: #063f3b;
-  --header-accent: #e76e5d;
-}
+  --header-line: rgb(23 75 69 / 22%);
+  --header-accent: #0f7773;
 
-html[data-season='summer'][data-theme='dark'] {
-  --bg: #07191d;
-  --surface: rgba(13, 39, 42, 0.8);
-  --surface-strong: #102b2e;
-  --text: #eff8f4;
-  --muted: #a4bfba;
-  --line: rgba(218, 241, 235, 0.15);
-  --accent: #73d0c3;
-  --accent-strong: #a7eee2;
-  --accent-soft: rgba(115, 208, 195, 0.15);
-  --season-1: #3fb8a6;
-  --season-2: #efbd55;
-  --season-3: #ee7767;
-  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.34);
-  --header-bg: #0b2930;
-  --header-text: #eef8f5;
-  --header-muted: #b8d2cd;
-  --header-line: rgba(223, 244, 239, 0.16);
-  --header-hover: rgba(115, 208, 195, 0.1);
-  --header-active-text: #ffe09a;
-  --header-accent: #f27863;
-}
-
-html[data-season='autumn'][data-theme='light'] {
-  --bg: #f7ead5;
-  --surface: rgba(255, 248, 234, 0.8);
-  --surface-strong: #fff8eb;
-  --text: #472e25;
-  --muted: #7d6559;
-  --line: rgba(109, 64, 42, 0.21);
-  --accent: #ad4d2c;
-  --accent-strong: #73301d;
-  --accent-soft: rgba(173, 77, 44, 0.14);
-  --season-1: #b54f2e;
-  --season-2: #d8912d;
-  --season-3: #788054;
-  --shadow: 0 1.25rem 3rem rgba(93, 58, 36, 0.13);
-  --header-bg: #eed6ad;
-  --header-text: #5d3525;
-  --header-muted: #7d5540;
-  --header-line: rgba(93, 53, 37, 0.25);
-  --header-hover: rgba(255, 250, 239, 0.42);
-  --header-active-text: #6b2919;
-  --header-accent: #b84f2f;
-}
-
-html[data-season='autumn'][data-theme='dark'] {
-  --bg: #1a100c;
-  --surface: rgba(47, 29, 21, 0.82);
-  --surface-strong: #352117;
-  --text: #faeee3;
-  --muted: #c8ad9a;
-  --line: rgba(247, 222, 202, 0.15);
-  --accent: #ef8a55;
-  --accent-strong: #ffb17f;
-  --accent-soft: rgba(239, 138, 85, 0.16);
-  --season-1: #d16235;
-  --season-2: #dba13f;
-  --season-3: #8d9562;
-  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.36);
-  --header-bg: #301b13;
-  --header-text: #f8e9dc;
-  --header-muted: #d1b49f;
-  --header-line: rgba(250, 229, 211, 0.16);
-  --header-hover: rgba(239, 138, 85, 0.11);
-  --header-active-text: #ffc39e;
-  --header-accent: #d9603a;
-}
-
-html[data-season='winter'][data-theme='light'] {
-  --bg: #edf2f6;
-  --surface: rgba(248, 251, 253, 0.82);
-  --surface-strong: #fbfdff;
-  --text: #293642;
-  --muted: #667685;
-  --line: rgba(58, 81, 101, 0.2);
-  --accent: #64839a;
-  --accent-strong: #46657c;
-  --accent-soft: rgba(100, 131, 154, 0.14);
-  --season-1: #8fa8ba;
-  --season-2: #cedbe4;
-  --season-3: #a7afc2;
-  --shadow: 0 1.25rem 3rem rgba(42, 63, 80, 0.11);
-  --header-bg: #dce7ee;
-  --header-text: #3b566a;
-  --header-muted: #607687;
-  --header-line: rgba(59, 86, 106, 0.23);
-  --header-hover: rgba(255, 255, 255, 0.46);
-  --header-active-text: #304b60;
-  --header-accent: #84a9c3;
-}
-
-html[data-season='winter'][data-theme='dark'] {
-  --bg: #0d151c;
-  --surface: rgba(22, 34, 44, 0.84);
-  --surface-strong: #1b2a35;
-  --text: #edf5fa;
-  --muted: #a9bac7;
-  --line: rgba(220, 234, 243, 0.15);
-  --accent: #8fb4cf;
-  --accent-strong: #c3dceb;
-  --accent-soft: rgba(143, 180, 207, 0.16);
-  --season-1: #789bb2;
-  --season-2: #c8d9e4;
-  --season-3: #9fa9be;
-  --shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.38);
-  --header-bg: #172630;
-  --header-text: #edf5fa;
-  --header-muted: #b4c6d2;
-  --header-line: rgba(225, 238, 246, 0.16);
-  --header-hover: rgba(143, 180, 207, 0.11);
-  --header-active-text: #d7e9f4;
-  --header-accent: #8eb8d2;
-}
-
-/*
- * Homepage wall palette. Dark mode keeps the existing carefully tuned
- * seasonal wall colors. In light mode, the architectural dark tile becomes a
- * slightly-darkened version of that season's existing accent while the light
- * checker/grout color comes directly from the page background.
- */
-html[data-theme='light'] {
   --wall-dark: color-mix(in srgb, var(--accent) 88%, black);
   --wall-light: var(--bg);
-  /* Keep the seasonal hue, but desaturate the painted wood slightly. */
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 82%, #3f4140);
-  /* Painted trim: neutral gray edges, with separate highlights/shadows for depth. */
   --wall-trim-line: rgb(76 80 80 / 22%);
   --wall-trim-line-soft: rgb(76 80 80 / 12%);
   --wall-trim-highlight: rgb(255 255 255 / 8%);
@@ -207,30 +30,28 @@ html[data-theme='light'] {
 }
 
 html[data-theme='dark'] {
-  --wall-baseboard: color-mix(in srgb, var(--wall-dark, #050505) 92%, #090a09);
-  /* Dark trim catches only a soft reflection of the warm mortar/light color. */
-  --wall-trim-line: color-mix(in srgb, var(--wall-light, #f4f1e9) 10%, transparent);
-  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light, #f4f1e9) 5.5%, transparent);
-  --wall-trim-highlight: color-mix(in srgb, var(--wall-light, #f4f1e9) 4%, transparent);
-  --wall-trim-shadow: rgb(0 0 0 / 42%);
-}
+  color-scheme: dark;
+  --bg: #07191d;
+  --surface: rgb(13 39 42 / 80%);
+  --surface-strong: #102b2e;
+  --text: #eff8f4;
+  --muted: #a4bfba;
+  --line: rgb(218 241 235 / 15%);
+  --accent: #73d0c3;
+  --accent-strong: #a7eee2;
+  --accent-soft: rgb(115 208 195 / 15%);
+  --shadow: 0 1.25rem 3rem rgb(0 0 0 / 34%);
 
-html[data-season='spring'][data-theme='dark'] {
-  --wall-dark: #0c130f;
-  --wall-light: #f8f4ed;
-}
+  --header-text: #eef8f5;
+  --header-muted: #b8d2cd;
+  --header-line: rgb(223 244 239 / 15%);
+  --header-accent: #73d0c3;
 
-html[data-season='summer'][data-theme='dark'] {
   --wall-dark: #051417;
   --wall-light: #fff8e8;
-}
-
-html[data-season='autumn'][data-theme='dark'] {
-  --wall-dark: #140c09;
-  --wall-light: #f7ead5;
-}
-
-html[data-season='winter'][data-theme='dark'] {
-  --wall-dark: #0a1016;
-  --wall-light: #edf2f6;
+  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 92%, #090a09);
+  --wall-trim-line: color-mix(in srgb, var(--wall-light) 10%, transparent);
+  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 5.5%, transparent);
+  --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 4%, transparent);
+  --wall-trim-shadow: rgb(0 0 0 / 42%);
 }

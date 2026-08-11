@@ -1,7 +1,0 @@
-{
-  "label": "Ornate green chess chair",
-  "source": "chair.blend",
-  "normalize_origin": "floor-center",
-  "source_rotation_degrees": [0, 0, 180],
-  "exclude_object_types": ["CAMERA", "LIGHT", "LIGHT_PROBE"]
-}

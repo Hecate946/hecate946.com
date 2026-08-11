@@ -10,7 +10,7 @@ const homeHref = withBase('/');
 ---
 
 <!doctype html>
-<html lang="en-US" data-theme="light" data-html-mode="false">
+<html lang="en-US" data-theme="light">
   <head>
     <ThemeBootstrap />
     <BaseHead title="404" description="This page is not here." noindex />
@@ -44,12 +44,6 @@ const homeHref = withBase('/');
       sound off
     </button>
 
-    <script>
-      import { initializeHtmlMode } from '@/lib/html-mode';
-
-      initializeHtmlMode();
-      document.addEventListener('astro:page-load', initializeHtmlMode);
-    </script>
 
     <script is:inline>
       const frame = document.querySelector('#error-video');

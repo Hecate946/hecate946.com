@@ -28,7 +28,6 @@
   aria-label={semantic ? `Enter ${destination.label}` : undefined}
   aria-hidden={semantic ? undefined : 'true'}
   data-wall-window={destination.id}
-  data-site-sound-silent
   data-astro-prefetch={semantic ? true : undefined}
   draggable="false"
   tabindex={keyboardAccessible ? undefined : -1}

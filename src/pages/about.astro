@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Disclosure from '@/components/core/Disclosure.astro';
+import WallRoom from '@/features/wall/WallRoom.svelte';
 import { withBase } from '@/lib/paths';
 import '@/styles/about.css';
 
@@ -8,8 +9,6 @@ const musicVideoUrl = 'https://www.youtube.com/watch?v=EkgH4zzXoNg';
 const pickleballArticleUrl =
   'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
 const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
-const softwareResumeUrl = withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf');
-const musicResumeUrl = withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf');
 const portraitImage = withBase('/images/about/cyrus-portrait.webp');
 const pickleballImage720 = withBase('/images/about/ucla-pickleball-super-regional-720.webp');
 const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-regional-1200.webp');
@@ -18,232 +17,219 @@ const pickleballImage1200 = withBase('/images/about/ucla-pickleball-super-region
 <BaseLayout
   title="About — Cyrus Asasi"
   description="Software engineer, classical musician, competitive pickleball player, and chess enthusiast."
+  bodyClass="about-room-page"
 >
-  <article class="about-book interior-page interior-page--six" aria-labelledby="about-title">
-    <header class="about-masthead interior-page-heading">
-      <h1 id="about-title">About</h1>
-    </header>
+  <div class="about-room wall-room-host">
+    <WallRoom />
 
-    <div class="about-intro about-prose interior-page-content">
-      <div class="about-portrait-frame">
-        <img
-          src={portraitImage}
-          alt="Portrait of Cyrus Asasi"
-          width="400"
-          height="400"
-          decoding="async"
-          fetchpriority="high"
-        />
+  <article class="about-book interior-page" aria-labelledby="about-title">
+      <header class="about-masthead interior-page-heading">
+        <h1 id="about-title">About</h1>
+      </header>
+  
+      <div class="about-intro about-prose interior-page-content">
+        <div class="about-portrait-frame">
+          <img
+            src={portraitImage}
+            alt="Portrait of Cyrus Asasi"
+            width="400"
+            height="400"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </div>
+  
+        <p class="about-opening">
+          Hi, I'm Cyrus. I'm a software engineer and classical musician who enjoys mastering difficult skills.
+          Whether it's reverse engineering complex systems, performing concertos, or building interactive web
+          experiences, I'm happiest when I'm learning something challenging.
+        </p>
+  
+        <p>
+          Outside of work, you'll usually find me practicing the clarinet or piano, competing in pickleball
+          tournaments, or playing chess.
+        </p>
+  
+        <p>
+          I recently completed dual bachelor's degrees in Computer Science and Music Performance at UCLA and am
+          now pursuing a Master's in Music Performance while continuing to build software projects.
+        </p>
       </div>
-
-      <p class="about-opening">
-        Hi, I'm Cyrus. I'm a software engineer and classical musician who enjoys mastering difficult skills.
-        Whether it's reverse engineering complex systems, performing concertos, or building interactive web
-        experiences, I'm happiest when I'm learning something challenging.
-      </p>
-
-      <p>
-        Outside of work, you'll usually find me practicing the clarinet or piano, competing in pickleball
-        tournaments, or playing chess.
-      </p>
-
-      <p>
-        I recently completed dual bachelor's degrees in Computer Science and Music Performance at UCLA and am
-        now pursuing a Master's in Music Performance while continuing to build software projects.
-      </p>
-    </div>
-
-    <section class="about-resumes interior-page-column" aria-labelledby="about-resumes-heading">
-      <h2 id="about-resumes-heading">Resumes</h2>
-      <ol class="about-resume-list">
-        <li>
-          <a href={softwareResumeUrl} target="_blank" rel="noopener noreferrer">
-            <span class="about-resume-title ui-text">Software Engineering Resume</span>
-            <span class="about-resume-format ui-text" aria-hidden="true">PDF ↗</span>
-          </a>
-        </li>
-        <li>
-          <a href={musicResumeUrl} target="_blank" rel="noopener noreferrer">
-            <span class="about-resume-title ui-text">Clarinet Performance Resume</span>
-            <span class="about-resume-format ui-text" aria-hidden="true">PDF ↗</span>
-          </a>
-        </li>
-      </ol>
-    </section>
-
-    <div class="about-disciplines interior-page-column">
-      <Disclosure class="passion-section" summaryClass="passion-heading">
-        <Fragment slot="summary">
-          <h2 class="ui-text">Software</h2>
-        </Fragment>
-
-        <div class="passion-content">
-          <div class="about-prose">
-            <p>I love building software that's functional, efficient, and enjoyable to use.</p>
-
-            <p>
-              Professionally, much of my experience has been in reverse engineering, where I enjoy understanding
-              complex systems and rebuilding them in cleaner, more useful ways. Outside of work, I build web
-              applications, developer tools, and whatever projects solve problems I encounter.
-            </p>
-
+  
+      <div class="about-disciplines interior-page-column">
+        <Disclosure class="passion-section" summaryClass="passion-heading">
+          <Fragment slot="summary">
+            <h2 class="ui-text">Software</h2>
+          </Fragment>
+  
+          <div class="passion-content">
+            <div class="about-prose">
+              <p>I love building software that's functional, efficient, and enjoyable to use.</p>
+  
+              <p>
+                Professionally, much of my experience has been in reverse engineering, where I enjoy understanding
+                complex systems and rebuilding them in cleaner, more useful ways. Outside of work, I build web
+                applications, developer tools, and whatever projects solve problems I encounter.
+              </p>
+  
+            </div>
           </div>
-        </div>
-      </Disclosure>
-
-      <Disclosure class="passion-section" summaryClass="passion-heading">
-        <Fragment slot="summary">
-          <h2 class="ui-text">Music</h2>
-        </Fragment>
-
-        <div class="passion-content">
-          <div class="about-prose">
-            <p>Music has been a lifelong passion.</p>
-
-            <p>
-              I'm a clarinetist and pianist currently pursuing a Master's in Music Performance at UCLA. In 2026,
-              I won UCLA's All-Stars Competition, giving me the opportunity to perform as a concerto soloist with
-              the UCLA Philharmonia.
-            </p>
-
-            <p>
-              Beyond performing, I love listening. I almost exclusively listen to classical music, with my current
-              favorites being Brahms, Ravel, and Kapustin.
-            </p>
+        </Disclosure>
+  
+        <Disclosure class="passion-section" summaryClass="passion-heading">
+          <Fragment slot="summary">
+            <h2 class="ui-text">Music</h2>
+          </Fragment>
+  
+          <div class="passion-content">
+            <div class="about-prose">
+              <p>Music has been a lifelong passion.</p>
+  
+              <p>
+                I'm a clarinetist and pianist currently pursuing a Master's in Music Performance at UCLA. In 2026,
+                I won UCLA's All-Stars Competition, giving me the opportunity to perform as a concerto soloist with
+                the UCLA Philharmonia.
+              </p>
+  
+              <p>
+                Beyond performing, I love listening. I almost exclusively listen to classical music, with my current
+                favorites being Brahms, Ravel, and Kapustin.
+              </p>
+            </div>
+  
+            <figure class="media-card video-card">
+              <div class="video-frame">
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/EkgH4zzXoNg"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  title="Cyrus Asasi performing with the UCLA Philharmonia"
+                  width="1280"
+                  height="720"
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                ></iframe>
+              </div>
+              <figcaption class="media-card__caption">
+                <div>
+                  <span class="media-card__kicker">Featured performance</span>
+                  <strong>Mendelssohn Konzertstück No. 2 with the UCLA Philharmonia</strong>
+                </div>
+                <a href={musicVideoUrl} target="_blank" rel="noopener noreferrer" aria-label="Watch the performance on YouTube">
+                  Watch on YouTube <span aria-hidden="true">↗︎</span>
+                </a>
+              </figcaption>
+            </figure>
           </div>
-
-          <figure class="media-card video-card">
-            <div class="video-frame">
-              <iframe
-                src="https://www.youtube-nocookie.com/embed/EkgH4zzXoNg"
-                referrerpolicy="strict-origin-when-cross-origin"
-                title="Cyrus Asasi performing with the UCLA Philharmonia"
-                width="1280"
-                height="720"
-                loading="lazy"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowfullscreen
-              ></iframe>
+        </Disclosure>
+  
+        <Disclosure class="passion-section" summaryClass="passion-heading">
+          <Fragment slot="summary">
+            <h2 class="ui-text">Pickleball</h2>
+          </Fragment>
+  
+          <div class="passion-content">
+            <div class="about-prose">
+              <p>
+                I grew up playing tennis, but eventually found myself drawn to pickleball because of its strategic
+                depth.
+              </p>
+  
+              <p>
+                I've competed for around four years at the 5.0 level and currently serve as captain of the UCLA
+                Pickleball Team. One highlight was winning the California Collegiate Super Regional Championship,
+                where our team took home the title and a $2,500 prize.
+              </p>
             </div>
-            <figcaption class="media-card__caption">
-              <div>
-                <span class="media-card__kicker">Featured performance</span>
-                <strong>Mendelssohn Konzertstück No. 2 with the UCLA Philharmonia</strong>
+  
+            <a
+              class="media-card article-card"
+              href={pickleballArticleUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Read the UCLA pickleball tournament recap"
+            >
+              <div class="article-card__image-wrap">
+                <img
+                  src={pickleballImage720}
+                  srcset={`${pickleballImage720} 720w, ${pickleballImage1200} 1200w`}
+                  sizes="(max-width: 900px) 100vw, 50vw"
+                  alt="The UCLA Pickleball Team celebrating its California Super Regional championship"
+                  loading="lazy"
+                  decoding="async"
+                  width="1200"
+                  height="800"
+                />
               </div>
-              <a href={musicVideoUrl} target="_blank" rel="noopener noreferrer" aria-label="Watch the performance on YouTube">
-                Watch on YouTube <span aria-hidden="true">↗︎</span>
-              </a>
-            </figcaption>
-          </figure>
-        </div>
-      </Disclosure>
-
-      <Disclosure class="passion-section" summaryClass="passion-heading">
-        <Fragment slot="summary">
-          <h2 class="ui-text">Pickleball</h2>
-        </Fragment>
-
-        <div class="passion-content">
-          <div class="about-prose">
-            <p>
-              I grew up playing tennis, but eventually found myself drawn to pickleball because of its strategic
-              depth.
-            </p>
-
-            <p>
-              I've competed for around four years at the 5.0 level and currently serve as captain of the UCLA
-              Pickleball Team. One highlight was winning the California Collegiate Super Regional Championship,
-              where our team took home the title and a $2,500 prize.
-            </p>
+              <div class="media-card__caption">
+                <div>
+                  <span class="media-card__kicker">DUPR tournament recap</span>
+                  <strong>UCLA captures its first California Super Regional championship</strong>
+                </div>
+                <span class="media-card__link">Read the article <span aria-hidden="true">↗︎</span></span>
+              </div>
+            </a>
           </div>
-
-          <a
-            class="media-card article-card"
-            href={pickleballArticleUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Read the UCLA pickleball tournament recap"
-          >
-            <div class="article-card__image-wrap">
-              <img
-                src={pickleballImage720}
-                srcset={`${pickleballImage720} 720w, ${pickleballImage1200} 1200w`}
-                sizes="(max-width: 900px) 100vw, 50vw"
-                alt="The UCLA Pickleball Team celebrating its California Super Regional championship"
-                loading="lazy"
-                decoding="async"
-                width="1200"
-                height="800"
-              />
+        </Disclosure>
+  
+        <Disclosure class="passion-section" summaryClass="passion-heading">
+          <Fragment slot="summary">
+            <h2 class="ui-text">Chess</h2>
+          </Fragment>
+  
+          <div class="passion-content">
+            <div class="about-prose">
+              <p>Chess has been an obsession ever since middle school.</p>
+  
+              <p>
+                After discovering Chess.com in seventh grade, I spent far too many hours studying openings, tactics,
+                and endgames, eventually reaching a peak online rating of 2450.
+              </p>
+  
+              <p>
+                I still enjoy the game because it rewards the same type of analytical thinking and pattern
+                recognition that drew me toward computer science.
+              </p>
             </div>
-            <div class="media-card__caption">
-              <div>
-                <span class="media-card__kicker">DUPR tournament recap</span>
-                <strong>UCLA captures its first California Super Regional championship</strong>
+  
+            <a
+              class="chess-card"
+              href={chessProfileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open Cyrus2020SD's Chess.com statistics"
+              data-chess-card
+            >
+              <div class="chess-card__identity">
+                <div class="chess-card__mark" aria-hidden="true">♞</div>
+                <div>
+                  <span class="chess-card__platform">Chess.com profile</span>
+                  <h3>Cyrus2020SD</h3>
+                  <span class="chess-card__live" data-chess-status>Loading live ratings…</span>
+                </div>
+                <span class="chess-card__arrow" aria-hidden="true">↗︎</span>
               </div>
-              <span class="media-card__link">Read the article <span aria-hidden="true">↗︎</span></span>
-            </div>
-          </a>
-        </div>
-      </Disclosure>
-
-      <Disclosure class="passion-section" summaryClass="passion-heading">
-        <Fragment slot="summary">
-          <h2 class="ui-text">Chess</h2>
-        </Fragment>
-
-        <div class="passion-content">
-          <div class="about-prose">
-            <p>Chess has been an obsession ever since middle school.</p>
-
-            <p>
-              After discovering Chess.com in seventh grade, I spent far too many hours studying openings, tactics,
-              and endgames, eventually reaching a peak online rating of 2450.
-            </p>
-
-            <p>
-              I still enjoy the game because it rewards the same type of analytical thinking and pattern
-              recognition that drew me toward computer science.
-            </p>
+  
+              <div class="chess-card__stats" role="group" aria-label="Current Chess.com ratings">
+                <div class="chess-stat">
+                  <span class="chess-stat__label">Rapid</span>
+                  <strong data-rating="rapid">—</strong>
+                </div>
+                <div class="chess-stat">
+                  <span class="chess-stat__label">Blitz</span>
+                  <strong data-rating="blitz">—</strong>
+                </div>
+                <div class="chess-stat">
+                  <span class="chess-stat__label">Bullet</span>
+                  <strong data-rating="bullet">—</strong>
+                </div>
+              </div>
+            </a>
           </div>
-
-          <a
-            class="chess-card"
-            href={chessProfileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Open Cyrus2020SD's Chess.com statistics"
-            data-chess-card
-          >
-            <div class="chess-card__identity">
-              <div class="chess-card__mark" aria-hidden="true">♞</div>
-              <div>
-                <span class="chess-card__platform">Chess.com profile</span>
-                <h3>Cyrus2020SD</h3>
-                <span class="chess-card__live" data-chess-status>Loading live ratings…</span>
-              </div>
-              <span class="chess-card__arrow" aria-hidden="true">↗︎</span>
-            </div>
-
-            <div class="chess-card__stats" role="group" aria-label="Current Chess.com ratings">
-              <div class="chess-stat">
-                <span class="chess-stat__label">Rapid</span>
-                <strong data-rating="rapid">—</strong>
-              </div>
-              <div class="chess-stat">
-                <span class="chess-stat__label">Blitz</span>
-                <strong data-rating="blitz">—</strong>
-              </div>
-              <div class="chess-stat">
-                <span class="chess-stat__label">Bullet</span>
-                <strong data-rating="bullet">—</strong>
-              </div>
-            </div>
-          </a>
-        </div>
-      </Disclosure>
-    </div>
-  </article>
+        </Disclosure>
+      </div>
+    </article>
+  </div>
 </BaseLayout>
 
 <script>

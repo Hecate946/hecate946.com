@@ -2,24 +2,18 @@
 import { siteConfig } from '@/config/site';
 import { headerNavigation, type HeaderNavItem } from '@/config/navigation';
 import { isCurrentPath, withBase } from '@/lib/paths';
-
 import ColorModeToggle from '@/components/islands/ColorModeToggle.svelte';
-import SoundSettings from '@/components/islands/SoundSettings.svelte';
-import SeasonSelector from '@/components/islands/SeasonSelector.svelte';
-
 import '@/styles/layout.css';
 import '@/styles/header.css';
 
 const currentPath = Astro.url.pathname;
 
 function isHeaderItemCurrent(item: HeaderNavItem) {
-  return [item.href, ...(item.match ?? [])].some((path) =>
-    isCurrentPath(currentPath, path),
-  );
+  return isCurrentPath(currentPath, item.href);
 }
 ---
 
-<header class="site-header" data-site-header data-scrolled="false">
+<header class="site-header">
   <div class="header-grid">
     <a
       class="brand"
@@ -48,43 +42,8 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
       </ul>
     </nav>
 
-    <div class="mode-slot header-region">
-      <div class="header-control-pair">
-        <SoundSettings client:load />
-        <ColorModeToggle client:idle />
-      </div>
-    </div>
-
-    <div class="seasons-slot header-region">
-      <SeasonSelector client:idle />
+    <div class="mode-slot header-region" role="group" aria-label="Appearance">
+      <ColorModeToggle client:idle />
     </div>
   </div>
 </header>
-
-<script>
-  interface HeaderWindow extends Window {
-    __siteHeaderScrollCleanup?: () => void;
-  }
-
-  function connectHeaderScrollState() {
-    const headerWindow = window as HeaderWindow;
-    headerWindow.__siteHeaderScrollCleanup?.();
-
-    const header = document.querySelector<HTMLElement>('[data-site-header]');
-    if (!header) return;
-
-    const update = () => {
-      header.dataset.scrolled = window.scrollY > 1 ? 'true' : 'false';
-    };
-
-    window.addEventListener('scroll', update, { passive: true });
-    update();
-
-    headerWindow.__siteHeaderScrollCleanup = () => {
-      window.removeEventListener('scroll', update);
-    };
-  }
-
-  connectHeaderScrollState();
-  document.addEventListener('astro:page-load', connectHeaderScrollState);
-</script>

@@ -1,0 +1,79 @@
+/*
+ * Shared brick-room palettes for ordinary pages. Every room uses the exact
+ * same WallRoom geometry as the homepage; only the color variables change.
+ * The main navigation follows a deliberate sequence: teal Home, orange About,
+ * purple Projects, golden Resume, and green Contact. Stats belongs to the
+ * Projects family, so it shares the same purple room.
+ */
+.site-room-backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  min-height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body:has(> .site-room-backdrop) {
+  position: relative;
+  isolation: isolate;
+  background: var(--wall-dark);
+}
+
+body:has(> .site-room-backdrop) > main {
+  position: relative;
+  z-index: 1;
+}
+
+.room-theme-projects,
+.room-theme-resume,
+.room-theme-contact,
+.room-theme-stats {
+  --wall-light: #fff8e8;
+  --header-text: var(--wall-light);
+  --header-muted: color-mix(in srgb, var(--wall-light) 74%, transparent);
+  --header-line: rgb(255 255 255 / 62%);
+  --header-accent: var(--wall-light);
+  --text: var(--wall-light);
+  --muted: color-mix(in srgb, var(--wall-light) 70%, var(--wall-dark));
+  --line: color-mix(in srgb, var(--wall-light) 17%, transparent);
+  --surface: color-mix(in srgb, var(--wall-dark) 84%, transparent);
+  --surface-strong: color-mix(in srgb, var(--wall-dark) 90%, black);
+  --accent: color-mix(in srgb, var(--wall-light) 82%, white);
+  --accent-strong: var(--wall-light);
+  --accent-soft: color-mix(in srgb, var(--wall-light) 11%, transparent);
+  --bg: var(--wall-dark);
+  --shadow: 0 1.25rem 3rem rgb(0 0 0 / 26%);
+  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 91%, #090909);
+  --wall-trim-line: color-mix(in srgb, var(--wall-light) 10%, transparent);
+  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 5.5%, transparent);
+  --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 4%, transparent);
+  --wall-trim-shadow: rgb(0 0 0 / 42%);
+}
+
+/* Projects + Stats: a saturated violet with the same density as Home teal. */
+html[data-theme='light'] :is(.room-theme-projects, .room-theme-stats) {
+  --wall-dark: #684f86;
+}
+
+html[data-theme='dark'] :is(.room-theme-projects, .room-theme-stats) {
+  --wall-dark: #140b1d;
+}
+
+/* Resume: ochre/gold, intentionally earthy rather than neon yellow. */
+html[data-theme='light'] .room-theme-resume {
+  --wall-dark: #96731d;
+}
+
+html[data-theme='dark'] .room-theme-resume {
+  --wall-dark: #1b1403;
+}
+
+/* Contact: deep botanical green. */
+html[data-theme='light'] .room-theme-contact {
+  --wall-dark: #4b765d;
+}
+
+html[data-theme='dark'] .room-theme-contact {
+  --wall-dark: #08170f;
+}

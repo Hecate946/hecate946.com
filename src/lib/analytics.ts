@@ -33,7 +33,6 @@ interface LocalVisitorStats {
   pages: Record<string, number>;
   events: Record<string, number>;
   colorTheme: string;
-  season: string;
   pathHistory: LocalPathEntry[];
 }
 
@@ -49,7 +48,6 @@ function readLocalStats(): LocalVisitorStats {
     pages: {},
     events: {},
     colorTheme: 'system',
-    season: 'auto',
     pathHistory: [],
   };
 
@@ -68,7 +66,6 @@ function updateLocalStats(update: (stats: LocalVisitorStats) => void) {
     update(stats);
     stats.lastVisitAt = new Date().toISOString();
     stats.colorTheme = window.localStorage.getItem('color-theme') ?? 'system';
-    stats.season = window.localStorage.getItem('season-preference') ?? 'auto';
     window.localStorage.setItem(LOCAL_STATS_KEY, JSON.stringify(stats));
     window.dispatchEvent(new CustomEvent('hecate:local-stats-updated'));
   } catch {

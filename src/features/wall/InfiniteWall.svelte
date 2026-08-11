@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import WallWindow from './WallWindow.svelte';
-  import { playNavigationSound } from '@/lib/site-sound';
+  import WallRoom from './WallRoom.svelte';
   import {
     WALL_LOOP_WIDTH,
     WALL_START_X,
@@ -14,15 +14,13 @@
   const WHEEL_SCALE = 0.82;
   const IDLE_DRIFT_SPEED = 30; // pixels per second
   const WALL_PATTERN_WIDTH = 96;
-  const FLOOR_TILE_SIZE = 120;
+  const FLOOR_TILE_SIZE = 68;
   const DIRECTION_THRESHOLD = 36;
   const INERTIA_TIME_CONSTANT = 0.78;
   const MAX_MANUAL_SPEED = 2_400;
 
   let stage: HTMLElement;
   let wallWorld: HTMLElement;
-  let wallTexture: HTMLElement;
-  let floorSurface: HTMLElement;
   let cameraX = WALL_START_X;
   let velocity = 0;
   let driftDirection = 1;
@@ -45,7 +43,7 @@
   let lastLoopBase = Number.NaN;
   let renderDevicePixelRatio = 1;
 
-  const stageStyle = `--loop-width: ${WALL_LOOP_WIDTH}px;`;
+  const stageStyle = `--loop-width: ${WALL_LOOP_WIDTH}px; --wall-room-brick-x: ${periodicOffset(WALL_START_X, WALL_PATTERN_WIDTH)}px; --wall-room-floor-x: ${periodicOffset(WALL_START_X, FLOOR_TILE_SIZE)}px;`;
 
   function modulo(value: number, period: number) {
     return ((value % period) + period) % period;
@@ -109,14 +107,8 @@
     // Only genuinely repeating texture layers are wrapped at their own small
     // periods. Static wall/floor lighting stays fixed, so these resets are
     // visually exact and cannot create a one-frame lighting jump.
-    wallTexture?.style.setProperty(
-      'transform',
-      `translate3d(${periodicOffset(renderedCameraX, WALL_PATTERN_WIDTH)}px, 0, 0)`,
-    );
-    floorSurface?.style.setProperty(
-      'transform',
-      `translate3d(${periodicOffset(renderedCameraX, FLOOR_TILE_SIZE)}px, 0, 0) rotateX(64deg) scaleY(1.28) translateY(14%)`,
-    );
+    stage?.style.setProperty('--wall-room-brick-x', `${periodicOffset(renderedCameraX, WALL_PATTERN_WIDTH)}px`);
+    stage?.style.setProperty('--wall-room-floor-x', `${periodicOffset(renderedCameraX, FLOOR_TILE_SIZE)}px`);
 
     lastRenderedCameraX = renderedCameraX;
   }
@@ -195,19 +187,13 @@
 
   function enterDestination(event: MouseEvent, _destination: WallDestination) {
     // A drag must never accidentally activate the underlying link. For a real
-    // click, however, leave the anchor alone so Astro's ClientRouter handles
-    // it exactly like the links in the navbar. A hard location.assign() reload
-    // destroyed the persistent music element and cut off in-flight SFX.
+    // click, leave the anchor alone so Astro's ClientRouter handles navigation
+    // exactly like the links in the navbar.
     if (dragDistance > DRAG_THRESHOLD) {
       event.preventDefault();
       return;
     }
 
-    // Wall links opt out of the global capture-phase sound handler because
-    // that handler fires before this component can distinguish a click from a
-    // drag. Trigger the same redirect SFX only after the gesture is confirmed
-    // as a real navigation click.
-    playNavigationSound('redirect');
     markInteracted();
     clearPointerDrag();
   }
@@ -472,21 +458,13 @@
   class:wall-stage--dragging={dragging}
   class:wall-stage--interacted={hasInteracted}
   class:wall-stage--entering={Boolean(enteringId)}
-  class="wall-stage"
+  class="wall-stage wall-room-host"
   style={stageStyle}
   aria-label="Infinite navigation wall. Drag or scroll horizontally, then select a lit window to enter a page."
 >
   <h1 class="visually-hidden">Cyrus Asasi</h1>
 
-  <div class="wall-stage__wall-surface" aria-hidden="true">
-    <div
-      bind:this={wallTexture}
-      class="wall-stage__brick-pattern"
-      style={`transform: translate3d(${periodicOffset(WALL_START_X, WALL_PATTERN_WIDTH)}px, 0, 0);`}
-    ></div>
-  </div>
-
-  <div class="wall-stage__mortar-light" aria-hidden="true"></div>
+  <WallRoom />
 
   <div
     bind:this={wallWorld}
@@ -517,17 +495,6 @@
     {/each}
   </div>
 
-  <div class="wall-floor" aria-hidden="true">
-    <div
-      bind:this={floorSurface}
-      class="wall-floor__surface"
-      style={`transform: translate3d(${periodicOffset(WALL_START_X, FLOOR_TILE_SIZE)}px, 0, 0) rotateX(64deg) scaleY(1.28) translateY(14%);`}
-    ></div>
-  </div>
-
-  <div class="wall-stage__vignette" aria-hidden="true"></div>
-  <div class="wall-floor__baseboard" aria-hidden="true"></div>
-
 
   <button
     class="wall-motion-toggle"
@@ -553,21 +520,15 @@
 
 <style>
   .wall-stage {
-    --floor-height: clamp(5.2rem, 18%, 9.8rem);
-    --baseboard-height: clamp(0.62rem, 1.15vw, 0.92rem);
     --window-width: 306px;
     --window-height: 378px;
     --window-offset-x: -153px;
     --window-offset-y: -189px;
 
-    position: relative;
-    isolation: isolate;
     width: 100%;
     height: 100%;
     min-height: 25rem;
     overflow: hidden;
-    background: var(--wall-dark, #010101);
-    color: var(--wall-light, #f4f1e9);
     cursor: grab;
     touch-action: pan-y;
     overscroll-behavior-x: contain;
@@ -580,72 +541,6 @@
 
   .wall-stage--entering {
     cursor: default;
-  }
-
-  .wall-stage__mortar-light {
-    position: absolute;
-    z-index: 2;
-    inset: 0;
-    background:
-      radial-gradient(
-        ellipse at 50% 8%,
-        color-mix(in srgb, var(--wall-light, #f4f1e9) 2.2%, transparent),
-        transparent 43%
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--wall-light, #f4f1e9) 0.35%, transparent),
-        transparent 12% 78%,
-        rgb(0 0 0 / 24%)
-      );
-    pointer-events: none;
-  }
-
-  .wall-stage__wall-surface {
-    position: absolute;
-    z-index: 1;
-    inset: 0;
-    overflow: hidden;
-    background-color: var(--wall-dark, #010101);
-    background-image: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--wall-light, #f4f1e9) 0.7%, transparent),
-      transparent 18%,
-      rgb(0 0 0 / 14%) 82%,
-      rgb(0 0 0 / 22%)
-    );
-    contain: layout paint style;
-    box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 0.5%, transparent),
-      inset 0 -8rem 12rem rgb(0 0 0 / 32%);
-    pointer-events: none;
-  }
-
-  .wall-stage__brick-pattern {
-    position: absolute;
-    inset: 0 auto 0 -96px;
-    width: calc(100% + 192px);
-    background: color-mix(in srgb, var(--wall-light, #f4f1e9) 22%, transparent);
-    backface-visibility: hidden;
-    content: '';
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='48' viewBox='0 0 96 48'%3E%3Cg fill='%23fff'%3E%3Crect x='0' y='0' width='96' height='1'/%3E%3Crect x='0' y='24' width='96' height='1'/%3E%3Crect x='0' y='0' width='1' height='24'/%3E%3Crect x='48' y='0' width='1' height='24'/%3E%3Crect x='24' y='24' width='1' height='24'/%3E%3Crect x='72' y='24' width='1' height='24'/%3E%3C/g%3E%3C/svg%3E");
-    -webkit-mask-position: 0 0;
-    -webkit-mask-repeat: repeat;
-    -webkit-mask-size: 96px 48px;
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='48' viewBox='0 0 96 48'%3E%3Cg fill='%23fff'%3E%3Crect x='0' y='0' width='96' height='1'/%3E%3Crect x='0' y='24' width='96' height='1'/%3E%3Crect x='0' y='0' width='1' height='24'/%3E%3Crect x='48' y='0' width='1' height='24'/%3E%3Crect x='24' y='24' width='1' height='24'/%3E%3Crect x='72' y='24' width='1' height='24'/%3E%3C/g%3E%3C/svg%3E");
-    mask-position: 0 0;
-    mask-repeat: repeat;
-    mask-size: 96px 48px;
-    pointer-events: none;
-    will-change: transform;
-  }
-
-  .wall-stage__wall-surface::after {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent, rgb(0 0 0 / 16%) 78%, rgb(0 0 0 / 28%));
-    content: '';
-    pointer-events: none;
   }
 
   .wall-world {
@@ -661,126 +556,6 @@
        paintings stay untransformed inside it so they cannot drift against one
        another during slow subpixel motion. */
     will-change: transform;
-  }
-
-  .wall-floor {
-    position: absolute;
-    z-index: 5;
-    right: 0;
-    bottom: -0.2rem;
-    left: 0;
-    height: calc(var(--floor-height) + 0.2rem);
-    overflow: hidden;
-    perspective: 30rem;
-    perspective-origin: 50% 0;
-    contain: layout paint style;
-    pointer-events: none;
-  }
-
-  .wall-floor__surface {
-    position: absolute;
-    top: -0.15rem;
-    bottom: 0;
-    left: -50%;
-    width: 200%;
-    background-color: var(--wall-dark, #050505);
-    background-image: conic-gradient(
-      from 90deg,
-      var(--wall-light, #f4f1e9) 0 25%,
-      var(--wall-dark, #050505) 0 50%,
-      var(--wall-light, #f4f1e9) 0 75%,
-      var(--wall-dark, #050505) 0 100%
-    );
-    background-position: 0 0;
-    background-repeat: repeat;
-    background-size: 120px 120px;
-    backface-visibility: hidden;
-    box-shadow:
-      inset 0 1rem 1.5rem rgb(0 0 0 / 22%),
-      inset 0 -1.1rem 2rem rgb(0 0 0 / 16%);
-    transform-origin: 50% 0;
-    will-change: transform;
-  }
-
-  .wall-floor::after {
-    position: absolute;
-    z-index: 1;
-    inset: 0;
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--wall-light, #f4f1e9) 8%, transparent),
-        transparent 20% 76%,
-        rgb(0 0 0 / 16%)
-      ),
-      linear-gradient(108deg, transparent 0 32%, color-mix(in srgb, var(--wall-light, #f4f1e9) 2.4%, transparent) 41%, transparent 50%) 0 0 / 30rem 100% repeat-x,
-      linear-gradient(180deg, color-mix(in srgb, var(--wall-light, #f4f1e9) 1.2%, transparent), transparent 45%);
-    content: '';
-    opacity: 0.14;
-    pointer-events: none;
-  }
-
-  .wall-floor__baseboard {
-    position: absolute;
-    z-index: 11;
-    top: calc(100% - var(--floor-height) + var(--floor-top-offset, 0rem) - 0.14rem);
-    right: -1px;
-    left: -1px;
-    height: calc(var(--baseboard-height) + 0.7rem);
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 92%, var(--wall-light, #f4f1e9)) 0%,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 96%, black) 38%,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 90%, black) 100%
-    );
-    border-top: 1px solid var(--wall-trim-line-soft, rgb(255 255 255 / 7%));
-    border-bottom: 1px solid var(--wall-trim-shadow, rgb(0 0 0 / 42%));
-    box-shadow:
-      inset 0 1px 0 var(--wall-trim-highlight, rgb(255 255 255 / 4%)),
-      inset 0 -1px 0 var(--wall-trim-shadow, rgb(0 0 0 / 42%)),
-      0 0.75rem 1rem rgb(0 0 0 / 0.2);
-  }
-
-  .wall-floor__baseboard::before {
-    position: absolute;
-    top: -0.12rem;
-    right: 0;
-    left: 0;
-    height: 0.38rem;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 91%, var(--wall-light, #f4f1e9)) 0%,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 97%, var(--wall-light, #f4f1e9)) 30%,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 97%, black) 68%,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 90%, black) 100%
-    );
-    border: 1px solid var(--wall-trim-line-soft, rgb(255 255 255 / 6%));
-    border-top-color: var(--wall-trim-line, rgb(255 255 255 / 10%));
-    border-bottom-color: var(--wall-trim-shadow, rgb(0 0 0 / 42%));
-    border-radius: 0;
-    box-shadow:
-      inset 0 1px 0 var(--wall-trim-highlight, rgb(255 255 255 / 4%)),
-      0 0.08rem 0.14rem rgb(0 0 0 / 0.16);
-    content: '';
-  }
-
-  .wall-floor__baseboard::after {
-    position: absolute;
-    top: 0.5rem;
-    right: -1px;
-    bottom: 0.18rem;
-    left: -1px;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 95%, var(--wall-light, #f4f1e9)) 0%,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 99%, black) 28%,
-      color-mix(in srgb, var(--wall-baseboard, var(--wall-dark, #050505)) 93%, black) 100%
-    );
-    border: 1px solid var(--wall-trim-line-soft, rgb(255 255 255 / 6%));
-    border-top-color: var(--wall-trim-line, rgb(255 255 255 / 10%));
-    border-bottom-color: var(--wall-trim-shadow, rgb(0 0 0 / 42%));
-    box-shadow: inset 0 1px 0 var(--wall-trim-highlight, rgb(255 255 255 / 4%));
-    content: '';
   }
 
   .wall-loop {
@@ -813,17 +588,6 @@
     left: 88%;
     height: 55%;
   }
-
-  .wall-stage__vignette {
-    position: absolute;
-    z-index: 10;
-    inset: 0;
-    background:
-      linear-gradient(90deg, rgb(0 0 0 / 48%), transparent 12% 88%, rgb(0 0 0 / 48%)),
-      linear-gradient(180deg, rgb(0 0 0 / 20%), transparent 22% 78%, rgb(0 0 0 / 28%));
-    pointer-events: none;
-  }
-
 
   .wall-motion-toggle {
     position: absolute;
@@ -890,24 +654,11 @@
 
   @media (max-width: 40rem) {
     .wall-stage {
-      --floor-height: 6.4rem;
-      --baseboard-height: 0.78rem;
-      --floor-top-offset: -0.25rem;
       --window-width: 248px;
       --window-height: 308px;
       --window-offset-x: -124px;
       --window-offset-y: -154px;
     }
-
-    .wall-floor {
-      bottom: -0.55rem;
-      height: calc(var(--floor-height) + 0.8rem);
-    }
-
-    .wall-floor__baseboard {
-      height: calc(var(--baseboard-height) + 0.9rem);
-    }
-
 
     .wall-motion-toggle {
       right: 0.75rem;

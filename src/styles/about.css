@@ -1,43 +1,168 @@
-.about-book {
-  --about-section-gap: clamp(2.5rem, 5vw, 3.75rem);
-  --about-outer-space: var(--interior-content-space);
-  --about-dropdown-space: clamp(2.7rem, 5vw, 4rem);
+/*
+ * ABOUT ROOM
+ * ----------
+ * The About page now uses the exact same physical room shell as the homepage.
+ * Only the room palette and content layout differ; brick geometry, lighting,
+ * floor perspective, checker pattern and baseboard are shared by WallRoom.
+ */
+
+body.about-room-page {
+  /* About is the warm room in the building: a burnt architectural orange in
+     light mode, deep ember in dark mode, with the same cream contrast as Home. */
+  --wall-dark: #ad5522;
+  --wall-light: #fff8e8;
+  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 89%, #251008);
+  --wall-trim-line: color-mix(in srgb, var(--wall-light) 18%, transparent);
+  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 9%, transparent);
+  --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 7%, transparent);
+  --wall-trim-shadow: rgb(40 15 4 / 38%);
+
+  --about-panel: color-mix(in srgb, var(--wall-dark) 76%, #2c1207);
+  --about-panel-soft: color-mix(in srgb, var(--wall-dark) 68%, transparent);
+  --about-panel-strong: color-mix(in srgb, var(--wall-dark) 78%, #1e0d05);
+  --about-ink: var(--wall-light);
+  --about-muted: color-mix(in srgb, var(--wall-light) 72%, var(--wall-dark));
+  --about-line: color-mix(in srgb, var(--wall-light) 18%, transparent);
+  --about-accent: #ffd0a3;
+  --about-accent-soft: rgb(255 208 163 / 12%);
+
+  --bg: var(--wall-dark);
+  --surface: var(--about-panel-soft);
+  --surface-strong: var(--about-panel-strong);
+  --text: var(--about-ink);
+  --muted: var(--about-muted);
+  --line: var(--about-line);
+  --accent: var(--about-accent);
+  --accent-strong: var(--about-accent);
+  --accent-soft: var(--about-accent-soft);
+  --shadow: 0 1.25rem 3rem rgb(48 17 4 / 24%);
+  --header-text: var(--wall-light);
+  --header-muted: color-mix(in srgb, var(--wall-light) 74%, transparent);
+  --header-line: rgb(255 255 255 / 62%);
+  --header-accent: var(--wall-light);
+
+  background: var(--wall-dark);
 }
 
-.about-masthead {
-  margin: 0;
+html[data-theme='dark'] body.about-room-page {
+  --wall-dark: #1c0c04;
+  --wall-light: #fff8e8;
+  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 95%, #050201);
+  --wall-trim-line: color-mix(in srgb, var(--wall-light) 10%, transparent);
+  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 5.5%, transparent);
+  --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 4%, transparent);
+  --wall-trim-shadow: rgb(0 0 0 / 48%);
+
+  --about-panel: rgb(28 12 4 / 86%);
+  --about-panel-soft: rgb(28 12 4 / 72%);
+  --about-panel-strong: #241006;
+  --about-ink: var(--wall-light);
+  --about-muted: #d7bca7;
+  --about-line: rgb(255 248 232 / 14%);
+  --about-accent: #eab37f;
+  --about-accent-soft: rgb(234 179 127 / 11%);
+  --shadow: 0 1.25rem 3rem rgb(0 0 0 / 36%);
+  --header-text: var(--wall-light);
+  --header-muted: color-mix(in srgb, var(--wall-light) 72%, transparent);
+  --header-line: rgb(255 255 255 / 62%);
+  --header-accent: var(--about-accent);
 }
 
-.about-prose {
-  color: color-mix(in srgb, var(--text) 94%, var(--muted));
-  font-family: var(--font-display);
-  font-size: clamp(1.04rem, 1.3vw, 1.17rem);
-  font-weight: 400;
-  letter-spacing: 0.002em;
-  line-height: 1.75;
-  text-wrap: pretty;
-}
-
-.about-prose p {
-  margin: 0;
-}
-
-.about-prose p + p {
-  margin-top: 1.45em;
-}
-
-.about-intro {
-  display: grid;
+/* Pull the room underneath the transparent sticky header so the same bricks
+   are visible through the navigation, just like the homepage. */
+.about-room-page main {
+  min-height: 0;
   padding: 0;
 }
 
+.about-room {
+  min-height: calc(100svh - var(--header-height));
+  margin-top: calc(-1 * var(--header-height));
+  padding-top: var(--header-height);
+  overflow: hidden;
+}
+
+@supports (min-height: 100dvh) {
+  .about-room {
+    min-height: calc(100dvh - var(--header-height));
+  }
+}
+
+/* A static room has no camera movement, so avoid promoting these layers to
+   dedicated compositor surfaces unnecessarily. The visual CSS is identical. */
+.about-room .wall-stage__brick-pattern,
+.about-room .wall-floor__surface {
+  will-change: auto;
+}
+
+.about-book {
+  --about-edge: clamp(1rem, 4.25vw, 5.5rem);
+  --about-max: 94rem;
+
+  position: relative;
+  z-index: 4;
+  box-sizing: border-box;
+  width: min(100%, var(--about-max));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(0.75rem, 1.5vw, 1.6rem);
+  margin-inline: auto;
+  padding: 0 var(--about-edge) calc(var(--floor-height) + clamp(3.5rem, 7vw, 6rem));
+}
+
+/* Break out of the narrow generic interior-page column. Every About section
+   owns the full room grid and decides where its content should sit. */
+.about-book > .about-masthead,
+.about-book > .about-intro,
+.about-book > .about-disciplines {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.about-masthead {
+  display: flex;
+  min-height: clamp(10rem, 22vh, 15rem);
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: clamp(3.5rem, 8vh, 6rem) 0 clamp(1.5rem, 3vw, 2.25rem);
+  border-bottom: 1px solid var(--header-line);
+  text-align: left;
+}
+
+.about-masthead h1 {
+  margin: 0;
+  color: var(--wall-light);
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 8vw, 7.5rem);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 0.83;
+  text-transform: uppercase;
+  text-shadow: 0 0.2rem 1.5rem rgb(48 17 4 / 18%);
+}
+
+/* Hero: portrait on the left, all introductory copy on the right. This uses
+   desktop width instead of forcing a portrait and three paragraphs through a
+   six-column reading strip. */
+.about-intro {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(0.75rem, 1.5vw, 1.6rem);
+  row-gap: 0;
+  padding-block: clamp(3rem, 7vw, 6.5rem);
+}
+
 .about-portrait-frame {
-  width: clamp(8.5rem, 28vw, 11rem);
+  grid-column: 1 / 6;
+  grid-row: 1 / span 3;
+  width: min(100%, 27rem);
   aspect-ratio: 1;
   overflow: hidden;
-  margin: var(--about-section-gap) auto;
-  border: 1px solid var(--accent-strong);
-  background: var(--surface-strong);
+  align-self: start;
+  justify-self: start;
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--wall-light) 28%, transparent);
+  background: var(--about-panel-strong);
+  box-shadow: 0 1.4rem 3.5rem rgb(48 17 4 / 22%);
 }
 
 .about-portrait-frame img {
@@ -48,127 +173,85 @@
   object-position: center;
 }
 
-.about-opening {
-  display: flow-root;
+.about-prose {
+  color: var(--about-ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.06rem, 1.25vw, 1.22rem);
+  font-weight: 400;
+  letter-spacing: 0.002em;
+  line-height: 1.72;
+  text-wrap: pretty;
+}
+
+.about-intro > p {
+  grid-column: 7 / 13;
+  box-sizing: border-box;
+  margin: 0;
+  padding-inline: clamp(1.35rem, 2.4vw, 2.25rem);
+  background: var(--about-panel);
+}
+
+.about-intro > p:first-of-type {
+  padding-top: clamp(1.5rem, 2.8vw, 2.4rem);
+  border: 1px solid var(--about-line);
+  border-bottom: 0;
+}
+
+.about-intro > p:nth-of-type(2) {
+  padding-top: 1.3em;
+  border-right: 1px solid var(--about-line);
+  border-left: 1px solid var(--about-line);
+}
+
+.about-intro > p:last-of-type {
+  padding-top: 1.3em;
+  padding-bottom: clamp(1.5rem, 2.8vw, 2.4rem);
+  border: 1px solid var(--about-line);
+  border-top: 0;
 }
 
 .about-opening::first-letter {
   float: left;
   margin: 0.015em 0.075em -0.08em 0;
-  color: var(--accent-strong);
+  color: var(--about-accent);
   font-family: 'SydoniaAtramentiquaRegular', 'Times New Roman', serif;
   font-size: 5.2em;
   font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.62;
-  text-shadow: 0 0.035em 0 color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
-/* Resumes are a first-class About section, not utility chrome. In HTML mode,
-   this remains a simple section heading followed by a numbered list of links. */
-.about-resumes {
-  margin-top: var(--about-dropdown-space);
-  margin-bottom: clamp(2.25rem, 4.5vw, 3.25rem);
-}
-
-.about-resumes h2 {
-  margin: 0 0 clamp(0.85rem, 1.8vw, 1.05rem);
-  color: var(--accent-strong);
-  font-family: var(--font-display);
-  font-size: clamp(1.28rem, 2vw, 1.62rem);
-  font-weight: 400;
-  letter-spacing: -0.025em;
-  line-height: 1;
-}
-
-.about-resume-list {
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  list-style: none;
-  counter-reset: resume;
-}
-
-.about-resume-list li + li {
-  border-top: 1px solid var(--line);
-}
-
-.about-resume-list a {
-  display: grid;
-  min-height: 3.15rem;
-  grid-template-columns: 2.15rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: clamp(0.75rem, 2vw, 1.2rem);
-  color: var(--text);
-  text-decoration: none;
-  transition: color 180ms ease;
-}
-
-.about-resume-list a::before {
-  counter-increment: resume;
-  color: var(--muted);
-  content: counter(resume, decimal-leading-zero);
-  font-family: var(--font-body);
-  font-size: 0.62rem;
-  font-variant-numeric: tabular-nums;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  transition: color 180ms ease;
-}
-
-.about-resume-title {
-  min-width: 0;
-  font-family: var(--font-display);
-  font-size: clamp(0.96rem, 1.45vw, 1.08rem);
-  line-height: 1.2;
-}
-
-.about-resume-format {
-  color: var(--muted);
-  font-family: var(--font-body);
-  font-size: 0.62rem;
-  font-weight: 650;
-  letter-spacing: 0.07em;
-  white-space: nowrap;
-  transition:
-    color 180ms ease,
-    transform 180ms ease;
-}
-
-.about-resume-list a:is(:hover, :focus-visible) {
-  color: var(--accent-strong);
-}
-
-.about-resume-list a:is(:hover, :focus-visible)::before,
-.about-resume-list a:is(:hover, :focus-visible) .about-resume-format {
-  color: var(--accent-strong);
-}
-
-.about-resume-list a:is(:hover, :focus-visible) .about-resume-format {
-  transform: translate(0.12rem, -0.08rem);
-}
-
+/* The four interests become broad architectural bands across the wall. The
+   content still uses the existing native disclosure behavior. */
 .about-disciplines {
-  margin-bottom: var(--about-outer-space);
-  border-top: 1px solid var(--line);
+  margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
+  border-top: 1px solid var(--header-line);
+  counter-reset: discipline;
 }
 
-/* Native details/summary is intentional: the same markup remains a usable,
-   clean disclosure list when HTML mode disables every stylesheet. */
 .passion-section {
   margin: 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--header-line);
+  counter-increment: discipline;
 }
 
 .passion-heading {
-  display: flex;
-  height: clamp(2.55rem, 4.2vw, 2.8rem);
-  padding: 0;
+  display: grid;
+  min-height: clamp(5rem, 8vw, 7rem);
+  grid-template-columns: 4.25rem minmax(0, 1fr) 2.5rem;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  color: var(--accent-strong);
+  gap: clamp(0.85rem, 2vw, 1.5rem);
+  padding: 0;
+  color: var(--wall-light);
+}
+
+.passion-heading::before {
+  color: color-mix(in srgb, var(--wall-light) 58%, transparent);
+  content: '0' counter(discipline);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
 }
 
 .passion-heading h2 {
@@ -176,31 +259,60 @@
   margin: 0;
   color: inherit;
   font-family: var(--font-display);
-  font-size: clamp(1.3rem, 2vw, 1.72rem);
+  font-size: clamp(2.1rem, 4.2vw, 4rem);
   font-weight: 400;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.045em;
   line-height: 1;
 }
 
-@supports (text-box-trim: trim-both) and (text-box-edge: cap alphabetic) {
-  .about-resume-list a::before {
-    text-box-trim: trim-both;
-    text-box-edge: cap alphabetic;
-  }
+.passion-heading .disclosure__arrow {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: color-mix(in srgb, var(--wall-light) 72%, transparent);
 }
 
 .passion-content {
   display: grid;
-  gap: clamp(1.8rem, 4vw, 2.8rem);
-  padding: 0 0 clamp(2.4rem, 5vw, 3.35rem);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(0.75rem, 1.5vw, 1.6rem);
+  row-gap: clamp(1.6rem, 3vw, 2.6rem);
+  padding: 0 0 clamp(3.2rem, 6vw, 5.5rem) 5.75rem;
+}
+
+.passion-content > .about-prose {
+  grid-column: 1 / 7;
+  box-sizing: border-box;
+  align-self: start;
+  padding: clamp(1.35rem, 2.6vw, 2.25rem);
+  border: 1px solid var(--about-line);
+  background: var(--about-panel);
+}
+
+.passion-content > .about-prose p {
+  margin: 0;
+}
+
+.passion-content > .about-prose p + p {
+  margin-top: 1.35em;
+}
+
+.passion-content > .media-card,
+.passion-content > .chess-card {
+  grid-column: 7 / 13;
+  align-self: start;
+}
+
+/* Software has no media object, so let its text use the available room. */
+.passion-section:first-child .passion-content > .about-prose {
+  grid-column: 1 / 10;
 }
 
 .media-card__kicker,
 .chess-card__platform {
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.12em;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -208,13 +320,13 @@
 .chess-card {
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 1.2rem;
+  border: 1px solid var(--about-line);
+  border-radius: 0;
   outline: 2px solid transparent;
   outline-offset: 3px;
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  box-shadow: 0 0.9rem 2.5rem color-mix(in srgb, var(--shadow) 42%, transparent);
-  color: var(--text);
+  background: var(--about-panel);
+  box-shadow: 0 1.25rem 3rem rgb(56 12 15 / 18%);
+  color: var(--about-ink);
   text-decoration: none;
   transition:
     border-color 180ms ease,
@@ -252,14 +364,15 @@
   gap: 0.35rem;
 }
 
-.media-card__kicker {
-  color: var(--muted);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
+.media-card__kicker,
+.chess-card__platform,
+.chess-card__live,
+.chess-stat__label {
+  color: var(--about-muted);
 }
 
 .media-card__caption strong {
-  color: var(--text);
+  color: var(--about-ink);
   font-family: var(--font-display);
   font-size: clamp(1rem, 1.6vw, 1.22rem);
   font-weight: 500;
@@ -267,37 +380,43 @@
 }
 
 .media-card__caption a,
+.media-card__link,
+.chess-card__arrow {
+  color: var(--about-accent);
+  text-decoration: none;
+}
+
+.media-card__caption a,
 .media-card__link {
   flex: 0 0 auto;
-  color: var(--accent-strong);
   font-size: 0.8rem;
   font-weight: 600;
-  text-decoration: none;
   white-space: nowrap;
 }
 
-.article-card {
+.article-card,
+.chess-card {
   display: block;
   cursor: pointer;
 }
 
 .article-card:is(:hover, :focus-visible),
 .chess-card:is(:hover, :focus-visible) {
-  border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
-  box-shadow: 0 1.05rem 2.8rem color-mix(in srgb, var(--shadow) 54%, transparent);
-  color: var(--text);
+  border-color: color-mix(in srgb, var(--about-accent) 58%, var(--about-line));
+  box-shadow: 0 1.4rem 3.3rem rgb(56 12 15 / 25%);
+  color: var(--about-ink);
   transform: translateY(-2px);
 }
 
 .article-card:focus-visible,
 .chess-card:focus-visible {
-  outline-color: color-mix(in srgb, var(--accent) 72%, transparent);
+  outline-color: color-mix(in srgb, var(--about-accent) 68%, transparent);
 }
 
 .article-card__image-wrap {
   aspect-ratio: 3 / 2;
   overflow: hidden;
-  background: var(--surface-strong);
+  background: var(--about-panel-strong);
 }
 
 .article-card__image-wrap img {
@@ -314,9 +433,8 @@
 }
 
 .chess-card {
-  display: block;
+  box-sizing: border-box;
   padding: clamp(1.3rem, 2.8vw, 1.85rem);
-  cursor: pointer;
 }
 
 .chess-card__identity {
@@ -332,10 +450,10 @@
   width: 3.3rem;
   height: 3.3rem;
   place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 0.9rem;
-  background: var(--surface-strong);
-  color: var(--accent-strong);
+  border: 1px solid var(--about-line);
+  border-radius: 0;
+  background: var(--about-panel-strong);
+  color: var(--about-accent);
   font-family: Georgia, serif;
   font-size: 2rem;
   line-height: 1;
@@ -344,14 +462,12 @@
 .chess-card__platform {
   display: block;
   margin-bottom: 0.2rem;
-  color: var(--muted);
   font-size: 0.61rem;
-  letter-spacing: 0.1em;
 }
 
 .chess-card h3 {
   margin: 0;
-  color: var(--text);
+  color: var(--about-ink);
   font-family: var(--font-display);
   font-size: clamp(1.35rem, 2vw, 1.7rem);
   font-weight: 500;
@@ -361,7 +477,6 @@
 .chess-card__live {
   display: block;
   margin-top: 0.2rem;
-  color: var(--muted);
   font-size: 0.75rem;
 }
 
@@ -371,23 +486,20 @@
   height: 0.42rem;
   margin-right: 0.38rem;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--about-accent);
   content: '';
   vertical-align: 0.08em;
 }
 
 .chess-card__arrow {
-  color: var(--accent-strong);
   font-size: 1.1rem;
-  text-decoration: none;
 }
 
 .chess-card__stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 0.9rem;
+  border: 1px solid var(--about-line);
 }
 
 .chess-stat {
@@ -398,50 +510,100 @@
 }
 
 .chess-stat + .chess-stat {
-  border-left: 1px solid var(--line);
-}
-
-.chess-stat__label {
-  color: var(--muted);
-  font-size: 0.72rem;
+  border-left: 1px solid var(--about-line);
 }
 
 .chess-stat strong {
-  color: var(--accent-strong);
+  color: var(--about-accent);
   font-family: var(--font-display);
   font-size: clamp(1.25rem, 2.5vw, 1.65rem);
   font-variant-numeric: tabular-nums;
   font-weight: 500;
 }
 
-@media (max-width: 680px) {
+@supports (text-box-trim: trim-both) and (text-box-edge: cap alphabetic) {
+  .passion-heading::before {
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+  }
+}
+
+@media (max-width: 68rem) {
+  .about-book {
+    --about-edge: clamp(1rem, 3.5vw, 2.25rem);
+  }
+
   .about-portrait-frame {
-    width: clamp(6.75rem, 34vw, 8rem);
-    margin-right: auto;
-    margin-left: auto;
+    grid-column: 1 / 6;
   }
 
-  .about-resume-list a {
-    min-height: 3rem;
-    grid-template-columns: 1.8rem minmax(0, 1fr) auto;
-    gap: 0.65rem;
-  }
-
-  .about-resume-title {
-    font-size: 0.96rem;
-  }
-
-  .passion-heading h2 {
-    font-size: clamp(1.3rem, 7vw, 1.62rem);
+  .about-intro > p {
+    grid-column: 6 / 13;
   }
 
   .passion-content {
-    gap: 2.2rem;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 48rem) {
+  /* global.css pads ordinary mobile mains; this room owns its own full-bleed
+     brick background and therefore handles its content edge itself. */
+  .about-room-page main {
+    padding-inline: 0;
   }
 
-  .about-opening::first-letter {
-    font-size: 4.65em;
-    line-height: 0.67;
+  .about-masthead {
+    min-height: 9rem;
+    padding-top: 3rem;
+  }
+
+  .about-masthead h1 {
+    font-size: clamp(3.5rem, 16vw, 5rem);
+  }
+
+  .about-intro {
+    grid-template-columns: 1fr;
+    gap: 1.3rem;
+    padding-block: 2.5rem 3.5rem;
+  }
+
+  .about-portrait-frame,
+  .about-intro > p {
+    grid-column: 1;
+  }
+
+  .about-portrait-frame {
+    grid-row: auto;
+    width: min(72vw, 19rem);
+    justify-self: center;
+    margin-bottom: 0.8rem;
+  }
+
+  .about-intro > p {
+    border-right: 1px solid var(--about-line);
+    border-left: 1px solid var(--about-line);
+  }
+
+  .passion-heading {
+    min-height: 5rem;
+    grid-template-columns: 2.8rem minmax(0, 1fr) 2.35rem;
+  }
+
+  .passion-heading h2 {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+
+  .passion-content {
+    grid-template-columns: 1fr;
+    padding-bottom: 3.25rem;
+  }
+
+  .passion-content > .about-prose,
+  .passion-content > .media-card,
+  .passion-content > .chess-card,
+  .passion-section:first-child .passion-content > .about-prose {
+    grid-column: 1;
   }
 
   .media-card__caption {
@@ -455,7 +617,13 @@
   }
 }
 
-@media (max-width: 430px) {
+@media (max-width: 30rem) {
+
+
+  .passion-heading {
+    grid-template-columns: 2.35rem minmax(0, 1fr) 2.1rem;
+  }
+
   .chess-card__mark {
     width: 2.8rem;
     height: 2.8rem;
@@ -473,14 +641,15 @@
   }
 
   .chess-stat + .chess-stat {
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--about-line);
     border-left: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .article-card__image-wrap img {
+  .article-card__image-wrap img,
+  .media-card,
+  .chess-card {
     transition: none;
   }
 }
-

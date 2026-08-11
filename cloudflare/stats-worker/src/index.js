@@ -340,9 +340,8 @@ async function readStats(request, env, url) {
      WHERE day NOT LIKE ? AND day >= date('now', ?)
      ORDER BY day ASC`,
   ).bind(LEGACY_LOCAL_MATCH, `-${days - 1} day`);
-  // Return the complete route inventory. The observatory renders counts on
-  // specific navigation nodes (including /graph/ and /stats/), so a top-10
-  // truncation makes legitimate lower-traffic routes look like zero views.
+  // Return the complete route inventory so lower-traffic pages still receive
+  // accurate counts in the public observatory.
   const pageQuery = env.DB.prepare(
     `SELECT path AS label, page_views AS value
      FROM page_stats

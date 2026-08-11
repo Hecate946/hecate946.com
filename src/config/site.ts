@@ -3,7 +3,7 @@ export const siteConfig = {
   shortName: 'Cyrus',
   title: 'Cyrus Asasi — Software Engineer & Classical Musician',
   description:
-    'Personal portfolio of Cyrus Asasi, a software engineer and classical musician, featuring projects, performances, experiments, and contact information.',
+    'Personal portfolio of Cyrus Asasi, a software engineer and classical musician, featuring projects, performances, live site statistics, and contact information.',
   email: 'cyrusasasi@gmail.com',
   locale: 'en-US',
   social: {
@@ -11,14 +11,3 @@ export const siteConfig = {
     linkedin: 'https://www.linkedin.com/in/cyrus-asasi/',
   },
 } as const;
-
-/** Destinations exposed through the command palette beyond the header tabs. */
-export const navigation = [
-  { label: 'Home', href: '/' },
-  { label: 'About', href: '/about/' },
-  { label: 'Projects', href: '/projects/' },
-  { label: 'Contact', href: '/contact/' },
-  { label: 'Stats', href: '/stats/' },
-  { label: 'Lab', href: '/lab/' },
-  { label: 'Graph', href: '/graph/' },
-] as const;

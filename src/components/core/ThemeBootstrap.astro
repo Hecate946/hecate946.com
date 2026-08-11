@@ -1,316 +1,80 @@
 <script is:inline>
   (() => {
-    const seasonNames = ['spring', 'summer', 'autumn', 'winter'];
-    const themeNames = ['light', 'dark'];
+    const THEME_STORAGE_KEY = 'color-theme';
+    const themeNames = new Set(['light', 'dark']);
     const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    /* HTML mode is intentionally literal: it disables author CSS and authored
-       inline styles on the real page DOM. Before doing that, it snapshots
-       anything the styled page is currently hiding and preserves that state
-       with the native `hidden` attribute. This prevents CSS-only helper text,
-       alternate icons, overlays, or accessibility labels from suddenly
-       becoming visible just because the stylesheet was turned off. */
-    const styleNodeState = new WeakMap();
-    const inlineStyleState = new WeakMap();
-    const inlineStyleElements = new Set();
-    const htmlHiddenState = new WeakMap();
-    const htmlHiddenElements = new Set();
-
-    const isStyleNode = (node) =>
-      node instanceof HTMLStyleElement ||
-      (node instanceof HTMLLinkElement && node.relList.contains('stylesheet'));
-
-    const setStyleNodeDisabled = (node, disabled) => {
-      if (!isStyleNode(node)) return;
-      if (!styleNodeState.has(node)) styleNodeState.set(node, Boolean(node.disabled));
-      node.disabled = disabled ? true : styleNodeState.get(node);
-    };
-
-    const syncInlineStyle = (element, htmlMode) => {
-      if (!(element instanceof Element)) return;
-
-      if (htmlMode) {
-        const currentStyle = element.getAttribute('style');
-        if (currentStyle === null) return;
-
-        // Components may keep updating transforms or dimensions while CSS is
-        // disabled. Remember the newest authored value so returning to the
-        // standard site resumes from the current state, not a stale snapshot.
-        inlineStyleState.set(element, currentStyle);
-        inlineStyleElements.add(element);
-        element.removeAttribute('style');
-        return;
-      }
-
-      if (!inlineStyleState.has(element)) return;
-      const original = inlineStyleState.get(element);
-      if (original === null) element.removeAttribute('style');
-      else element.setAttribute('style', original);
-      inlineStyleState.delete(element);
-      inlineStyleElements.delete(element);
-    };
-
-    const restoreInlineStyles = (targetDocument) => {
-      for (const element of Array.from(inlineStyleElements)) {
-        if (element.ownerDocument !== targetDocument) continue;
-
-        if (!targetDocument.documentElement.contains(element)) {
-          inlineStyleState.delete(element);
-          inlineStyleElements.delete(element);
-          continue;
-        }
-
-        syncInlineStyle(element, false);
-      }
-    };
-
-    const rememberHtmlHidden = (element) => {
-      if (!(element instanceof HTMLElement) || element.hidden) return;
-      if (!htmlHiddenState.has(element)) htmlHiddenState.set(element, false);
-      htmlHiddenElements.add(element);
-      element.hidden = true;
-    };
-
-    const restoreHtmlHidden = (targetDocument) => {
-      for (const element of Array.from(htmlHiddenElements)) {
-        if (element.ownerDocument !== targetDocument) continue;
-
-        if (!targetDocument.documentElement.contains(element)) {
-          htmlHiddenState.delete(element);
-          htmlHiddenElements.delete(element);
-          continue;
-        }
-
-        if (htmlHiddenState.get(element) === false) element.hidden = false;
-        htmlHiddenState.delete(element);
-        htmlHiddenElements.delete(element);
-      }
-    };
-
-    const preserveStyledVisibility = (targetDocument) => {
-      if (targetDocument !== document || !targetDocument.body) return;
-
-      for (const element of targetDocument.body.querySelectorAll('*')) {
-        if (!(element instanceof HTMLElement)) continue;
-        if (element.hidden || element.closest('[hidden]')) continue;
-        if (['SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT'].includes(element.tagName)) continue;
-
-        const styles = getComputedStyle(element);
-        const opacity = Number.parseFloat(styles.opacity);
-        const hiddenByAuthorStyles =
-          styles.display === 'none' ||
-          styles.visibility === 'hidden' ||
-          styles.visibility === 'collapse' ||
-          opacity === 0 ||
-          element.getAttribute('aria-hidden') === 'true' ||
-          element.classList.contains('visually-hidden');
-
-        if (hiddenByAuthorStyles) rememberHtmlHidden(element);
-      }
-    };
-
-    const preserveExplicitHiddenContent = (node) => {
-      if (!(node instanceof Element)) return;
-      if (node.matches('.visually-hidden, [aria-hidden="true"]')) rememberHtmlHidden(node);
-      node
-        .querySelectorAll?.('.visually-hidden, [aria-hidden="true"]')
-        .forEach(rememberHtmlHidden);
-    };
-
-    const applyHtmlPresentation = (targetDocument, htmlMode) => {
-      const root = targetDocument.documentElement;
-
-      if (htmlMode) {
-        // Measure the normal styled presentation first, even when HTML mode is
-        // being restored after an Astro navigation. This makes HTML mode show
-        // only content that the real styled page would expose.
-        targetDocument
-          .querySelectorAll('style, link[rel~="stylesheet"]')
-          .forEach((node) => setStyleNodeDisabled(node, false));
-        restoreInlineStyles(targetDocument);
-        restoreHtmlHidden(targetDocument);
-
-        const previousMode = root.dataset.htmlMode;
-        root.dataset.htmlMode = 'false';
-        preserveStyledVisibility(targetDocument);
-        root.dataset.htmlMode = previousMode ?? 'true';
-
-        targetDocument
-          .querySelectorAll('[style]')
-          .forEach((element) => syncInlineStyle(element, true));
-        syncInlineStyle(root, true);
-        root.dataset.htmlMode = 'true';
-
-        targetDocument
-          .querySelectorAll('style, link[rel~="stylesheet"]')
-          .forEach((node) => setStyleNodeDisabled(node, true));
-        return;
-      }
-
-      targetDocument
-        .querySelectorAll('style, link[rel~="stylesheet"]')
-        .forEach((node) => setStyleNodeDisabled(node, false));
-      restoreInlineStyles(targetDocument);
-      restoreHtmlHidden(targetDocument);
-      root.dataset.htmlMode = 'false';
-    };
-
-    window.__hecateApplyHtmlPresentation = applyHtmlPresentation;
-
-    const automaticSeason = () => {
-      const month = new Date().getMonth();
-      if (month >= 2 && month <= 4) return 'spring';
-      if (month >= 5 && month <= 7) return 'summer';
-      if (month >= 8 && month <= 10) return 'autumn';
-      return 'winter';
-    };
-
-    const readPreference = (key) => {
+    const readPreference = () => {
       try {
-        return localStorage.getItem(key);
+        const saved = localStorage.getItem(THEME_STORAGE_KEY);
+        return themeNames.has(saved) ? saved : null;
       } catch {
         return null;
       }
     };
 
-    const readPercentPreference = (key) => {
-      const raw = readPreference(key);
-      if (raw === null) return 0;
-      const value = Number(raw);
-      if (!Number.isFinite(value)) return 0;
-      return Math.min(100, Math.max(0, Math.round(value)));
-    };
+    const resolveTheme = () => readPreference() ?? (darkModeQuery.matches ? 'dark' : 'light');
 
-    const resolvePreferences = () => {
-      const savedSeason = readPreference('season-preference');
-      const seasonPreference = seasonNames.includes(savedSeason)
-        ? savedSeason
-        : 'auto';
-      const season =
-        seasonPreference === 'auto' ? automaticSeason() : seasonPreference;
-
-      const savedTheme = readPreference('color-theme');
-      const theme = themeNames.includes(savedTheme)
-        ? savedTheme
-        : darkModeQuery.matches
-          ? 'dark'
-          : 'light';
-
-      return {
-        seasonPreference,
-        season,
-        theme,
-        musicVolume: readPercentPreference('site-audio:music-volume'),
-        sfxVolume: readPercentPreference('site-audio:sfx-volume'),
-        htmlMode: readPreference('html-mode') === 'html',
-      };
-    };
-
-    const applyPreferences = (
-      targetDocument = document,
-      applyPresentation = targetDocument === document && Boolean(targetDocument.body),
-    ) => {
-      const { seasonPreference, season, theme, musicVolume, sfxVolume, htmlMode } =
-        resolvePreferences();
+    const applyTheme = (targetDocument = document) => {
+      const theme = resolveTheme();
       const root = targetDocument.documentElement;
-
-      root.dataset.seasonPreference = seasonPreference;
-      root.dataset.season = season;
       root.dataset.theme = theme;
-      root.dataset.musicVolume = String(musicVolume);
-      root.dataset.sfxVolume = String(sfxVolume);
-      root.dataset.soundEnabled = String(sfxVolume > 0);
-      root.dataset.audioActive = String(musicVolume > 0 || sfxVolume > 0);
       root.dataset.themeReady = 'true';
-
-      if (applyPresentation) applyHtmlPresentation(targetDocument, htmlMode);
-      else root.dataset.htmlMode = String(htmlMode);
-      if (!htmlMode) root.style.colorScheme = theme;
+      root.style.colorScheme = theme;
     };
 
     const updateThemeColor = () => {
-      if (document.documentElement.dataset.htmlMode === 'true') {
-        document
-          .querySelectorAll('meta[name="theme-color"]')
-          .forEach((meta) => meta.setAttribute('content', '#ffffff'));
-        return;
-      }
-
       requestAnimationFrame(() => {
         const themeColor = getComputedStyle(document.documentElement)
-          .getPropertyValue('--header-bg')
+          .getPropertyValue('--bg')
           .trim();
 
-        if (themeColor) {
-          document
-            .querySelectorAll('meta[name="theme-color"]')
-            .forEach((meta) => meta.setAttribute('content', themeColor));
-        }
+        if (!themeColor) return;
+        document
+          .querySelectorAll('meta[name="theme-color"]')
+          .forEach((meta) => meta.setAttribute('content', themeColor));
       });
     };
 
-    /* Apply every stored visual and audio preference before first paint. */
-    applyPreferences();
+    // Retire preferences from removed UI systems without touching the one
+    // remaining appearance preference.
+    try {
+      localStorage.removeItem('season-preference');
+      localStorage.removeItem('html-mode');
+      localStorage.removeItem('site-audio:music-volume');
+      localStorage.removeItem('site-audio:sfx-volume');
+      localStorage.removeItem('site-sound');
+    } catch {
+      // Storage may be unavailable; the visual theme still works normally.
+    }
+
+    applyTheme();
 
     if (!window.__cyrusThemeBootstrapInstalled) {
       window.__cyrusThemeBootstrapInstalled = true;
 
-      const observer = new MutationObserver((mutations) => {
-        const htmlMode = document.documentElement.dataset.htmlMode === 'true';
-        if (!htmlMode) return;
-
-        for (const mutation of mutations) {
-          if (mutation.type === 'attributes') {
-            const target = mutation.target;
-            if (target instanceof Element && mutation.attributeName === 'style') {
-              syncInlineStyle(target, true);
-            }
-            continue;
-          }
-
-          for (const node of mutation.addedNodes) {
-            if (!(node instanceof Element)) continue;
-
-            if (isStyleNode(node)) setStyleNodeDisabled(node, true);
-            syncInlineStyle(node, true);
-            preserveExplicitHiddenContent(node);
-
-            node
-              .querySelectorAll('style, link[rel~="stylesheet"]')
-              .forEach((styleNode) => setStyleNodeDisabled(styleNode, true));
-            node
-              .querySelectorAll('[style]')
-              .forEach((element) => syncInlineStyle(element, true));
-          }
-        }
-      });
-
-      observer.observe(document.documentElement, {
-        subtree: true,
-        childList: true,
-        attributes: true,
-        attributeFilter: ['style'],
-      });
-
       document.addEventListener('astro:before-swap', (event) => {
-        applyPreferences(event.newDocument, false);
+        applyTheme(event.newDocument);
       });
 
       document.addEventListener('astro:after-swap', () => {
-        applyPreferences();
+        applyTheme();
         updateThemeColor();
       });
 
-      document.addEventListener('DOMContentLoaded', () => {
-        applyPreferences();
-        updateThemeColor();
-      }, { once: true });
+      document.addEventListener(
+        'DOMContentLoaded',
+        () => {
+          applyTheme();
+          updateThemeColor();
+        },
+        { once: true },
+      );
 
       darkModeQuery.addEventListener('change', () => {
-        if (!readPreference('color-theme')) {
-          applyPreferences();
-          updateThemeColor();
-        }
+        if (readPreference()) return;
+        applyTheme();
+        updateThemeColor();
       });
     }
   })();

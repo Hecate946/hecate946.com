@@ -1,6 +1,7 @@
 @import './tokens.css';
 @import './reset.css';
 @import './themes.css';
+@import './room-palettes.css';
 
 @view-transition {
   navigation: auto;
@@ -43,18 +44,17 @@ body::after {
   pointer-events: none;
 }
 
-/* The navbar inherits the page palette instead of using a separate panel. */
+/* The navbar is part of the room architecture everywhere: the header itself
+   paints the same two brick courses and remains free of opaque UI chrome. */
 .site-header {
-  --header-bg: var(--bg) !important;
-  --header-text: var(--text) !important;
-  --header-muted: var(--muted) !important;
-  --header-line: var(--line) !important;
-  --header-active-text: var(--accent-strong) !important;
-  --header-accent: var(--accent) !important;
+  --header-text: var(--wall-light) !important;
+  --header-muted: color-mix(in srgb, var(--wall-light) 72%, transparent) !important;
+  --header-line: rgb(255 255 255 / 48%) !important;
+  --header-active-text: var(--wall-light) !important;
+  --header-accent: var(--wall-light) !important;
   --nav-font-weight: 400 !important;
-  background: var(--bg) !important;
-  border-bottom-color: var(--line) !important;
-  box-shadow: var(--header-shadow, none) !important;
+  background: transparent !important;
+  box-shadow: none !important;
   backdrop-filter: none !important;
 }
 
@@ -165,10 +165,10 @@ main {
 
 .interior-page-heading {
   display: grid;
-  place-items: center;
+  place-items: start;
   padding-block: var(--interior-heading-space);
   border-bottom: 1px solid var(--line);
-  text-align: center;
+  text-align: left;
 }
 
 .interior-page-heading h1 {
@@ -177,8 +177,9 @@ main {
   font-family: var(--font-display);
   font-size: clamp(2.45rem, 5vw, 3.6rem);
   font-weight: 400;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.015em;
   line-height: 1;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
