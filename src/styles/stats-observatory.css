@@ -59,20 +59,20 @@
   background-image: radial-gradient(circle at 50% 52%, var(--accent-soft), transparent 46%);
 }
 
-.observatory-earth-stage > .visitor-map-shell,
-.observatory-earth-stage > .globe-shell {
+.stats-observatory-page .stats-observatory .observatory-earth-stage > .visitor-map-shell,
+.stats-observatory-page .stats-observatory .observatory-earth-stage > .globe-shell {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  border: 0 !important;
+  border: 0;
 }
 
-.observatory-earth-stage > .visitor-map-shell {
-  background: transparent !important;
+.stats-observatory-page .stats-observatory .observatory-earth-stage > .visitor-map-shell {
+  background: transparent;
 }
 
-.observatory-earth-stage .visitor-map {
+.stats-observatory-page .stats-observatory .observatory-earth-stage .visitor-map {
   height: 100%;
   aspect-ratio: auto;
 }
@@ -190,7 +190,7 @@
   background: var(--bg);
 }
 
-.network-force-stage .force-network {
+.stats-observatory-page .stats-observatory .network-force-stage .force-network {
   border: 0;
   border-radius: 0;
   background: transparent;

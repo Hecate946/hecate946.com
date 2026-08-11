@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build": "npm run check:style-parity && astro check && astro build",
     "preview": "astro preview",
-    "check": "astro check",
+    "check": "npm run check:style-parity && astro check",
     "stats:deploy": "node scripts/deploy-stats-worker.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -16,7 +16,8 @@
     "site:zip": "node scripts/create-website-source-zip.mjs",
     "world:sync": "node scripts/sync-rendered-world.mjs",
     "world:render": "node scripts/render-world.mjs",
-    "ballroom:render": "npm run world:render -- ballroom"
+    "ballroom:render": "npm run world:render -- ballroom",
+    "check:style-parity": "node scripts/check-style-parity.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import VisitorGlobeClearV2 from '@/components/islands/VisitorGlobeClearV2.svelte';
   import VisitorMap from '@/components/islands/VisitorMap.svelte';
   import { resolveStatsApiBase } from '@/lib/stats-api';
 
@@ -104,10 +105,7 @@
   let refreshing = false;
   let liveStatsLoading = false;
   type MapView = '2d' | '3d';
-  type GlobeComponentType = typeof import('@/components/islands/VisitorGlobeClearV2.svelte')['default'];
   let mapView: MapView = '2d';
-  let GlobeComponent: GlobeComponentType | null = null;
-  let globeLoading = false;
   let globeTexturePrewarmed = false;
   const devMode = import.meta.env.DEV;
 
@@ -139,20 +137,9 @@
     image.src = `${base}generated/globe-world-mask-4096.webp`;
   }
 
-  async function prepareGlobe() {
-    prewarmGlobePreview();
-    if (GlobeComponent || globeLoading) return;
-    globeLoading = true;
-    try {
-      GlobeComponent = (await import('@/components/islands/VisitorGlobeClearV2.svelte')).default;
-    } finally {
-      globeLoading = false;
-    }
-  }
-
   function selectMapView(view: MapView) {
     mapView = view;
-    if (view === '3d') void prepareGlobe();
+    if (view === '3d') prewarmGlobePreview();
   }
   function formatNumber(value: number, compact = false) {
     return (compact ? compactFormatter : numberFormatter).format(value ?? 0);
@@ -453,8 +440,8 @@
                 class:active={mapView === '3d'}
                 aria-pressed={mapView === '3d'}
                 aria-label="Show three-dimensional visitor globe"
-                on:mouseenter={() => void prepareGlobe()}
-                on:focus={() => void prepareGlobe()}
+                on:mouseenter={prewarmGlobePreview}
+                on:focus={prewarmGlobePreview}
                 on:click={() => selectMapView('3d')}
               >3D</button>
             </div>
@@ -464,15 +451,12 @@
                 locations={liveStats.locations}
                 totalVisitors={liveStats.summary.estimatedVisitors}
               />
-            {:else if GlobeComponent}
-              <svelte:component
-                this={GlobeComponent}
+            {:else}
+              <VisitorGlobeClearV2
                 embedded={true}
                 locations={liveStats.locations}
                 totalVisitors={liveStats.summary.estimatedVisitors}
               />
-            {:else}
-              <div class="stats-empty">Loading visitor globe…</div>
             {/if}
           </div>
         {:else if liveError}

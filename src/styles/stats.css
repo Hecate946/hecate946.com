@@ -147,8 +147,8 @@
   overflow: hidden;
 }
 
-.stats-map-stage .visitor-map-shell,
-.stats-map-stage .globe-shell {
+.stats-dashboard .stats-map-stage > .visitor-map-shell,
+.stats-dashboard .stats-map-stage > .globe-shell {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -156,7 +156,7 @@
   box-sizing: border-box;
 }
 
-.stats-map-stage .visitor-map {
+.stats-dashboard .stats-map-stage .visitor-map {
   height: 100%;
   aspect-ratio: auto;
 }
