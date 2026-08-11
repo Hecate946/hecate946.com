@@ -7,6 +7,7 @@ import '@/styles/lab.css';
 import '@/styles/stats.css';
 
 const statsApiBase = STATS_API_BASE;
+const statsApiOrigin = statsApiBase.startsWith('http') ? new URL(statsApiBase).origin : '';
 const codeStatsUrl = withBase('/generated/code-stats.json');
 ---
 
@@ -14,6 +15,9 @@ const codeStatsUrl = withBase('/generated/code-stats.json');
   title="Raw Stats — Lab"
   description="The original data dashboard for website, code, and local browser statistics."
 >
+  <Fragment slot="head">
+    {statsApiOrigin && <link rel="preconnect" href={statsApiOrigin} crossorigin />}
+  </Fragment>
   <section class="lab-page interior-page interior-page--eight" aria-labelledby="raw-stats-title">
     <header class="lab-heading interior-page-heading">
       <div>

@@ -69,7 +69,7 @@
   const MAX_CAMERA_Z = 9.5;
   const INITIAL_CAMERA_Z = 6.45;
   const SITE_BASE = String(import.meta.env.BASE_URL ?? '/').replace(/\/?$/, '/');
-  const WORLD_TEXTURE_PREVIEW_URL = `${SITE_BASE}generated/globe-world-mask-4096.png`;
+  const WORLD_TEXTURE_PREVIEW_URL = `${SITE_BASE}generated/globe-world-mask-4096.webp`;
   const WORLD_TEXTURE_HD_URL = `${SITE_BASE}generated/globe-world-mask-8192.png`;
   const GLOBE_SHELL_BASE_OPACITY = 0.0075;
   const GLOBE_SHELL_EDGE_OPACITY = 0.082;
@@ -208,16 +208,18 @@
     });
   }
 
+  const readableTimeFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
   function readableTime(value: string | null) {
     if (!value) return '';
     const date = new Date(value);
     if (Number.isNaN(date.valueOf())) return '';
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date);
+    return readableTimeFormatter.format(date);
   }
 
   function enableSphericalTextureLookup(material: THREE.MeshBasicMaterial) {
@@ -267,7 +269,7 @@
       alpha: true,
       powerPreference: 'high-performance',
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -626,8 +628,8 @@
 
     async function loadWorldTextures() {
       try {
-        // 4K preview first: small enough to decode/upload quickly, already sharp
-        // at the normal view, and prevents the UI from waiting on the 8K texture.
+        // Show the lightweight lossless 4K preview first so the globe becomes
+        // visible quickly, then keep the existing idle-time HD upgrade.
         const previewTexture = await loadWorldTexture(WORLD_TEXTURE_PREVIEW_URL);
         installWorldTexture(previewTexture);
 
@@ -635,8 +637,6 @@
         await waitForIdle();
         if (disposed) return;
 
-        // Upgrade quietly to the 8K texture after the globe is already visible
-        // and interactive. Browser image caching also makes remounts very cheap.
         const hdTexture = await loadWorldTexture(WORLD_TEXTURE_HD_URL);
         installWorldTexture(hdTexture);
       } catch (textureError) {

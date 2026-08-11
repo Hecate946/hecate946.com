@@ -51,6 +51,7 @@
     if (!src || typeof Image === 'undefined') return;
     const image = new Image();
     image.decoding = 'async';
+    image.fetchPriority = 'low';
     image.src = src;
   }
 
@@ -103,7 +104,7 @@
 
   onMount(async () => {
     try {
-      const response = await fetch(manifestUrl, { cache: 'no-cache' });
+      const response = await fetch(manifestUrl, { cache: import.meta.env.DEV ? 'no-cache' : 'default' });
       if (!response.ok) throw new Error(`World manifest returned ${response.status}`);
       manifest = (await response.json()) as Manifest;
       const initial = findView(startViewId ?? manifest.startView) ?? manifest.views[0] ?? null;
@@ -134,13 +135,24 @@
   {#if activeView}
     <div class="rendered-world__frame">
       {#if previousImage}
-        <img class="rendered-world__image rendered-world__image--previous" src={previousImage} alt="" aria-hidden="true" />
+        <img
+          class="rendered-world__image rendered-world__image--previous"
+          src={previousImage}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          fetchpriority="low"
+        />
       {/if}
       <img
         class="rendered-world__image rendered-world__image--current"
         src={currentImage}
         alt=""
         aria-hidden="true"
+        width={activeView.width}
+        height={activeView.height}
+        decoding="async"
+        fetchpriority="high"
         draggable="false"
         on:error={handleImageError}
       />

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import VisitorMap from '@/components/islands/VisitorMap.svelte';
-  import VisitorGlobeClearV2 from '@/components/islands/VisitorGlobeClearV2.svelte';
   import { resolveStatsApiBase } from '@/lib/stats-api';
 
   export let apiBase = '';
@@ -105,7 +104,11 @@
   let refreshing = false;
   let liveStatsLoading = false;
   type MapView = '2d' | '3d';
+  type GlobeComponentType = typeof import('@/components/islands/VisitorGlobeClearV2.svelte')['default'];
   let mapView: MapView = '2d';
+  let GlobeComponent: GlobeComponentType | null = null;
+  let globeLoading = false;
+  let globeTexturePrewarmed = false;
   const devMode = import.meta.env.DEV;
 
   const numberFormatter = new Intl.NumberFormat('en-US');
@@ -127,10 +130,29 @@
 
 
   function prewarmGlobePreview() {
+    if (globeTexturePrewarmed) return;
+    globeTexturePrewarmed = true;
     const base = String(import.meta.env.BASE_URL ?? '/').replace(/\/?$/, '/');
     const image = new Image();
     image.decoding = 'async';
-    image.src = `${base}generated/globe-world-mask-4096.png`;
+    image.fetchPriority = 'low';
+    image.src = `${base}generated/globe-world-mask-4096.webp`;
+  }
+
+  async function prepareGlobe() {
+    prewarmGlobePreview();
+    if (GlobeComponent || globeLoading) return;
+    globeLoading = true;
+    try {
+      GlobeComponent = (await import('@/components/islands/VisitorGlobeClearV2.svelte')).default;
+    } finally {
+      globeLoading = false;
+    }
+  }
+
+  function selectMapView(view: MapView) {
+    mapView = view;
+    if (view === '3d') void prepareGlobe();
   }
   function formatNumber(value: number, compact = false) {
     return (compact ? compactFormatter : numberFormatter).format(value ?? 0);
@@ -308,16 +330,6 @@
     void loadLiveStats();
     if (activeTab === 'code') void loadCodeStats();
 
-    // Warm the small globe texture while the default 2D map is being viewed.
-    // This makes the first 2D → 3D switch feel immediate without loading the
-    // much larger HD texture until the globe is actually requested.
-    let globePrewarmTimer: number | null = null;
-    if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(prewarmGlobePreview, { timeout: 1_200 });
-    } else {
-      globePrewarmTimer = window.setTimeout(prewarmGlobePreview, 250);
-    }
-
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'visible' && activeTab === 'website') {
         void loadLiveStats();
@@ -332,7 +344,6 @@
     return () => {
       window.clearInterval(interval);
       if (codeStatsInterval) window.clearInterval(codeStatsInterval);
-      if (globePrewarmTimer !== null) window.clearTimeout(globePrewarmTimer);
       window.removeEventListener('hecate:local-stats-updated', loadYourStats);
       window.removeEventListener(
         'hecate:local-backend-stats-updated',
@@ -435,14 +446,16 @@
                 class:active={mapView === '2d'}
                 aria-pressed={mapView === '2d'}
                 aria-label="Show two-dimensional visitor map"
-                on:click={() => (mapView = '2d')}
+                on:click={() => selectMapView('2d')}
               >2D</button>
               <button
                 type="button"
                 class:active={mapView === '3d'}
                 aria-pressed={mapView === '3d'}
                 aria-label="Show three-dimensional visitor globe"
-                on:click={() => (mapView = '3d')}
+                on:mouseenter={() => void prepareGlobe()}
+                on:focus={() => void prepareGlobe()}
+                on:click={() => selectMapView('3d')}
               >3D</button>
             </div>
 
@@ -451,12 +464,15 @@
                 locations={liveStats.locations}
                 totalVisitors={liveStats.summary.estimatedVisitors}
               />
-            {:else}
-              <VisitorGlobeClearV2
+            {:else if GlobeComponent}
+              <svelte:component
+                this={GlobeComponent}
                 embedded={true}
                 locations={liveStats.locations}
                 totalVisitors={liveStats.summary.estimatedVisitors}
               />
+            {:else}
+              <div class="stats-empty">Loading visitor globe…</div>
             {/if}
           </div>
         {:else if liveError}

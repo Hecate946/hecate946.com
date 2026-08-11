@@ -6,6 +6,7 @@ import '@/styles/stats.css';
 import '@/styles/stats-observatory.css';
 
 const statsApiBase = STATS_API_BASE;
+const statsApiOrigin = statsApiBase.startsWith('http') ? new URL(statsApiBase).origin : '';
 const rawStatsUrl = '/lab/stats/';
 ---
 
@@ -13,6 +14,9 @@ const rawStatsUrl = '/lab/stats/';
   title="Stats — Cyrus Asasi"
   description="The website, observed: a live interactive view of visitors, traffic, time, and browsing paths on hecate946.com."
 >
+  <Fragment slot="head">
+    {statsApiOrigin && <link rel="preconnect" href={statsApiOrigin} crossorigin />}
+  </Fragment>
   <section class="stats-observatory-page interior-page interior-page--eight" aria-labelledby="stats-title">
     <header class="interior-page-heading">
       <h1 id="stats-title">Stats</h1>

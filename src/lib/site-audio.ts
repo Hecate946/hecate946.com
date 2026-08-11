@@ -77,6 +77,8 @@ const markMusicAvailable = (available: boolean) => {
   emitState();
 };
 
+const peekMusicAudio = () => (window as AudioWindow).__hecateSiteMusic ?? null;
+
 const getMusicAudio = () => {
   const audioWindow = window as AudioWindow;
   if (audioWindow.__hecateSiteMusic) return audioWindow.__hecateSiteMusic;
@@ -161,12 +163,14 @@ export const initializeSiteAudio = () => {
   syncRootState();
   installGestureResume();
 
-  const audio = getMusicAudio();
-  audio.volume = musicVolume / 100;
-  audio.load();
-
-  if (musicVolume > 0 && audio.paused) {
-    musicPlaybackPending = true;
+  // Zero is the default music setting. Do not touch the 2.6 MB music asset
+  // until the user has actually enabled music (or a saved non-zero preference
+  // needs to resume it). This keeps the default page load network-silent.
+  if (musicVolume > 0) {
+    const audio = getMusicAudio();
+    audio.volume = musicVolume / 100;
+    audio.load();
+    if (audio.paused) musicPlaybackPending = true;
   }
 };
 
@@ -193,15 +197,20 @@ export const setMusicVolume = (value: number, persist = true) => {
   musicVolume = clampPercent(value);
   if (persist) writeStoredPercent(MUSIC_VOLUME_STORAGE_KEY, musicVolume);
 
-  const audio = getMusicAudio();
-  audio.volume = musicVolume / 100;
-
   if (musicVolume <= 0) {
     musicPlaybackPending = false;
-    audio.pause();
-  } else if (audio.paused) {
-    musicPlaybackPending = true;
-    attemptMusicPlayback();
+    const audio = peekMusicAudio();
+    if (audio) {
+      audio.volume = 0;
+      audio.pause();
+    }
+  } else {
+    const audio = getMusicAudio();
+    audio.volume = musicVolume / 100;
+    if (audio.paused) {
+      musicPlaybackPending = true;
+      attemptMusicPlayback();
+    }
   }
 
   emitState();

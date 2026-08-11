@@ -75,6 +75,7 @@ const commandItems = Array.from(
   <head>
     <ThemeBootstrap />
     <BaseHead {title} {description} {image} {noindex} />
+    <slot name="head" />
     <ClientRouter fallback="swap" />
   </head>
 

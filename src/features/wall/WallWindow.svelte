@@ -9,6 +9,9 @@
   export let onEnter: (event: MouseEvent, destination: WallDestination) => void;
 
   const indexLabel = wallIndex(destination.id);
+  const paintingSrcset = destination.painting.sources
+    ?.map((source) => `${withBase(source.src)} ${source.width}w`)
+    .join(', ');
 
   function wallIndex(id: string) {
     const order = ['about', 'projects', 'contact', 'stats'];
@@ -36,6 +39,8 @@
       <img
         class="wall-window__painting"
         src={withBase(destination.painting.src)}
+        srcset={paintingSrcset}
+        sizes="340px"
         alt=""
         width={destination.width}
         height={destination.height}

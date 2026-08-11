@@ -5,6 +5,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import { withBase } from '@/lib/paths';
 
 const statsApiBase = STATS_API_BASE;
+const statsApiOrigin = statsApiBase.startsWith('http') ? new URL(statsApiBase).origin : '';
 ---
 
 <BaseLayout
@@ -16,6 +17,9 @@ const statsApiBase = STATS_API_BASE;
   bodyClass="visitor-globe-body"
   soundSilent={true}
 >
+  <Fragment slot="head">
+    {statsApiOrigin && <link rel="preconnect" href={statsApiOrigin} crossorigin />}
+  </Fragment>
   <div class="visitor-globe-page" data-default-only>
     <a class="visitor-globe-close" href={withBase('/lab/')} aria-label="Back to Lab">×</a>
     <VisitorGlobeClearV2 client:load apiBase={statsApiBase} />

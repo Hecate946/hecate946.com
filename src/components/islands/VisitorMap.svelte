@@ -81,6 +81,7 @@
   let pinchState: PinchState | null = null;
   let zoomAnchor: ZoomAnchor | null = null;
   let fittedSignature = '';
+  let animationFrame = 0;
 
   const activePointers = new Map<number, Point>();
 
@@ -109,6 +110,37 @@
 
   $: transform = `translate(${WIDTH / 2} ${HEIGHT / 2}) scale(${zoom}) translate(${-centerX} ${-centerY})`;
 
+  function scheduleZoomAnimation() {
+    if (animationFrame || typeof window === 'undefined') return;
+    animationFrame = requestAnimationFrame(animateZoom);
+  }
+
+  function animateZoom() {
+    animationFrame = 0;
+    const zoomDelta = targetZoom - zoom;
+    if (Math.abs(zoomDelta) > 0.00001) {
+      zoom += zoomDelta * VISITOR_VIEW_ZOOM_EASING;
+    } else if (zoom !== targetZoom) {
+      zoom = targetZoom;
+    }
+
+    // When wheel-zooming, keep the geographic point beneath the cursor pinned
+    // beneath that cursor for every eased frame.
+    if (zoomAnchor) {
+      centerX = zoomAnchor.worldX - (zoomAnchor.screenX - WIDTH / 2) / zoom;
+      centerY = zoomAnchor.worldY - (zoomAnchor.screenY - HEIGHT / 2) / zoom;
+    }
+
+    constrainCamera();
+
+    if (Math.abs(targetZoom - zoom) > 0.00001) {
+      scheduleZoomAnimation();
+    } else {
+      zoom = targetZoom;
+      zoomAnchor = null;
+    }
+  }
+
   onMount(() => {
     updateVisibleDimensions();
     fitLocations(true);
@@ -119,33 +151,9 @@
 
     observer.observe(mapElement);
 
-    let frameId = 0;
-    const animate = () => {
-      const zoomDelta = targetZoom - zoom;
-      if (Math.abs(zoomDelta) > 0.00001) {
-        zoom += zoomDelta * VISITOR_VIEW_ZOOM_EASING;
-      } else if (zoom !== targetZoom) {
-        zoom = targetZoom;
-      }
-
-      // When wheel-zooming, keep the geographic point beneath the cursor
-      // pinned beneath that cursor for every eased animation frame. This gives
-      // us the same smooth target-zoom inertia as the globe without the old
-      // snap-to-cursor behavior.
-      if (zoomAnchor) {
-        centerX =
-          zoomAnchor.worldX - (zoomAnchor.screenX - WIDTH / 2) / zoom;
-        centerY =
-          zoomAnchor.worldY - (zoomAnchor.screenY - HEIGHT / 2) / zoom;
-      }
-
-      constrainCamera();
-      frameId = requestAnimationFrame(animate);
-    };
-    animate();
-
     return () => {
-      cancelAnimationFrame(frameId);
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
       observer.disconnect();
     };
   });
@@ -304,6 +312,7 @@
     zoomAnchor = null;
     targetZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
     if (immediate) zoom = targetZoom;
+    else scheduleZoomAnimation();
     constrainCamera();
   }
 
@@ -367,6 +376,7 @@
   function setZoomTarget(nextZoom: number, anchor: ZoomAnchor | null = null) {
     targetZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
     zoomAnchor = anchor;
+    scheduleZoomAnimation();
   }
 
   function zoomByDistanceRatio(
