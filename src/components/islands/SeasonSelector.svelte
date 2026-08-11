@@ -20,8 +20,8 @@
 
       if (themeColor) {
         document
-          .querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-          ?.setAttribute('content', themeColor);
+          .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
+          .forEach((meta) => meta.setAttribute('content', themeColor));
       }
     });
   }
@@ -90,7 +90,7 @@
       onclick={() => applySeason(season.id)}
     >
       {#if season.id === 'spring'}
-        <svg viewBox="0 0 32 32" aria-hidden="true">
+        <svg viewBox="0 0 32 32" aria-hidden="true" width="32" height="32" focusable="false">
           <g
             fill="none"
             stroke="currentColor"
@@ -107,7 +107,7 @@
           </g>
         </svg>
       {:else if season.id === 'summer'}
-        <svg viewBox="0 0 32 32" aria-hidden="true">
+        <svg viewBox="0 0 32 32" aria-hidden="true" width="32" height="32" focusable="false">
           <circle cx="16" cy="16" r="11.5"></circle>
           <circle cx="18.1" cy="12.7" r="2.15"></circle>
           <path d="M18.1 10.55C15.2 7.7 13.25 6.45 10.1 5.7"></path>
@@ -119,12 +119,12 @@
           <path d="M22.3 6.55c-.45 3.2.15 6.2 2.95 8.85"></path>
         </svg>
       {:else if season.id === 'autumn'}
-        <svg viewBox="0 0 32 32" aria-hidden="true">
+        <svg viewBox="0 0 32 32" aria-hidden="true" width="32" height="32" focusable="false">
           <path d="M26 5C15 5 7 10 6 21c6 2 13 0 17-5 3-4 3-8 3-11Z"></path>
           <path d="M7 26c4-7 9-11 17-16M14 18l-1-6M18 14l5 1"></path>
         </svg>
       {:else}
-        <svg viewBox="0 0 32 32" aria-hidden="true">
+        <svg viewBox="0 0 32 32" aria-hidden="true" width="32" height="32" focusable="false">
           <path d="M16 2v28M4 9l24 14M4 23 28 9M12 5l4 4 4-4M12 27l4-4 4 4M5 13l6 1-2-6M27 19l-6-1 2 6M9 24l2-6-6 1M23 8l-2 6 6-1"></path>
         </svg>
       {/if}

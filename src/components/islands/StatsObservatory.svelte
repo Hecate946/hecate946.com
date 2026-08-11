@@ -328,7 +328,7 @@
       {/if}
     </div>
 
-    <div class="earth-caption" aria-label="Visitor summary">
+    <div class="earth-caption" role="group" aria-label="Visitor summary">
       <strong>{formatNumber(liveStats?.summary.sessions)}</strong>
       <span>visits</span>
       <i aria-hidden="true">·</i>

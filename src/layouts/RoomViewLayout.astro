@@ -1,5 +1,4 @@
 ---
-import HtmlSiteTree from '@/components/core/HtmlSiteTree.astro';
 import BaseHead from '@/components/core/BaseHead.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import RenderedWorld from '@/components/world/RenderedWorld.svelte';
@@ -24,7 +23,6 @@ const {
   interactive = false,
 } = Astro.props;
 
-const currentPath = Astro.url.pathname;
 const manifestUrl = withBase('/scenes/world/manifest.json');
 const resolvedBackHref = withBase(backHref);
 const plainTitle = title.split('|')[0].trim();
@@ -32,7 +30,7 @@ const plainTitle = title.split('|')[0].trim();
 
 <!doctype html>
 <html
-  lang="en"
+  lang="en-US"
   data-season="summer"
   data-season-preference="auto"
   data-theme="light"
@@ -43,11 +41,14 @@ const plainTitle = title.split('|')[0].trim();
     <BaseHead {title} {description} />
   </head>
 
-  <body class="room-view-page" data-html-page="interior">
-    <HtmlSiteTree {currentPath} />
-
+  <body class="room-view-page">
     <main id="main-content" class="room-view-shell">
-      <div class="room-view-scene" data-default-only>
+      <header class="visually-hidden">
+        <h1>{plainTitle}</h1>
+        <p>{description}</p>
+      </header>
+
+      <div class="room-view-scene">
         <RenderedWorld
           client:load
           {manifestUrl}
@@ -56,11 +57,6 @@ const plainTitle = title.split('|')[0].trim();
           showHotspots={interactive}
         />
       </div>
-
-      <section data-html-only hidden class="room-view-html">
-        <h1>{plainTitle}</h1>
-        <p>{description}</p>
-      </section>
 
       <a class="room-view-back" href={resolvedBackHref}>{backLabel}</a>
     </main>
@@ -133,9 +129,5 @@ const plainTitle = title.split('|')[0].trim();
     border-color: color-mix(in srgb, var(--text) 48%, transparent);
     color: var(--text) !important;
     transform: none;
-  }
-
-  .room-view-html {
-    padding: 1rem;
   }
 </style>

@@ -469,6 +469,10 @@
       class:voronoi-website-graph__svg--panning={isPanning}
       class="voronoi-website-graph__svg"
       viewBox={`0 0 ${width} ${height}`}
+      width={width}
+      height={height}
+      role="group"
+      aria-label={ariaLabel}
     >
       <title>{ariaLabel}</title>
 

@@ -1,5 +1,4 @@
 ---
-import HtmlSiteTree from '@/components/core/HtmlSiteTree.astro';
 import BaseHead from '@/components/core/BaseHead.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import { withBase } from '@/lib/paths';
@@ -7,41 +6,41 @@ import '@/styles/not-found.css';
 
 const videoId = '9390xDUuPuU';
 const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&playsinline=1&rel=0&enablejsapi=1`;
-const currentPath = Astro.url.pathname;
 const homeHref = withBase('/');
 ---
 
 <!doctype html>
-<html lang="en" data-theme="light" data-html-mode="false">
+<html lang="en-US" data-theme="light" data-html-mode="false">
   <head>
     <ThemeBootstrap />
     <BaseHead title="404" description="This page is not here." noindex />
   </head>
-  <body class="error-page" data-html-page="interior">
-    <HtmlSiteTree {currentPath} />
-
-    <div class="error-noise" aria-hidden="true" data-default-only></div>
+  <body class="error-page">
+    <div class="error-noise" aria-hidden="true"></div>
 
     <main class="error-stage">
       <h1 class="error-code" aria-label="error 404">404</h1>
 
-      <div class="error-video-shell" data-default-only>
+      <div class="error-video-shell">
         <iframe
           id="error-video"
           src={embedUrl}
-          title="404 page video"
+          title="404 page background video"
+          width="1280"
+          height="720"
           allow="autoplay; encrypted-media; picture-in-picture"
-          referrerpolicy="no-referrer"
+          aria-hidden="true"
+          tabindex="-1"
+          referrerpolicy="strict-origin-when-cross-origin"
         ></iframe>
       </div>
 
-      <div data-html-only hidden>
-        <p>This page is not here.</p>
-        <p><a href={homeHref}>Return home</a></p>
-      </div>
+      <p class="visually-hidden">
+        This page is not here. <a href={homeHref}>Return home</a>.
+      </p>
     </main>
 
-    <button class="error-sound" type="button" aria-pressed="false" data-default-only>
+    <button class="error-sound" type="button" aria-pressed="false">
       sound off
     </button>
 
@@ -64,7 +63,7 @@ const homeHref = withBase('/');
             func: command,
             args: [],
           }),
-          '*',
+          'https://www.youtube-nocookie.com',
         );
       }
 

@@ -42,8 +42,8 @@
         srcset={paintingSrcset}
         sizes="340px"
         alt=""
-        width={destination.width}
-        height={destination.height}
+        width={destination.painting.width}
+        height={destination.painting.height}
         draggable="false"
         decoding="async"
         loading="eager"
@@ -57,7 +57,7 @@
     <span class="wall-window__index">{indexLabel}</span>
     <span class="wall-window__name">{destination.label}</span>
     <span class="wall-window__arrow" aria-hidden="true">
-      <svg viewBox="0 0 16 16" focusable="false">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
         <path d="M4 12 12 4M6.25 4H12v5.75" />
       </svg>
     </span>

@@ -7,7 +7,6 @@ import '@/styles/stats-observatory.css';
 
 const statsApiBase = STATS_API_BASE;
 const statsApiOrigin = statsApiBase.startsWith('http') ? new URL(statsApiBase).origin : '';
-const rawStatsUrl = '/lab/stats/';
 ---
 
 <BaseLayout
@@ -23,14 +22,9 @@ const rawStatsUrl = '/lab/stats/';
     </header>
 
     <div class="stats-observatory-content interior-page-content">
-      <div data-default-only>
+      <div>
         <StatsObservatory client:visible apiBase={statsApiBase} />
       </div>
-
-      <section data-html-only hidden>
-        <h2>Stats</h2>
-        <p><a href={rawStatsUrl}>Raw statistics</a></p>
-      </section>
     </div>
   </section>
 </BaseLayout>

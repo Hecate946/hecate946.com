@@ -11,8 +11,8 @@
 
       if (themeColor) {
         document
-          .querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-          ?.setAttribute('content', themeColor);
+          .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
+          .forEach((meta) => meta.setAttribute('content', themeColor));
       }
     });
   }
@@ -48,14 +48,14 @@
     onclick={toggleTheme}
   >
     <span class="header-action-icon mode-icon" aria-hidden="true">
-      <svg class="mode-sun" viewBox="0 0 24 24">
+      <svg class="mode-sun" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
         <circle cx="12" cy="12" r="4"></circle>
         <path
           d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
         ></path>
       </svg>
 
-      <svg class="mode-moon" viewBox="0 0 24 24">
+      <svg class="mode-moon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
         <path d="M20.2 15.25A8.5 8.5 0 0 1 8.75 3.8 8.5 8.5 0 1 0 20.2 15.25Z"></path>
       </svg>
     </span>

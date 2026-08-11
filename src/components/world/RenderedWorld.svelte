@@ -34,6 +34,8 @@
   let manifest: Manifest | null = null;
   let activeView: WorldView | null = null;
   let previousImage = '';
+  let previousImageWidth = 0;
+  let previousImageHeight = 0;
   let currentImage = '';
   let imageFailed = false;
   let loading = true;
@@ -68,13 +70,19 @@
     const nextImage = resolveAsset(view.image || view.fallbackImage);
     if (animate && currentImage && currentImage !== nextImage) {
       previousImage = currentImage;
+      previousImageWidth = activeView?.width ?? view.width;
+      previousImageHeight = activeView?.height ?? view.height;
       if (transitionTimer !== null) window.clearTimeout(transitionTimer);
       transitionTimer = window.setTimeout(() => {
         previousImage = '';
+        previousImageWidth = 0;
+        previousImageHeight = 0;
         transitionTimer = null;
       }, 760);
     } else {
       previousImage = '';
+      previousImageWidth = 0;
+      previousImageHeight = 0;
     }
     activeView = view;
     currentImage = nextImage;
@@ -130,6 +138,7 @@
   class:has-error={Boolean(error)}
   class:rendered-world--fill={fillViewport}
   style:--world-aspect={activeView ? `${activeView.width} / ${activeView.height}` : '3 / 2'}
+  role="group"
   aria-label={activeView?.description ?? 'Explore the house'}
 >
   {#if activeView}
@@ -140,6 +149,8 @@
           src={previousImage}
           alt=""
           aria-hidden="true"
+          width={previousImageWidth || activeView.width}
+          height={previousImageHeight || activeView.height}
           decoding="async"
           fetchpriority="low"
         />
@@ -158,7 +169,7 @@
       />
 
       {#if showHotspots}
-        <div class="rendered-world__hotspots" aria-label={`${activeView.label} destinations`}>
+        <div class="rendered-world__hotspots" role="group" aria-label={`${activeView.label} destinations`}>
           {#each activeView.hotspots as hotspot (hotspot.id)}
             <button
               type="button"

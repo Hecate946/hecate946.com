@@ -105,12 +105,13 @@
 
 <dialog
   bind:this={dialog}
+  aria-label="Site search"
   on:click={(event) => event.target === dialog && close()}
   on:keydown={handlePaletteKeydown}
 >
   <section aria-label="Site search">
     <div class="search-row">
-      <svg class="search-symbol" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="search-symbol" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
         <circle cx="11" cy="11" r="6.5"></circle>
         <path d="m16 16 4 4"></path>
       </svg>

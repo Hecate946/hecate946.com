@@ -6,6 +6,8 @@ export interface WallPaintingSource {
 export interface WallPainting {
   src: string;
   name: string;
+  width: number;
+  height: number;
   objectPosition?: string;
   sources?: readonly WallPaintingSource[];
 }
@@ -41,6 +43,8 @@ const destinationDefinitions = [
     painting: {
       src: '/paintings/the-stare.webp',
       name: 'The Stare',
+      width: 886,
+      height: 1080,
       sources: [
         { src: '/paintings/the-stare-480.webp', width: 480 },
         { src: '/paintings/the-stare.webp', width: 886 },
@@ -54,6 +58,8 @@ const destinationDefinitions = [
     painting: {
       src: '/paintings/pastry-chef.webp',
       name: 'Pastry Chef',
+      width: 540,
+      height: 600,
       sources: [
         { src: '/paintings/pastry-chef-480.webp', width: 480 },
         { src: '/paintings/pastry-chef.webp', width: 540 },
@@ -67,6 +73,8 @@ const destinationDefinitions = [
     painting: {
       src: '/paintings/madame-le-peletier.webp',
       name: 'Madame Le Peletier',
+      width: 564,
+      height: 694,
       sources: [
         { src: '/paintings/madame-le-peletier-480.webp', width: 480 },
         { src: '/paintings/madame-le-peletier.webp', width: 564 },
@@ -80,6 +88,8 @@ const destinationDefinitions = [
     painting: {
       src: '/paintings/stats-portrait.webp',
       name: 'Seated Portrait',
+      width: 960,
+      height: 1203,
       sources: [
         { src: '/paintings/stats-portrait-480.webp', width: 480 },
         { src: '/paintings/stats-portrait-720.webp', width: 720 },

@@ -20,16 +20,16 @@ const statsApiOrigin = statsApiBase.startsWith('http') ? new URL(statsApiBase).o
   <Fragment slot="head">
     {statsApiOrigin && <link rel="preconnect" href={statsApiOrigin} crossorigin />}
   </Fragment>
-  <div class="visitor-globe-page" data-default-only>
+  <header class="visually-hidden">
+    <h1>Visitor Globe</h1>
+    <p>A draggable three-dimensional prototype of the visitor map.</p>
+  </header>
+
+  <div class="visitor-globe-page">
     <a class="visitor-globe-close" href={withBase('/lab/')} aria-label="Back to Lab">×</a>
     <VisitorGlobeClearV2 client:load apiBase={statsApiBase} />
   </div>
 
-  <section class="visitor-globe-html" data-html-only hidden>
-    <h1>Visitor Globe</h1>
-    <p>The interactive 3D globe is available in the default visual mode.</p>
-    <p><a href={withBase('/lab/')}>Back to Lab</a></p>
-  </section>
 </BaseLayout>
 
 <style is:global>
@@ -97,10 +97,6 @@ const statsApiOrigin = statsApiBase.startsWith('http') ? new URL(statsApiBase).o
 
   .visitor-globe-page .globe-meta {
     left: clamp(4.15rem, 7vw, 4.65rem);
-  }
-
-  .visitor-globe-html {
-    padding: 2rem var(--site-edge);
   }
 
 </style>

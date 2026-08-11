@@ -6,6 +6,10 @@ interface Props {
   title?: string | undefined;
   description?: string | undefined;
   image?: string | undefined;
+  imageAlt?: string | undefined;
+  imageWidth?: number | undefined;
+  imageHeight?: number | undefined;
+  imageType?: string | undefined;
   canonicalURL?: URL | undefined;
   noindex?: boolean | undefined;
 }
@@ -14,6 +18,10 @@ const {
   title = siteConfig.title,
   description = siteConfig.description,
   image,
+  imageAlt,
+  imageWidth,
+  imageHeight,
+  imageType,
   canonicalURL = new URL(Astro.url.pathname, Astro.site),
   noindex = false,
 } = Astro.props;
@@ -21,20 +29,15 @@ const {
 const escapeRegExp = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const siteNamePattern = escapeRegExp(siteConfig.name);
+const normalizedPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isHomePage = normalizedPath === '/';
+const isAboutPage = normalizedPath === '/about';
 
 function getPageName(input: string) {
   const cleanTitle = input.trim();
 
-  if (
-    !cleanTitle ||
-    cleanTitle === siteConfig.name ||
-    cleanTitle === siteConfig.title ||
-    cleanTitle.startsWith(`${siteConfig.name} —`) ||
-    cleanTitle.startsWith(`${siteConfig.name} –`) ||
-    cleanTitle.startsWith(`${siteConfig.name} -`) ||
-    cleanTitle.startsWith(`${siteConfig.name} |`)
-  ) {
-    return 'Home';
+  if (!cleanTitle || cleanTitle === siteConfig.name || cleanTitle === siteConfig.title) {
+    return siteConfig.name;
   }
 
   return (
@@ -43,21 +46,97 @@ function getPageName(input: string) {
         new RegExp(`\\s*(?:\\||—|–|-)\\s*${siteNamePattern}\\s*$`, 'i'),
         '',
       )
-      .trim() || 'Home'
+      .trim() || siteConfig.name
   );
 }
 
+function inferImageType(path: string) {
+  const cleanPath = path.split(/[?#]/, 1)[0]?.toLowerCase() ?? '';
+  if (cleanPath.endsWith('.webp')) return 'image/webp';
+  if (cleanPath.endsWith('.png')) return 'image/png';
+  if (cleanPath.endsWith('.jpg') || cleanPath.endsWith('.jpeg')) return 'image/jpeg';
+  if (cleanPath.endsWith('.gif')) return 'image/gif';
+  return undefined;
+}
+
 const pageName = getPageName(title);
-const resolvedTitle = `${pageName} | ${siteConfig.name}`;
+const resolvedTitle = isHomePage ? siteConfig.title : `${pageName} | ${siteConfig.name}`;
 const canonicalHref = canonicalURL.toString();
-const socialImage = image ? new URL(image, Astro.site).toString() : undefined;
+const siteUrl = new URL('/', Astro.site).toString();
+const defaultSocialImagePath = withBase('/images/social/cyrus-asasi-og.jpg');
+const resolvedImagePath = image ?? defaultSocialImagePath;
+const socialImage = new URL(resolvedImagePath, Astro.site).toString();
+const socialImageAlt = imageAlt ?? (
+  image
+    ? `${pageName} — project preview by ${siteConfig.name}`
+    : `${siteConfig.name}, software engineer and classical musician`
+);
+const socialImageWidth = imageWidth ?? (image ? undefined : 1200);
+const socialImageHeight = imageHeight ?? (image ? undefined : 630);
+const socialImageType = imageType ?? inferImageType(resolvedImagePath);
+const personId = `${siteUrl}#person`;
+const websiteId = `${siteUrl}#website`;
+const webPageId = `${canonicalHref}#webpage`;
+const portraitUrl = new URL(withBase('/images/about/cyrus-portrait.webp'), Astro.site).toString();
+
+const structuredImage = (image || isAboutPage)
+  ? {
+      '@type': 'ImageObject',
+      url: isAboutPage ? portraitUrl : socialImage,
+      contentUrl: isAboutPage ? portraitUrl : socialImage,
+      caption: isAboutPage ? `Portrait of ${siteConfig.name}` : socialImageAlt,
+      ...(isAboutPage
+        ? { width: 400, height: 400 }
+        : {
+            ...(socialImageWidth ? { width: socialImageWidth } : {}),
+            ...(socialImageHeight ? { height: socialImageHeight } : {}),
+          }),
+    }
+  : undefined;
+
+const personStructuredData = {
+  '@type': 'Person',
+  '@id': personId,
+  name: siteConfig.name,
+  url: siteUrl,
+  sameAs: [siteConfig.social.github, siteConfig.social.linkedin],
+  ...(isAboutPage
+    ? {
+        image: portraitUrl,
+        jobTitle: 'Software Engineer and Classical Musician',
+      }
+    : {}),
+};
+
+const pageStructuredData = {
+  '@type': isAboutPage ? 'ProfilePage' : 'WebPage',
+  '@id': webPageId,
+  url: canonicalHref,
+  name: resolvedTitle,
+  description,
+  inLanguage: siteConfig.locale,
+  isPartOf: { '@id': websiteId },
+  author: { '@id': personId },
+  ...(isAboutPage ? { mainEntity: { '@id': personId } } : {}),
+  ...(structuredImage ? { primaryImageOfPage: structuredImage } : {}),
+};
+
 const structuredData = {
   '@context': 'https://schema.org',
-  '@type': 'Person',
-  name: siteConfig.name,
-  url: Astro.site?.toString() ?? 'https://hecate946.com/',
-  email: `mailto:${siteConfig.email}`,
-  sameAs: [siteConfig.social.github, siteConfig.social.linkedin],
+  '@graph': [
+    personStructuredData,
+    {
+      '@type': 'WebSite',
+      '@id': websiteId,
+      url: siteUrl,
+      name: siteConfig.name,
+      alternateName: 'hecate946.com',
+      description: siteConfig.description,
+      inLanguage: siteConfig.locale,
+      creator: { '@id': personId },
+    },
+    pageStructuredData,
+  ],
 };
 ---
 
@@ -85,6 +164,7 @@ const structuredData = {
   })();
 </script>
 <meta name="description" content={description} />
+<meta name="author" content={siteConfig.name} />
 <meta name="application-name" content={siteConfig.name} />
 <meta name="apple-mobile-web-app-title" content={siteConfig.shortName} />
 <meta name="color-scheme" content="light dark" />
@@ -92,7 +172,7 @@ const structuredData = {
 <meta
   name="robots"
   content={noindex
-    ? 'noindex, nofollow, noarchive'
+    ? 'noindex'
     : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}
 />
 <meta
@@ -107,7 +187,9 @@ const structuredData = {
 />
 
 <link rel="canonical" href={canonicalHref} />
-<link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+<link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" sizes="any" />
+<link rel="icon" href={withBase('/favicon-48.png')} type="image/png" sizes="48x48" />
+<link rel="apple-touch-icon" href={withBase('/apple-touch-icon.png')} sizes="180x180" />
 <link rel="me" href={siteConfig.social.github} />
 <link rel="me" href={siteConfig.social.linkedin} />
 
@@ -130,12 +212,17 @@ const structuredData = {
 <meta property="og:title" content={resolvedTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonicalHref} />
-{socialImage && <meta property="og:image" content={socialImage} />}
-{socialImage && <meta property="og:image:alt" content={`${pageName} — ${siteConfig.name}`} />}
+<meta property="og:image" content={socialImage} />
+<meta property="og:image:secure_url" content={socialImage} />
+<meta property="og:image:alt" content={socialImageAlt} />
+{socialImageType && <meta property="og:image:type" content={socialImageType} />}
+{socialImageWidth && <meta property="og:image:width" content={String(socialImageWidth)} />}
+{socialImageHeight && <meta property="og:image:height" content={String(socialImageHeight)} />}
 
-<meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={resolvedTitle} />
 <meta name="twitter:description" content={description} />
-{socialImage && <meta name="twitter:image" content={socialImage} />}
+<meta name="twitter:image" content={socialImage} />
+<meta name="twitter:image:alt" content={socialImageAlt} />
 
 <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>

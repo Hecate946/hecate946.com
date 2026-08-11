@@ -538,11 +538,11 @@
     onclick={handleMotionToggleClick}
   >
     {#if isPaused}
-      <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
         <path d="M8 5.5v13l10-6.5z" fill="currentColor" />
       </svg>
     {:else}
-      <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
         <rect x="6.5" y="5" width="4" height="14" rx="1" fill="currentColor" />
         <rect x="13.5" y="5" width="4" height="14" rx="1" fill="currentColor" />
       </svg>

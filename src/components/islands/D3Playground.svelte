@@ -1501,14 +1501,14 @@
       <h2>{currentScene().label}</h2>
       <p>{currentScene().description}</p>
     </div>
-    <div class="d3-lab__stats" aria-label="Simulation status">
+    <div class="d3-lab__stats" role="group" aria-label="Simulation status">
       <span><strong>{nodes.length}</strong> nodes</span>
       <span><strong>{links.length}</strong> links</span>
       <span><strong>{zoom.k.toFixed(1)}×</strong> zoom</span>
     </div>
   </div>
 
-  <div class="d3-lab__scene-tabs" aria-label="D3 simulation demos">
+  <div class="d3-lab__scene-tabs" role="group" aria-label="D3 simulation demos">
     {#each scenes as scene, index}
       <button
         type="button"
@@ -1522,7 +1522,7 @@
     {/each}
   </div>
 
-  <div class="d3-lab__toolbar" aria-label="Simulation controls">
+  <div class="d3-lab__toolbar" role="group" aria-label="Simulation controls">
     <div class="d3-lab__toolbar-group">
       <button type="button" on:click={togglePause}>{paused ? 'Play' : 'Pause'}</button>
       <button type="button" on:click={explode}>Explode</button>
@@ -1533,7 +1533,7 @@
     </div>
 
     {#if activeScene === 'morph'}
-      <div class="d3-lab__toolbar-group d3-lab__toolbar-group--scroll" aria-label="Layout choices">
+      <div class="d3-lab__toolbar-group d3-lab__toolbar-group--scroll" role="group" aria-label="Layout choices">
         {#each ['organic', 'orbit', 'grid', 'split', 'timeline'] as mode}
           <button type="button" class:active={layoutMode === mode} aria-pressed={layoutMode === mode} on:click={() => setLayout(mode as LayoutMode)}>
             {mode}
@@ -1585,7 +1585,7 @@
     <p>Drag to pan · Wheel or +/− to zoom · Shift-drag to lasso · P pause · R regenerate</p>
   </div>
 
-  <div class="d3-lab__feature-grid" aria-label="Features demonstrated on this page">
+  <section class="d3-lab__feature-grid" aria-label="Features demonstrated on this page">
     <article>
       <span>Physics</span>
       <h3>Composable forces</h3>
@@ -1606,5 +1606,5 @@
       <h3>Derived structure</h3>
       <p>Convex community hulls, curved edges, neighborhood emphasis, shortest paths, and semantic zoom labels.</p>
     </article>
-  </div>
+  </section>
 </div>

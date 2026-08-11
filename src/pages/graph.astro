@@ -28,7 +28,12 @@ const graph = buildSiteMapGraph({
   bodyClass="website-graph-body"
   soundSilent={true}
 >
-  <div class="website-graph-page" data-default-only>
+  <header class="visually-hidden">
+    <h1>Website Graph</h1>
+    <p>An interactive graph of every destination on hecate946.com.</p>
+  </header>
+
+  <div class="website-graph-page">
     <WebsiteGraph
       client:load
       nodes={graph.nodes}
@@ -37,28 +42,6 @@ const graph = buildSiteMapGraph({
     />
   </div>
 
-  <section class="website-graph-html" data-html-only hidden>
-    <h1>Website Graph</h1>
-    <p>The graphical view is replaced by the complete route inventory in HTML mode.</p>
-    <table>
-      <thead>
-        <tr>
-          <th scope="col">Path</th>
-          <th scope="col">Page</th>
-          <th scope="col">Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        {siteRoutes.map((route) => (
-          <tr>
-            <td><code>{route.href}</code></td>
-            <td><a href={withBase(route.href)}>{route.label}</a></td>
-            <td>{route.description ?? ''}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </section>
 </BaseLayout>
 
 <style is:global>

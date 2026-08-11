@@ -1,5 +1,4 @@
 ---
-import HtmlSiteTree from '@/components/core/HtmlSiteTree.astro';
 import BaseHead from '@/components/core/BaseHead.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import '@/styles/global.css';
@@ -11,13 +10,12 @@ interface Props {
 }
 
 const { title, description, image } = Astro.props;
-const currentPath = Astro.url.pathname;
 const plainTitle = title?.split('|')[0].trim() || 'Immersive page';
 ---
 
 <!doctype html>
 <html
-  lang="en"
+  lang="en-US"
   data-season="summer"
   data-season-preference="auto"
   data-theme="light"
@@ -28,17 +26,13 @@ const plainTitle = title?.split('|')[0].trim() || 'Immersive page';
     <BaseHead {title} {description} {image} />
   </head>
 
-  <body class="immersive-page" data-html-page="interior">
-    <HtmlSiteTree {currentPath} />
-
+  <body class="immersive-page">
     <main id="main-content">
-      <div data-html-only hidden>
+      <header class="visually-hidden">
         <h1>{plainTitle}</h1>
         {description && <p>{description}</p>}
-      </div>
-      <div data-default-only>
-        <slot />
-      </div>
+      </header>
+      <slot />
     </main>
 
     <script>
@@ -58,8 +52,7 @@ const plainTitle = title?.split('|')[0].trim() || 'Immersive page';
     background: #020202;
   }
 
-  body.immersive-page #main-content,
-  body.immersive-page [data-default-only] {
+  body.immersive-page #main-content {
     width: 100%;
     height: 100%;
     min-height: 100%;

@@ -21,12 +21,15 @@ const readStoredHtmlMode = () => {
 const isHtmlModeEnabled = () =>
   document.documentElement.dataset.htmlMode === 'true';
 
-const updateThemeColor = (htmlEnabled: boolean) => {
-  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  if (!meta) return;
+const setThemeColor = (color: string) => {
+  document
+    .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
+    .forEach((meta) => meta.setAttribute('content', color));
+};
 
+const updateThemeColor = (htmlEnabled: boolean) => {
   if (htmlEnabled) {
-    meta.setAttribute('content', '#ffffff');
+    setThemeColor('#ffffff');
     return;
   }
 
@@ -34,7 +37,7 @@ const updateThemeColor = (htmlEnabled: boolean) => {
     const color = getComputedStyle(document.documentElement)
       .getPropertyValue('--header-bg')
       .trim();
-    if (color) meta.setAttribute('content', color);
+    if (color) setThemeColor(color);
   });
 };
 

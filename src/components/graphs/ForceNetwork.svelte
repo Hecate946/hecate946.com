@@ -1439,8 +1439,10 @@
     bind:this={svgElement}
     class="force-network__canvas"
     viewBox={`0 0 ${width} ${heightPixels}`}
-    role="img"
+    role="group"
     aria-label={ariaLabel}
+    width={width}
+    height={heightPixels}
     preserveAspectRatio="xMidYMid meet"
     on:wheel={handleWheel}
     on:pointerdown={startPan}
@@ -1551,6 +1553,7 @@
           aria-label={node.description
             ? `${node.label}: ${node.description}`
             : node.label}
+          aria-current={node.current ? 'page' : undefined}
           on:pointerdown={(event) => startDrag(event, node)}
           on:pointermove={(event) => moveDrag(event, node)}
           on:pointerup={(event) => finishDrag(event, node)}
@@ -1598,6 +1601,7 @@
               height={size}
               viewBox={node.icon.viewBox ?? '0 0 24 24'}
               aria-hidden="true"
+              focusable="false"
             >
               {#each node.icon.paths as path}
                 <path d={path} />
@@ -1643,7 +1647,7 @@
       title="Reset view"
       on:click|stopPropagation={() => resetViewport()}
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
         <path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" />
         <circle cx="12" cy="12" r="2.25" />
       </svg>
@@ -1659,7 +1663,6 @@
 <style>
   .force-network {
     --network-canvas: #ffffff;
-    --network-grid: rgba(15, 23, 42, 0.055);
     --network-edge-start: #64748b;
     --network-node-fill: #f4f5f7;
     --network-node-fill-hover: #e9edf2;
@@ -1674,12 +1677,7 @@
     overflow: hidden;
     border: 1px solid var(--network-node-border);
     border-radius: 0.65rem;
-    background-color: var(--network-canvas);
-    background-image:
-      linear-gradient(var(--network-grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--network-grid) 1px, transparent 1px);
-    background-position: center;
-    background-size: 2.25rem 2.25rem;
+    background: transparent;
     isolation: isolate;
     contain: layout paint style;
   }
@@ -1688,7 +1686,6 @@
   :global([data-color-scheme='dark']) .force-network,
   :global(.dark) .force-network {
     --network-canvas: #000000;
-    --network-grid: rgba(255, 255, 255, 0.065);
     --network-edge-start: #94a3b8;
     --network-node-fill: #111316;
     --network-node-fill-hover: #1b1f24;
@@ -1701,7 +1698,6 @@
   :global([data-color-scheme='light']) .force-network,
   :global(.light) .force-network {
     --network-canvas: #ffffff;
-    --network-grid: rgba(15, 23, 42, 0.055);
     --network-edge-start: #64748b;
     --network-node-fill: #f4f5f7;
     --network-node-fill-hover: #e9edf2;
@@ -1718,7 +1714,6 @@
       )
       .force-network {
       --network-canvas: #000000;
-      --network-grid: rgba(255, 255, 255, 0.065);
       --network-edge-start: #94a3b8;
       --network-node-fill: #111316;
       --network-node-fill-hover: #1b1f24;
@@ -1917,8 +1912,7 @@
     min-height: 0;
     border: 0;
     border-radius: 0;
-    background-color: var(--network-canvas);
-    background-image: none;
+    background: transparent;
   }
 
   .force-network--obsidian .force-network__link {

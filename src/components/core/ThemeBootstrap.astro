@@ -4,11 +4,14 @@
     const themeNames = ['light', 'dark'];
     const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
+    /* HTML mode is intentionally literal: it disables author stylesheets and
+       removes inline style attributes, but it never changes element visibility
+       or substitutes alternate/hidden content. Native HTML attributes such as
+       `hidden`, `open`, `alt`, `width`, and `height` keep their normal browser
+       meaning. */
     const styleNodeState = new WeakMap();
     const inlineStyleState = new WeakMap();
     const inlineStyleElements = new Set();
-    const hiddenState = new WeakMap();
-    const visualSelector = 'astro-island, img, picture, svg, canvas, video, audio, iframe';
 
     const isStyleNode = (node) =>
       node instanceof HTMLStyleElement ||
@@ -20,38 +23,18 @@
       node.disabled = disabled ? true : styleNodeState.get(node);
     };
 
-    const setManagedHidden = (element, shouldHide) => {
-      if (!hiddenState.has(element)) hiddenState.set(element, element.hasAttribute('hidden'));
-      if (shouldHide || hiddenState.get(element)) element.setAttribute('hidden', '');
-      else element.removeAttribute('hidden');
-    };
-
-    const syncVisibility = (element, htmlMode) => {
-      if (!(element instanceof HTMLElement || element instanceof SVGElement)) return;
-
-      if (element.hasAttribute('data-html-only')) {
-        if (htmlMode) element.removeAttribute('hidden');
-        else element.setAttribute('hidden', '');
-        return;
-      }
-
-      if (
-        element.hasAttribute('data-default-only') ||
-        (element instanceof Element && element.matches(visualSelector))
-      ) {
-        setManagedHidden(element, htmlMode);
-      }
-    };
-
     const syncInlineStyle = (element, htmlMode) => {
       if (!(element instanceof Element)) return;
 
       if (htmlMode) {
-        if (!element.hasAttribute('style')) return;
-        if (!inlineStyleState.has(element)) {
-          inlineStyleState.set(element, element.getAttribute('style'));
-          inlineStyleElements.add(element);
-        }
+        const currentStyle = element.getAttribute('style');
+        if (currentStyle === null) return;
+
+        // Components may keep updating transforms or dimensions while CSS is
+        // disabled. Remember the newest authored value so returning to the
+        // standard site resumes from the current state, not a stale snapshot.
+        inlineStyleState.set(element, currentStyle);
+        inlineStyleElements.add(element);
         element.removeAttribute('style');
         return;
       }
@@ -66,9 +49,6 @@
 
     const restoreInlineStyles = (targetDocument) => {
       for (const element of Array.from(inlineStyleElements)) {
-        // Astro can prepare a second Document during client-side navigation.
-        // Only restore elements that belong to the document being presented;
-        // disconnected elements from an abandoned page can simply be released.
         if (element.ownerDocument !== targetDocument) continue;
 
         if (!targetDocument.documentElement.contains(element)) {
@@ -89,20 +69,12 @@
         .querySelectorAll('style, link[rel~="stylesheet"]')
         .forEach((node) => setStyleNodeDisabled(node, htmlMode));
 
-      targetDocument
-        .querySelectorAll('[data-html-only], [data-default-only], astro-island, img, picture, svg, canvas, video, audio, iframe')
-        .forEach((element) => syncVisibility(element, htmlMode));
-
       if (htmlMode) {
         targetDocument
           .querySelectorAll('[style]')
           .forEach((element) => syncInlineStyle(element, true));
-
         syncInlineStyle(root, true);
       } else {
-        // Elements whose inline styles were removed no longer match `[style]`.
-        // Keep an enumerable set while HTML mode is active so every original
-        // style can be restored when returning to the standard presentation.
         restoreInlineStyles(targetDocument);
       }
     };
@@ -171,15 +143,16 @@
       root.dataset.soundEnabled = String(sfxVolume > 0);
       root.dataset.audioActive = String(musicVolume > 0 || sfxVolume > 0);
       root.dataset.themeReady = 'true';
-      root.style.colorScheme = htmlMode ? 'light' : theme;
+
       applyHtmlPresentation(targetDocument, htmlMode);
+      if (!htmlMode) root.style.colorScheme = theme;
     };
 
     const updateThemeColor = () => {
       if (document.documentElement.dataset.htmlMode === 'true') {
         document
-          .querySelector('meta[name="theme-color"]')
-          ?.setAttribute('content', '#ffffff');
+          .querySelectorAll('meta[name="theme-color"]')
+          .forEach((meta) => meta.setAttribute('content', '#ffffff'));
         return;
       }
 
@@ -190,8 +163,8 @@
 
         if (themeColor) {
           document
-            .querySelector('meta[name="theme-color"]')
-            ?.setAttribute('content', themeColor);
+            .querySelectorAll('meta[name="theme-color"]')
+            .forEach((meta) => meta.setAttribute('content', themeColor));
         }
       });
     };
@@ -204,12 +177,13 @@
 
       const observer = new MutationObserver((mutations) => {
         const htmlMode = document.documentElement.dataset.htmlMode === 'true';
+        if (!htmlMode) return;
 
         for (const mutation of mutations) {
           if (mutation.type === 'attributes') {
             const target = mutation.target;
             if (target instanceof Element && mutation.attributeName === 'style') {
-              syncInlineStyle(target, htmlMode);
+              syncInlineStyle(target, true);
             }
             continue;
           }
@@ -217,19 +191,15 @@
           for (const node of mutation.addedNodes) {
             if (!(node instanceof Element)) continue;
 
-            if (isStyleNode(node)) setStyleNodeDisabled(node, htmlMode);
-            syncVisibility(node, htmlMode);
-            syncInlineStyle(node, htmlMode);
+            if (isStyleNode(node)) setStyleNodeDisabled(node, true);
+            syncInlineStyle(node, true);
 
             node
               .querySelectorAll('style, link[rel~="stylesheet"]')
-              .forEach((styleNode) => setStyleNodeDisabled(styleNode, htmlMode));
-            node
-              .querySelectorAll('[data-html-only], [data-default-only], astro-island, img, picture, svg, canvas, video, audio, iframe')
-              .forEach((element) => syncVisibility(element, htmlMode));
+              .forEach((styleNode) => setStyleNodeDisabled(styleNode, true));
             node
               .querySelectorAll('[style]')
-              .forEach((element) => syncInlineStyle(element, htmlMode));
+              .forEach((element) => syncInlineStyle(element, true));
           }
         }
       });

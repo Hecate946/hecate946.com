@@ -11,11 +11,12 @@ import '@/styles/navigation.css';
 <BaseLayout
   title="Navigation — Cyrus Asasi"
   description="An interactive map of the primary pages on hecate946.com."
+  noindex
 >
   <section class="navigation-graph" aria-labelledby="navigation-title">
     <h1 id="navigation-title" class="visually-hidden">Site navigation</h1>
 
-    <div class="navigation-graph__stage" data-default-only>
+    <div class="navigation-graph__stage">
       <ForceNetwork
         client:visible
         nodes={navigationNetworkNodes}
@@ -39,15 +40,5 @@ import '@/styles/navigation.css';
       />
     </div>
 
-    <nav data-html-only hidden aria-label="Primary navigation destinations">
-      <ul>
-        {navigationNetworkNodes.map((node) => (
-          <li>
-            <a href={node.href}>{node.label}</a>
-            {node.description ? ` — ${node.description}` : ''}
-          </li>
-        ))}
-      </ul>
-    </nav>
   </section>
 </BaseLayout>

@@ -558,6 +558,8 @@
     class="visitor-map"
     data-dragging={dragging || pinching}
     viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+    width={WIDTH}
+    height={HEIGHT}
     preserveAspectRatio="xMidYMid slice"
     role="img"
     aria-label="Zoomable, horizontally wrapping map of approximate visitor lights"
@@ -612,7 +614,7 @@
     </g>
   </svg>
 
-  <div class="map-controls" aria-label="Map controls">
+  <div class="map-controls" role="group" aria-label="Map controls">
     <button type="button" aria-label="Zoom in" on:click={() => zoomByDistanceRatio(1 / 1.5)}>
       +
     </button>

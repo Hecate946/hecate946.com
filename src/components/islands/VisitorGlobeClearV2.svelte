@@ -1119,7 +1119,7 @@
     <div class="globe-help">Grab and drag 1:1 · scroll or pinch to zoom</div>
   {/if}
 
-  <div class="globe-controls" aria-label="Globe controls">
+  <div class="globe-controls" role="group" aria-label="Globe controls">
     <button
       type="button"
       aria-label="Zoom in"

@@ -79,7 +79,7 @@
   />
 
   <a class="website-graph__control website-graph__close" href={resolvedCloseHref} aria-label="Close graph" title="Close graph">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
       <path d="M6 6l12 12M18 6L6 18"></path>
     </svg>
   </a>

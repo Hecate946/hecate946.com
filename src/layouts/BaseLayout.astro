@@ -1,5 +1,4 @@
 ---
-import HtmlSiteTree from '@/components/core/HtmlSiteTree.astro';
 import BaseHead from '@/components/core/BaseHead.astro';
 import Footer from '@/components/core/Footer.astro';
 import Header from '@/components/core/Header.astro';
@@ -18,6 +17,10 @@ interface Props {
   title?: string;
   description?: string;
   image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageType?: string;
   hideFooter?: boolean;
   suppressSeasonalShower?: boolean;
   mainClass?: string;
@@ -30,6 +33,10 @@ const {
   title,
   description,
   image,
+  imageAlt,
+  imageWidth,
+  imageHeight,
+  imageType,
   hideFooter = false,
   suppressSeasonalShower = false,
   mainClass,
@@ -38,16 +45,8 @@ const {
   noindex = false,
 } = Astro.props;
 
-const normalizePath = (value: string) => {
-  const normalized = value.replace(/\/+$/, '');
-  return normalized === '' ? '/' : normalized;
-};
-
-const currentPath = normalizePath(Astro.url.pathname);
 const showSeasonalShower =
   !suppressSeasonalShower && shouldShowSeasonalShower(Astro.url.pathname);
-
-const htmlPage = currentPath === '/' ? 'home' : 'interior';
 
 const commandItems = Array.from(
   new Map(
@@ -65,7 +64,7 @@ const commandItems = Array.from(
 
 <!doctype html>
 <html
-  lang="en"
+  lang="en-US"
   transition:animate="none"
   data-season="summer"
   data-season-preference="auto"
@@ -74,17 +73,15 @@ const commandItems = Array.from(
 >
   <head>
     <ThemeBootstrap />
-    <BaseHead {title} {description} {image} {noindex} />
+    <BaseHead {title} {description} {image} {imageAlt} {imageWidth} {imageHeight} {imageType} {noindex} />
     <slot name="head" />
     <ClientRouter fallback="swap" />
   </head>
 
   <body
-    data-html-page={htmlPage}
     class={bodyClass}
     data-site-sound-silent={soundSilent ? true : undefined}
   >
-    <HtmlSiteTree currentPath={Astro.url.pathname} />
     <SkipLink />
 
     {
@@ -98,11 +95,7 @@ const commandItems = Array.from(
 
     <Header />
 
-    <main
-      id="main-content"
-      class={mainClass}
-      data-default-only={htmlPage === 'home' ? true : undefined}
-    >
+    <main id="main-content" class={mainClass}>
       <slot />
     </main>
 

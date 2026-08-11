@@ -494,7 +494,7 @@
 
         {#if liveStats?.daily?.length}
           <div class="activity-chart">
-            <svg viewBox="0 0 720 190" role="img" aria-label="Daily page views over the last 30 days">
+            <svg viewBox="0 0 720 190" role="img" aria-label="Daily page views over the last 30 days" width="720" height="190">
               <line class="chart-guide" x1="24" x2="696" y1="22" y2="22" />
               <line class="chart-baseline" x1="24" x2="696" y1="168" y2="168" />
               <path

@@ -135,7 +135,7 @@
     onclick={togglePanel}
   >
     <span class="header-action-icon audio-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
         <path class="audio-speaker" d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4Z" />
         <path class="audio-wave" d="M15.25 9.1a4 4 0 0 1 0 5.8" />
         <path class="audio-wave" d="M17.75 6.75a7.25 7.25 0 0 1 0 10.5" />
@@ -159,7 +159,7 @@
         aria-label="Close audio settings"
         onclick={closePanel}
       >
-        <svg viewBox="0 0 10 10" aria-hidden="true" focusable="false">
+        <svg viewBox="0 0 10 10" aria-hidden="true" focusable="false" width="10" height="10">
           <path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5" />
         </svg>
       </button>

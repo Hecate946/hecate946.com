@@ -37,6 +37,7 @@
 <div
   class:ready
   class="immersive-shell"
+  role="region"
   aria-label={`Interactive Cycles-rendered ${space.title}`}
   style={`--space-accent: ${space.accent}`}
 >

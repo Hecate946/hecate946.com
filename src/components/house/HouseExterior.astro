@@ -5,13 +5,11 @@ import '@/styles/house-exterior.css';
 interface Props {
   class?: string;
   ariaLabel?: string;
-  defaultOnly?: boolean;
 }
 
 const {
   class: className = '',
   ariaLabel = 'Seasonal exterior view of the house',
-  defaultOnly = false,
 } = Astro.props;
 
 const renders = {
@@ -27,13 +25,14 @@ const renders = {
   role="img"
   aria-label={ariaLabel}
   data-house-exterior
-  data-default-only={defaultOnly ? true : undefined}
 >
   <div class="house-exterior-stage" aria-hidden="true">
     <img
       class="house-exterior-render house-exterior-render--spring"
       src={renders.spring}
       alt=""
+      width="1600"
+      height="750"
       decoding="async"
       loading="eager"
       draggable="false"
@@ -42,6 +41,8 @@ const renders = {
       class="house-exterior-render house-exterior-render--summer"
       src={renders.summer}
       alt=""
+      width="1280"
+      height="720"
       decoding="async"
       loading="eager"
       draggable="false"
@@ -50,6 +51,8 @@ const renders = {
       class="house-exterior-render house-exterior-render--autumn"
       src={renders.autumn}
       alt=""
+      width="1280"
+      height="720"
       decoding="async"
       loading="eager"
       draggable="false"
@@ -58,6 +61,8 @@ const renders = {
       class="house-exterior-render house-exterior-render--winter"
       src={renders.winter}
       alt=""
+      width="1280"
+      height="720"
       decoding="async"
       loading="eager"
       draggable="false"
