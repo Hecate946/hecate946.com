@@ -1091,11 +1091,13 @@
   });
 </script>
 
-<div class="globe-shell" data-embedded={embedded} bind:this={shell}>
-  <p class="globe-a11y-description">
-    Interactive clear three-dimensional globe showing approximate website visitor locations with transparent oceans. Pointer and touch users can grab the surface directly to rotate it one-to-one and scroll or pinch to zoom.
-  </p>
-
+<div
+  class="globe-shell"
+  data-embedded={embedded}
+  bind:this={shell}
+  role="group"
+  aria-label="Interactive visitor geography globe"
+>
   <canvas
     bind:this={canvas}
     class="globe-canvas"
@@ -1160,18 +1162,6 @@
   .globe-shell[data-embedded='true'] {
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
-  }
-
-  .globe-a11y-description {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
   }
 
   .globe-canvas {

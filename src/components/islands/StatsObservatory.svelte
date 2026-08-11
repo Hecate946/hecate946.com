@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import ForceNetwork from '@/components/graphs/ForceNetwork.svelte';
+  import VisitorGlobeClearV2 from '@/components/islands/VisitorGlobeClearV2.svelte';
   import VisitorMap from '@/components/islands/VisitorMap.svelte';
   import YourPathGraph from '@/components/islands/YourPathTree.svelte';
   import {
@@ -62,7 +63,6 @@
   }
 
   type EarthView = '2d' | '3d';
-  type GlobeComponentType = typeof import('@/components/islands/VisitorGlobeClearV2.svelte')['default'];
 
   const numberFormatter = new Intl.NumberFormat('en-US');
   const localHourFormatter = new Intl.DateTimeFormat(undefined, {
@@ -84,8 +84,6 @@
   let hoveredHour: number | null = null;
   let refreshing = false;
   let utcOffsetMinutes = 0;
-  let GlobeComponent: GlobeComponentType | null = null;
-  let globeLoading = false;
   let globeTexturePrewarmed = false;
 
   $: hourly = normalizedHours(liveStats?.hours);
@@ -201,20 +199,9 @@
     image.src = `${base}generated/globe-world-mask-4096.webp`;
   }
 
-  async function prepareGlobe() {
-    prewarmGlobePreview();
-    if (GlobeComponent || globeLoading) return;
-    globeLoading = true;
-    try {
-      GlobeComponent = (await import('@/components/islands/VisitorGlobeClearV2.svelte')).default;
-    } finally {
-      globeLoading = false;
-    }
-  }
-
   function selectEarthView(view: EarthView) {
     earthView = view;
-    if (view === '3d') void prepareGlobe();
+    if (view === '3d') prewarmGlobePreview();
   }
 
   async function readJson<T>(url: string): Promise<T> {
@@ -293,8 +280,8 @@
           type="button"
           class:active={earthView === '3d'}
           aria-pressed={earthView === '3d'}
-          on:mouseenter={() => void prepareGlobe()}
-          on:focus={() => void prepareGlobe()}
+          on:mouseenter={prewarmGlobePreview}
+          on:focus={prewarmGlobePreview}
           on:click={() => selectEarthView('3d')}
         >3D</button>
       </div>
@@ -306,18 +293,12 @@
               locations={liveStats.locations}
               totalVisitors={liveStats.summary.estimatedVisitors}
             />
-          {:else if GlobeComponent}
-            <svelte:component
-              this={GlobeComponent}
+          {:else}
+            <VisitorGlobeClearV2
               embedded={true}
               locations={liveStats.locations}
               totalVisitors={liveStats.summary.estimatedVisitors}
             />
-          {:else}
-            <div class="observatory-loading">
-              <span class="observatory-orbit" aria-hidden="true"></span>
-              <span>Loading globe…</span>
-            </div>
           {/if}
         {/key}
       {:else}
