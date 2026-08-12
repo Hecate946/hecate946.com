@@ -6,11 +6,6 @@ import FloorScene from '@/features/floor/FloorScene.svelte';
 import { withBase } from '@/lib/paths';
 import '@/styles/about.css';
 
-const musicVideoUrl = 'https://www.youtube.com/watch?v=EkgH4zzXoNg';
-const pickleballArticleUrl =
-  'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
-const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
-const resumesUrl = withBase('/resumes/');
 const portraitUrl = withBase('/images/about/cyrus-portrait.webp');
 ---
 
@@ -22,13 +17,6 @@ const portraitUrl = withBase('/images/about/cyrus-portrait.webp');
   <div class="about-room wall-room-host">
     <WallBackdrop />
     <FloorScene client:load />
-    <AboutBook
-      client:load
-      {musicVideoUrl}
-      {pickleballArticleUrl}
-      {chessProfileUrl}
-      {resumesUrl}
-      {portraitUrl}
-    />
+    <AboutBook client:load {portraitUrl} />
   </div>
 </BaseLayout>
