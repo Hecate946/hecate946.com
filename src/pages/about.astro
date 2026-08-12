@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import AboutTV from '@/components/about/AboutTV.svelte';
-import WallBackdrop from '@/features/wall/WallBackdrop.svelte';
 import AboutFloor from '@/components/about/AboutFloor.svelte';
+import { siteConfig } from '@/config/site';
 import { withBase } from '@/lib/paths';
 
 const portraitUrl = withBase('/images/about/cyrus-portrait-480.webp');
@@ -21,8 +21,7 @@ const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
   bodyClass="about-room-page"
 >
   <div class="about-room wall-room-host">
-    <WallBackdrop />
-    <AboutFloor client:load />
+    {siteConfig.ui.enableMagnifyingGlass && <AboutFloor client:load />}
     <AboutTV
       client:load
       {portraitUrl}

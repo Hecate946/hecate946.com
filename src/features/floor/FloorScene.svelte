@@ -27,6 +27,10 @@
   let horizonY = 1;
   let pixelRatio = 1;
   let pitch = 0;
+  let pitchSin = 0;
+  let pitchCos = 1;
+  let visibleDepth = TILE_SIZE_WORLD;
+  let lastVisibleRow = 1;
   let cameraY = 1;
   let cameraZ = 1;
   let focalDistance = 1;
@@ -56,16 +60,14 @@
   }
 
   function project(worldX: number, worldZ: number) {
-    const sin = Math.sin(pitch);
-    const cos = Math.cos(pitch);
     const forwardDistance =
-      -cameraY * sin + (worldZ - cameraZ) * -cos;
+      -cameraY * pitchSin + (worldZ - cameraZ) * -pitchCos;
 
     if (forwardDistance <= 0.001) {
       return { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY };
     }
 
-    const vertical = -cameraY * cos + (worldZ - cameraZ) * sin;
+    const vertical = -cameraY * pitchCos + (worldZ - cameraZ) * pitchSin;
     const scale = focalDistance / forwardDistance;
 
     return {
@@ -109,13 +111,11 @@
       return;
     }
 
-    context2d.beginPath();
     context2d.moveTo(a.x, a.y);
     context2d.lineTo(b.x, b.y);
     context2d.lineTo(c.x, c.y);
     context2d.lineTo(d.x, d.y);
     context2d.closePath();
-    context2d.fill();
   }
 
   function renderFloor() {
@@ -136,12 +136,14 @@
     context2d.clip();
     context2d.fillStyle = lightColor;
 
-    const visibleDepth = solveVisibleDepth();
     const firstColumn = Math.floor((currentCameraX - width / 2) / TILE_SIZE_WORLD) - 1;
     const lastColumn = Math.ceil((currentCameraX + width / 2) / TILE_SIZE_WORLD) + 1;
-    const lastRow = Math.ceil(visibleDepth / TILE_SIZE_WORLD) + 1;
 
-    for (let row = 0; row <= lastRow; row += 1) {
+    // Build all visible light cells into one canvas path and fill once. The old
+    // renderer issued a beginPath/fill pair for every tile, which dominated CPU
+    // time while the conveyor was moving. Geometry and appearance are unchanged.
+    context2d.beginPath();
+    for (let row = 0; row <= lastVisibleRow; row += 1) {
       const z0 = row * TILE_SIZE_WORLD;
       const z1 = Math.min((row + 1) * TILE_SIZE_WORLD, visibleDepth + TILE_SIZE_WORLD);
 
@@ -157,6 +159,7 @@
       }
     }
 
+    context2d.fill();
     context2d.restore();
   }
 
@@ -184,16 +187,24 @@
     const tanHalfFov = Math.tan((CAMERA_FOV_DEGREES * Math.PI) / 360);
     const targetNdcY = 1 - (2 * horizonY) / height;
     pitch = solveCameraPitch(targetNdcY, tanHalfFov);
+    pitchSin = Math.sin(pitch);
+    pitchCos = Math.cos(pitch);
 
-    const sin = Math.sin(pitch);
-    const cos = Math.cos(pitch);
-    const forwardBase = -CAMERA_HEIGHT_TO_DISTANCE * sin + cos;
+    const forwardBase = -CAMERA_HEIGHT_TO_DISTANCE * pitchSin + pitchCos;
     focalDistance = height / (2 * tanHalfFov);
     const scale = focalDistance / forwardBase;
     cameraZ = scale;
     cameraY = CAMERA_HEIGHT_TO_DISTANCE * scale;
+    visibleDepth = solveVisibleDepth();
+    lastVisibleRow = Math.ceil(visibleDepth / TILE_SIZE_WORLD) + 1;
 
     renderFloor();
+  }
+
+  /** Re-read inherited room colors and geometry after an Astro body swap. */
+  export function refreshFromCss() {
+    refreshPalette();
+    refreshLayout();
   }
 
   /** Synchronize the checkerboard with the wall's shared horizontal camera. */

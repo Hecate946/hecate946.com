@@ -1,8 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import WallWindow from './WallWindow.svelte';
-  import WallBackdrop from './WallBackdrop.svelte';
-  import FloorScene from '../floor/FloorScene.svelte';
   import type { WallDestination } from './wall-config';
   import {
     PROJECT_LOOP_WIDTH,
@@ -25,12 +23,9 @@
   const DIRECTION_THRESHOLD = 36;
   const INERTIA_TIME_CONSTANT = 0.78;
   const MAX_MANUAL_SPEED = 2_400;
-  const MIN_FRAME_INTERVAL_MS = 10;
 
   let stage: HTMLElement;
   let wallWorld: HTMLElement;
-  let wallBackdrop: { setCameraX: (cameraX: number) => void };
-  let floorScene: { setCameraX: (cameraX: number) => void };
   let cameraX = startX;
   let velocity = 0;
   let driftDirection = 1;
@@ -48,10 +43,14 @@
   let rafId = 0;
   let lastFrame = 0;
   let programmatic = false;
-  let cameraAnimationToken = 0;
+  let programmaticStart = 0;
+  let programmaticDelta = 0;
+  let programmaticStarted = 0;
+  let programmaticDuration = 0;
+  let programmaticResolve: (() => void) | null = null;
   let lastRenderedCameraX = Number.NaN;
   let lastLoopBase = Number.NaN;
-  let renderDevicePixelRatio = 1;
+  let backdropBaseCameraX = startX;
 
   $: stageStyle = `--loop-width: ${loopWidth}px;`;
 
@@ -81,29 +80,28 @@
     return isPaused ? 0 : driftDirection * IDLE_DRIFT_SPEED;
   }
 
-  function snapToDevicePixel(value: number) {
-    return Math.round(value * renderDevicePixelRatio) / renderDevicePixelRatio;
-  }
+  type RoomCameraWindow = Window & {
+    __hecateRoomCameraX?: number;
+    __hecateSetRoomCameraX?: (cameraX: number) => void;
+  };
 
-  function refreshRenderDevicePixelRatio() {
-    // More than 2x positioning precision only increases style/WebGL updates on
-    // high-DPR phones without a visible benefit at these frame sizes.
-    renderDevicePixelRatio = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-    lastRenderedCameraX = Number.NaN;
-    lastLoopBase = Number.NaN;
-    renderCamera(true);
+  function syncSharedBackdrop(cameraX: number) {
+    const roomWindow = window as RoomCameraWindow;
+    roomWindow.__hecateRoomCameraX = cameraX;
+    roomWindow.__hecateSetRoomCameraX?.(cameraX);
+    document.documentElement.style.setProperty('--room-camera-x', `${cameraX}px`);
   }
 
   function renderCamera(force = false) {
-    // Keep physics fully precise, but quantize only the rendered camera to
-    // physical pixels so detailed paintings do not shimmer between sampling
-    // phases during slow movement.
-    const renderedCameraX = snapToDevicePixel(cameraX);
+    // Keep the camera fully subpixel-precise. Device-pixel quantization made
+    // slow motion visibly step on 60/90/120Hz displays. The browser compositor
+    // is better at sampling the transformed painting track continuously.
+    const renderedCameraX = cameraX;
     if (!force && renderedCameraX === lastRenderedCameraX) return;
 
     // The camera itself never wraps. Instead, the three identical destination
-    // strips are recycled around the current lap. This avoids the large
-    // compositor transform jump that used to happen once per full rotation.
+    // strips are recycled around the current lap. This avoids a compositor
+    // transform jump once per full rotation.
     const nextLoopBase = loopBase(renderedCameraX);
     if (force || nextLoopBase !== lastLoopBase) {
       wallWorld?.style.setProperty('--loop-base', `${nextLoopBase}px`);
@@ -112,13 +110,18 @@
 
     wallWorld?.style.setProperty('transform', `translate3d(${-renderedCameraX}px, 0, 0)`);
 
-    // The wall and floor are independent render layers, but both consume the
-    // same camera coordinate. Imperative synchronization keeps the animation
-    // on a single rAF without forcing per-frame Svelte reactivity.
-    wallBackdrop?.setCameraX(renderedCameraX);
-    floorScene?.setCameraX(renderedCameraX);
+    // One persistent room backdrop is shared by Home, Projects, Resumes,
+    // About and Contact. Updating it imperatively avoids remounting/repainting
+    // a second wall/floor engine during every tab switch.
+    syncSharedBackdrop(backdropBaseCameraX + (renderedCameraX - startX));
 
     lastRenderedCameraX = renderedCameraX;
+  }
+
+  function refreshRenderState() {
+    lastRenderedCameraX = Number.NaN;
+    lastLoopBase = Number.NaN;
+    renderCamera(true);
   }
 
   function ensureAnimationLoop() {
@@ -143,8 +146,11 @@
   }
 
   function cancelCameraAnimation() {
-    cameraAnimationToken += 1;
+    if (!programmatic) return;
     programmatic = false;
+    const resolve = programmaticResolve;
+    programmaticResolve = null;
+    resolve?.();
   }
 
   function moveBy(amount: number) {
@@ -163,36 +169,17 @@
   }
 
   function animateCameraTo(targetX: number, duration = 460) {
+    cancelCameraAnimation();
+    programmaticStart = cameraX;
+    programmaticDelta = nearestDelta(targetX);
+    programmaticStarted = performance.now();
+    programmaticDuration = Math.max(1, duration);
+    programmatic = true;
+    velocity = 0;
+    ensureAnimationLoop();
+
     return new Promise<void>((resolve) => {
-      const start = cameraX;
-      const delta = nearestDelta(targetX);
-      const started = performance.now();
-      const token = ++cameraAnimationToken;
-      programmatic = true;
-      velocity = 0;
-      ensureAnimationLoop();
-
-      const step = (now: number) => {
-        if (token !== cameraAnimationToken) {
-          resolve();
-          return;
-        }
-
-        const progress = Math.min(1, (now - started) / duration);
-        const eased = 1 - Math.pow(1 - progress, 4);
-        cameraX = start + delta * eased;
-
-        if (progress < 1) {
-          requestAnimationFrame(step);
-          return;
-        }
-
-        programmatic = false;
-        velocity = getDriftVelocity();
-        resolve();
-      };
-
-      requestAnimationFrame(step);
+      programmaticResolve = resolve;
     });
   }
 
@@ -350,8 +337,7 @@
     // rAF is suspended in background tabs. Reset the clock on return so a
     // stale frame interval can never feed a visible velocity jump.
     lastFrame = performance.now();
-    lastRenderedCameraX = Number.NaN;
-    renderCamera(true);
+    refreshRenderState();
     if (!isPaused) ensureAnimationLoop();
   }
 
@@ -365,9 +351,7 @@
     dragDistance = 0;
     lastFrame = performance.now();
     velocity = getDriftVelocity();
-    lastRenderedCameraX = Number.NaN;
-    lastLoopBase = Number.NaN;
-    renderCamera(true);
+    refreshRenderState();
     if (!isPaused) ensureAnimationLoop();
   }
 
@@ -405,18 +389,27 @@
 
   function animationFrame(now: number) {
     rafId = 0;
-    // Suppress redundant ultra-high-refresh frames without turning 90Hz displays
-    // into 45Hz animation. Pointer input is still sampled at native event frequency.
-    if (lastFrame && now - lastFrame < MIN_FRAME_INTERVAL_MS) {
-      rafId = requestAnimationFrame(animationFrame);
-      return;
-    }
 
+    // requestAnimationFrame already follows the display's refresh cadence.
+    // Do not add a second software frame limiter; doing so causes uneven frame
+    // pacing on 90/120/144Hz screens and makes the checkerboard appear to jump.
     const elapsedMs = lastFrame ? Math.min(50, Math.max(0, now - lastFrame)) : 16.667;
     const dt = elapsedMs / 1000;
     lastFrame = now;
 
-    if (!dragging && !programmatic && !enteringId) {
+    if (programmatic) {
+      const progress = Math.min(1, (now - programmaticStarted) / programmaticDuration);
+      const eased = 1 - Math.pow(1 - progress, 4);
+      cameraX = programmaticStart + programmaticDelta * eased;
+
+      if (progress >= 1) {
+        programmatic = false;
+        velocity = getDriftVelocity();
+        const resolve = programmaticResolve;
+        programmaticResolve = null;
+        resolve?.();
+      }
+    } else if (!dragging && !enteringId) {
       const driftVelocity = getDriftVelocity();
       const easing = 1 - Math.exp(-dt / INERTIA_TIME_CONSTANT);
       velocity += (driftVelocity - velocity) * easing;
@@ -427,8 +420,7 @@
     renderCamera();
 
     // When the user explicitly pauses the conveyor, stop scheduling frames
-    // entirely once any residual inertia has settled. Pointer/wheel/key input
-    // restarts the loop on demand, so a paused tab costs effectively no CPU.
+    // entirely once residual inertia has settled. Input restarts it on demand.
     if (isPaused && !dragging && !programmatic && !enteringId && Math.abs(velocity) < 0.01) {
       velocity = 0;
       return;
@@ -452,9 +444,13 @@
     // that pauses this scene, which avoids browser/OS preference mismatches
     // producing a frozen wall with a nonfunctional-looking Pause button.
     isPaused = false;
+    const roomWindow = window as RoomCameraWindow;
+    backdropBaseCameraX = Number.isFinite(roomWindow.__hecateRoomCameraX)
+      ? (roomWindow.__hecateRoomCameraX as number)
+      : startX;
     velocity = driftDirection * IDLE_DRIFT_SPEED;
     lastFrame = performance.now();
-    refreshRenderDevicePixelRatio();
+    refreshRenderState();
 
     stage.addEventListener('wheel', onWheel, { passive: false });
     stage.addEventListener('pointerdown', onPointerDown);
@@ -464,7 +460,7 @@
     stage.addEventListener('pointerleave', onPointerLeave);
     window.addEventListener('keydown', onKeydown);
     window.addEventListener('blur', onWindowBlur);
-    window.addEventListener('resize', refreshRenderDevicePixelRatio, { passive: true });
+    window.addEventListener('resize', refreshRenderState, { passive: true });
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('pageshow', restoreWallAfterHistoryNavigation);
     ensureAnimationLoop();
@@ -478,7 +474,7 @@
       stage.removeEventListener('pointerleave', onPointerLeave);
       window.removeEventListener('keydown', onKeydown);
       window.removeEventListener('blur', onWindowBlur);
-      window.removeEventListener('resize', refreshRenderDevicePixelRatio);
+      window.removeEventListener('resize', refreshRenderState);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pageshow', restoreWallAfterHistoryNavigation);
       cancelAnimationFrame(rafId);
@@ -498,8 +494,6 @@
 >
   <h1 class="visually-hidden">{heading}</h1>
 
-  <WallBackdrop bind:this={wallBackdrop} initialCameraX={startX} />
-  <FloorScene bind:this={floorScene} initialCameraX={startX} />
 
   <div
     bind:this={wallWorld}
@@ -555,169 +549,4 @@
   </button>
 </section>
 
-<style>
-  .wall-stage {
-    --window-width: 306px;
-    --window-height: 378px;
-    --window-offset-x: -153px;
-    --window-offset-y: -189px;
 
-    width: 100%;
-    height: 100%;
-    min-height: 25rem;
-    overflow: hidden;
-    cursor: grab;
-    touch-action: pan-y;
-    overscroll-behavior-x: contain;
-    user-select: none;
-  }
-
-  .wall-stage--dragging {
-    cursor: grabbing;
-  }
-
-  .wall-stage--entering {
-    cursor: default;
-  }
-
-  .wall-world {
-    position: absolute;
-    z-index: 4;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 100%;
-    backface-visibility: hidden;
-    contain: layout style;
-    /* The destination track is the only moving compositor layer. Frames and
-       paintings stay untransformed inside it so they cannot drift against one
-       another during slow subpixel motion. */
-    will-change: transform;
-  }
-
-  .wall-loop {
-    position: absolute;
-    z-index: 3;
-    inset: 0 auto 0 0;
-    width: var(--loop-width);
-    transform: translate3d(calc(var(--loop-base, 0px) + var(--loop-offset)), 0, 0);
-    pointer-events: none;
-  }
-
-  .wall-loop :global(.wall-window) {
-    pointer-events: auto;
-  }
-
-  .wall-loop__seam {
-    position: absolute;
-    bottom: calc(var(--floor-height) + 1.2rem);
-    width: 1px;
-    background: linear-gradient(
-      180deg,
-      transparent,
-      color-mix(in srgb, var(--room-outline, var(--wall-light, #f4f1e9)) 18%, transparent) 18% 83%,
-      transparent
-    );
-    opacity: 0.32;
-  }
-
-  .wall-loop__seam--a {
-    left: 10%;
-    height: 41%;
-  }
-
-  .wall-loop__seam--b {
-    left: 88%;
-    height: 55%;
-  }
-
-  .wall-motion-toggle {
-    --wall-control-ink: var(--room-control-ink, var(--wall-light, #f4f1e9));
-    --wall-control-outline: var(--room-outline, var(--wall-control-ink));
-    --wall-control-bg: var(
-      --room-control-bg,
-      color-mix(in srgb, var(--wall-dark, #050505) 82%, transparent)
-    );
-
-    position: absolute;
-    z-index: 13;
-    right: clamp(0.9rem, 2.4vw, 1.7rem);
-    bottom: clamp(0.76rem, 2vw, 1.3rem);
-    display: grid;
-    width: 2.2rem;
-    height: 2.2rem;
-    place-items: center;
-    padding: 0;
-    border: 1px solid color-mix(in srgb, var(--wall-control-outline) 28%, transparent);
-    border-radius: 0.56rem;
-    outline: 2px solid transparent;
-    outline-offset: 1px;
-    background: var(--wall-control-bg);
-    color: color-mix(in srgb, var(--wall-control-ink) 58%, transparent);
-    cursor: pointer;
-    opacity: 0.78;
-    transition:
-      opacity 160ms ease,
-      border-color 160ms ease,
-      color 160ms ease,
-      outline-color 160ms ease;
-  }
-
-  .wall-motion-toggle:hover,
-  .wall-motion-toggle:focus-visible {
-    border-color: color-mix(in srgb, var(--wall-control-outline) 46%, transparent);
-    color: color-mix(in srgb, var(--wall-control-ink) 84%, transparent);
-    opacity: 1;
-  }
-
-  .wall-motion-toggle:focus-visible {
-    outline: 1px solid var(--wall-control-outline);
-    outline-offset: 0.18rem;
-  }
-
-  .wall-motion-toggle__icon {
-    display: block;
-    width: 1.15rem;
-    height: 1.15rem;
-    overflow: visible;
-  }
-
-
-  @media (min-height: 50rem) and (min-width: 40.001rem) {
-    .wall-stage {
-      --window-width: 340px;
-      --window-height: 420px;
-      --window-offset-x: -170px;
-      --window-offset-y: -210px;
-    }
-  }
-
-  @media (max-height: 42rem) and (min-width: 40.001rem) {
-    .wall-stage {
-      --window-width: 266px;
-      --window-height: 328px;
-      --window-offset-x: -133px;
-      --window-offset-y: -164px;
-    }
-  }
-
-  @media (max-width: 40rem) {
-    .wall-stage {
-      --window-width: 248px;
-      --window-height: 308px;
-      --window-offset-x: -124px;
-      --window-offset-y: -154px;
-    }
-
-    .wall-motion-toggle {
-      right: 0.75rem;
-      bottom: 0.5rem;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .wall-motion-toggle {
-      transition: none;
-    }
-  }
-</style>

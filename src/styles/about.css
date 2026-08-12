@@ -603,3 +603,13 @@ html[data-theme='dark'] body.about-room-page {
     animation-duration: 1ms;
   }
 }
+
+/* The primary-room backdrop now persists underneath About. Keep the TV shell
+   in the same full-viewport coordinate system without painting a second room. */
+body.primary-room-page.about-room-page .about-room {
+  height: 100%;
+  min-height: 100%;
+  margin-top: 0;
+  padding-top: var(--header-height);
+  background: transparent;
+}

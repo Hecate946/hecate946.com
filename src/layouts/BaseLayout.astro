@@ -5,8 +5,12 @@ import SkipLink from '@/components/core/SkipLink.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import WallBackdrop from '@/features/wall/WallBackdrop.svelte';
 import FloorScene from '@/features/floor/FloorScene.svelte';
+import SharedRoomBackdrop from '@/features/wall/SharedRoomBackdrop.svelte';
 import { ClientRouter } from 'astro:transitions';
 import { siteConfig } from '@/config/site';
+import { WALL_START_X } from '@/features/wall/wall-config';
+import { PROJECT_START_X } from '@/features/wall/project-wall-config';
+import { RESUME_START_X } from '@/features/wall/resume-wall-config';
 import '@/styles/global.css';
 // Keep the five primary room styles resident from the first paint. Astro's
 // client router otherwise has to wait for route-specific stylesheets during a
@@ -16,6 +20,11 @@ import '@/styles/about.css';
 import '@/styles/projects-wall.css';
 import '@/styles/resume.css';
 import '@/styles/contact.css';
+import '@/styles/room-shell.css';
+import '@/styles/wall-backdrop.css';
+import '@/styles/floor-scene.css';
+import '@/styles/conveyor.css';
+import '@/styles/primary-rooms.css';
 
 interface Props {
   title?: string;
@@ -44,14 +53,13 @@ const {
 } = Astro.props;
 
 const pathname = Astro.url.pathname;
-const isDedicatedRoom =
-  pathname === '/' ||
-  pathname === '/about/' ||
-  pathname === '/about' ||
-  pathname === '/projects/' ||
-  pathname === '/projects' ||
-  pathname === '/resumes/' ||
-  pathname === '/resumes';
+const normalizedPathname = pathname === '/' ? '/' : pathname.replace(/\/+$/, '');
+const isPrimaryRoom =
+  normalizedPathname === '/' ||
+  normalizedPathname === '/about' ||
+  normalizedPathname === '/projects' ||
+  normalizedPathname === '/resumes' ||
+  normalizedPathname === '/contact';
 const roomThemeClass = pathname.startsWith('/about')
   ? 'room-theme-about'
   : pathname.startsWith('/projects')
@@ -64,7 +72,16 @@ const roomThemeClass = pathname.startsWith('/about')
           ? 'room-theme-stats'
           : undefined;
 
-const hasSiteRoomBackdrop = !isDedicatedRoom;
+const primaryRoomInitialCameraX =
+  normalizedPathname === '/projects'
+    ? PROJECT_START_X
+    : normalizedPathname === '/resumes'
+      ? RESUME_START_X
+      : normalizedPathname === '/'
+        ? WALL_START_X
+        : 0;
+
+const hasSiteRoomBackdrop = !isPrimaryRoom;
 const elevatorTabAnimationsEnabled = siteConfig.ui.enableElevatorTabAnimations;
 const clientRouterFallback = elevatorTabAnimationsEnabled ? 'animate' : 'swap';
 
@@ -106,20 +123,7 @@ const roomLiftTransition = {
   data-theme="light"
   data-elevator-tab-animations={elevatorTabAnimationsEnabled ? 'on' : 'off'}
   transition:name="root"
-  transition:animate={
-    elevatorTabAnimationsEnabled
-      ? roomLiftTransition
-      : {
-          forwards: {
-            old: { name: 'none', duration: '1ms', easing: 'linear', fillMode: 'both' },
-            new: { name: 'none', duration: '1ms', easing: 'linear', fillMode: 'both' },
-          },
-          backwards: {
-            old: { name: 'none', duration: '1ms', easing: 'linear', fillMode: 'both' },
-            new: { name: 'none', duration: '1ms', easing: 'linear', fillMode: 'both' },
-          },
-        }
-  }
+  transition:animate={elevatorTabAnimationsEnabled ? roomLiftTransition : 'none'}
 >
   <head>
     <ThemeBootstrap />
@@ -131,11 +135,19 @@ const roomLiftTransition = {
   <body
     class:list={[
       bodyClass,
+      isPrimaryRoom && 'primary-room-page',
       roomThemeClass && 'room-themed',
       roomThemeClass,
       hasSiteRoomBackdrop && 'has-site-room-backdrop',
     ]}
   >
+    {isPrimaryRoom && (
+      <SharedRoomBackdrop
+        client:load
+        transition:persist="primary-room-backdrop"
+        initialCameraX={primaryRoomInitialCameraX}
+      />
+    )}
     {hasSiteRoomBackdrop && (
       <div class="site-room-backdrop wall-room-host" aria-hidden="true">
         <WallBackdrop />

@@ -1,0 +1,62 @@
+/*
+ * One deterministic viewport shell for the five navbar rooms. Keeping the
+ * header/content/backdrop in the same coordinate system prevents production
+ * swaps from briefly putting a room in normal document flow.
+ */
+body.primary-room-page {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+@supports (height: 100svh) {
+  body.primary-room-page {
+    height: 100svh;
+    min-height: 100svh;
+  }
+}
+
+@supports (height: 100dvh) {
+  body.primary-room-page {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
+
+body.primary-room-page > .site-header {
+  position: absolute;
+  z-index: 50;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+body.primary-room-page > main {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.primary-room-backdrop {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+/* The interactive foreground owns no opaque room paint. The single backdrop
+   underneath it is the only brick/floor renderer in the five primary rooms. */
+body.primary-room-page .wall-stage,
+body.primary-room-page .about-room,
+body.primary-room-page .contact-page {
+  background: transparent;
+}
