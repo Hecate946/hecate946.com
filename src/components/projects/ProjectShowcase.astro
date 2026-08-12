@@ -9,17 +9,28 @@ interface Props {
 }
 
 const { project } = Astro.props;
-const image = withBase(project.image);
-const imageStem = project.image.replace(/\.webp$/i, '');
-const imageSrcset = [640, 960, 1200]
-  .map((width) => `${withBase(`${imageStem}-${width}.webp`)} ${width}w`)
-  .concat(`${image} 1600w`)
-  .join(', ');
-const imageSizes = '(max-width: 47.999rem) calc(100vw - 2rem), min(46vw, 42rem)';
 const projectsHref = withBase('/projects/');
+const painting = withBase(`/images/project-gallery/${project.slug}.webp`);
 const projectLinks = project.links ?? [];
 const resolveLink = (href: string) => (href.startsWith('/') ? withBase(href) : href);
-const longTitle = project.title.length > 10;
+
+/*
+ * Detail-page copy intentionally lives here instead of in projects.ts.
+ * projects.ts feeds the Projects index too; keeping this prose local means
+ * this redesign cannot change the index or any other project presentation.
+ */
+const projectWriting: Record<Project['slug'], string> = {
+  neutra:
+    'Neutra was one of the first projects where software stopped feeling like a small program and started feeling like a system I had to operate. I built it as one Discord platform for moderation, analytics, security, and music rather than a collection of disconnected bots. Over time it grew to 320 commands and was used by 500,000 people, which forced me to think seriously about data modeling, reliability, and what it means to maintain software at scale. Looking back, it is the project that taught me how much I enjoy building tools that become infrastructure for other people.',
+  sunset:
+    'I built Sunset because reserving UCLA tennis and pickleball courts had become a strangely competitive timing problem: inventory opened on a strict 72-hour schedule and disappeared almost immediately. I reverse engineered the authenticated booking flow and turned it into a multi-user scheduler that could preserve sessions, wait for the exact release window, retry quickly, and recover when a browser or process failed. It is a small project in scope, but I like it because it takes an annoying real-world ritual and makes the computer handle every fragile part of it.',
+  keycad:
+    'KeyCAD started with a question I found interesting: could a photograph contain enough information to recreate useful physical geometry? I built a library of 19 parameterized key blanks in OpenSCAD, then wrote an OpenCV pipeline that corrected scale, found measurement points in an image, and transferred those measurements onto the matching model to produce printable geometry. What I like most about the project is the bridge between two very different kinds of computation—interpreting pixels on one side and generating a precise physical object on the other.',
+  portfolio:
+    'I built Hecate946.com because I wanted a personal website to feel less like a document and more like a place. The site is statically generated with Astro, with Svelte and WebGL used only where interaction earns the extra complexity, and I keep rebuilding parts of it whenever I find a visual idea worth exploring. It has become an ongoing experiment in animation, interface design, accessibility, performance, and how much personality a website can have without becoming difficult to use. More than a portfolio, it is the project where I let myself treat the browser as a creative medium.',
+};
+
+const writing = projectWriting[project.slug];
 ---
 
 <BaseLayout
@@ -31,11 +42,21 @@ const longTitle = project.title.length > 10;
   imageHeight={1000}
   imageType="image/webp"
   mainClass="project-detail-main"
-  bodyClass="project-detail-page"
+  bodyClass={`project-detail-page project-detail-page--${project.slug}`}
 >
-  <article class="project-case">
-    <div class="project-case__shell">
-      <div class="project-case__utility">
+  <article class="project-page" aria-labelledby="project-title">
+    <div class="project-page__plaster" aria-hidden="true"></div>
+
+    <div class="project-page__art" aria-hidden="true">
+      <img src={painting} alt="" decoding="async" />
+    </div>
+
+    <div class="project-page__content">
+      <p class="project-timeline">{project.period}</p>
+      <h1 id="project-title">{project.title}</h1>
+      <p class="project-writing">{writing}</p>
+
+      <div class="project-page__links">
         <a class="project-back-link" href={projectsHref}>
           <span aria-hidden="true">←</span>
           <span>Projects</span>
@@ -61,75 +82,6 @@ const longTitle = project.title.length > 10;
           )
         }
       </div>
-
-      <header class="project-hero">
-        <div class="project-hero__copy">
-          <p class="project-kicker">{project.category} · {project.period}</p>
-          <h1 class:list={{ 'project-title--long': longTitle }}>{project.title}</h1>
-          <p class="project-tagline">{project.tagline}</p>
-        </div>
-
-        <figure class="project-hero__image">
-          <img
-            src={image}
-            srcset={imageSrcset}
-            sizes={imageSizes}
-            alt={project.imageAlt}
-            width="1600"
-            height="1000"
-            decoding="async"
-            fetchpriority="high"
-          />
-        </figure>
-      </header>
-
-      <dl class="project-facts" aria-label="Project facts">
-        <div>
-          <dt>Role</dt>
-          <dd>{project.role}</dd>
-        </div>
-        <div>
-          <dt>Status</dt>
-          <dd>{project.status}</dd>
-        </div>
-        <div class="project-facts__wide">
-          <dt>Built with</dt>
-          <dd>{project.technologies.join(' · ')}</dd>
-        </div>
-      </dl>
-
-      <div class="project-sections">
-        <section class="project-section" aria-labelledby="overview-heading">
-          <h2 id="overview-heading">Overview</h2>
-          <p>{project.description}</p>
-        </section>
-
-        <section class="project-section" aria-labelledby="challenge-heading">
-          <h2 id="challenge-heading">Challenge</h2>
-          <p>{project.challenge}</p>
-        </section>
-
-        <section class="project-section" aria-labelledby="approach-heading">
-          <h2 id="approach-heading">Approach</h2>
-          <p>{project.approach}</p>
-        </section>
-
-        <section class="project-section" aria-labelledby="result-heading">
-          <h2 id="result-heading">Result</h2>
-          <p>{project.result}</p>
-        </section>
-
-        <section class="project-section project-section--highlights" aria-labelledby="highlights-heading">
-          <h2 id="highlights-heading">Highlights</h2>
-          <ol>
-            {project.highlights.map((highlight) => <li>{highlight}</li>)}
-          </ol>
-        </section>
-      </div>
-
-      <footer class="project-footer-nav">
-        <a href={projectsHref}><span aria-hidden="true">←</span> All projects</a>
-      </footer>
     </div>
   </article>
 </BaseLayout>

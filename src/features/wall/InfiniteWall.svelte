@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import WallWindow from './WallWindow.svelte';
-  import WallRoom from './WallRoom.svelte';
+  import WallBackdrop from './WallBackdrop.svelte';
+  import FloorScene from '../floor/FloorScene.svelte';
   import {
     WALL_LOOP_WIDTH,
     WALL_START_X,
@@ -13,14 +14,14 @@
   const DRAG_THRESHOLD = 7;
   const WHEEL_SCALE = 0.82;
   const IDLE_DRIFT_SPEED = 30; // pixels per second
-  const WALL_PATTERN_WIDTH = 96;
-  const FLOOR_TILE_SIZE = 84;
   const DIRECTION_THRESHOLD = 36;
   const INERTIA_TIME_CONSTANT = 0.78;
   const MAX_MANUAL_SPEED = 2_400;
 
   let stage: HTMLElement;
   let wallWorld: HTMLElement;
+  let wallBackdrop: { setCameraX: (cameraX: number) => void };
+  let floorScene: { setCameraX: (cameraX: number) => void };
   let cameraX = WALL_START_X;
   let velocity = 0;
   let driftDirection = 1;
@@ -43,7 +44,7 @@
   let lastLoopBase = Number.NaN;
   let renderDevicePixelRatio = 1;
 
-  const stageStyle = `--loop-width: ${WALL_LOOP_WIDTH}px; --wall-room-brick-x: ${periodicOffset(WALL_START_X, WALL_PATTERN_WIDTH)}px; --wall-room-floor-x: ${periodicOffset(WALL_START_X, FLOOR_TILE_SIZE)}px;`;
+  const stageStyle = `--loop-width: ${WALL_LOOP_WIDTH}px;`;
 
   function modulo(value: number, period: number) {
     return ((value % period) + period) % period;
@@ -69,10 +70,6 @@
     // the OS reduced-motion media query here could leave the wall permanently
     // stationary while the control still appeared to be in its playing state.
     return isPaused ? 0 : driftDirection * IDLE_DRIFT_SPEED;
-  }
-
-  function periodicOffset(position: number, period: number) {
-    return -modulo(position, period);
   }
 
   function snapToDevicePixel(value: number) {
@@ -104,11 +101,11 @@
 
     wallWorld?.style.setProperty('transform', `translate3d(${-renderedCameraX}px, 0, 0)`);
 
-    // Only genuinely repeating texture layers are wrapped at their own small
-    // periods. Static wall/floor lighting stays fixed, so these resets are
-    // visually exact and cannot create a one-frame lighting jump.
-    stage?.style.setProperty('--wall-room-brick-x', `${periodicOffset(renderedCameraX, WALL_PATTERN_WIDTH)}px`);
-    stage?.style.setProperty('--wall-room-floor-x', `${periodicOffset(renderedCameraX, FLOOR_TILE_SIZE)}px`);
+    // The wall and floor are independent render layers, but both consume the
+    // same camera coordinate. Imperative synchronization keeps the animation
+    // on a single rAF without forcing per-frame Svelte reactivity.
+    wallBackdrop?.setCameraX(renderedCameraX);
+    floorScene?.setCameraX(renderedCameraX);
 
     lastRenderedCameraX = renderedCameraX;
   }
@@ -464,7 +461,8 @@
 >
   <h1 class="visually-hidden">Cyrus Asasi</h1>
 
-  <WallRoom />
+  <WallBackdrop bind:this={wallBackdrop} initialCameraX={WALL_START_X} />
+  <FloorScene bind:this={floorScene} initialCameraX={WALL_START_X} />
 
   <div
     bind:this={wallWorld}

@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import AboutBook from '@/components/about/AboutBook.svelte';
-import WallRoom from '@/features/wall/WallRoom.svelte';
+import WallBackdrop from '@/features/wall/WallBackdrop.svelte';
+import FloorScene from '@/features/floor/FloorScene.svelte';
 import { withBase } from '@/lib/paths';
 import '@/styles/about.css';
 
@@ -22,7 +23,8 @@ const pickleballImageUrl = withBase('/images/about/ucla-pickleball-super-regiona
   bodyClass="about-room-page"
 >
   <div class="about-room wall-room-host">
-    <WallRoom />
+    <WallBackdrop />
+    <FloorScene client:load />
     <AboutBook
       client:load
       {musicVideoUrl}

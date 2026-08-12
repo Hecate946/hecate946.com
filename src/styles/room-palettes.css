@@ -1,6 +1,6 @@
 /*
  * Shared brick-room palettes for ordinary pages. Every room uses the exact
- * same WallRoom geometry as the homepage; only the color variables change.
+ * same room geometry as the homepage; only the color variables change.
  * The main navigation follows a deliberate sequence: teal Home, orange About,
  * purple Projects, golden Resumes, and green Contact. Stats belongs to the
  * Projects family, so it shares the same purple room.

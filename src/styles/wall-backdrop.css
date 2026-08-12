@@ -1,26 +1,8 @@
 /*
- * Shared architectural room shell used by the moving homepage and static
- * interior pages. Interaction/camera code intentionally lives elsewhere;
- * this file owns only the physical wall, brickwork, floor, baseboard and
- * lighting so every room is literally built from the same visual system.
+ * DOM-rendered architectural backdrop. The wall owns brickwork, ambient wall
+ * lighting, the baseboard, and the room vignette. It deliberately knows
+ * nothing about the floor renderer or any future 3D floor objects.
  */
-.wall-room-host {
-  --floor-height: clamp(5.2rem, 18%, 9.8rem);
-  --baseboard-height: clamp(0.62rem, 1.15vw, 0.92rem);
-  --wall-room-brick-x: 0px;
-  --wall-room-floor-x: 0px;
-  /* The floor is projected in 3D. These source dimensions are intentionally
-     depth-compensated so the projected cells read as square ceramic tiles,
-     not tall rectangles. Keep this geometry shared by every room. */
-  --floor-tile-width: 84px;
-  --floor-tile-depth: 118px;
-
-  position: relative;
-  isolation: isolate;
-  background: var(--wall-dark, #010101);
-  color: var(--wall-light, #f4f1e9);
-}
-
 .wall-stage__mortar-light {
   position: absolute;
   z-index: 2;
@@ -66,8 +48,7 @@
   width: calc(100% + 192px);
   background: color-mix(in srgb, var(--wall-light, #f4f1e9) 22%, transparent);
   backface-visibility: hidden;
-  content: '';
-  transform: translate3d(var(--wall-room-brick-x), 0, 0);
+  transform: translate3d(var(--wall-backdrop-brick-x, 0px), 0, 0);
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='48' viewBox='0 0 96 48'%3E%3Cg fill='%23fff'%3E%3Crect x='0' y='0' width='96' height='1'/%3E%3Crect x='0' y='24' width='96' height='1'/%3E%3Crect x='0' y='0' width='1' height='24'/%3E%3Crect x='48' y='0' width='1' height='24'/%3E%3Crect x='24' y='24' width='1' height='24'/%3E%3Crect x='72' y='24' width='1' height='24'/%3E%3C/g%3E%3C/svg%3E");
   -webkit-mask-position: 0 0;
   -webkit-mask-repeat: repeat;
@@ -88,67 +69,15 @@
   pointer-events: none;
 }
 
-.wall-floor {
+/*
+ * The baseboard is part of the wall, not the floor. It sits behind the 3D
+ * layer so future floor objects can correctly occlude it when they stand in
+ * front of the wall. The floor geometry itself begins at the baseboard's
+ * lower edge, so it never paints over the trim.
+ */
+.wall-baseboard {
   position: absolute;
-  z-index: 5;
-  right: 0;
-  bottom: -0.2rem;
-  left: 0;
-  height: calc(var(--floor-height) + 0.2rem);
-  overflow: hidden;
-  perspective: 30rem;
-  perspective-origin: 50% 0;
-  contain: layout paint style;
-  pointer-events: none;
-}
-
-.wall-floor__surface {
-  position: absolute;
-  top: -0.15rem;
-  bottom: 0;
-  left: -50%;
-  width: 200%;
-  background-color: var(--wall-dark, #050505);
-  background-image: conic-gradient(
-    from 90deg,
-    var(--wall-light, #f4f1e9) 0 25%,
-    var(--wall-dark, #050505) 0 50%,
-    var(--wall-light, #f4f1e9) 0 75%,
-    var(--wall-dark, #050505) 0 100%
-  );
-  background-position: 0 0;
-  background-repeat: repeat;
-  background-size: var(--floor-tile-width) var(--floor-tile-depth);
-  backface-visibility: hidden;
-  box-shadow:
-    inset 0 1rem 1.5rem rgb(0 0 0 / 22%),
-    inset 0 -1.1rem 2rem rgb(0 0 0 / 16%);
-  transform: translate3d(var(--wall-room-floor-x), 0, 0) rotateX(64deg) scaleY(1.28) translateY(14%);
-  transform-origin: 50% 0;
-  will-change: transform;
-}
-
-.wall-floor::after {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--wall-light, #f4f1e9) 8%, transparent),
-      transparent 20% 76%,
-      rgb(0 0 0 / 16%)
-    ),
-    linear-gradient(108deg, transparent 0 32%, color-mix(in srgb, var(--wall-light, #f4f1e9) 2.4%, transparent) 41%, transparent 50%) 0 0 / 30rem 100% repeat-x,
-    linear-gradient(180deg, color-mix(in srgb, var(--wall-light, #f4f1e9) 1.2%, transparent), transparent 45%);
-  content: '';
-  opacity: 0.14;
-  pointer-events: none;
-}
-
-.wall-floor__baseboard {
-  position: absolute;
-  z-index: 11;
+  z-index: 3;
   top: calc(100% - var(--floor-height) + var(--floor-top-offset, 0rem) - 0.14rem);
   right: -1px;
   left: -1px;
@@ -168,7 +97,7 @@
   pointer-events: none;
 }
 
-.wall-floor__baseboard::before {
+.wall-baseboard::before {
   position: absolute;
   top: -0.12rem;
   right: 0;
@@ -191,7 +120,7 @@
   content: '';
 }
 
-.wall-floor__baseboard::after {
+.wall-baseboard::after {
   position: absolute;
   top: 0.5rem;
   right: -1px;
@@ -221,18 +150,7 @@
 }
 
 @media (max-width: 40rem) {
-  .wall-room-host {
-    --floor-height: 6.4rem;
-    --baseboard-height: 0.78rem;
-    --floor-top-offset: -0.25rem;
-  }
-
-  .wall-floor {
-    bottom: -0.55rem;
-    height: calc(var(--floor-height) + 0.8rem);
-  }
-
-  .wall-floor__baseboard {
+  .wall-baseboard {
     height: calc(var(--baseboard-height) + 0.9rem);
   }
 }
