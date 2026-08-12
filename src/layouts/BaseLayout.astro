@@ -41,7 +41,9 @@ const isDedicatedRoom =
   pathname === '/about/' ||
   pathname === '/about' ||
   pathname === '/projects/' ||
-  pathname === '/projects';
+  pathname === '/projects' ||
+  pathname === '/resumes/' ||
+  pathname === '/resumes';
 const roomThemeClass = pathname.startsWith('/about')
   ? 'room-theme-about'
   : pathname.startsWith('/projects')

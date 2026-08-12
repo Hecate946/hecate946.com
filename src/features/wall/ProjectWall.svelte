@@ -10,6 +10,14 @@
     projectDestinations,
   } from './project-wall-config';
 
+  export let destinations: readonly WallDestination[] = projectDestinations;
+  export let loopWidth = PROJECT_LOOP_WIDTH;
+  export let startX = PROJECT_START_X;
+  export let heading = 'Projects';
+  export let stageLabel =
+    'Infinite project conveyor. Drag, swipe, or scroll horizontally, then select a framed project.';
+  export let trackLabel = 'Selected projects';
+
   const loopCopies = [-1, 0, 1] as const;
   const DRAG_THRESHOLD = 7;
   const WHEEL_SCALE = 0.82;
@@ -22,7 +30,7 @@
   let wallWorld: HTMLElement;
   let wallBackdrop: { setCameraX: (cameraX: number) => void };
   let floorScene: { setCameraX: (cameraX: number) => void };
-  let cameraX = PROJECT_START_X;
+  let cameraX = startX;
   let velocity = 0;
   let driftDirection = 1;
   let isPaused = false;
@@ -44,14 +52,14 @@
   let lastLoopBase = Number.NaN;
   let renderDevicePixelRatio = 1;
 
-  const stageStyle = `--loop-width: ${PROJECT_LOOP_WIDTH}px;`;
+  $: stageStyle = `--loop-width: ${loopWidth}px;`;
 
   function modulo(value: number, period: number) {
     return ((value % period) + period) % period;
   }
 
   function loopBase(position: number) {
-    return Math.floor(position / PROJECT_LOOP_WIDTH) * PROJECT_LOOP_WIDTH;
+    return Math.floor(position / loopWidth) * loopWidth;
   }
 
   function markInteracted() {
@@ -138,9 +146,9 @@
   }
 
   function nearestDelta(targetX: number) {
-    let delta = targetX - modulo(cameraX, PROJECT_LOOP_WIDTH);
-    if (delta > PROJECT_LOOP_WIDTH / 2) delta -= PROJECT_LOOP_WIDTH;
-    if (delta < -PROJECT_LOOP_WIDTH / 2) delta += PROJECT_LOOP_WIDTH;
+    let delta = targetX - modulo(cameraX, loopWidth);
+    if (delta > loopWidth / 2) delta -= loopWidth;
+    if (delta < -loopWidth / 2) delta += loopWidth;
     return delta;
   }
 
@@ -376,7 +384,7 @@
     } else if (event.key === 'Home') {
       event.preventDefault();
       markInteracted();
-      void animateCameraTo(PROJECT_START_X, 420);
+      void animateCameraTo(startX, 420);
     }
   }
 
@@ -457,29 +465,29 @@
   class:wall-stage--entering={Boolean(enteringId)}
   class="wall-stage wall-room-host"
   style={stageStyle}
-  aria-label="Infinite project conveyor. Drag, swipe, or scroll horizontally, then select a framed project."
+  aria-label={stageLabel}
 >
-  <h1 class="visually-hidden">Projects</h1>
+  <h1 class="visually-hidden">{heading}</h1>
 
-  <WallBackdrop bind:this={wallBackdrop} initialCameraX={PROJECT_START_X} />
-  <FloorScene bind:this={floorScene} initialCameraX={PROJECT_START_X} />
+  <WallBackdrop bind:this={wallBackdrop} initialCameraX={startX} />
+  <FloorScene bind:this={floorScene} initialCameraX={startX} />
 
   <div
     bind:this={wallWorld}
     class="wall-world"
-    aria-label="Selected projects"
-    style={`--loop-base: 0px; transform: translate3d(${-PROJECT_START_X}px, 0, 0);`}
+    aria-label={trackLabel}
+    style={`--loop-base: 0px; transform: translate3d(${-startX}px, 0, 0);`}
   >
     {#each loopCopies as loopIndex}
       <div
         class="wall-loop"
         aria-hidden={loopIndex !== 0 ? 'true' : undefined}
-        style={`--loop-offset: ${loopIndex * PROJECT_LOOP_WIDTH}px;`}
+        style={`--loop-offset: ${loopIndex * loopWidth}px;`}
       >
         <div class="wall-loop__seam wall-loop__seam--a" aria-hidden="true"></div>
         <div class="wall-loop__seam wall-loop__seam--b" aria-hidden="true"></div>
 
-        {#each projectDestinations as destination, destinationIndex (destination.id)}
+        {#each destinations as destination, destinationIndex (destination.id)}
           <WallWindow
             {destination}
             keyboardAccessible={loopIndex === 0}

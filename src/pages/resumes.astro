@@ -1,43 +1,27 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import ResumeGallery from '@/components/resume/ResumeGallery.svelte';
-import { pdfViewerHref, withBase } from '@/lib/paths';
+import ProjectWall from '@/features/wall/ProjectWall.svelte';
+import {
+  RESUME_LOOP_WIDTH,
+  RESUME_START_X,
+  resumeDestinations,
+} from '@/features/wall/resume-wall-config';
 import '@/styles/resume.css';
-
-const softwareResumeUrl = pdfViewerHref('/resumes/cyrus-asasi-software-engineering-resume.pdf');
-const musicResumeUrl = pdfViewerHref('/resumes/cyrus-asasi-clarinet-performance-resume.pdf');
-
-const resumes = [
-  {
-    id: 'software',
-    number: '01',
-    label: 'Software Engineering',
-    shortLabel: 'Software Engineering',
-    pdfUrl: softwareResumeUrl,
-    previewUrl: withBase('/images/resume/cyrus-asasi-software-engineering-resume.webp'),
-    previewWidth: 1454,
-    previewHeight: 2048,
-  },
-  {
-    id: 'clarinet',
-    number: '02',
-    label: 'Clarinet Performance',
-    shortLabel: 'Clarinet Performance',
-    pdfUrl: musicResumeUrl,
-    previewUrl: withBase('/images/resume/cyrus-asasi-clarinet-performance-resume.webp'),
-    previewWidth: 1338,
-    previewHeight: 1885,
-  },
-] as const;
 ---
 
 <BaseLayout
   title="Resumes — Cyrus Asasi"
   description="Software engineering and clarinet performance resumes for Cyrus Asasi."
+  mainClass="resume-wall-main"
+  bodyClass="resume-wall-page"
 >
-  <section class="resume-page interior-page interior-page--open" aria-label="Resumes">
-    <div class="resume-content interior-page-content">
-      <ResumeGallery {resumes} />
-    </div>
-  </section>
+  <ProjectWall
+    client:load
+    destinations={resumeDestinations}
+    loopWidth={RESUME_LOOP_WIDTH}
+    startX={RESUME_START_X}
+    heading="Resumes"
+    stageLabel="Infinite resume conveyor. Drag, swipe, or scroll horizontally, then select a framed resume."
+    trackLabel="Resumes"
+  />
 </BaseLayout>

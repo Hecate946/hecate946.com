@@ -26,9 +26,10 @@
   const GRIP_LOCAL = new THREE.Vector3(0, 0, 147);
   const LENS_VIEW_RADIUS = LENS_RADIUS - RING_TUBE_RADIUS - 2.3;
   const LENS_PLANE_Y = 0;
-  const REST_BODY_CLEARANCE = OUTER_RING_RADIUS + 0.18;
   const VIEWPORT_MARGIN = 6;
   const WALL_PLANE_OFFSET_Z = 10;
+  const HANDLE_SCREEN_TILT = THREE.MathUtils.degToRad(-78);
+  const FLOOR_VISUAL_EPSILON = 0.65;
   const LENS_CONTOUR_POINTS = 36;
 
   const MAGNIFICATION = 1.82;
@@ -36,12 +37,12 @@
   const FIXED_STEP = 1 / 60;
   const GRAVITY = -980;
   const MAX_RELEASE_SPEED = 1320;
-  const FLOOR_FRICTION = 0.82;
+  const FLOOR_FRICTION = 1.45;
   const FLOOR_RESTITUTION = 0.095;
   const WALL_FRICTION = 0.58;
   const WALL_RESTITUTION = 0.18;
-  const BOUNDS_MARGIN_LEFT = OUTER_RING_RADIUS + 4;
-  const BOUNDS_MARGIN_RIGHT = CAP_CENTER_Z + CAP_HALF_LENGTH + 4;
+  const BOUNDS_MARGIN_LEFT = OUTER_RING_RADIUS + 5;
+  const BOUNDS_MARGIN_RIGHT = OUTER_RING_RADIUS + 5;
   const METAL_RESTITUTION = 0.31;
   const WOOD_RESTITUTION = 0.11;
   const GLASS_RESTITUTION = 0.045;
@@ -540,9 +541,10 @@
     );
     const startZ = floor.minZ + WALL_PLANE_OFFSET_Z;
 
+    const restingY = exactMinimumBodyY(cameraFacingQuaternion(), floor.y);
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
-      .setTranslation(startX, floor.y + REST_BODY_CLEARANCE, startZ)
-      .setLinearDamping(0.14)
+      .setTranslation(startX, restingY, startZ)
+      .setLinearDamping(0.72)
       .setAngularDamping(1.2)
       .setCcdEnabled(true)
       .setCanSleep(true)
@@ -552,7 +554,7 @@
 
     // The physical body is constrained to the wall-parallel X/Y plane. These
     // colliders match the camera-facing silhouette: circular metal ring plus a
-    // horizontal ferrule, wood handle, and metal cap pointing to the right.
+    // near-vertical ferrule, wood handle, and metal cap leaning slightly right.
     const ringSegments = 24;
     const segmentHalfLength = (Math.PI * 2 * LENS_RADIUS) / ringSegments / 2 * 0.94;
     for (let index = 0; index < ringSegments; index += 1) {
@@ -570,30 +572,27 @@
     }
 
     addCollider(RAPIER.ColliderDesc.cuboid(29, 29, 1.0), 0.05, GLASS_RESTITUTION);
+    const ferrulePoint = rotatePhysicsPoint(FERRULE_CENTER_Z, 0);
+    const handlePoint = rotatePhysicsPoint(HANDLE_CENTER_Z, 0);
+    const capPoint = rotatePhysicsPoint(CAP_CENTER_Z, 0);
     addCollider(
-      RAPIER.ColliderDesc.cuboid(FERRULE_HALF_LENGTH, FERRULE_HALF_HEIGHT, 3.5).setTranslation(
-        FERRULE_CENTER_Z,
-        0,
-        0,
-      ),
+      RAPIER.ColliderDesc.cuboid(FERRULE_HALF_LENGTH, FERRULE_HALF_HEIGHT, 3.5)
+        .setTranslation(ferrulePoint.x, ferrulePoint.y, 0)
+        .setRotation(zRotationQuaternion(HANDLE_SCREEN_TILT)),
       0.72,
       METAL_RESTITUTION,
     );
     addCollider(
-      RAPIER.ColliderDesc.cuboid(HANDLE_HALF_LENGTH, HANDLE_HALF_WIDTH, 3.9).setTranslation(
-        HANDLE_CENTER_Z,
-        0,
-        0,
-      ),
+      RAPIER.ColliderDesc.cuboid(HANDLE_HALF_LENGTH, HANDLE_HALF_WIDTH, 3.9)
+        .setTranslation(handlePoint.x, handlePoint.y, 0)
+        .setRotation(zRotationQuaternion(HANDLE_SCREEN_TILT)),
       0.24,
       WOOD_RESTITUTION,
     );
     addCollider(
-      RAPIER.ColliderDesc.cuboid(CAP_HALF_LENGTH, CAP_HALF_HEIGHT, 4.1).setTranslation(
-        CAP_CENTER_Z,
-        0,
-        0,
-      ),
+      RAPIER.ColliderDesc.cuboid(CAP_HALF_LENGTH, CAP_HALF_HEIGHT, 4.1)
+        .setTranslation(capPoint.x, capPoint.y, 0)
+        .setRotation(zRotationQuaternion(HANDLE_SCREEN_TILT)),
       0.66,
       METAL_RESTITUTION,
     );
@@ -630,14 +629,39 @@
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).normalize();
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion).normalize();
     const towardCamera = new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion).normalize();
-    // Local +Y is the lens normal; local +Z is the handle direction. Mapping
-    // +Z to camera-right makes the wooden handle naturally point right.
     const basis = new THREE.Matrix4().makeBasis(up, towardCamera, right);
-    return new THREE.Quaternion().setFromRotationMatrix(basis).normalize();
+    const facing = new THREE.Quaternion().setFromRotationMatrix(basis).normalize();
+    // A slight local-Y twist keeps the lens face camera-parallel while placing
+    // the handle on a natural down-right diagonal instead of straight sideways.
+    const handleTilt = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      HANDLE_SCREEN_TILT,
+    );
+    return facing.multiply(handleTilt).normalize();
   }
 
   function wallPlaneZ() {
     return (context.getFloorSurface()?.minZ ?? 0) + WALL_PLANE_OFFSET_Z;
+  }
+
+  function exactMinimumBodyY(quaternion: THREE.Quaternion, floorY: number) {
+    if (!magnifierBoundsLocalVertices.length) return floorY + OUTER_RING_RADIUS;
+    let lowestOffset = Infinity;
+    for (const localVertex of magnifierBoundsLocalVertices) {
+      const offsetY = tmpVectorC.copy(localVertex).applyQuaternion(quaternion).y;
+      lowestOffset = Math.min(lowestOffset, offsetY);
+    }
+    return floorY - lowestOffset + FLOOR_VISUAL_EPSILON;
+  }
+
+  function rotatePhysicsPoint(x: number, y: number) {
+    const c = Math.cos(HANDLE_SCREEN_TILT);
+    const s = Math.sin(HANDLE_SCREEN_TILT);
+    return { x: x * c - y * s, y: x * s + y * c };
+  }
+
+  function zRotationQuaternion(angle: number) {
+    return { x: 0, y: 0, z: Math.sin(angle / 2), w: Math.cos(angle / 2) };
   }
 
   function syncVisualFromBody() {
@@ -703,22 +727,17 @@
     return { gripScreen, capScreen };
   }
 
-  function pointerIsNearHandle(clientX: number, clientY: number) {
+  function pointerHitsMagnifier(clientX: number, clientY: number) {
     if (!physicsReady || mode === 'held' || !magnifier) return false;
-    const segment = handleScreenSegment();
-    if (!segment) return false;
-    const { gripScreen, capScreen } = segment;
-    const vx = capScreen.x - gripScreen.x;
-    const vy = capScreen.y - gripScreen.y;
-    const lengthSq = vx * vx + vy * vy;
-    if (lengthSq < 1) return false;
-    const wx = clientX - gripScreen.x;
-    const wy = clientY - gripScreen.y;
-    const t = Math.max(0, Math.min(1, (wx * vx + wy * vy) / lengthSq));
-    const nearestX = gripScreen.x + vx * t;
-    const nearestY = gripScreen.y + vy * t;
-    const distance = Math.hypot(clientX - nearestX, clientY - nearestY);
-    return distance <= 28;
+    const ray = pointerRay(clientX, clientY);
+    if (!ray) return false;
+    magnifier.updateMatrixWorld(true);
+    const raycaster = new THREE.Raycaster();
+    raycaster.ray.copy(ray);
+    // Raycast the actual ring, lens, ferrule, wood and cap meshes. This makes
+    // the whole visible prop selectable rather than only an invisible handle
+    // strip, while still ignoring empty space inside its screen bounding box.
+    return raycaster.intersectObject(magnifier, true).length > 0;
   }
 
   function updateHitButton() {
@@ -788,6 +807,7 @@
       floor.minX + BOUNDS_MARGIN_LEFT,
       floor.maxX - BOUNDS_MARGIN_RIGHT,
     );
+    position.y = Math.max(position.y, exactMinimumBodyY(quaternion, floor.y));
     return { position, quaternion };
   }
 
@@ -842,10 +862,11 @@
     snapshot.style.height = `${window.innerHeight}px`;
     snapshot.style.pointerEvents = 'none';
 
-    const appendClone = (source: HTMLElement) => {
+    const appendClone = (source: HTMLElement, kind: 'room' | 'header') => {
       const rect = source.getBoundingClientRect();
       const clone = source.cloneNode(true) as HTMLElement;
       clone.querySelectorAll('.floor-scene__registrants, .room-magnifier-hit, .room-magnifier-overlay').forEach((node) => node.remove());
+      if (kind === 'header') clone.classList.add('room-magnifier-overlay__header-clone');
       clone.style.position = 'absolute';
       clone.style.inset = 'auto';
       clone.style.left = `${rect.left}px`;
@@ -856,12 +877,13 @@
       clone.style.margin = '0';
       clone.style.transform = 'none';
       clone.style.pointerEvents = 'none';
+      clone.style.zIndex = kind === 'header' ? '2' : '1';
       snapshot.append(clone);
       return clone;
     };
 
-    const roomClone = appendClone(sourceRoom);
-    if (sourceHeader) appendClone(sourceHeader);
+    const roomClone = appendClone(sourceRoom, 'room');
+    if (sourceHeader) appendClone(sourceHeader, 'header');
     snapshotRoom?.remove();
     snapshotRoom = snapshot;
     lensViewport.prepend(snapshot);
@@ -955,6 +977,7 @@
     mode = 'held';
     destroyOverlay();
     if (hitButton) hitButton.style.display = 'none';
+    document.documentElement.classList.remove('is-hovering-room-magnifier');
     document.documentElement.classList.add('is-using-room-magnifier');
     createOverlay();
     captureRoomSnapshot();
@@ -963,12 +986,19 @@
 
   function handleGlobalPointerDown(event: PointerEvent) {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    if (!pointerIsNearHandle(event.clientX, event.clientY)) return;
+    if (!pointerHitsMagnifier(event.clientX, event.clientY)) return;
     beginPickup(event);
   }
 
   function handlePointerMove(event: PointerEvent) {
-    if (mode !== 'held' || event.pointerId !== activePointerId) return;
+    if (mode !== 'held' || event.pointerId !== activePointerId) {
+      document.documentElement.classList.toggle(
+        'is-hovering-room-magnifier',
+        pointerHitsMagnifier(event.clientX, event.clientY),
+      );
+      return;
+    }
+    document.documentElement.classList.remove('is-hovering-room-magnifier');
     if (event.cancelable) event.preventDefault();
     pointerX = event.clientX;
     pointerY = event.clientY;
@@ -1020,7 +1050,9 @@
     heldQuaternion.copy(target.quaternion);
     heldPosition.z = wallPlaneZ();
     setBodyTransform(heldPosition, heldQuaternion);
+    enforceExactFloorBoundary(false);
     enforceViewportBounds(false);
+    enforceExactFloorBoundary(false);
     syncVisualFromBody();
     if (!rememberViewportSafeState() && lastViewportSafeState) {
       applyBodyState(lastViewportSafeState, false);
@@ -1157,6 +1189,22 @@
     }
   }
 
+  function enforceExactFloorBoundary(wake = true) {
+    if (!rigidBody) return;
+    const floor = context.getFloorSurface();
+    if (!floor) return;
+    const minimumY = exactMinimumBodyY(cameraFacingQuaternion(), floor.y);
+    const translation = rigidBody.translation();
+    if (translation.y >= minimumY) return;
+    const velocity = rigidBody.linvel();
+    rigidBody.setTranslation({ x: translation.x, y: minimumY, z: wallPlaneZ() }, wake);
+    rigidBody.setLinvel(
+      { x: velocity.x, y: velocity.y < 0 ? -velocity.y * 0.2 : velocity.y, z: 0 },
+      wake,
+    );
+    rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, wake);
+  }
+
   function enforceRoomBounds() {
     if (!rigidBody) return;
     const floor = context.getFloorSurface();
@@ -1185,8 +1233,10 @@
       preStepVerticalVelocity = rigidBody.linvel().y;
       physicsWorld.step(physicsEventQueue);
       assistHardFloorImpact();
+      enforceExactFloorBoundary(true);
       enforceRoomBounds();
       enforceViewportBounds(true);
+      enforceExactFloorBoundary(true);
       syncVisualFromBody();
       const bounds = projectedMagnifierBounds();
       if (!viewportBoundsInside(bounds) && previousState) {
@@ -1227,7 +1277,7 @@
       rigidBody.setTranslation(
         {
           x: THREE.MathUtils.clamp(translation.x, floor.minX + BOUNDS_MARGIN_LEFT, floor.maxX - BOUNDS_MARGIN_RIGHT),
-          y: floor.y + REST_BODY_CLEARANCE + 10,
+          y: exactMinimumBodyY(cameraFacingQuaternion(), floor.y) + 10,
           z: wallPlaneZ(),
         },
         true,
@@ -1305,7 +1355,7 @@
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'room-magnifier-hit';
-    button.setAttribute('aria-label', 'Pick up the magnifying glass by its handle');
+    button.setAttribute('aria-label', 'Pick up the magnifying glass');
     button.addEventListener('pointerdown', beginPickup);
     document.body.append(button);
     hitButton = button;
@@ -1327,6 +1377,7 @@
       window.removeEventListener('pointercancel', handlePointerCancel);
       window.removeEventListener('resize', handleResize);
       document.documentElement.classList.remove('is-using-room-magnifier');
+      document.documentElement.classList.remove('is-hovering-room-magnifier');
       hitButton?.removeEventListener('pointerdown', beginPickup);
       hitButton?.remove();
       hitButton = null;

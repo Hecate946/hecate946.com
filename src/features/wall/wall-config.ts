@@ -9,6 +9,7 @@ export interface WallPainting {
   width: number;
   height: number;
   objectPosition?: string;
+  objectFit?: 'cover' | 'contain';
   sources?: readonly WallPaintingSource[];
 }
 

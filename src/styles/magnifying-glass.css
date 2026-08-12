@@ -74,10 +74,11 @@
   user-select: none !important;
 }
 
-/* While the prop is in the user's hand or falling, the existing Three.js floor
-   canvas becomes the foreground object layer. The canvas itself remains
-   transparent everywhere except its 3D geometry. */
-html.is-using-room-magnifier .floor-scene {
+/* The magnifier shares FloorScene's transparent WebGL canvas. Keep that canvas
+   above all room installations at all times so the prop can never disappear
+   behind the TV at rest. The checkerboard geometry itself still begins at the
+   floor seam; wall-area pixels remain transparent. */
+.floor-scene {
   z-index: 2001;
   contain: none;
   overflow: visible;
@@ -88,13 +89,23 @@ html.is-using-room-magnifier body {
   cursor: grabbing !important;
 }
 
+html.is-hovering-room-magnifier,
+html.is-hovering-room-magnifier body {
+  cursor: grab !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .room-magnifier-hit::after {
     transition: none;
   }
 }
 
-html.is-over-room-magnifier,
-html.is-over-room-magnifier body {
-  cursor: grab !important;
+/* Inside the lens the navbar should read as the same navbar, not as a second
+   translucent panel layered over the page. Keep its typography/borders, but
+   remove header-only compositing effects from the cloned optical sample. */
+.room-magnifier-overlay__header-clone {
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }

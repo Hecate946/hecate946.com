@@ -33,7 +33,7 @@
   draggable="false"
   tabindex={keyboardAccessible ? undefined : -1}
   onfocus={() => keyboardAccessible && onFocus(destination)}
-  style={`left: ${destination.x}px; --painting-position: ${destination.painting.objectPosition ?? '50% 50%'};`}
+  style={`left: ${destination.x}px; --painting-position: ${destination.painting.objectPosition ?? '50% 50%'}; --painting-fit: ${destination.painting.objectFit ?? 'cover'};`}
   onclick={(event) => onEnter(event, destination)}
 >
   <span class="wall-window__recess" aria-hidden="true">
@@ -134,7 +134,7 @@
     height: 100%;
     max-width: 100%;
     max-height: 100%;
-    object-fit: cover;
+    object-fit: var(--painting-fit, cover);
     object-position: var(--painting-position);
     transform: none;
     pointer-events: none;
