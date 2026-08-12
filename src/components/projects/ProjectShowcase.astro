@@ -10,7 +10,7 @@ interface Props {
 
 const { project } = Astro.props;
 const projectsHref = withBase('/projects/');
-const painting = withBase(`/images/project-gallery/${project.slug}.webp`);
+const chalkboardTexture = withBase('/images/contact/chalkboard-photo.webp');
 const projectLinks = project.links ?? [];
 const resolveLink = (href: string) => (href.startsWith('/') ? withBase(href) : href);
 
@@ -31,6 +31,8 @@ const projectWriting: Record<Project['slug'], string> = {
 };
 
 const writing = projectWriting[project.slug];
+const writingWords = writing.split(' ');
+let chalkCharacterIndex = 0;
 ---
 
 <BaseLayout
@@ -45,43 +47,100 @@ const writing = projectWriting[project.slug];
   bodyClass={`project-detail-page project-detail-page--${project.slug}`}
 >
   <article class="project-page" aria-labelledby="project-title">
-    <div class="project-page__plaster" aria-hidden="true"></div>
+    <div class="project-board-stage">
+      <div class="project-chalkboard-wrap">
+        <div class="project-chalkboard__recess">
+          <div class="project-chalkboard__glass">
+            <section class="project-chalkboard" aria-label={`${project.title} project chalkboard`}>
+              <img
+                class="project-chalkboard__texture"
+                src={chalkboardTexture}
+                alt=""
+                width="1600"
+                height="1000"
+                draggable="false"
+                decoding="async"
+              />
 
-    <div class="project-page__art" aria-hidden="true">
-      <img src={painting} alt="" decoding="async" />
-    </div>
+              <div class="project-chalkboard__copy">
+                <p class="project-timeline">{project.period}</p>
+                <h1 id="project-title">{project.title}</h1>
 
-    <div class="project-page__content">
-      <p class="project-timeline">{project.period}</p>
-      <h1 id="project-title">{project.title}</h1>
-      <p class="project-writing">{writing}</p>
+                <p class="project-writing">
+                  <span class="project-writing__animated is-writing" aria-hidden="true">
+                    {writingWords.map((word, wordIndex) => (
+                      <>
+                        <span class="project-writing__word">
+                          {Array.from(word).map((character) => {
+                            const characterIndex = chalkCharacterIndex++;
+                            return (
+                              <span
+                                class="project-writing__character"
+                                style={`--chalk-index:${characterIndex}`}
+                              >
+                                {character}
+                              </span>
+                            );
+                          })}
+                        </span>
+                        {wordIndex < writingWords.length - 1 && (
+                          <span class="project-writing__space"> </span>
+                        )}
+                      </>
+                    ))}
+                  </span>
+                  <span class="project-writing__sr-only">{writing}</span>
+                </p>
 
-      <div class="project-page__links">
-        <a class="project-back-link" href={projectsHref}>
-          <span aria-hidden="true">←</span>
-          <span>Projects</span>
-        </a>
+                <div class="project-page__links">
+                  <a class="project-back-link" href={projectsHref}>
+                    <span aria-hidden="true">←</span>
+                    <span>Projects</span>
+                  </a>
 
-        {
-          projectLinks.length > 0 && (
-            <nav aria-label={`${project.title} links`}>
-              <ul class="project-links">
-                {projectLinks.map((link) => (
-                  <li>
-                    <a
-                      href={resolveLink(link.href)}
-                      target={link.href.startsWith('http') ? '_blank' : undefined}
-                      rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    >
-                      {link.label}<span aria-hidden="true">↗</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )
-        }
+                  {
+                    projectLinks.length > 0 && (
+                      <nav aria-label={`${project.title} links`}>
+                        <ul class="project-links">
+                          {projectLinks.map((link) => (
+                            <li>
+                              <a
+                                href={resolveLink(link.href)}
+                                target={link.href.startsWith('http') ? '_blank' : undefined}
+                                rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                              >
+                                {link.label}<span aria-hidden="true">↗</span>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </nav>
+                    )
+                  }
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="project-chalkboard__sill" aria-hidden="true"></div>
       </div>
     </div>
   </article>
+
+  <script>
+    const restartProjectChalkWriting = () => {
+      document.querySelectorAll<HTMLElement>('.project-writing__animated').forEach((writing) => {
+        writing.classList.remove('is-writing');
+        // Force the browser to commit the reset before re-applying the animation.
+        void writing.offsetWidth;
+        writing.classList.add('is-writing');
+      });
+    };
+  
+    document.addEventListener('astro:after-swap', restartProjectChalkWriting);
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) restartProjectChalkWriting();
+    });
+  </script>
 </BaseLayout>

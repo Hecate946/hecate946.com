@@ -1,78 +1,5 @@
-/*
- * Individual project pages are intentionally much quieter than the Projects
- * gallery. The shared brick room remains visible, but a broad area of the wall
- * has been "plastered over" to make long-form text effortless to read. Each
- * project's gallery painting is treated as a faded mural at the edge of that
- * surface rather than as a UI card or conventional hero image.
- */
 body.project-detail-page {
-  --project-paper: #e6ddd1;
-  --project-paper-edge: #d8cec2;
-  --project-ink: #211d1b;
-  --project-muted: rgb(33 29 27 / 56%);
-  --project-rule: rgb(33 29 27 / 20%);
-  --project-art-opacity: 0.34;
-  --project-art-opacity-mobile: 0.23;
-  --project-art-opacity-small: 0.19;
-
   min-height: 100vh;
-}
-
-/* The surface palette changes with the painting, while the surrounding room
-   stays the Projects room. The difference is deliberately restrained. */
-html[data-theme='light'] body.project-detail-page--neutra {
-  --project-paper: #ded8d0;
-  --project-paper-edge: #cfc8bf;
-  --project-ink: #211e1a;
-}
-
-html[data-theme='light'] body.project-detail-page--sunset {
-  --project-paper: #ddd7c7;
-  --project-paper-edge: #cbc4b3;
-  --project-ink: #211e18;
-}
-
-html[data-theme='light'] body.project-detail-page--keycad {
-  --project-paper: #dce0d6;
-  --project-paper-edge: #ccd0c5;
-  --project-ink: #1c211c;
-}
-
-html[data-theme='light'] body.project-detail-page--portfolio {
-  --project-paper: #e2d5c8;
-  --project-paper-edge: #d0c1b3;
-  --project-ink: #241b17;
-}
-
-html[data-theme='dark'] body.project-detail-page {
-  --project-paper: #191719;
-  --project-paper-edge: #121113;
-  --project-ink: #f0eadf;
-  --project-muted: rgb(240 234 223 / 58%);
-  --project-rule: rgb(240 234 223 / 18%);
-  --project-art-opacity: 0.25;
-  --project-art-opacity-mobile: 0.17;
-  --project-art-opacity-small: 0.14;
-}
-
-html[data-theme='dark'] body.project-detail-page--neutra {
-  --project-paper: #1b1917;
-  --project-paper-edge: #12110f;
-}
-
-html[data-theme='dark'] body.project-detail-page--sunset {
-  --project-paper: #1c1913;
-  --project-paper-edge: #13110d;
-}
-
-html[data-theme='dark'] body.project-detail-page--keycad {
-  --project-paper: #171b17;
-  --project-paper-edge: #101310;
-}
-
-html[data-theme='dark'] body.project-detail-page--portfolio {
-  --project-paper: #1d1613;
-  --project-paper-edge: #130f0d;
 }
 
 .project-detail-main {
@@ -80,172 +7,216 @@ html[data-theme='dark'] body.project-detail-page--portfolio {
   z-index: 1;
   min-height: calc(100vh - var(--header-height));
   padding: 0 !important;
-  overflow-x: clip;
 }
 
 .project-page {
-  --project-floor-clearance: clamp(6.5rem, 18vh, 10.25rem);
+  --project-floor-height: clamp(5.2rem, 18dvh, 9.8rem);
+  --project-board-chalk: #f0ede1;
+  --project-board-chalk-soft: rgb(240 237 225 / 62%);
+  --project-board-frame: #050505;
+  --project-board-frame-shadow: rgb(0 0 0 / 66%);
 
+  box-sizing: border-box;
   position: relative;
-  isolation: isolate;
-  display: grid;
   min-height: calc(100svh - var(--header-height));
-  place-items: stretch center;
-  padding: clamp(1rem, 2.4vw, 2rem) var(--site-edge) var(--project-floor-clearance);
-}
-
-/* A broad soft-edged field reads as part of the wall rather than a card. */
-.project-page__plaster {
-  position: absolute;
-  z-index: -2;
-  top: clamp(0.7rem, 1.7vw, 1.4rem);
-  bottom: calc(var(--project-floor-clearance) - clamp(0.8rem, 1.8vw, 1.35rem));
-  left: 50%;
-  width: min(78rem, 84vw);
-  background:
-    linear-gradient(115deg, rgb(255 255 255 / 3%), transparent 28% 72%, rgb(0 0 0 / 4%)),
-    var(--project-paper);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 5%),
-    inset 0 -1px 0 rgb(0 0 0 / 5%);
-  transform: translateX(-50%);
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent 0,
-    rgb(0 0 0 / 22%) 1.2%,
-    #000 5% 95%,
-    rgb(0 0 0 / 22%) 98.8%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    90deg,
-    transparent 0,
-    rgb(0 0 0 / 22%) 1.2%,
-    #000 5% 95%,
-    rgb(0 0 0 / 22%) 98.8%,
-    transparent 100%
-  );
-  pointer-events: none;
-}
-
-/* The painting becomes a mural fragment at the far edge of the writing wall.
-   There is no frame, border, shadow, or card chrome. */
-.project-page__art {
-  position: absolute;
-  z-index: -1;
-  top: clamp(0.7rem, 1.7vw, 1.4rem);
-  right: max(calc((100vw - min(78rem, 84vw)) / 2), 0px);
-  bottom: calc(var(--project-floor-clearance) - clamp(0.8rem, 1.8vw, 1.35rem));
-  width: min(29rem, 34vw);
+  padding-inline: clamp(1rem, 3.6vw, 3.75rem);
   overflow: hidden;
-  opacity: var(--project-art-opacity);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 22%) 17%, #000 45% 100%);
-  mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 22%) 17%, #000 45% 100%);
-  pointer-events: none;
 }
 
-.project-page__art img {
+@supports (min-height: 100dvh) {
+  .project-page {
+    min-height: calc(100dvh - var(--header-height));
+  }
+}
+
+.project-board-stage {
+  position: absolute;
+  inset: 0 0 var(--project-floor-height);
+  z-index: 4;
+  display: grid;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  place-items: center;
+}
+
+.project-chalkboard-wrap {
+  position: relative;
+  width: min(62vw, 54rem);
+  max-width: calc(100vw - 2.25rem);
+  aspect-ratio: 7 / 5;
+}
+
+.project-chalkboard__recess {
+  position: absolute;
+  inset: 0 0 0.62rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  contain: paint;
+  border: 0.78rem solid var(--project-board-frame);
+  background: #020202;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 7%, transparent),
+    0 0 0 0.34rem #0b0b0b,
+    0.7rem 0.92rem 1.18rem var(--project-board-frame-shadow),
+    0 0 2.6rem color-mix(in srgb, var(--wall-light, #f4f1e9) 8%, transparent),
+    inset 0 0 2.2rem rgb(0 0 0 / 88%);
+}
+
+.project-chalkboard__glass {
+  position: absolute;
+  inset: 0.32rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  contain: paint;
+  background: #0b0b0a;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 8%, transparent);
+}
+
+.project-chalkboard {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: #14221d;
+}
+
+.project-chalkboard__texture {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: saturate(0.74) contrast(0.92);
-  transform: scale(1.045);
+  opacity: 1;
+  filter: none;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.project-detail-page--neutra .project-page__art img {
-  object-position: 48% 43%;
-}
-
-.project-detail-page--sunset .project-page__art img {
-  object-position: 48% 42%;
-}
-
-.project-detail-page--keycad .project-page__art img {
-  object-position: 54% 46%;
-}
-
-.project-detail-page--portfolio .project-page__art img {
-  object-position: 52% 39%;
-}
-
-.project-page__content {
+.project-chalkboard__copy {
+  position: relative;
+  z-index: 2;
   display: flex;
-  width: min(68rem, 72vw);
-  min-height: 100%;
+  height: 100%;
   flex-direction: column;
-  justify-content: center;
-  padding: clamp(3.25rem, 7vh, 5.75rem) clamp(1.5rem, 5.2vw, 5.1rem)
-    clamp(2.5rem, 5vh, 4rem);
-  color: var(--project-ink);
+  padding: clamp(1.45rem, 3vw, 2.2rem) clamp(1.6rem, 4vw, 2.8rem) clamp(1.35rem, 2.6vw, 1.9rem);
+  color: var(--project-board-chalk);
 }
 
 .project-timeline {
   display: flex;
-  width: min(20rem, 42vw);
+  width: min(19rem, 50%);
   align-items: center;
-  gap: 0.9rem;
-  margin: 0 0 clamp(1.15rem, 2.4vh, 1.7rem);
-  color: var(--project-muted);
+  gap: 0.8rem;
+  margin: 0;
+  color: var(--project-board-chalk-soft);
   font-family: var(--font-mono);
-  font-size: clamp(0.67rem, 0.78vw, 0.75rem);
+  font-size: clamp(0.64rem, 0.76vw, 0.72rem);
   letter-spacing: 0.12em;
   line-height: 1;
+  text-shadow: 0.015rem 0.015rem 0 rgb(255 255 255 / 12%), 0 0 0.12rem rgb(255 255 255 / 12%);
   text-transform: uppercase;
 }
 
 .project-timeline::after {
   height: 1px;
   flex: 1;
-  background: var(--project-rule);
+  background: color-mix(in srgb, var(--project-board-chalk) 28%, transparent);
+  box-shadow: 0 0 0.08rem rgb(255 255 255 / 10%);
   content: '';
 }
 
 .project-page h1 {
-  max-width: 10ch;
-  margin: 0;
-  color: var(--project-ink);
+  margin: clamp(1rem, 2vw, 1.35rem) 0 0;
+  color: var(--project-board-chalk);
   font-family: var(--font-display);
-  font-size: clamp(4.25rem, 9vw, 8.5rem);
+  font-size: clamp(3.5rem, 6.2vw, 5.6rem);
   font-weight: 400;
-  letter-spacing: -0.047em;
-  line-height: 0.84;
+  letter-spacing: -0.045em;
+  line-height: 0.86;
+  text-shadow:
+    0.018rem 0.018rem 0 rgb(255 255 255 / 15%),
+    0 0 0.16rem rgb(255 255 255 / 12%);
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
 .project-detail-page--portfolio .project-page h1 {
-  max-width: none;
-  font-size: clamp(3.6rem, 6.2vw, 6.5rem);
-  white-space: nowrap;
+  font-size: clamp(3rem, 5.2vw, 4.7rem);
 }
 
 .project-writing {
-  max-width: 43rem;
-  margin: clamp(2rem, 4.8vh, 3.2rem) 0 0;
-  color: color-mix(in srgb, var(--project-ink) 91%, transparent);
-  font-size: clamp(1.02rem, 1.32vw, 1.16rem);
+  position: relative;
+  max-width: 40rem;
+  min-height: 12.25rem;
+  margin: clamp(1.45rem, 3vw, 2rem) 0 0;
+  color: var(--project-board-chalk);
+  font-size: clamp(1rem, 1.26vw, 1.12rem);
   line-height: 1.72;
+  text-shadow:
+    0.015rem 0.015rem 0 rgb(255 255 255 / 12%),
+    0 0 0.12rem rgb(255 255 255 / 12%);
   text-wrap: pretty;
+}
+
+.project-writing__animated {
+  display: inline;
+}
+
+.project-writing__word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.project-writing__space {
+  white-space: pre;
+}
+
+.project-writing__character {
+  opacity: 0;
+}
+
+.project-writing__animated.is-writing .project-writing__character {
+  animation: project-chalk-character-in 120ms cubic-bezier(0.22, 0.7, 0.2, 1) forwards;
+  animation-delay: calc(260ms + var(--chalk-index) * 18ms);
+}
+
+
+.project-writing__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .project-page__links {
   display: flex;
-  width: min(43rem, 100%);
+  width: 100%;
   align-items: center;
   justify-content: space-between;
-  gap: 1.25rem;
-  margin-top: clamp(2rem, 4.8vh, 3.1rem);
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--project-rule);
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 0.92rem;
+  border-top: 1px solid color-mix(in srgb, var(--project-board-chalk) 18%, transparent);
 }
 
 .project-back-link,
 .project-links a {
-  color: var(--project-muted);
+  color: var(--project-board-chalk-soft);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   letter-spacing: 0.08em;
   line-height: 1;
   text-decoration: none;
+  text-shadow: 0.015rem 0.015rem 0 rgb(255 255 255 / 12%), 0 0 0.12rem rgb(255 255 255 / 12%);
   text-transform: uppercase;
 }
 
@@ -273,105 +244,83 @@ html[data-theme='dark'] body.project-detail-page--portfolio {
 
 .project-back-link:hover,
 .project-links a:hover {
-  color: var(--project-ink);
+  color: var(--project-board-chalk);
 }
 
 .project-back-link:focus-visible,
 .project-links a:focus-visible {
-  outline-color: var(--project-ink);
+  outline-color: var(--project-board-chalk);
+}
+
+.project-chalkboard__sill {
+  position: absolute;
+  z-index: 6;
+  right: -0.72rem;
+  bottom: 0.02rem;
+  left: -0.72rem;
+  height: 0.58rem;
+  background: var(--project-board-frame);
+  border-top: 1px solid color-mix(in srgb, var(--wall-light, #f4f1e9) 7%, transparent);
+  box-shadow: 0 0.52rem 0.68rem rgb(0 0 0 / 58%);
+}
+
+@keyframes project-chalk-character-in {
+  0% {
+    opacity: 0;
+    text-shadow: none;
+  }
+
+  55% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 64rem) {
-  .project-page__plaster {
-    width: 91vw;
-  }
-
-  .project-page__art {
-    right: 4.5vw;
-    width: 36vw;
-  }
-
-  .project-page__content {
-    width: 82vw;
+  .project-chalkboard-wrap {
+    width: min(70vw, 48rem);
   }
 
   .project-writing {
-    max-width: 38rem;
+    min-height: 13.2rem;
   }
 }
 
 @media (max-width: 48rem) {
-  .project-detail-main {
-    overflow: visible;
-  }
-
   .project-page {
-    --project-floor-clearance: clamp(6.6rem, 16vh, 8.6rem);
+    --project-floor-height: clamp(6.2rem, 15vh, 8.6rem);
 
-    min-height: calc(100svh - var(--header-height));
-    padding-inline: 0;
+    padding-inline: 0.85rem;
   }
 
-  .project-page__plaster {
-    top: 0.65rem;
-    right: 0;
-    bottom: calc(var(--project-floor-clearance) - 0.8rem);
-    left: 0;
-    width: 100%;
-    transform: none;
-    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 1rem calc(100% - 1rem), transparent 100%);
-    mask-image: linear-gradient(180deg, transparent 0, #000 1rem calc(100% - 1rem), transparent 100%);
+  .project-chalkboard-wrap {
+    width: min(92vw, 34rem);
+    max-width: calc(100vw - 1.7rem);
+    aspect-ratio: 5 / 6;
   }
 
-  .project-page__art {
-    top: 0.65rem;
-    right: 0;
-    bottom: calc(var(--project-floor-clearance) - 0.8rem);
-    width: 48vw;
-    opacity: var(--project-art-opacity-mobile);
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 58% 100%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 58% 100%);
-  }
-
-  .project-page__content {
-    width: 100%;
-    padding: clamp(3rem, 8vh, 4.5rem) clamp(1.35rem, 7vw, 2.5rem) 2.6rem;
-  }
-
-  .project-timeline {
-    width: min(17rem, 72vw);
+  .project-chalkboard__copy {
+    padding: 1.25rem 1.2rem 1.05rem;
   }
 
   .project-page h1,
   .project-detail-page--portfolio .project-page h1 {
-    max-width: 10ch;
-    font-size: clamp(3.6rem, 16vw, 6.1rem);
-    white-space: normal;
+    font-size: clamp(2.6rem, 11vw, 4.25rem);
   }
 
   .project-writing {
-    max-width: 35rem;
-    margin-top: 1.9rem;
-    font-size: clamp(0.98rem, 4vw, 1.08rem);
-    line-height: 1.68;
-  }
-}
-
-@media (max-width: 28rem) {
-  .project-page__content {
-    justify-content: flex-start;
-    padding-top: 3.1rem;
-  }
-
-  .project-page__art {
-    width: 56vw;
-    opacity: var(--project-art-opacity-small);
+    min-height: 0;
+    font-size: clamp(0.95rem, 4vw, 1.02rem);
+    line-height: 1.66;
   }
 
   .project-page__links {
     align-items: flex-start;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.95rem;
   }
 
   .project-links {
@@ -379,9 +328,29 @@ html[data-theme='dark'] body.project-detail-page--portfolio {
   }
 }
 
+@media (max-width: 28rem) {
+  .project-board-stage {
+    inset-inline: 0;
+  }
+
+  .project-chalkboard__recess {
+    border-width: 0.68rem;
+  }
+
+  .project-page h1,
+  .project-detail-page--portfolio .project-page h1 {
+    font-size: clamp(2.45rem, 10.5vw, 3.65rem);
+  }
+
+  .project-timeline {
+    width: min(15rem, 70%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .project-back-link,
-  .project-links a {
-    transition: none;
+  .project-writing__character,
+  .project-writing__animated.is-writing .project-writing__character {
+    opacity: 1;
+    animation: none;
   }
 }
