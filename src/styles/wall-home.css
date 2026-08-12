@@ -10,8 +10,14 @@ body.wall-home-page {
   overflow: hidden;
   overscroll-behavior: none;
 
-  /* Header focus state follows the existing light floor/mortar color. */
-  --header-accent: var(--wall-light);
+  /* Home shares the site's white linework/text language without changing
+     its independent wall/floor palette from themes.css. */
+  --room-outline: #fff;
+  --wall-outline: var(--room-outline);
+  --room-nav-ink: var(--room-outline);
+  --room-label-ink: var(--room-outline);
+  --room-control-ink: var(--room-outline);
+  --header-accent: var(--room-outline);
 }
 
 @supports (height: 100svh) {
