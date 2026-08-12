@@ -8,6 +8,14 @@ import FloorScene from '@/features/floor/FloorScene.svelte';
 import { ClientRouter } from 'astro:transitions';
 import { siteConfig } from '@/config/site';
 import '@/styles/global.css';
+// Keep the five primary room styles resident from the first paint. Astro's
+// client router otherwise has to wait for route-specific stylesheets during a
+// swap, which makes a cached navigation still feel slower than a native tab.
+import '@/styles/wall-home.css';
+import '@/styles/about.css';
+import '@/styles/projects-wall.css';
+import '@/styles/resume.css';
+import '@/styles/contact.css';
 
 interface Props {
   title?: string;
@@ -114,6 +122,19 @@ const roomLiftTransition = {
   }
 >
   <head>
+    <script is:inline>
+      (() => {
+        if (!('prerendering' in document) || !document.prerendering) return;
+        document.documentElement.dataset.prerendering = 'true';
+        document.addEventListener(
+          'prerenderingchange',
+          () => {
+            delete document.documentElement.dataset.prerendering;
+          },
+          { once: true },
+        );
+      })();
+    </script>
     <ThemeBootstrap />
     <BaseHead {title} {description} {image} {imageAlt} {imageWidth} {imageHeight} {imageType} {noindex} />
     <slot name="head" />
@@ -206,6 +227,42 @@ const roomLiftTransition = {
         document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach(rewritePdfLink);
       };
 
+      const setPersistentHeaderCurrentPath = (pathname: string) => {
+        const currentPath = normalizePath(pathname);
+        document
+          .querySelectorAll<HTMLAnchorElement>('.primary-nav a[data-nav-path]')
+          .forEach((link) => {
+            const navPath = normalizePath(link.dataset.navPath || new URL(link.href).pathname);
+            if (navPath === currentPath) link.setAttribute('aria-current', 'page');
+            else link.removeAttribute('aria-current');
+          });
+      };
+
+      const updatePersistentHeaderCurrentState = () => {
+        setPersistentHeaderCurrentPath(window.location.pathname);
+      };
+
+      const reflectPrimaryNavigationIntent = (event: MouseEvent) => {
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const link = target.closest<HTMLAnchorElement>('.primary-nav a[data-nav-path]');
+        if (!link) return;
+
+        const destination = new URL(link.href, window.location.href);
+        if (destination.origin !== window.location.origin) return;
+        setPersistentHeaderCurrentPath(destination.pathname);
+      };
+
       const routePdfNavigation = (event: MouseEvent) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
@@ -278,6 +335,8 @@ const roomLiftTransition = {
           document.addEventListener('astro:before-preparation', setRoomTransitionDirection);
         }
         document.addEventListener('astro:page-load', rewritePdfLinks);
+        document.addEventListener('astro:page-load', updatePersistentHeaderCurrentState);
+        document.addEventListener('click', reflectPrimaryNavigationIntent, { capture: true });
         document.addEventListener('click', routePdfNavigation, { capture: true });
         document.addEventListener('click', preventRedundantNavigation, { capture: true });
       }
@@ -285,26 +344,110 @@ const roomLiftTransition = {
       // Handle the initial document immediately. Subsequent swaps are covered
       // by the single astro:page-load listener above.
       rewritePdfLinks();
+      updatePersistentHeaderCurrentState();
     </script>
 
     <script>
-      type AnalyticsBootstrapWindow = Window & { __hecateAnalyticsBootstrapScheduled?: boolean };
-      const analyticsBootstrapWindow = window as AnalyticsBootstrapWindow;
+      type PerformanceBootstrapWindow = Window & {
+        __hecatePrimaryRoomsWarmed?: boolean;
+        __hecateAnalyticsBootstrapScheduled?: boolean;
+      };
+      const performanceWindow = window as PerformanceBootstrapWindow;
 
-      if (!analyticsBootstrapWindow.__hecateAnalyticsBootstrapScheduled) {
-        analyticsBootstrapWindow.__hecateAnalyticsBootstrapScheduled = true;
-
-        const startAnalytics = () => {
-          void import('@/lib/analytics').then(({ initAnalytics }) => {
-            initAnalytics();
-          });
-        };
-
+      const scheduleIdle = (callback: () => void, timeout: number, fallbackDelay: number) => {
         if ('requestIdleCallback' in window) {
-          window.requestIdleCallback(startAnalytics, { timeout: 2_000 });
+          window.requestIdleCallback(callback, { timeout });
         } else {
-          globalThis.setTimeout(startAnalytics, 500);
+          globalThis.setTimeout(callback, fallbackDelay);
         }
+      };
+
+      // HTML/CSS for the five navbar rooms is prepared by Astro's eager
+      // prefetch/prerender path. Warm the two interactive runtime families as
+      // well so a fallback browser does not discover their JS only after the
+      // user clicks. Dynamic imports keep them off the critical first-paint
+      // path while still putting their chunks in the module cache.
+      const isPrerendering =
+        (document as Document & { prerendering?: boolean }).prerendering === true;
+
+      const warmPrimaryRooms = () => {
+        if (performanceWindow.__hecatePrimaryRoomsWarmed) return;
+        performanceWindow.__hecatePrimaryRoomsWarmed = true;
+
+        scheduleIdle(
+          () => {
+            void Promise.allSettled([
+              import('@/features/wall/ProjectWall.svelte'),
+              import('@/components/about/AboutTV.svelte'),
+            ]);
+
+            // The remaining primary-room imagery is small after the responsive
+            // image pass. Put the exact candidates the device is likely to use
+            // into the browser image cache before a navbar click so an already
+            // prepared room never arrives with a blank painting/portrait.
+            const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+            const useRetinaCandidates = (window.devicePixelRatio || 1) >= 1.5;
+            const primaryRoomImages = useRetinaCandidates
+              ? [
+                  '/images/about/cyrus-portrait-480.webp',
+                  '/images/project-gallery/neutra.webp',
+                  '/images/project-gallery/sunset-720.webp',
+                  '/images/project-gallery/keycad.webp',
+                  '/images/project-gallery/portfolio.webp',
+                  '/images/resume/cyrus-asasi-software-engineering-resume-720.webp',
+                  '/images/resume/cyrus-asasi-clarinet-performance-resume-720.webp',
+                  '/images/contact/chalkboard-photo.webp',
+                ]
+              : [
+                  '/images/about/cyrus-portrait-480.webp',
+                  '/images/project-gallery/neutra-480.webp',
+                  '/images/project-gallery/sunset-480.webp',
+                  '/images/project-gallery/keycad-480.webp',
+                  '/images/project-gallery/portfolio-480.webp',
+                  '/images/resume/cyrus-asasi-software-engineering-resume-480.webp',
+                  '/images/resume/cyrus-asasi-clarinet-performance-resume-480.webp',
+                  '/images/contact/chalkboard-photo.webp',
+                ];
+
+            for (const source of primaryRoomImages) {
+              const image = new Image();
+              image.decoding = 'async';
+              image.fetchPriority = 'low';
+              image.src = `${basePath}${source}`;
+            }
+          },
+          1_250,
+          300,
+        );
+      };
+
+      if (isPrerendering) {
+        document.addEventListener('prerenderingchange', warmPrimaryRooms, { once: true });
+      } else {
+        warmPrimaryRooms();
+      }
+
+      const scheduleAnalytics = () => {
+        if (performanceWindow.__hecateAnalyticsBootstrapScheduled) return;
+        performanceWindow.__hecateAnalyticsBootstrapScheduled = true;
+
+        scheduleIdle(
+          () => {
+            void import('@/lib/analytics').then(({ initAnalytics }) => {
+              initAnalytics();
+            });
+          },
+          2_000,
+          500,
+        );
+      };
+
+      // Speculative prerender documents must not count as visits. Start
+      // analytics only after the page is actually activated by the user.
+      if (isPrerendering) {
+        document.addEventListener('prerenderingchange', scheduleAnalytics, { once: true });
+      } else {
+        scheduleAnalytics();
       }
     </script>
   </body>

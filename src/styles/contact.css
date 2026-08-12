@@ -118,7 +118,7 @@ body.room-theme-contact main {
 .chalk-link {
   position: relative;
   display: grid;
-  width: clamp(2.75rem, 4.35vw, 3.25rem);
+  width: clamp(3.05rem, 4.9vw, 3.65rem);
   aspect-ratio: 1;
   place-items: center;
   color: var(--contact-board-chalk-soft);
@@ -157,7 +157,7 @@ body.room-theme-contact main {
   stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: contact-chalk-draw 520ms cubic-bezier(0.2, 0.7, 0.25, 1) forwards;
+  animation: contact-chalk-draw 340ms cubic-bezier(0.2, 0.7, 0.25, 1) forwards;
   animation-delay: calc(var(--draw-delay, 0ms) + var(--segment-delay, 0ms));
 }
 
@@ -247,7 +247,7 @@ body.room-theme-contact main {
   }
 
   .chalk-link {
-    width: clamp(2.35rem, 10vw, 2.9rem);
+    width: clamp(2.6rem, 11vw, 3.2rem);
   }
 }
 
@@ -266,4 +266,11 @@ body.room-theme-contact main {
     stroke-dashoffset: 0;
     animation: none;
   }
+}
+
+/* Astro's client prerender can construct Contact before the user enters it.
+   Keep the chalk strokes frozen at frame zero while speculative so activation
+   preserves the exact same visible draw-in behavior as a normal navigation. */
+html[data-prerendering='true'] .chalk-link__mark .chalk-segment {
+  animation-play-state: paused;
 }

@@ -29,7 +29,7 @@
     chessProfileUrl,
   });
   $: currentChannel = channels[currentIndex];
-  $: isChanging = phase !== 'idle';
+  $: selectedIndex = pendingIndex ?? currentIndex;
 
   const clampIndex = (index: number) => Math.min(channels.length - 1, Math.max(0, index));
 
@@ -46,7 +46,14 @@
 
   const changeChannel = (nextIndex: number) => {
     const clamped = clampIndex(nextIndex);
-    if (clamped === currentIndex || isChanging) return;
+    if (clamped === selectedIndex) return;
+
+    // While the picture is already powering down, don't discard rapid clicks.
+    // Just retarget the in-flight switch so the latest button always wins.
+    if (phase === 'powering-down') {
+      pendingIndex = clamped;
+      return;
+    }
 
     clearTimers();
     pendingIndex = clamped;
@@ -60,7 +67,9 @@
 
       onTimer = setTimeout(() => {
         phase = 'idle';
+        onTimer = null;
       }, 360);
+      offTimer = null;
     }, 210);
   };
 
@@ -99,9 +108,9 @@
             <button
               type="button"
               class="about-tv__button"
-              class:is-active={index === currentIndex && pendingIndex === null}
+              class:is-active={index === selectedIndex}
               aria-label={`Show ${channel.label}`}
-              aria-current={index === currentIndex ? 'true' : undefined}
+              aria-current={index === selectedIndex ? 'true' : undefined}
               onclick={() => changeChannel(index)}
             >
               {channel.label}

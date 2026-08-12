@@ -3,22 +3,36 @@
   import FloorScene from '@/features/floor/FloorScene.svelte';
   import { siteConfig } from '@/config/site';
 
+  let legacyFloorComponent: any = null;
   let magnifyingGlassComponent: any = null;
 
   onMount(() => {
     if (!siteConfig.ui.enableMagnifyingGlass) return;
 
-    // Keep the expensive Three/Rapier magnifier completely out of the active
-    // About-page path while disabled. Flipping the global feature switch is
-    // enough to bring the existing implementation back.
-    void import('@/features/floor/MagnifyingGlass.svelte').then((module) => {
-      magnifyingGlassComponent = module.default;
+    // The active site uses the lightweight checkerboard renderer. The old
+    // Three/Rapier floor is retained only as a compatibility host for the
+    // magnifier, and is fetched solely if that global feature switch is turned
+    // back on later.
+    void Promise.all([
+      import('@/features/floor/LegacyFloorScene.svelte'),
+      import('@/features/floor/MagnifyingGlass.svelte'),
+    ]).then(([floorModule, magnifierModule]) => {
+      legacyFloorComponent = floorModule.default;
+      magnifyingGlassComponent = magnifierModule.default;
     });
   });
 </script>
 
-<FloorScene>
-  {#if magnifyingGlassComponent}
-    <svelte:component this={magnifyingGlassComponent} />
+{#if siteConfig.ui.enableMagnifyingGlass}
+  {#if legacyFloorComponent}
+    <svelte:component this={legacyFloorComponent}>
+      {#if magnifyingGlassComponent}
+        <svelte:component this={magnifyingGlassComponent} />
+      {/if}
+    </svelte:component>
+  {:else}
+    <FloorScene />
   {/if}
-</FloorScene>
+{:else}
+  <FloorScene />
+{/if}

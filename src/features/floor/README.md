@@ -1,18 +1,16 @@
 # Floor scene
 
-`FloorScene.svelte` is the only owner of the room's WebGL renderer. The wall remains DOM/Svelte, while the floor and future spatial objects live in this scene.
+`FloorScene.svelte` is the production room floor. It reproduces the original Three.js camera projection with a tiny 2D checkerboard renderer, so normal rooms do not create a WebGL context or download/parse Three.js just to display flat floor tiles.
 
 ## Coordinate contract
 
-- At the wall/floor seam, one Three.js world unit projects to one CSS pixel. This keeps the 2D wall and 3D floor on the same horizontal coordinate system.
-- `x` follows wall coordinates, `y` is height above the floor, and `z` starts at the wall and increases toward the viewer.
+- At the wall/floor seam, one floor world unit projects to one CSS pixel, matching the wall controller exactly.
+- `x` follows wall coordinates and `z` starts at the wall and increases toward the viewer.
 - `cameraX` is owned by the room/wall controller and passed to the floor imperatively. The floor never starts a competing animation loop.
-- The WebGL canvas spans the room so objects may extend above the baseboard. The floor plane itself starts at the shared `--floor-seam-top` geometry boundary.
+- The camera/FOV/seam math intentionally matches the old Three.js floor so the visible tile geometry remains unchanged.
 
-## Loading and failure behavior
+## Magnifier compatibility
 
-Three.js is bundled with the floor island rather than dynamically imported after hydration, avoiding a second network/loading step before initialization. Server-rendered markup contains only a solid dark underlay below the floor seam; there is no legacy CSS checkerboard renderer. Once WebGL paints, the real 3D floor appears directly over that underlay. If WebGL is unavailable or the context is lost, the underlay remains as a quiet non-checkered floor instead of flashing an obsolete implementation.
+The magnifying-glass experiment still needs a real Three.js floor scene because it registers 3D/Rapier objects through `floor-scene-context.ts`. The previous implementation is retained as `LegacyFloorScene.svelte` and is dynamically loaded by `AboutFloor.svelte` only when the global `enableMagnifyingGlass` feature switch is turned back on.
 
-## Future objects
-
-Use `floor-scene-context.ts` to register Three.js objects with the existing scene. New floor-object components should not create their own renderer or animation loop.
+With the feature disabled, neither the legacy floor nor Rapier/Three magnifier code enters the active About-page runtime.
