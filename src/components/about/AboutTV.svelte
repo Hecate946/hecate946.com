@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy } from 'svelte';
   import { createAboutTVChannels } from './about-tv-content';
   import TVChannel from './TVChannel.svelte';
 
@@ -13,17 +13,11 @@
 
   type TVPhase = 'idle' | 'powering-down' | 'powering-up';
 
-  let screenElement: HTMLDivElement;
   let currentIndex = 0;
   let pendingIndex: number | null = null;
   let phase: TVPhase = 'idle';
-  let offTimer = 0;
-  let onTimer = 0;
-  let activePointerId: number | null = null;
-  let pointerStartX = 0;
-  let pointerStartY = 0;
-  let pointerMoved = false;
-  let ignoreClickUntil = 0;
+  let offTimer: ReturnType<typeof setTimeout> | null = null;
+  let onTimer: ReturnType<typeof setTimeout> | null = null;
 
   $: channels = createAboutTVChannels({
     portraitUrl,
@@ -40,8 +34,14 @@
   const clampIndex = (index: number) => Math.min(channels.length - 1, Math.max(0, index));
 
   const clearTimers = () => {
-    window.clearTimeout(offTimer);
-    window.clearTimeout(onTimer);
+    if (offTimer !== null) {
+      clearTimeout(offTimer);
+      offTimer = null;
+    }
+    if (onTimer !== null) {
+      clearTimeout(onTimer);
+      onTimer = null;
+    }
   };
 
   const changeChannel = (nextIndex: number) => {
@@ -52,98 +52,19 @@
     pendingIndex = clamped;
     phase = 'powering-down';
 
-    offTimer = window.setTimeout(() => {
+    offTimer = setTimeout(() => {
       if (pendingIndex === null) return;
       currentIndex = pendingIndex;
       pendingIndex = null;
       phase = 'powering-up';
 
-      onTimer = window.setTimeout(() => {
+      onTimer = setTimeout(() => {
         phase = 'idle';
       }, 360);
     }, 210);
   };
 
-  const next = () => changeChannel(currentIndex + 1);
-  const previous = () => changeChannel(currentIndex - 1);
-
-  const handleClick = (event: MouseEvent) => {
-    if (performance.now() < ignoreClickUntil || isChanging) return;
-    if (event.target instanceof Element && event.target.closest('a, button')) return;
-    const bounds = screenElement.getBoundingClientRect();
-    const relativeX = event.clientX - bounds.left;
-    if (relativeX < bounds.width * 0.42) previous();
-    else next();
-  };
-
-  const handlePointerDown = (event: PointerEvent) => {
-    if (isChanging || activePointerId !== null) return;
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    if (event.target instanceof Element && event.target.closest('a, button')) return;
-    activePointerId = event.pointerId;
-    pointerStartX = event.clientX;
-    pointerStartY = event.clientY;
-    pointerMoved = false;
-  };
-
-  const handlePointerMove = (event: PointerEvent) => {
-    if (event.pointerId !== activePointerId) return;
-    const dx = event.clientX - pointerStartX;
-    const dy = event.clientY - pointerStartY;
-    if (!pointerMoved && Math.hypot(dx, dy) < 8) return;
-    if (Math.abs(dy) > Math.abs(dx) * 1.15) {
-      activePointerId = null;
-      pointerMoved = false;
-      return;
-    }
-    pointerMoved = true;
-    if (event.cancelable) event.preventDefault();
-  };
-
-  const finishPointer = (event: PointerEvent) => {
-    if (event.pointerId !== activePointerId) return;
-    const dx = event.clientX - pointerStartX;
-    const dy = event.clientY - pointerStartY;
-    const moved = pointerMoved;
-    activePointerId = null;
-    pointerMoved = false;
-
-    if (!moved || Math.abs(dx) < 42 || Math.abs(dx) < Math.abs(dy)) return;
-    ignoreClickUntil = performance.now() + 360;
-    if (dx < 0) next();
-    else previous();
-  };
-
-  const handleKeyDown = (event: KeyboardEvent) => {
-    const target = event.target;
-    if (target instanceof Element && target.closest('a, button, input, textarea, select')) return;
-    if (event.key === 'ArrowRight' || event.key === 'PageDown') {
-      event.preventDefault();
-      next();
-    } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
-      event.preventDefault();
-      previous();
-    }
-  };
-
-  onMount(() => {
-    screenElement.addEventListener('pointerdown', handlePointerDown);
-    screenElement.addEventListener('pointermove', handlePointerMove, { passive: false });
-    screenElement.addEventListener('click', handleClick);
-    window.addEventListener('pointerup', finishPointer);
-    window.addEventListener('pointercancel', finishPointer);
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      clearTimers();
-      screenElement.removeEventListener('pointerdown', handlePointerDown);
-      screenElement.removeEventListener('pointermove', handlePointerMove);
-      screenElement.removeEventListener('click', handleClick);
-      window.removeEventListener('pointerup', finishPointer);
-      window.removeEventListener('pointercancel', finishPointer);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  });
+  onDestroy(clearTimers);
 </script>
 
 <div
@@ -159,7 +80,7 @@
       <span class="about-tv__screw about-tv__screw--bl" aria-hidden="true"></span>
       <span class="about-tv__screw about-tv__screw--br" aria-hidden="true"></span>
 
-      <div class="about-tv__screen-frame" bind:this={screenElement}>
+      <div class="about-tv__screen-frame" aria-label="Television screen">
         <div class="about-tv__glass" aria-live="polite">
           <div class="about-tv__picture">
             <TVChannel channel={currentChannel} />

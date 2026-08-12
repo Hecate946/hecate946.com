@@ -1053,7 +1053,16 @@
       const rect = source.getBoundingClientRect();
       const clone = source.cloneNode(true) as HTMLElement;
       clone.querySelectorAll('.floor-scene__registrants, .room-magnifier-hit, .room-magnifier-overlay').forEach((node) => node.remove());
-      if (kind === 'header') clone.classList.add('room-magnifier-overlay__header-clone');
+      if (kind === 'header') {
+        clone.classList.add('room-magnifier-overlay__header-clone');
+        const liveHeaderStyle = getComputedStyle(source);
+        clone.style.setProperty('--nav-ink', liveHeaderStyle.getPropertyValue('--nav-ink').trim() || liveHeaderStyle.color);
+        clone.style.setProperty('--nav-border-color', liveHeaderStyle.getPropertyValue('--nav-border-color').trim());
+        clone.style.setProperty('--nav-underline-color', liveHeaderStyle.getPropertyValue('--nav-underline-color').trim());
+        clone.style.color = liveHeaderStyle.color;
+        clone.style.opacity = '1';
+        clone.style.visibility = 'visible';
+      }
       clone.style.position = 'absolute';
       clone.style.inset = 'auto';
       clone.style.left = `${rect.left}px`;
