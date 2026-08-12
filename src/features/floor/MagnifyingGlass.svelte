@@ -107,6 +107,7 @@
   let previousFrameTime = 0;
   let physicsAccumulator = 0;
   let destroyed = false;
+  let visualViewport: VisualViewport | null = null;
 
   const tmpVectorB = new THREE.Vector3();
   const tmpVectorC = new THREE.Vector3();
@@ -933,31 +934,26 @@
       return;
     }
 
-    const segment = handleScreenSegment();
-    const sideLeft = worldPointFromLocal(new THREE.Vector3(-13, 0, 157));
-    const sideRight = worldPointFromLocal(new THREE.Vector3(13, 0, 157));
-    if (!segment || !sideLeft || !sideRight) return;
-
-    const { gripScreen, capScreen } = segment;
-    const leftScreen = projectWorldPoint(sideLeft);
-    const rightScreen = projectWorldPoint(sideRight);
-    if (!leftScreen || !rightScreen) {
+    // Use the exact projected mesh bounds as the native pointer/touch target.
+    // This is especially important on iOS: the button receives the touch before
+    // the text underneath can trigger Safari's long-press selection loupe.
+    const bounds = projectedMagnifierBounds();
+    if (!bounds) {
       hitButton.style.display = 'none';
       return;
     }
 
-    const centerX = (gripScreen.x + capScreen.x) / 2;
-    const centerY = (gripScreen.y + capScreen.y) / 2;
-    const length = Math.hypot(capScreen.x - gripScreen.x, capScreen.y - gripScreen.y);
-    const width = Math.hypot(rightScreen.x - leftScreen.x, rightScreen.y - leftScreen.y);
-    const angle = Math.atan2(capScreen.y - gripScreen.y, capScreen.x - gripScreen.x) * (180 / Math.PI) - 90;
-
+    const width = Math.max(1, bounds.right - bounds.left);
+    const height = Math.max(1, bounds.bottom - bounds.top);
     hitButton.style.display = 'block';
-    hitButton.style.setProperty('--magnifier-hit-width', `${Math.max(34, width * 2.15)}px`);
-    hitButton.style.setProperty('--magnifier-hit-height', `${Math.max(48, length * 1.18)}px`);
-    hitButton.style.setProperty('--magnifier-hit-angle', `${angle}deg`);
-    hitButton.style.left = `${centerX - Math.max(34, width * 2.15) / 2}px`;
-    hitButton.style.top = `${centerY - Math.max(48, length * 1.18) / 2}px`;
+    hitButton.style.left = `${bounds.left}px`;
+    hitButton.style.top = `${bounds.top}px`;
+    hitButton.style.width = `${width}px`;
+    hitButton.style.height = `${height}px`;
+    hitButton.style.transform = 'none';
+    hitButton.style.setProperty('--magnifier-hit-width', `${width}px`);
+    hitButton.style.setProperty('--magnifier-hit-height', `${height}px`);
+    hitButton.style.setProperty('--magnifier-hit-angle', '0deg');
   }
 
   function pointerRay(clientX: number, clientY: number) {
@@ -1045,8 +1041,8 @@
     const snapshot = document.createElement('div');
     snapshot.className = 'room-magnifier-overlay__snapshot';
     snapshot.setAttribute('aria-hidden', 'true');
-    snapshot.style.width = `${window.innerWidth}px`;
-    snapshot.style.height = `${window.innerHeight}px`;
+    snapshot.style.width = `${Math.max(window.innerWidth, document.documentElement.clientWidth)}px`;
+    snapshot.style.height = `${Math.max(window.innerHeight, document.documentElement.clientHeight)}px`;
     snapshot.style.pointerEvents = 'none';
 
     const appendClone = (source: HTMLElement, kind: 'room' | 'header') => {
@@ -1096,50 +1092,37 @@
     if (!lensViewport || !snapshotRoom || !magnifier) return;
 
     const centerWorld = worldPointFromLocal(new THREE.Vector3(0, LENS_PLANE_Y, 0));
-    if (!centerWorld) return;
+    const edgeWorld = worldPointFromLocal(new THREE.Vector3(LENS_VIEW_RADIUS, LENS_PLANE_Y, 0));
+    if (!centerWorld || !edgeWorld) return;
     const center = projectWorldPoint(centerWorld);
-    if (!center) {
+    const edge = projectWorldPoint(edgeWorld);
+    if (!center || !edge) {
       lensViewport.style.opacity = '0';
       return;
     }
 
-    // Build the optical aperture from the *actual projected 3D lens circle*.
-    // The contour is derived from the actual camera-facing lens aperture, so the
-    // zoom can never spill beyond the inner edge of the metal ring.
-    const contour: string[] = [];
-    for (let index = 0; index < LENS_CONTOUR_POINTS; index += 1) {
-      const angle = (index / LENS_CONTOUR_POINTS) * Math.PI * 2;
-      const world = worldPointFromLocal(
-        new THREE.Vector3(
-          Math.cos(angle) * LENS_VIEW_RADIUS,
-          LENS_PLANE_Y,
-          Math.sin(angle) * LENS_VIEW_RADIUS,
-        ),
-      );
-      if (!world) continue;
-      const projected = projectWorldPoint(world);
-      if (!projected) continue;
-      contour.push(`${projected.x.toFixed(2)}px ${projected.y.toFixed(2)}px`);
-    }
-
-    if (contour.length < 12) {
-      lensViewport.style.opacity = '0';
-      return;
-    }
-
+    // The lens is constrained to remain camera-facing, so its optical aperture
+    // projects to a true circle. Use that exact projected circle as a small fixed
+    // viewport instead of clipping a full-screen overlay. This keeps the glass
+    // perfectly seated inside the ring on iOS Safari even while the visual
+    // viewport changes as browser chrome expands/collapses.
+    const radius = Math.max(1, Math.hypot(edge.x - center.x, edge.y - center.y));
+    const diameter = radius * 2;
     lensViewport.style.opacity = '1';
-    lensViewport.style.left = '0';
-    lensViewport.style.top = '0';
-    lensViewport.style.width = `${window.innerWidth}px`;
-    lensViewport.style.height = `${window.innerHeight}px`;
+    lensViewport.style.left = `${center.x - radius}px`;
+    lensViewport.style.top = `${center.y - radius}px`;
+    lensViewport.style.width = `${diameter}px`;
+    lensViewport.style.height = `${diameter}px`;
     lensViewport.style.transform = 'none';
-    lensViewport.style.clipPath = `polygon(${contour.join(',')})`;
+    lensViewport.style.clipPath = 'none';
+    lensViewport.style.borderRadius = '50%';
 
-    // Zoom around the true projected lens center. The clipped polygon rotates
-    // with the hardware while the scene itself remains upright, as real optical
-    // magnification should.
-    const tx = center.x * (1 - MAGNIFICATION);
-    const ty = center.y * (1 - MAGNIFICATION);
+    // snapshotRoom is authored in viewport coordinates. Translate its global
+    // coordinate system into this local circular viewport, then scale around the
+    // true lens center. The optical scene remains upright while the hardware may
+    // rotate around its camera-facing normal.
+    const tx = radius - center.x * MAGNIFICATION;
+    const ty = radius - center.y * MAGNIFICATION;
     snapshotRoom.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${MAGNIFICATION})`;
   }
 
@@ -1159,6 +1142,9 @@
     event.preventDefault();
     event.stopPropagation();
     activePointerId = event.pointerId;
+    if (event.currentTarget instanceof Element && 'setPointerCapture' in event.currentTarget) {
+      try { (event.currentTarget as Element & { setPointerCapture(id: number): void }).setPointerCapture(event.pointerId); } catch {}
+    }
     pointerX = event.clientX;
     pointerY = event.clientY;
     pointerSampleTime = performance.now();
@@ -1177,6 +1163,18 @@
     createOverlay();
     captureRoomSnapshot();
     startAnimation();
+  }
+
+  function handleMagnifierTouchStart(event: TouchEvent) {
+    const touch = event.touches[0];
+    if (!touch) return;
+    if (!pointerHitsMagnifier(touch.clientX, touch.clientY)) return;
+    if (event.cancelable) event.preventDefault();
+  }
+
+  function handleMagnifierContextMenu(event: MouseEvent) {
+    if (!pointerHitsMagnifier(event.clientX, event.clientY)) return;
+    event.preventDefault();
   }
 
   function handleGlobalPointerDown(event: PointerEvent) {
@@ -1572,10 +1570,15 @@
     hitButton = button;
 
     window.addEventListener('pointerdown', handleGlobalPointerDown, { capture: true, passive: false });
+    window.addEventListener('touchstart', handleMagnifierTouchStart, { capture: true, passive: false });
+    window.addEventListener('contextmenu', handleMagnifierContextMenu, { capture: true });
     window.addEventListener('pointermove', handlePointerMove, { passive: false });
     window.addEventListener('pointerup', releaseHeld);
     window.addEventListener('pointercancel', handlePointerCancel);
     window.addEventListener('resize', handleResize, { passive: true });
+    visualViewport = window.visualViewport ?? null;
+    visualViewport?.addEventListener('resize', handleResize, { passive: true });
+    visualViewport?.addEventListener('scroll', handleResize, { passive: true });
 
     void createPhysics();
 
@@ -1583,10 +1586,15 @@
       destroyed = true;
       if (animationFrame) cancelAnimationFrame(animationFrame);
       window.removeEventListener('pointerdown', handleGlobalPointerDown, true);
+      window.removeEventListener('touchstart', handleMagnifierTouchStart, true);
+      window.removeEventListener('contextmenu', handleMagnifierContextMenu, true);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', releaseHeld);
       window.removeEventListener('pointercancel', handlePointerCancel);
       window.removeEventListener('resize', handleResize);
+      visualViewport?.removeEventListener('resize', handleResize);
+      visualViewport?.removeEventListener('scroll', handleResize);
+      visualViewport = null;
       document.documentElement.classList.remove('is-using-room-magnifier');
       document.documentElement.classList.remove('is-hovering-room-magnifier');
       hitButton?.removeEventListener('pointerdown', beginPickup);

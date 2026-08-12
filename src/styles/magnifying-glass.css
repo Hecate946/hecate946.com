@@ -5,12 +5,15 @@
   height: var(--magnifier-hit-height, 4.2rem);
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0;
   background: transparent;
   pointer-events: auto;
   cursor: grab;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   transform: rotate(var(--magnifier-hit-angle, 0deg));
   transform-origin: center;
 }
@@ -30,14 +33,15 @@
 
 .room-magnifier-overlay__lens {
   position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-  border-radius: 0;
+  border-radius: 50%;
   background: transparent;
-  clip-path: polygon(0 0, 0 0, 0 0);
-  will-change: clip-path;
+  contain: strict;
+  will-change: left, top, width, height;
   filter: saturate(1.01) contrast(1.01);
 }
 
@@ -117,4 +121,25 @@ html.is-hovering-room-magnifier body {
 .room-magnifier-overlay__header-clone .header-grid {
   position: relative !important;
   z-index: 1 !important;
+}
+
+
+/* Mobile Safari must never treat a magnifier drag as text selection/lookup.
+   Scope this to the prop interaction instead of disabling native gestures sitewide. */
+html.is-using-room-magnifier,
+html.is-using-room-magnifier body,
+html.is-using-room-magnifier .about-room {
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+@media (pointer: coarse) {
+  .room-magnifier-hit {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }
