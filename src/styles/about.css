@@ -69,7 +69,7 @@ html[data-theme='dark'] body.about-room-page {
 }
 
 .about-tv {
-  width: min(39rem, calc(100vw - 2rem));
+  width: min(45rem, calc(100vw - 2rem));
   max-height: 100%;
   perspective: 1200px;
 }
@@ -340,7 +340,7 @@ html[data-theme='dark'] body.about-room-page {
 
 .about-tv-channel__portrait-wrap {
   flex: 0 0 auto;
-  width: 4.1rem;
+  width: 5.2rem;
   margin: 0.14rem auto 0;
 }
 
@@ -499,7 +499,7 @@ html[data-theme='dark'] body.about-room-page {
 }
 
 @media (max-height: 46rem) and (min-width: 45rem) {
-  .about-tv { width: min(34rem, calc(100vw - 2rem)); }
+  .about-tv { width: min(38rem, calc(100vw - 2rem)); }
   .about-tv__cabinet { padding: 0.78rem 0.78rem 0.65rem; }
   .about-tv__screen-frame { padding: 0.54rem; }
   .about-tv-channel {
@@ -507,13 +507,13 @@ html[data-theme='dark'] body.about-room-page {
     padding: 1.15rem 1.5rem 1.05rem;
   }
   .about-tv-channel__body { max-width: 25rem; }
-  .about-tv-channel__portrait-wrap { width: 3.5rem; }
+  .about-tv-channel__portrait-wrap { width: 4.2rem; }
   .about-tv__button { height: 1.78rem; }
 }
 
 @media (max-width: 44rem) {
   .about-tv-installation { padding: 0.48rem; }
-  .about-tv { width: min(95vw, 27.5rem); }
+  .about-tv { width: min(97vw, 31rem); }
   .about-tv__cabinet {
     padding: 0.64rem 0.64rem 0.56rem;
     border-radius: 1.02rem 1.02rem 0.78rem 0.78rem;
@@ -529,7 +529,7 @@ html[data-theme='dark'] body.about-room-page {
   .about-tv-channel__body { max-width: 21rem; }
   .about-tv-channel__header { gap: 0.34rem; margin-bottom: 0.55rem; }
   .about-tv-channel__header h1 { font-size: 0.98rem; }
-  .about-tv-channel__portrait-wrap { width: 3.35rem; }
+  .about-tv-channel__portrait-wrap { width: 4.15rem; }
   .about-tv-channel__paragraph + .about-tv-channel__paragraph { margin-top: 0.28rem; }
   .about-tv-channel__links { gap: 0.22rem 0.48rem; margin-top: 0.38rem; }
 
@@ -553,7 +553,7 @@ html[data-theme='dark'] body.about-room-page {
   }
   .about-tv-channel__body { max-width: 18.5rem; }
   .about-tv-channel__header h1 { font-size: 0.9rem; }
-  .about-tv-channel__portrait-wrap { width: 3rem; }
+  .about-tv-channel__portrait-wrap { width: 3.55rem; }
   .about-tv__button { font-size: clamp(0.285rem, 1.24vw, 0.39rem); }
 }
 
