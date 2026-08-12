@@ -186,23 +186,8 @@ const drawImageCover = (
   y: number,
   width: number,
   height: number,
-  contain = false,
 ) => {
   if (!image.naturalWidth || !image.naturalHeight) return;
-
-  if (contain) {
-    const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
-    const drawWidth = image.naturalWidth * scale;
-    const drawHeight = image.naturalHeight * scale;
-    context.drawImage(
-      image,
-      x + (width - drawWidth) / 2,
-      y + (height - drawHeight) / 2,
-      drawWidth,
-      drawHeight,
-    );
-    return;
-  }
 
   const imageRatio = image.naturalWidth / image.naturalHeight;
   const targetRatio = width / height;
@@ -222,56 +207,46 @@ const drawImageCover = (
   context.drawImage(image, sx, sy, sw, sh, x, y, width, height);
 };
 
-const gothicFramePath = (context: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => {
-  const shoulder = 74;
-  context.beginPath();
-  context.moveTo(x + w / 2, y);
-  context.lineTo(x + w - 18, y + shoulder);
-  context.quadraticCurveTo(x + w, y + shoulder + 20, x + w, y + shoulder + 54);
-  context.lineTo(x + w, y + h);
-  context.lineTo(x, y + h);
-  context.lineTo(x, y + shoulder + 54);
-  context.quadraticCurveTo(x, y + shoulder + 20, x + 18, y + shoulder);
-  context.closePath();
-};
-
-
 
 const drawCoverFace = (
   context: CanvasRenderingContext2D,
   face: Extract<PageFace, { kind: 'cover' }>,
   palette: Palette,
 ) => {
-  const gradient = context.createLinearGradient(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
+  const gradient = context.createRadialGradient(
+    DESIGN_WIDTH * 0.48,
+    DESIGN_HEIGHT * 0.42,
+    40,
+    DESIGN_WIDTH * 0.5,
+    DESIGN_HEIGHT * 0.5,
+    DESIGN_HEIGHT * 0.78,
+  );
   gradient.addColorStop(0, palette.leatherLight);
-  gradient.addColorStop(0.48, palette.leather);
-  gradient.addColorStop(1, '#090403');
+  gradient.addColorStop(0.72, palette.leather);
+  gradient.addColorStop(1, palette.leather);
   context.fillStyle = gradient;
   context.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
 
-  // Restrained deterministic grain: enough to read as leather at high DPI,
-  // but not so much that it shimmers when the cover rotates.
+  // Very restrained grain. The physical outline comes from the real 3D cover
+  // and the soft canvas shadow, not a painted black frame.
   context.save();
-  context.globalAlpha = 0.14;
+  context.globalAlpha = 0.08;
   let seed = face.side === 'front' ? 946 : 1946;
-  for (let index = 0; index < 1800; index += 1) {
+  for (let index = 0; index < 1100; index += 1) {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     const x = (seed / 4294967296) * DESIGN_WIDTH;
     seed = (seed * 1664525 + 1013904223) >>> 0;
     const y = (seed / 4294967296) * DESIGN_HEIGHT;
-    context.fillStyle = index % 3 === 0 ? palette.leatherLight : '#050201';
-    context.fillRect(x, y, 1.2, 1.2);
+    context.fillStyle = index % 4 === 0 ? palette.metal : '#050201';
+    context.fillRect(x, y, 1, 1);
   }
   context.restore();
 
   context.save();
   context.strokeStyle = palette.metal;
-  context.globalAlpha = 0.46;
-  context.lineWidth = 3;
-  context.strokeRect(56, 56, DESIGN_WIDTH - 112, DESIGN_HEIGHT - 112);
-  context.globalAlpha = 0.22;
-  context.lineWidth = 1.5;
-  context.strokeRect(78, 78, DESIGN_WIDTH - 156, DESIGN_HEIGHT - 156);
+  context.globalAlpha = 0.26;
+  context.lineWidth = 2;
+  context.strokeRect(70, 70, DESIGN_WIDTH - 140, DESIGN_HEIGHT - 140);
   context.restore();
 
   if (face.side === 'front') {
@@ -279,25 +254,16 @@ const drawCoverFace = (
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.fillStyle = palette.metal;
-    context.globalAlpha = 0.82;
-    context.font = `500 27px ${FONT_SERIF}`;
+    context.globalAlpha = 0.66;
+    context.font = `500 23px ${FONT_SERIF}`;
     context.fillText(
       (face.eyebrow ?? 'ABOUT').toUpperCase().split('').join(' '),
       DESIGN_WIDTH / 2,
-      DESIGN_HEIGHT * 0.43,
+      DESIGN_HEIGHT * 0.46,
     );
-    context.globalAlpha = 0.62;
-    context.font = `400 62px ${FONT_SERIF}`;
-    context.fillText(face.title ?? 'About', DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.52);
-    context.restore();
-  } else {
-    context.save();
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillStyle = palette.metal;
-    context.globalAlpha = 0.42;
-    context.font = `400 32px ${FONT_SERIF}`;
-    context.fillText('✦', DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2);
+    context.globalAlpha = 0.52;
+    context.font = `400 52px ${FONT_SERIF}`;
+    context.fillText(face.title ?? 'About', DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.53);
     context.restore();
   }
 };
@@ -307,56 +273,61 @@ const drawVisualFace = async (
   face: Extract<PageFace, { kind: 'visual' }>,
   palette: Palette,
 ) => {
-  const image = await loadImage(face.spread.visual.src);
-  const mode = face.spread.visual.mode;
-  const frameX = mode === 'portrait' ? 178 : 126;
-  const frameY = mode === 'portrait' ? 144 : 150;
-  const frameW = mode === 'portrait' ? 844 : 948;
-  const frameH = mode === 'portrait' ? 1010 : 980;
+  const visual = face.spread.visual;
+
+  // Only the opening portrait is currently visual. Other left pages stay
+  // intentionally sparse so the book reads as a compact object, not a gallery.
+  if (!visual) {
+    context.save();
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = palette.muted;
+    context.globalAlpha = 0.46;
+    context.font = `500 22px ${FONT_SERIF}`;
+    drawTrackedText(
+      context,
+      face.spread.label.toUpperCase(),
+      DESIGN_WIDTH * 0.43,
+      DESIGN_HEIGHT * 0.48,
+      5.2,
+    );
+    context.restore();
+    drawPageNumber(context, face.pageNumber, 'left', palette);
+    return;
+  }
+
+  const image = await loadImage(visual.src);
+  const frameW = 610;
+  const frameH = 760;
+  const frameX = (DESIGN_WIDTH - frameW) / 2;
+  const frameY = 278;
 
   context.save();
-  context.fillStyle = palette.ink;
-  context.globalAlpha = 0.82;
-  if (mode === 'portrait') {
-    gothicFramePath(context, frameX - 16, frameY - 16, frameW + 32, frameH + 32);
-    context.fill();
-  } else {
-    context.fillRect(frameX - 16, frameY - 16, frameW + 32, frameH + 32);
-  }
+  context.strokeStyle = palette.metal;
+  context.globalAlpha = 0.58;
+  context.lineWidth = 3;
+  context.strokeRect(frameX - 10, frameY - 10, frameW + 20, frameH + 20);
+  context.globalAlpha = 0.25;
+  context.lineWidth = 1.5;
+  context.strokeRect(frameX - 22, frameY - 22, frameW + 44, frameH + 44);
   context.restore();
 
   context.save();
-  context.fillStyle = palette.metal;
-  context.globalAlpha = 0.92;
-  if (mode === 'portrait') {
-    gothicFramePath(context, frameX - 8, frameY - 8, frameW + 16, frameH + 16);
-    context.fill();
-  } else {
-    context.fillRect(frameX - 8, frameY - 8, frameW + 16, frameH + 16);
-  }
-  context.restore();
-
-  context.save();
-  if (mode === 'portrait') {
-    gothicFramePath(context, frameX, frameY, frameW, frameH);
-    context.clip();
-  } else {
-    context.beginPath();
-    context.rect(frameX, frameY, frameW, frameH);
-    context.clip();
-  }
-
+  context.beginPath();
+  context.rect(frameX, frameY, frameW, frameH);
+  context.clip();
   context.fillStyle = palette.paperBright;
   context.fillRect(frameX, frameY, frameW, frameH);
-  drawImageCover(context, image, frameX, frameY, frameW, frameH, mode === 'document');
+  drawImageCover(context, image, frameX, frameY, frameW, frameH);
   context.restore();
 
   context.save();
   context.fillStyle = palette.muted;
-  context.font = `400 24px ${FONT_SERIF}`;
+  context.globalAlpha = 0.72;
+  context.font = `400 21px ${FONT_SERIF}`;
   context.textBaseline = 'alphabetic';
-  drawTrackedText(context, '✦', 126, 1265, 0);
-  drawTrackedText(context, face.spread.visual.caption.toUpperCase(), 176, 1265, 4.2);
+  context.textAlign = 'center';
+  context.fillText(visual.caption.toUpperCase(), DESIGN_WIDTH / 2, 1125);
   context.restore();
 
   drawPageNumber(context, face.pageNumber, 'left', palette);

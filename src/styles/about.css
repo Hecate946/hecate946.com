@@ -20,8 +20,8 @@ body.about-room-page {
   --paper-ink: #24170f;
   --paper-muted: #695442;
   --paper-accent: #653128;
-  --book-leather: #180b08;
-  --book-leather-light: #2d1710;
+  --book-leather: #24120e;
+  --book-leather-light: #342019;
   --book-metal: #7b6040;
 
   --bg: var(--wall-dark);
@@ -54,8 +54,8 @@ html[data-theme='dark'] body.about-room-page {
   --paper-ink: #1b100b;
   --paper-muted: #5c4635;
   --paper-accent: #5c2923;
-  --book-leather: #0d0605;
-  --book-leather-light: #1d0e0b;
+  --book-leather: #140907;
+  --book-leather-light: #24130f;
   --book-metal: #685033;
 }
 
@@ -95,17 +95,11 @@ html[data-theme='dark'] body.about-room-page {
 
 .about-webgl-book {
   position: relative;
-  width: min(96rem, 100vw);
-  height: 100svh;
+  width: min(76rem, 100%);
+  height: 100%;
   pointer-events: auto;
   opacity: 0.98;
   transition: opacity 180ms ease;
-}
-
-@supports (height: 100dvh) {
-  .about-webgl-book {
-    height: 100dvh;
-  }
 }
 
 .about-webgl-book.is-ready {
@@ -116,11 +110,17 @@ html[data-theme='dark'] body.about-room-page {
   display: block;
   width: 100%;
   height: 100%;
-  touch-action: pan-y;
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  filter: drop-shadow(0 1.05rem 0.9rem rgb(22 7 2 / 24%));
+  filter:
+    drop-shadow(0 0.3rem 0.42rem rgb(22 7 2 / 20%))
+    drop-shadow(0 1.05rem 1.35rem rgb(15 5 2 / 28%));
   outline-offset: 0.28rem;
+}
+
+.about-webgl-book.is-closed canvas {
+  cursor: grab;
 }
 
 .about-webgl-book.is-dragging canvas {

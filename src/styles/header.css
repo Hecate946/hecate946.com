@@ -3,8 +3,9 @@
   --nav-font-weight: 400;
   --control-size: 2rem;
   --control-radius: 0.5rem;
-  --nav-border-color: rgb(255 255 255 / 62%);
-  --nav-underline-color: rgb(255 255 255 / 72%);
+  --nav-ink: var(--room-nav-ink, var(--wall-light, #fff8e8));
+  --nav-border-color: color-mix(in srgb, var(--nav-ink) 62%, transparent);
+  --nav-underline-color: color-mix(in srgb, var(--nav-ink) 72%, transparent);
 
   position: sticky;
   top: 0;
@@ -16,7 +17,7 @@
   border: 0;
   border-bottom: 1px solid var(--nav-border-color);
   background: transparent;
-  color: var(--wall-light, #fff8e8);
+  color: var(--nav-ink);
   font-family: var(--font-sans);
   box-shadow: none;
 }

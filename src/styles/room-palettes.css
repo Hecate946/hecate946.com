@@ -1,9 +1,12 @@
 /*
- * Shared brick-room palettes for ordinary pages. Every room uses the exact
- * same room geometry as the homepage; only the color variables change.
- * The main navigation follows a deliberate sequence: teal Home, orange About,
- * purple Projects, golden Resumes, and green Contact. Stats belongs to the
- * Projects family, so it shares the same purple room.
+ * Shared color system for every room except Home.
+ *
+ * COLOR TWEAKING: this is the one file to edit for page background colors.
+ * Change only the --wall-dark values in the two palette sections below:
+ *   LIGHT = macaron pastels
+ *   DARK  = rich, saturated companions
+ *
+ * Home intentionally continues to use src/styles/themes.css unchanged.
  */
 .site-room-backdrop {
   position: absolute;
@@ -25,55 +28,130 @@ body:has(> .site-room-backdrop) > main {
   z-index: 1;
 }
 
-.room-theme-projects,
-.room-theme-resume,
-.room-theme-contact,
-.room-theme-stats {
-  --wall-light: #fff8e8;
-  --header-text: var(--wall-light);
-  --header-muted: color-mix(in srgb, var(--wall-light) 74%, transparent);
-  --header-line: rgb(255 255 255 / 62%);
-  --header-accent: var(--wall-light);
-  --text: var(--wall-light);
-  --muted: color-mix(in srgb, var(--wall-light) 70%, var(--wall-dark));
-  --line: color-mix(in srgb, var(--wall-light) 17%, transparent);
-  --surface: color-mix(in srgb, var(--wall-dark) 84%, transparent);
-  --surface-strong: color-mix(in srgb, var(--wall-dark) 90%, black);
-  --accent: color-mix(in srgb, var(--wall-light) 82%, white);
-  --accent-strong: var(--wall-light);
-  --accent-soft: color-mix(in srgb, var(--wall-light) 11%, transparent);
+:is(
+    .room-theme-about,
+    .room-theme-projects,
+    .room-theme-resume,
+    .room-theme-contact,
+    .room-theme-stats
+  ) {
+  --wall-light: #fff8ec;
+  --room-ink: var(--wall-light);
+  --room-nav-ink: var(--room-ink);
+  --room-label-ink: var(--room-ink);
+  --room-control-ink: var(--room-ink);
+  --room-surface-base: var(--wall-dark);
+  --room-control-bg: color-mix(in srgb, var(--wall-dark) 82%, transparent);
+
+  --header-text: var(--room-nav-ink);
+  --header-muted: color-mix(in srgb, var(--room-nav-ink) 74%, transparent);
+  --header-line: color-mix(in srgb, var(--room-nav-ink) 34%, transparent);
+  --header-accent: var(--room-nav-ink);
+  --text: var(--room-ink);
+  --muted: color-mix(in srgb, var(--room-ink) 68%, var(--wall-dark));
+  --line: color-mix(in srgb, var(--room-ink) 18%, transparent);
+  --surface: color-mix(in srgb, var(--room-surface-base) 84%, transparent);
+  --surface-strong: var(--room-surface-base);
+  --accent: var(--room-ink);
+  --accent-strong: var(--room-ink);
+  --accent-soft: color-mix(in srgb, var(--room-ink) 12%, transparent);
   --bg: var(--wall-dark);
-  --shadow: 0 1.25rem 3rem rgb(0 0 0 / 26%);
-  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 91%, #090909);
+  --shadow: 0 1.25rem 3rem rgb(0 0 0 / 22%);
+
+  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 86%, #090909);
   --wall-trim-line: color-mix(in srgb, var(--wall-light) 10%, transparent);
   --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 5.5%, transparent);
   --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 4%, transparent);
-  --wall-trim-shadow: rgb(0 0 0 / 42%);
+  --wall-trim-shadow: rgb(0 0 0 / 38%);
 }
 
-/* Projects + Stats: a saturated violet with the same density as Home teal. */
-html[data-theme='light'] :is(.room-theme-projects, .room-theme-stats) {
-  --wall-dark: #684f86;
+/* -------------------------------------------------------------------------- */
+/* LIGHT MODE — macaron palette                                               */
+/* -------------------------------------------------------------------------- */
+html[data-theme='light']
+  :is(
+    .room-theme-about,
+    .room-theme-projects,
+    .room-theme-resume,
+    .room-theme-contact,
+    .room-theme-stats
+  ) {
+  --room-surface-base: color-mix(in srgb, var(--wall-light) 84%, var(--wall-dark));
+  --room-control-bg: color-mix(in srgb, var(--wall-light) 76%, transparent);
+  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 72%, #272321);
+  --wall-trim-shadow: rgb(39 31 27 / 24%);
 }
 
-html[data-theme='dark'] :is(.room-theme-projects, .room-theme-stats) {
-  --wall-dark: #140b1d;
+/* Peach macaron. */
+html[data-theme='light'] .room-theme-about {
+  --wall-dark: #e09253;
+  --room-ink: #583326;
 }
 
-/* Resumes: ochre/gold, intentionally earthy rather than neon yellow. */
+/* Lavender macaron. */
+html[data-theme='light'] .room-theme-projects {
+  --wall-dark: #b6a6cc;
+  --room-ink: #44355d;
+}
+
+/* Butter macaron. */
 html[data-theme='light'] .room-theme-resume {
-  --wall-dark: #96731d;
+  --wall-dark: #c2b589;
+  --room-ink: #51431d;
 }
 
-html[data-theme='dark'] .room-theme-resume {
-  --wall-dark: #1b1403;
-}
-
-/* Contact: deep botanical green. */
+/* Pistachio macaron. */
 html[data-theme='light'] .room-theme-contact {
-  --wall-dark: #4b765d;
+  --wall-dark: #739e6d;
+  --room-ink: #295a3c;
 }
 
+/* Blueberry macaron. */
+html[data-theme='light'] .room-theme-stats {
+  --wall-dark: #9cb4cf;
+  --room-ink: #29445e;
+}
+
+/* -------------------------------------------------------------------------- */
+/* DARK MODE — rich, saturated companions                                     */
+/* -------------------------------------------------------------------------- */
+html[data-theme='dark']
+  :is(
+    .room-theme-about,
+    .room-theme-projects,
+    .room-theme-resume,
+    .room-theme-contact,
+    .room-theme-stats
+  ) {
+  --wall-light: #fff8e8;
+  --room-ink: var(--wall-light);
+  --room-surface-base: color-mix(in srgb, var(--wall-dark) 86%, black);
+  --room-control-bg: color-mix(in srgb, var(--wall-dark) 82%, transparent);
+  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 91%, #090909);
+  --wall-trim-shadow: rgb(0 0 0 / 44%);
+}
+
+/* Rich terracotta. */
+html[data-theme='dark'] .room-theme-about {
+  --wall-dark: #750000;
+}
+
+/* Royal plum. */
+html[data-theme='dark'] .room-theme-projects {
+  --wall-dark: #130a1f;
+}
+
+/* Deep amber. */
+html[data-theme='dark'] .room-theme-resume {
+  --wall-dark: #8b6b00;
+}
+
+/* Saturated emerald. */
 html[data-theme='dark'] .room-theme-contact {
-  --wall-dark: #08170f;
+  --wall-dark: #041b0b;
+}
+
+/* Deep cobalt. */
+html[data-theme='dark'] .room-theme-stats {
+  --wall-dark: #22527f;
 }

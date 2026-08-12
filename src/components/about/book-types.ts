@@ -1,7 +1,6 @@
 export type Direction = -1 | 1;
 export type PageSide = 'left' | 'right';
 export type BookClosedSide = 'front' | 'back' | null;
-export type VisualMode = 'portrait' | 'screen' | 'document' | 'photo';
 
 export type BookMotion =
   | {
@@ -26,18 +25,19 @@ export type BookInterest = {
   link: BookLink;
 };
 
+export type BookVisual = {
+  src: string;
+  alt: string;
+  caption: string;
+};
+
 export type BookSpread = {
   id: 'about' | 'software' | 'music' | 'interests';
   label: string;
   eyebrow: string;
   title: string;
   paragraphs?: string[];
-  visual: {
-    src: string;
-    alt: string;
-    caption: string;
-    mode: VisualMode;
-  };
+  visual?: BookVisual;
   link?: BookLink;
   interests?: BookInterest[];
 };

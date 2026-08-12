@@ -7,9 +7,6 @@
   export let chessProfileUrl: string;
   export let resumesUrl: string;
   export let portraitUrl: string;
-  export let softwareImageUrl: string;
-  export let musicImageUrl: string;
-  export let pickleballImageUrl: string;
 
   $: spreads = createAboutBookSpreads({
     musicVideoUrl,
@@ -17,9 +14,6 @@
     chessProfileUrl,
     resumesUrl,
     portraitUrl,
-    softwareImageUrl,
-    musicImageUrl,
-    pickleballImageUrl,
   });
 </script>
 

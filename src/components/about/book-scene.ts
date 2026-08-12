@@ -19,11 +19,13 @@ const BINDING_Z = BASE_PAGE_Z + 0.025;
 const LEAF_THICKNESS = 0.0065;
 const PAGE_WIDTH_SEGMENTS = 72;
 const PAGE_HEIGHT_SEGMENTS = 18;
-const CAMERA_FOV = 18.5;
-const BOOK_FRAME_FILL_Y = 0.77;
-const BOOK_FRAME_FILL_X = 0.93;
-const BOOK_FRAME_HEIGHT = PAGE_HEIGHT * 1.02;
-const BOOK_FRAME_WIDTH = PAGE_WIDTH * 2.11;
+const CAMERA_FOV = 19.5;
+// Keep the volume intentionally compact inside the actual wall area. The lower
+// fill also leaves generous room for the free edge to rise during a turn.
+const BOOK_FRAME_FILL_Y = 0.60;
+const BOOK_FRAME_FILL_X = 0.76;
+const BOOK_FRAME_HEIGHT = PAGE_HEIGHT * 1.035;
+const BOOK_FRAME_WIDTH = PAGE_WIDTH * 2.08;
 
 type CachedFace = {
   texture: THREE.CanvasTexture;
@@ -124,9 +126,17 @@ export class BookScene {
     polygonOffsetUnits: -1,
   });
   private coverMaterial = new THREE.MeshStandardMaterial({
-    color: 0x180b08,
-    roughness: 0.92,
-    metalness: 0.02,
+    color: 0x24120e,
+    roughness: 0.94,
+    metalness: 0.01,
+  });
+  private coverHitMaterial = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
+    side: THREE.DoubleSide,
+    depthTest: false,
+    depthWrite: false,
+    colorWrite: false,
   });
   private pageBlockMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,
@@ -154,17 +164,21 @@ export class BookScene {
   private leftBlockMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), this.pageBlockMaterial);
   private rightBlockMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), this.pageBlockMaterial);
   private leftCoverMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(PAGE_WIDTH * 1.045, PAGE_HEIGHT * 1.055, 0.055),
+    new THREE.BoxGeometry(PAGE_WIDTH * 1.018, PAGE_HEIGHT * 1.024, 0.044),
     this.coverMaterial,
   );
   private rightCoverMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(PAGE_WIDTH * 1.045, PAGE_HEIGHT * 1.055, 0.055),
+    new THREE.BoxGeometry(PAGE_WIDTH * 1.018, PAGE_HEIGHT * 1.024, 0.044),
     this.coverMaterial,
   );
   private spineMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.070, PAGE_HEIGHT * 1.04, 0.062),
+    new THREE.BoxGeometry(0.054, PAGE_HEIGHT * 1.018, 0.050),
     this.spineMaterial,
   );
+  // A transparent, double-sided copy of the active cover geometry is used only
+  // for hit testing when the book is closed. This makes the entire visible
+  // cover reliably clickable/draggable regardless of face orientation.
+  private coverHitMesh = new THREE.Mesh(this.turnFrontGeometry, this.coverHitMaterial);
 
   private edgeTexture: THREE.CanvasTexture | null = null;
   private leatherTexture: THREE.CanvasTexture | null = null;
@@ -205,7 +219,7 @@ export class BookScene {
   async initialise() {
     if (!this.spreads.length) return;
     this.resize();
-    preloadBookImages(this.spreads.map((spread) => spread.visual.src));
+    preloadBookImages(this.spreads.flatMap((spread) => (spread.visual ? [spread.visual.src] : [])));
     await this.renderAllFaces(true);
     if (this.disposed) return;
     this.applyState();
@@ -248,7 +262,7 @@ export class BookScene {
     this.raycaster.setFromCamera(this.pointerNdc, this.camera);
 
     if (this.closedSide && !this.motion) {
-      const hit = this.raycaster.intersectObjects([this.turnFrontMesh, this.turnBackMesh], false)[0];
+      const hit = this.raycaster.intersectObject(this.coverHitMesh, false)[0];
       if (!hit?.uv) return null;
       return {
         target: 'cover',
@@ -304,6 +318,7 @@ export class BookScene {
     this.turnBackMaterial.dispose();
     this.turnEdgeMaterial.dispose();
     this.coverMaterial.dispose();
+    this.coverHitMaterial.dispose();
     this.pageBlockMaterial.dispose();
     this.spineMaterial.dispose();
 
@@ -331,9 +346,9 @@ export class BookScene {
     fill.position.set(2.6, -1.2, 3.4);
     this.scene.add(hemisphere, key, fill);
 
-    this.leftCoverMesh.position.set(-PAGE_WIDTH / 2 - 0.018, -0.006, COVER_Z - 0.025);
-    this.rightCoverMesh.position.set(PAGE_WIDTH / 2 + 0.018, -0.006, COVER_Z - 0.025);
-    this.spineMesh.position.set(0, -0.003, COVER_Z - 0.012);
+    this.leftCoverMesh.position.set(-PAGE_WIDTH / 2 - 0.007, -0.003, COVER_Z - 0.020);
+    this.rightCoverMesh.position.set(PAGE_WIDTH / 2 + 0.007, -0.003, COVER_Z - 0.020);
+    this.spineMesh.position.set(0, -0.002, COVER_Z - 0.010);
 
     this.leftPageMesh.renderOrder = 8;
     this.rightPageMesh.renderOrder = 8;
@@ -343,6 +358,8 @@ export class BookScene {
     this.turnFrontMesh.visible = false;
     this.turnBackMesh.visible = false;
     this.turnEdgeLine.visible = false;
+    this.coverHitMesh.visible = false;
+    this.coverHitMesh.scale.set(1.035, 1.035, 1);
 
     this.group.add(
       this.leftCoverMesh,
@@ -355,6 +372,7 @@ export class BookScene {
       this.turnFrontMesh,
       this.turnBackMesh,
       this.turnEdgeLine,
+      this.coverHitMesh,
     );
 
     this.updateBookMaterials();
@@ -491,7 +509,7 @@ export class BookScene {
 
     const generation = ++this.textureGeneration;
     this.textureWidth = width;
-    preloadBookImages(this.spreads.map((spread) => spread.visual.src));
+    preloadBookImages(this.spreads.flatMap((spread) => (spread.visual ? [spread.visual.src] : [])));
     await document.fonts?.ready;
 
     const faces: PageFace[] = [
@@ -698,6 +716,7 @@ export class BookScene {
   }
 
   private setOpenVisibility() {
+    this.coverHitMesh.visible = false;
     this.leftPageMesh.visible = true;
     this.rightPageMesh.visible = true;
     this.leftBlockMesh.visible = true;
@@ -852,6 +871,7 @@ export class BookScene {
       ? this.rightTopZ(0) + LEAF_THICKNESS + 0.004
       : this.leftTopZ(index) + LEAF_THICKNESS + 0.004;
     this.deformCoverLeaf(amount, side, startZ, endZ);
+    this.coverHitMesh.visible = Boolean(this.closedSide && !this.motion && amount >= 0.999);
   }
 
   private applyState() {
@@ -883,11 +903,9 @@ export class BookScene {
     this.renderer.setSize(Math.round(bounds.width), Math.round(bounds.height), false);
     this.camera.aspect = bounds.width / bounds.height;
 
-    // The canvas deliberately extends well beyond the resting book.  A page turn
-    // can project substantially larger than a flat page because the free edge
-    // moves toward the camera.  Frame the resting book at ~77% of the canvas
-    // height and use a longer lens so that depth does not balloon the sheet into
-    // the viewport edges during the 90-degree portion of a turn.
+    // Frame the book against the actual wall portion rather than the viewport.
+    // The compact fill leaves enough headroom for the free edge to rise during a
+    // turn without clipping while keeping both open and closed states centered.
     const verticalDistance =
       (BOOK_FRAME_HEIGHT / 2) /
       Math.tan((this.camera.fov * Math.PI) / 360) /

@@ -35,7 +35,7 @@ const FRAME_HEIGHT = 420;
  */
 const FRAME_SPACING = 600;
 
-/** Primary site order: About → Projects → Contact → Stats. */
+/** Primary site order: About → Projects → Resume → Contact. */
 const destinationDefinitions = [
   {
     id: 'about',
@@ -68,6 +68,22 @@ const destinationDefinitions = [
     },
   },
   {
+    id: 'resume',
+    label: 'Resume',
+    href: '/resumes/',
+    painting: {
+      src: '/paintings/stats-portrait.webp',
+      name: 'Seated Portrait',
+      width: 960,
+      height: 1203,
+      sources: [
+        { src: '/paintings/stats-portrait-480.webp', width: 480 },
+        { src: '/paintings/stats-portrait-720.webp', width: 720 },
+        { src: '/paintings/stats-portrait.webp', width: 960 },
+      ],
+    },
+  },
+  {
     id: 'contact',
     label: 'Contact',
     href: '/contact/',
@@ -79,22 +95,6 @@ const destinationDefinitions = [
       sources: [
         { src: '/paintings/madame-le-peletier-480.webp', width: 480 },
         { src: '/paintings/madame-le-peletier.webp', width: 564 },
-      ],
-    },
-  },
-  {
-    id: 'stats',
-    label: 'Stats',
-    href: '/stats/',
-    painting: {
-      src: '/paintings/stats-portrait.webp',
-      name: 'Seated Portrait',
-      width: 960,
-      height: 1203,
-      sources: [
-        { src: '/paintings/stats-portrait-480.webp', width: 480 },
-        { src: '/paintings/stats-portrait-720.webp', width: 720 },
-        { src: '/paintings/stats-portrait.webp', width: 960 },
       ],
     },
   },

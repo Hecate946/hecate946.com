@@ -42,15 +42,17 @@ const isDedicatedRoom =
   pathname === '/about' ||
   pathname === '/projects/' ||
   pathname === '/projects';
-const roomThemeClass = pathname.startsWith('/projects')
-  ? 'room-theme-projects'
-  : pathname.startsWith('/resumes')
-    ? 'room-theme-resume'
-    : pathname.startsWith('/contact')
-      ? 'room-theme-contact'
-      : pathname.startsWith('/stats')
-        ? 'room-theme-stats'
-        : undefined;
+const roomThemeClass = pathname.startsWith('/about')
+  ? 'room-theme-about'
+  : pathname.startsWith('/projects')
+    ? 'room-theme-projects'
+    : pathname.startsWith('/resumes')
+      ? 'room-theme-resume'
+      : pathname.startsWith('/contact')
+        ? 'room-theme-contact'
+        : pathname.startsWith('/stats')
+          ? 'room-theme-stats'
+          : undefined;
 
 const elevatorTabAnimationsEnabled = siteConfig.ui.enableElevatorTabAnimations;
 const clientRouterFallback = elevatorTabAnimationsEnabled ? 'animate' : 'swap';

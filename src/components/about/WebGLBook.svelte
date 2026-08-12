@@ -168,13 +168,17 @@
     const nextMotion = hit.target === 'cover' ? openMotionForClosedBook() : pageMotionForSide(hit.side);
     if (!nextMotion) return;
 
+    if (event.cancelable) event.preventDefault();
+    canvasElement.style.cursor = 'grab';
     activePointerId = event.pointerId;
     pointerMotion = nextMotion;
     pointerStartX = event.clientX;
     pointerStartY = event.clientY;
     pointerStartedAt = performance.now();
     const canvasBounds = canvasElement.getBoundingClientRect();
-    pointerTravelWidth = Math.max(1, Math.min(canvasBounds.width * 0.46, canvasBounds.height * 0.58));
+    // Scale drag distance to the compact book rather than the full transparent
+    // canvas. A natural page-width gesture should be enough to complete a turn.
+    pointerTravelWidth = Math.max(1, Math.min(canvasBounds.width * 0.30, canvasBounds.height * 0.42));
     pointerMoved = false;
   };
 
@@ -217,6 +221,7 @@
     const gestureDistance = Math.hypot(dx, dy);
     const activeMotion = pointerMotion;
     resetPointer();
+    canvasElement.style.cursor = closedSide ? 'grab' : 'default';
 
     if (!moved) {
       if (gestureDistance > 6) ignoreClicksUntil = performance.now() + 260;

@@ -589,6 +589,12 @@
   }
 
   .wall-motion-toggle {
+    --wall-control-ink: var(--room-control-ink, var(--wall-light, #f4f1e9));
+    --wall-control-bg: var(
+      --room-control-bg,
+      color-mix(in srgb, var(--wall-dark, #050505) 82%, transparent)
+    );
+
     position: absolute;
     z-index: 13;
     right: clamp(0.9rem, 2.4vw, 1.7rem);
@@ -598,12 +604,12 @@
     height: 2.2rem;
     place-items: center;
     padding: 0;
-    border: 1px solid color-mix(in srgb, var(--wall-light, #f4f1e9) 24%, transparent);
+    border: 1px solid color-mix(in srgb, var(--wall-control-ink) 28%, transparent);
     border-radius: 0.56rem;
     outline: 2px solid transparent;
     outline-offset: 1px;
-    background: color-mix(in srgb, var(--wall-dark, #050505) 82%, transparent);
-    color: color-mix(in srgb, var(--wall-light, #f4f1e9) 48%, transparent);
+    background: var(--wall-control-bg);
+    color: color-mix(in srgb, var(--wall-control-ink) 58%, transparent);
     cursor: pointer;
     opacity: 0.78;
     transition:
@@ -615,8 +621,8 @@
 
   .wall-motion-toggle:hover,
   .wall-motion-toggle:focus-visible {
-    border-color: color-mix(in srgb, var(--wall-light, #f4f1e9) 34%, transparent);
-    color: color-mix(in srgb, var(--wall-light, #f4f1e9) 70%, transparent);
+    border-color: color-mix(in srgb, var(--wall-control-ink) 46%, transparent);
+    color: color-mix(in srgb, var(--wall-control-ink) 84%, transparent);
     opacity: 1;
   }
 

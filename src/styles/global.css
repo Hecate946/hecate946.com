@@ -117,11 +117,15 @@ body::after {
 /* The navbar is part of the room architecture everywhere: the header itself
    paints the same two brick courses and remains free of opaque UI chrome. */
 .site-header {
-  --header-text: var(--wall-light) !important;
-  --header-muted: color-mix(in srgb, var(--wall-light) 72%, transparent) !important;
+  --header-text: var(--room-nav-ink, var(--wall-light)) !important;
+  --header-muted: color-mix(
+    in srgb,
+    var(--room-nav-ink, var(--wall-light)) 72%,
+    transparent
+  ) !important;
   --header-line: rgb(255 255 255 / 48%) !important;
-  --header-active-text: var(--wall-light) !important;
-  --header-accent: var(--wall-light) !important;
+  --header-active-text: var(--room-nav-ink, var(--wall-light)) !important;
+  --header-accent: var(--room-nav-ink, var(--wall-light)) !important;
   --nav-font-weight: 400 !important;
   background: transparent !important;
   box-shadow: none !important;

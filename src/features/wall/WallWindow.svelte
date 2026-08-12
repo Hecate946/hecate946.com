@@ -16,7 +16,7 @@
     .join(', ');
 
   function wallIndex(id: string) {
-    const order = ['about', 'projects', 'contact', 'stats'];
+    const order = ['about', 'projects', 'resume', 'contact'];
     const index = order.indexOf(id);
     return String(index + 1).padStart(2, '0');
   }
@@ -74,6 +74,7 @@
 <style>
   .wall-window {
     --room-light-hot: var(--wall-light, #f4f1e9);
+    --wall-label-ink: var(--room-label-ink, var(--wall-light, #f4f1e9));
 
     position: absolute;
     z-index: 3;
@@ -85,7 +86,7 @@
     height: var(--window-height);
     margin-top: var(--window-offset-y);
     margin-left: var(--window-offset-x);
-    color: color-mix(in srgb, var(--wall-light, #f4f1e9) 72%, transparent);
+    color: color-mix(in srgb, var(--wall-label-ink) 72%, transparent);
     outline: none;
     text-decoration: none;
     user-select: none;
@@ -181,7 +182,7 @@
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 0.7rem;
-    color: color-mix(in srgb, var(--wall-light, #f4f1e9) 58%, transparent);
+    color: color-mix(in srgb, var(--wall-label-ink) 58%, transparent);
     font-family: var(--font-sans, system-ui, sans-serif);
     font-size: 0.7rem;
     font-weight: 400;
@@ -192,7 +193,7 @@
   }
 
   .wall-window__index {
-    color: color-mix(in srgb, var(--wall-light, #f4f1e9) 30%, transparent);
+    color: color-mix(in srgb, var(--wall-label-ink) 38%, transparent);
     font-variant-numeric: tabular-nums;
   }
 
@@ -229,7 +230,7 @@
   }
 
   .wall-window--entering {
-    color: var(--wall-light, #f4f1e9);
+    color: var(--wall-label-ink);
   }
 
   .wall-window--entering .wall-window__recess {
@@ -247,7 +248,7 @@
   }
 
   .wall-window--entering .wall-window__label {
-    color: color-mix(in srgb, var(--wall-light, #f4f1e9) 92%, transparent);
+    color: color-mix(in srgb, var(--wall-label-ink) 92%, transparent);
   }
 
   .wall-window--entering .wall-window__arrow {
@@ -257,7 +258,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .wall-window:hover {
-      color: var(--wall-light, #f4f1e9);
+      color: var(--wall-label-ink);
     }
 
     .wall-window:hover .wall-window__recess {
@@ -275,7 +276,7 @@
     }
 
     .wall-window:hover .wall-window__label {
-      color: color-mix(in srgb, var(--wall-light, #f4f1e9) 92%, transparent);
+      color: color-mix(in srgb, var(--wall-label-ink) 92%, transparent);
     }
 
     .wall-window:hover .wall-window__arrow {
@@ -285,7 +286,7 @@
   }
 
   .wall-window:focus-visible .wall-window__recess {
-    outline: 2px solid color-mix(in srgb, var(--wall-light, #f4f1e9) 82%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--wall-label-ink) 82%, transparent);
     outline-offset: 0.5rem;
   }
 
