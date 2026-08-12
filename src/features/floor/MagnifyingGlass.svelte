@@ -24,7 +24,11 @@
   const CAP_Y = 1.15;
   const CAP_LOCAL = new THREE.Vector3(0, 0, CAP_CENTER_Z + CAP_HALF_LENGTH);
   const GRIP_LOCAL = new THREE.Vector3(0, 0, 147);
-  const LENS_EDGE_LOCAL = new THREE.Vector3(LENS_RADIUS, 0, 0);
+  const LENS_VIEW_RADIUS = LENS_RADIUS - RING_TUBE_RADIUS - 2.3;
+  const LENS_PLANE_Y = 0.65;
+  const REST_BODY_CLEARANCE = 2.81;
+  const VIEWPORT_MARGIN = 8;
+  const LENS_CONTOUR_POINTS = 36;
 
   const HELD_LENS_RADIUS = 78;
   const HELD_LENS_RADIUS_MOBILE = 61;
@@ -39,6 +43,9 @@
   const FLOOR_RESTITUTION = 0.095;
   const WALL_FRICTION = 0.58;
   const WALL_RESTITUTION = 0.18;
+  const BOUNDS_MARGIN_X = 46;
+  const BOUNDS_MARGIN_BACK = LENS_RADIUS + RING_TUBE_RADIUS + 4;
+  const BOUNDS_MARGIN_FRONT = 182;
   const METAL_RESTITUTION = 0.31;
   const WOOD_RESTITUTION = 0.11;
   const GLASS_RESTITUTION = 0.045;
@@ -46,10 +53,16 @@
   const MIN_HARD_IMPACT_SPEED = 82;
   const MAX_ASSISTED_BOUNCE_SPEED = 230;
   const FLOOR_COLLIDER_THICKNESS = 8;
-  const AIRBORNE_OVERLAY_CUTOFF_Y = 15;
 
   type Mode = 'settling' | 'idle' | 'held' | 'airborne';
   type TransformTarget = { position: THREE.Vector3; quaternion: THREE.Quaternion };
+  type ProjectedBounds = { left: number; right: number; top: number; bottom: number };
+  type BodyState = {
+    position: THREE.Vector3;
+    rotation: THREE.Quaternion;
+    linvel: THREE.Vector3;
+    angvel: THREE.Vector3;
+  };
 
   let mode: Mode = 'settling';
   let magnifier: THREE.Group | null = null;
@@ -72,6 +85,7 @@
   let lastBounceAssistAt = 0;
   let physicsReady = false;
   let physicsStartedAt = 0;
+  let lastViewportSafeState: BodyState | null = null;
 
   let hitButton: HTMLButtonElement | null = null;
   let activePointerId: number | null = null;
@@ -88,12 +102,10 @@
   let lensViewport: HTMLDivElement | null = null;
   let snapshotRoom: HTMLElement | null = null;
   let roomRect: DOMRect | null = null;
-  let lensRadius = HELD_LENS_RADIUS;
 
   let animationFrame = 0;
   let previousFrameTime = 0;
   let physicsAccumulator = 0;
-  let overlayRemovedAfterRelease = false;
   let destroyed = false;
 
   const tmpVectorA = new THREE.Vector3();
@@ -101,6 +113,59 @@
   const tmpVectorC = new THREE.Vector3();
   const tmpQuaternion = new THREE.Quaternion();
   const tmpEuler = new THREE.Euler();
+
+
+  function captureBodyState(): BodyState | null {
+    if (!rigidBody) return null;
+    const t = rigidBody.translation();
+    const r = rigidBody.rotation();
+    const lv = rigidBody.linvel();
+    const av = rigidBody.angvel();
+    return {
+      position: new THREE.Vector3(t.x, t.y, t.z),
+      rotation: new THREE.Quaternion(r.x, r.y, r.z, r.w),
+      linvel: new THREE.Vector3(lv.x, lv.y, lv.z),
+      angvel: new THREE.Vector3(av.x, av.y, av.z),
+    };
+  }
+
+  function applyBodyState(state: BodyState, wake = false) {
+    if (!rigidBody) return;
+    rigidBody.setTranslation({ x: state.position.x, y: state.position.y, z: state.position.z }, wake);
+    rigidBody.setRotation(
+      { x: state.rotation.x, y: state.rotation.y, z: state.rotation.z, w: state.rotation.w },
+      wake,
+    );
+    rigidBody.setLinvel({ x: state.linvel.x, y: state.linvel.y, z: state.linvel.z }, wake);
+    rigidBody.setAngvel({ x: state.angvel.x, y: state.angvel.y, z: state.angvel.z }, wake);
+  }
+
+  function viewportBoundsInside(bounds: ProjectedBounds | null) {
+    return !!bounds
+      && bounds.left >= VIEWPORT_MARGIN
+      && bounds.right <= window.innerWidth - VIEWPORT_MARGIN
+      && bounds.top >= VIEWPORT_MARGIN
+      && bounds.bottom <= window.innerHeight - VIEWPORT_MARGIN;
+  }
+
+  function rememberViewportSafeState() {
+    const bounds = projectedMagnifierBounds();
+    if (viewportBoundsInside(bounds)) {
+      const state = captureBodyState();
+      if (state) lastViewportSafeState = state;
+      return true;
+    }
+    return false;
+  }
+
+  function viewportViolations(bounds: ProjectedBounds | null) {
+    return {
+      left: !!bounds && bounds.left < VIEWPORT_MARGIN,
+      right: !!bounds && bounds.right > window.innerWidth - VIEWPORT_MARGIN,
+      top: !!bounds && bounds.top < VIEWPORT_MARGIN,
+      bottom: !!bounds && bounds.bottom > window.innerHeight - VIEWPORT_MARGIN,
+    };
+  }
 
   function createContactShadowTexture() {
     const canvas = document.createElement('canvas');
@@ -261,7 +326,7 @@
     innerRing.renderOrder = 7;
     root.add(innerRing);
 
-    const glass = new THREE.Mesh(new THREE.CircleGeometry(LENS_RADIUS - 5.9, 96), glassMaterial);
+    const glass = new THREE.Mesh(new THREE.CircleGeometry(LENS_VIEW_RADIUS, 96), glassMaterial);
     glass.rotation.x = -Math.PI / 2;
     glass.position.y = 0.65;
     glass.renderOrder = 5;
@@ -468,14 +533,16 @@
       floor.minX + 190,
       floor.maxX - 190,
     );
+    // As close to the back wall as the actual metal tube can physically sit
+    // without beginning the simulation intersecting the wall collider.
     const startZ = THREE.MathUtils.clamp(
-      floor.minZ + Math.max(8, Math.min(18, width * 0.016)),
-      floor.minZ + 8,
+      floor.minZ + BOUNDS_MARGIN_BACK + 2,
+      floor.minZ + BOUNDS_MARGIN_BACK,
       floor.maxZ - 210,
     );
 
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
-      .setTranslation(startX, floor.y + 2.95, startZ)
+      .setTranslation(startX, floor.y + REST_BODY_CLEARANCE, startZ)
       .setLinearDamping(0.16)
       .setAngularDamping(0.54)
       .setCcdEnabled(true)
@@ -533,12 +600,19 @@
     }
 
     rigidBody.recomputeMassPropertiesFromColliders?.();
+    // The default prop begins already resting on the floor. Sleeping it before
+    // the first simulation frame avoids tiny solver corrections that otherwise
+    // read as visible startup shaking.
+    rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, false);
+    rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, false);
+    rigidBody.sleep();
     physicsReady = true;
     physicsStartedAt = performance.now();
-    mode = 'settling';
+    mode = 'idle';
+    updateLightRig();
     syncVisualFromBody();
     updateHitButton();
-    startAnimation();
+    context.requestRender();
   }
 
   function syncVisualFromBody() {
@@ -697,13 +771,32 @@
     const rayDistance = forwardDepth / denominator;
     const capTarget = ray.at(rayDistance, tmpVectorB);
 
-    const faceNormal = tmpVectorC.copy(camera.position).sub(capTarget).normalize();
+    // Keep one stable hand-held orientation everywhere on screen. The lens
+    // therefore never changes apparent proportions simply because the pointer
+    // moved toward a corner; Rapier is still free to rotate it after release.
+    const faceNormal = camera.getWorldDirection(tmpVectorC).normalize().multiplyScalar(-1);
     const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), faceNormal);
     const twist = new THREE.Quaternion().setFromAxisAngle(faceNormal, HELD_TWIST);
     quaternion.premultiply(twist).normalize();
 
     const rotatedCap = CAP_LOCAL.clone().applyQuaternion(quaternion);
     const position = capTarget.clone().sub(rotatedCap);
+    const floor = context.getFloorSurface();
+    if (floor) {
+      // Keep the rigid-body origin inside the physical room even when the pointer
+      // is over the navbar or dragged beyond the viewport. Y remains unrestricted
+      // so the prop can still be lifted high and naturally fall under gravity.
+      position.x = THREE.MathUtils.clamp(
+        position.x,
+        floor.minX + BOUNDS_MARGIN_X,
+        floor.maxX - BOUNDS_MARGIN_X,
+      );
+      position.z = THREE.MathUtils.clamp(
+        position.z,
+        floor.minZ + BOUNDS_MARGIN_BACK,
+        floor.maxZ - BOUNDS_MARGIN_FRONT,
+      );
+    }
     return { position, quaternion };
   }
 
@@ -797,30 +890,53 @@
 
   function updateLensOverlay() {
     if (!lensViewport || !snapshotRoom || !magnifier) return;
-    const lensCenter = worldPointFromLocal(new THREE.Vector3(0, 0, 0));
-    const lensEdge = worldPointFromLocal(LENS_EDGE_LOCAL);
-    if (!lensCenter || !lensEdge) return;
-    const center = projectWorldPoint(lensCenter);
-    const edge = projectWorldPoint(lensEdge);
-    if (!center || !edge) {
+
+    const centerWorld = worldPointFromLocal(new THREE.Vector3(0, LENS_PLANE_Y, 0));
+    if (!centerWorld) return;
+    const center = projectWorldPoint(centerWorld);
+    if (!center) {
       lensViewport.style.opacity = '0';
       return;
     }
 
-    lensRadius = Math.max(20, Math.hypot(edge.x - center.x, edge.y - center.y));
-    const size = lensRadius * 2;
-    const segment = handleScreenSegment();
-    const lensAngle = segment
-      ? Math.atan2(segment.capScreen.y - segment.gripScreen.y, segment.capScreen.x - segment.gripScreen.x) + Math.PI / 2
-      : 0;
-    lensViewport.style.opacity = '1';
-    lensViewport.style.width = `${size}px`;
-    lensViewport.style.height = `${size}px`;
-    lensViewport.style.transform = `translate3d(${center.x - lensRadius}px, ${center.y - lensRadius}px, 0) rotate(${lensAngle}rad)`;
+    // Build the optical aperture from the *actual projected 3D lens circle*.
+    // This remains inside the metal ring whether the magnifier is flat, tilted,
+    // spinning, or viewed in perspective; no screen-space circle can spill out.
+    const contour: string[] = [];
+    for (let index = 0; index < LENS_CONTOUR_POINTS; index += 1) {
+      const angle = (index / LENS_CONTOUR_POINTS) * Math.PI * 2;
+      const world = worldPointFromLocal(
+        new THREE.Vector3(
+          Math.cos(angle) * LENS_VIEW_RADIUS,
+          LENS_PLANE_Y,
+          Math.sin(angle) * LENS_VIEW_RADIUS,
+        ),
+      );
+      if (!world) continue;
+      const projected = projectWorldPoint(world);
+      if (!projected) continue;
+      contour.push(`${projected.x.toFixed(2)}px ${projected.y.toFixed(2)}px`);
+    }
 
-    const tx = lensRadius - center.x * MAGNIFICATION;
-    const ty = lensRadius - center.y * MAGNIFICATION;
-    snapshotRoom.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${MAGNIFICATION}) rotate(${-lensAngle}rad)`;
+    if (contour.length < 12) {
+      lensViewport.style.opacity = '0';
+      return;
+    }
+
+    lensViewport.style.opacity = '1';
+    lensViewport.style.left = '0';
+    lensViewport.style.top = '0';
+    lensViewport.style.width = `${window.innerWidth}px`;
+    lensViewport.style.height = `${window.innerHeight}px`;
+    lensViewport.style.transform = 'none';
+    lensViewport.style.clipPath = `polygon(${contour.join(',')})`;
+
+    // Zoom around the true projected lens center. The clipped polygon rotates
+    // with the hardware while the scene itself remains upright, as real optical
+    // magnification should.
+    const tx = center.x * (1 - MAGNIFICATION);
+    const ty = center.y * (1 - MAGNIFICATION);
+    snapshotRoom.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${MAGNIFICATION})`;
   }
 
   function setBodyTransform(position: THREE.Vector3, quaternion: THREE.Quaternion) {
@@ -851,7 +967,6 @@
     rigidBody.wakeUp();
     rigidBody.setGravityScale(0, true);
     mode = 'held';
-    overlayRemovedAfterRelease = false;
     destroyOverlay();
     if (hitButton) hitButton.style.display = 'none';
     document.documentElement.classList.add('is-using-room-magnifier');
@@ -897,6 +1012,10 @@
     mode = 'airborne';
     physicsStartedAt = performance.now();
     rigidBody.setGravityScale(1, true);
+    if (!overlayRoot || !snapshotRoom) {
+      createOverlay();
+      captureRoomSnapshot();
+    }
 
     const linear = filteredReleaseVelocity.clone();
     if (linear.length() > MAX_RELEASE_SPEED) linear.setLength(MAX_RELEASE_SPEED);
@@ -932,6 +1051,14 @@
     heldPosition.lerp(target.position, PICKUP_FOLLOW);
     heldQuaternion.slerp(target.quaternion, PICKUP_FOLLOW).normalize();
     setBodyTransform(heldPosition, heldQuaternion);
+    enforceViewportBounds(false);
+    syncVisualFromBody();
+    if (!rememberViewportSafeState() && lastViewportSafeState) {
+      applyBodyState(lastViewportSafeState, false);
+      syncVisualFromBody();
+      heldPosition.copy(lastViewportSafeState.position);
+      heldQuaternion.copy(lastViewportSafeState.rotation);
+    }
     updateLensOverlay();
   }
 
@@ -974,14 +1101,197 @@
     lastBounceAssistAt = now;
   }
 
+  function projectedMagnifierBounds(): ProjectedBounds | null {
+    if (!magnifier) return null;
+    magnifier.updateMatrixWorld(true);
+    const bounds = new THREE.Box3().setFromObject(magnifier);
+    if (bounds.isEmpty()) return null;
+
+    const xs = [bounds.min.x, bounds.max.x];
+    const ys = [bounds.min.y, bounds.max.y];
+    const zs = [bounds.min.z, bounds.max.z];
+    let left = Infinity;
+    let right = -Infinity;
+    let top = Infinity;
+    let bottom = -Infinity;
+    let count = 0;
+    for (const x of xs) {
+      for (const y of ys) {
+        for (const z of zs) {
+          const point = projectWorldPoint(new THREE.Vector3(x, y, z));
+          if (!point) continue;
+          left = Math.min(left, point.x);
+          right = Math.max(right, point.x);
+          top = Math.min(top, point.y);
+          bottom = Math.max(bottom, point.y);
+          count += 1;
+        }
+      }
+    }
+    return count ? { left, right, top, bottom } : null;
+  }
+
+  function enforceViewportBounds(wake = true) {
+    if (!rigidBody || !magnifier) return;
+    const floor = context.getFloorSurface();
+    if (!floor) return;
+
+    // Two short iterations are enough because projection is locally linear at
+    // the prop's depth. Corrections happen before rendering, so no frame exposes
+    // any part of the object outside the viewport.
+    for (let pass = 0; pass < 2; pass += 1) {
+      syncVisualFromBody();
+      const bounds = projectedMagnifierBounds();
+      if (!bounds) return;
+
+      let dxPixels = 0;
+      let dyPixels = 0;
+      if (bounds.left < VIEWPORT_MARGIN) dxPixels += VIEWPORT_MARGIN - bounds.left;
+      if (bounds.right > window.innerWidth - VIEWPORT_MARGIN) {
+        dxPixels -= bounds.right - (window.innerWidth - VIEWPORT_MARGIN);
+      }
+      if (bounds.top < VIEWPORT_MARGIN) dyPixels += VIEWPORT_MARGIN - bounds.top;
+      if (bounds.bottom > window.innerHeight - VIEWPORT_MARGIN) {
+        dyPixels -= bounds.bottom - (window.innerHeight - VIEWPORT_MARGIN);
+      }
+      if (Math.abs(dxPixels) < 0.35 && Math.abs(dyPixels) < 0.35) return;
+
+      const translation = rigidBody.translation();
+      const center = new THREE.Vector3(translation.x, translation.y, translation.z);
+      const centerScreen = projectWorldPoint(center);
+      if (!centerScreen) return;
+
+      const xProbe = projectWorldPoint(center.clone().add(new THREE.Vector3(1, 0, 0)));
+      const zProbe = projectWorldPoint(center.clone().add(new THREE.Vector3(0, 0, 1)));
+      const yProbe = projectWorldPoint(center.clone().add(new THREE.Vector3(0, 1, 0)));
+      if (!xProbe || !zProbe || !yProbe) return;
+
+      const pixelsPerX = xProbe.x - centerScreen.x;
+      const pixelsPerZ = zProbe.y - centerScreen.y;
+      const pixelsPerY = yProbe.y - centerScreen.y;
+      let nextX = translation.x;
+      let nextY = translation.y;
+      let nextZ = translation.z;
+
+      if (Math.abs(dxPixels) >= 0.35 && Math.abs(pixelsPerX) > 0.001) {
+        nextX += dxPixels / pixelsPerX;
+      }
+
+      if (Math.abs(dyPixels) >= 0.35 && Math.abs(pixelsPerZ) > 0.001) {
+        const proposedZ = nextZ + dyPixels / pixelsPerZ;
+        const clampedZ = THREE.MathUtils.clamp(
+          proposedZ,
+          floor.minZ + BOUNDS_MARGIN_BACK,
+          floor.maxZ - BOUNDS_MARGIN_FRONT,
+        );
+        nextZ = clampedZ;
+
+        // If Z reached a physical room wall before the whole prop fit on-screen,
+        // use Y for only the remaining correction. This makes the viewport itself
+        // an absolute last-resort boundary without letting the object disappear.
+        const zPixelsApplied = (clampedZ - translation.z) * pixelsPerZ;
+        const remainingY = dyPixels - zPixelsApplied;
+        if (Math.abs(remainingY) >= 0.35 && Math.abs(pixelsPerY) > 0.001) {
+          nextY += remainingY / pixelsPerY;
+          nextY = Math.max(floor.y + REST_BODY_CLEARANCE, nextY);
+        }
+      }
+
+      nextX = THREE.MathUtils.clamp(
+        nextX,
+        floor.minX + BOUNDS_MARGIN_X,
+        floor.maxX - BOUNDS_MARGIN_X,
+      );
+      nextZ = THREE.MathUtils.clamp(
+        nextZ,
+        floor.minZ + BOUNDS_MARGIN_BACK,
+        floor.maxZ - BOUNDS_MARGIN_FRONT,
+      );
+
+      const velocity = rigidBody.linvel();
+      const correctedX = Math.abs(nextX - translation.x) > 0.001;
+      const correctedY = Math.abs(nextY - translation.y) > 0.001;
+      const correctedZ = Math.abs(nextZ - translation.z) > 0.001;
+      rigidBody.setTranslation({ x: nextX, y: nextY, z: nextZ }, wake);
+      rigidBody.setLinvel(
+        {
+          x: correctedX ? -velocity.x * 0.38 : velocity.x,
+          y: correctedY ? -velocity.y * 0.32 : velocity.y,
+          z: correctedZ ? -velocity.z * 0.38 : velocity.z,
+        },
+        wake,
+      );
+    }
+    syncVisualFromBody();
+  }
+
+  function enforceRoomBounds() {
+    if (!rigidBody) return;
+    const floor = context.getFloorSurface();
+    if (!floor) return;
+
+    const translation = rigidBody.translation();
+    const minX = floor.minX + BOUNDS_MARGIN_X;
+    const maxX = floor.maxX - BOUNDS_MARGIN_X;
+    const minZ = floor.minZ + BOUNDS_MARGIN_BACK;
+    const maxZ = floor.maxZ - BOUNDS_MARGIN_FRONT;
+    const clampedX = THREE.MathUtils.clamp(translation.x, minX, maxX);
+    const clampedZ = THREE.MathUtils.clamp(translation.z, minZ, maxZ);
+    if (clampedX === translation.x && clampedZ === translation.z) return;
+
+    const velocity = rigidBody.linvel();
+    const hitX = clampedX !== translation.x;
+    const hitZ = clampedZ !== translation.z;
+    rigidBody.setTranslation({ x: clampedX, y: translation.y, z: clampedZ }, true);
+    rigidBody.setLinvel(
+      {
+        x: hitX ? -velocity.x * 0.42 : velocity.x,
+        y: velocity.y,
+        z: hitZ ? -velocity.z * 0.42 : velocity.z,
+      },
+      true,
+    );
+    rigidBody.wakeUp();
+  }
+
   function stepPhysics(deltaSeconds: number) {
     if (!physicsWorld || !rigidBody) return;
     syncPhysicsFloor();
     physicsAccumulator += Math.min(deltaSeconds, 0.05);
     while (physicsAccumulator >= FIXED_STEP) {
+      const previousState = captureBodyState();
       preStepVerticalVelocity = rigidBody.linvel().y;
       physicsWorld.step(physicsEventQueue);
       assistHardFloorImpact();
+      enforceRoomBounds();
+      enforceViewportBounds(true);
+      syncVisualFromBody();
+      const bounds = projectedMagnifierBounds();
+      if (!viewportBoundsInside(bounds) && previousState) {
+        const fallbackState = lastViewportSafeState ?? previousState;
+        const hit = viewportViolations(bounds);
+        const bounced = {
+          position: fallbackState.position.clone(),
+          rotation: fallbackState.rotation.clone(),
+          linvel: fallbackState.linvel.clone(),
+          angvel: fallbackState.angvel.clone(),
+        };
+        if (hit.left || hit.right) {
+          bounced.linvel.x = -fallbackState.linvel.x * 0.42;
+          bounced.angvel.z = -fallbackState.angvel.z * 0.4;
+        }
+        if (hit.top || hit.bottom) {
+          bounced.linvel.z = -fallbackState.linvel.z * 0.42;
+          bounced.linvel.y = Math.abs(fallbackState.linvel.y) * 0.14;
+          bounced.angvel.x = -fallbackState.angvel.x * 0.4;
+        }
+        applyBodyState(bounced, true);
+        rigidBody.wakeUp();
+        syncVisualFromBody();
+        rememberViewportSafeState();
+      } else {
+        rememberViewportSafeState();
+      }
       physicsAccumulator -= FIXED_STEP;
     }
     syncVisualFromBody();
@@ -1006,32 +1316,18 @@
       return;
     }
     if (mode === 'airborne') {
-      if (!overlayRemovedAfterRelease) updateLensOverlay();
-      if (translation.y <= AIRBORNE_OVERLAY_CUTOFF_Y) {
-        overlayRemovedAfterRelease = true;
-        destroyOverlay();
-        // Keep the 3D canvas in the foreground until the rigid body has actually
-        // settled. Otherwise the prop visually vanishes a few pixels before contact.
-      }
+      // Keep the optical view alive for the complete rigid-body motion: falling,
+      // bouncing, sliding and tumbling. It disappears only once Rapier itself has
+      // put the body to sleep.
+      updateLensOverlay();
     }
 
     updateHitButton();
 
-    const linearVelocity = rigidBody.linvel();
-    const angularVelocity = rigidBody.angvel();
-    const linearSpeedSq =
-      linearVelocity.x * linearVelocity.x +
-      linearVelocity.y * linearVelocity.y +
-      linearVelocity.z * linearVelocity.z;
-    const angularSpeedSq =
-      angularVelocity.x * angularVelocity.x +
-      angularVelocity.y * angularVelocity.y +
-      angularVelocity.z * angularVelocity.z;
-    const nearlyStill = linearSpeedSq < 7.5 && angularSpeedSq < 0.035;
-    const hasHadTimeToLand = performance.now() - physicsStartedAt > 260;
-
-    if (rigidBody.isSleeping() || ((mode === 'settling' || mode === 'airborne') && nearlyStill && hasHadTimeToLand)) {
-      rigidBody.sleep();
+    // Do not infer settling from hand-picked velocity thresholds. Rapier owns the
+    // rigid body's sleep state, so the render/physics loop continues until the
+    // solver has genuinely completed all contact and damping motion.
+    if ((mode === 'settling' || mode === 'airborne') && rigidBody.isSleeping()) {
       mode = 'idle';
       destroyOverlay();
       document.documentElement.classList.remove('is-using-room-magnifier');
@@ -1061,8 +1357,18 @@
 
   function handleResize() {
     syncPhysicsFloor();
+    updateLightRig();
+    if (physicsReady && mode !== 'held') {
+      enforceViewportBounds(false);
+      syncVisualFromBody();
+      if (!rememberViewportSafeState() && lastViewportSafeState) {
+        applyBodyState(lastViewportSafeState, false);
+        syncVisualFromBody();
+      }
+    }
     if (mode !== 'held') updateHitButton();
     if (mode === 'held' || mode === 'airborne') updateLensOverlay();
+    context.requestRender();
   }
 
   onMount(() => {
