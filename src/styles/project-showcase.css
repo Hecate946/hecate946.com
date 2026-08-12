@@ -1,12 +1,29 @@
 body.project-detail-page {
+  height: 100vh;
   min-height: 100vh;
+  overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  body.project-detail-page {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
 }
 
 .project-detail-main {
   position: relative;
   z-index: 1;
-  min-height: calc(100vh - var(--header-height));
+  height: calc(100vh - var(--header-height));
+  min-height: 0;
+  overflow: hidden;
   padding: 0;
+}
+
+@supports (height: 100dvh) {
+  .project-detail-main {
+    height: calc(100dvh - var(--header-height));
+  }
 }
 
 .project-page {
@@ -19,15 +36,10 @@ body.project-detail-page {
 
   box-sizing: border-box;
   position: relative;
-  min-height: calc(100svh - var(--header-height));
+  height: 100%;
+  min-height: 0;
   padding-inline: clamp(1rem, 3.6vw, 3.75rem);
   overflow: hidden;
-}
-
-@supports (min-height: 100dvh) {
-  .project-page {
-    min-height: calc(100dvh - var(--header-height));
-  }
 }
 
 .project-board-stage {
@@ -292,40 +304,82 @@ body.project-detail-page {
 
 @media (max-width: 48rem) {
   .project-page {
-    --project-floor-height: clamp(6.2rem, 15vh, 8.6rem);
+    --project-floor-height: clamp(4.7rem, 12dvh, 6.5rem);
 
-    padding-inline: 0.85rem;
+    padding-inline: 0.6rem;
   }
 
+  /*
+   * JS caps this box against the stage's real rendered height as well. These
+   * values are deliberately conservative so there is no overflowing flash
+   * before the first fit pass runs.
+   */
   .project-chalkboard-wrap {
-    width: min(92vw, 34rem);
-    max-width: calc(100vw - 1.7rem);
+    width: min(90vw, 32rem);
+    max-width: calc(100vw - 1.2rem);
     aspect-ratio: 5 / 6;
   }
 
+  .project-chalkboard__recess {
+    bottom: 0.48rem;
+    border-width: 0.62rem;
+  }
+
+  .project-chalkboard__glass {
+    inset: 0.24rem;
+  }
+
   .project-chalkboard__copy {
-    padding: 1.25rem 1.2rem 1.05rem;
+    box-sizing: border-box;
+    transform-origin: top left;
+    padding: 0.9rem 0.95rem 0.76rem;
+  }
+
+  .project-timeline {
+    width: min(14rem, 66%);
+    gap: 0.58rem;
+    font-size: clamp(0.52rem, 2.35vw, 0.62rem);
+    letter-spacing: 0.1em;
   }
 
   .project-page h1,
   .project-detail-page--portfolio .project-page h1 {
-    font-size: clamp(2.6rem, 11vw, 4.25rem);
+    margin-top: 0.55rem;
+    font-size: clamp(2rem, 9.2vw, 3.1rem);
+    line-height: 0.88;
   }
 
   .project-writing {
     min-height: 0;
-    font-size: clamp(0.95rem, 4vw, 1.02rem);
-    line-height: 1.66;
+    margin-top: 0.72rem;
+    font-size: clamp(0.74rem, 3.05vw, 0.86rem);
+    line-height: 1.44;
   }
 
   .project-page__links {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.95rem;
+    align-items: center;
+    flex-direction: row;
+    gap: 0.65rem;
+    padding-top: 0.56rem;
+  }
+
+  .project-back-link,
+  .project-links a {
+    font-size: clamp(0.5rem, 2.15vw, 0.59rem);
+    letter-spacing: 0.065em;
   }
 
   .project-links {
-    justify-content: flex-start;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem 0.72rem;
+  }
+
+  .project-chalkboard__sill {
+    right: -0.52rem;
+    left: -0.52rem;
+    height: 0.46rem;
   }
 }
 
@@ -334,17 +388,37 @@ body.project-detail-page {
     inset-inline: 0;
   }
 
-  .project-chalkboard__recess {
-    border-width: 0.68rem;
+  .project-page {
+    --project-floor-height: clamp(4.2rem, 11dvh, 5.5rem);
+  }
+
+  .project-chalkboard__copy {
+    padding: 0.72rem 0.76rem 0.62rem;
   }
 
   .project-page h1,
   .project-detail-page--portfolio .project-page h1 {
-    font-size: clamp(2.45rem, 10.5vw, 3.65rem);
+    font-size: clamp(1.8rem, 8.8vw, 2.55rem);
+  }
+
+  .project-writing {
+    margin-top: 0.58rem;
+    font-size: clamp(0.68rem, 2.95vw, 0.78rem);
+    line-height: 1.38;
   }
 
   .project-timeline {
-    width: min(15rem, 70%);
+    width: min(12rem, 72%);
+  }
+}
+
+@media (max-width: 48rem) and (orientation: landscape) {
+  .project-page {
+    --project-floor-height: clamp(2.8rem, 13dvh, 4.2rem);
+  }
+
+  .project-chalkboard-wrap {
+    aspect-ratio: 7 / 5;
   }
 }
 

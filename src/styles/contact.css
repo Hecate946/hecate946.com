@@ -15,14 +15,19 @@
 
 .contact-wall {
   position: absolute;
-  inset: 0 0 var(--contact-floor-height);
+  inset: 0;
   display: grid;
-  place-items: center;
+  place-items: end center;
   padding-inline: clamp(1rem, 4vw, 3rem);
+  padding-bottom: clamp(0.25rem, 1.2vh, 0.9rem);
 }
 
 @media (max-width: 32rem) {
   .contact-page {
     --contact-floor-height: 6.2rem;
+  }
+
+  .contact-wall {
+    padding-bottom: 0.2rem;
   }
 }

@@ -46,14 +46,14 @@
 
 .room-magnifier-overlay__lens {
   position: fixed;
-  left: 0;
-  top: 0;
-  width: 9rem;
-  height: 9rem;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
-  border-radius: 50%;
+  border-radius: 0;
   background: transparent;
-  will-change: transform, width, height;
+  clip-path: polygon(0 0, 0 0, 0 0);
+  will-change: clip-path;
 }
 
 .room-magnifier-overlay__snapshot {
@@ -92,4 +92,9 @@ html.is-using-room-magnifier body {
   .room-magnifier-hit::after {
     transition: none;
   }
+}
+
+html.is-over-room-magnifier,
+html.is-over-room-magnifier body {
+  cursor: grab !important;
 }

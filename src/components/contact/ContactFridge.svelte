@@ -80,7 +80,7 @@
   let fridgeSurfaceEl: HTMLDivElement | null = null;
   let resizeObserver: ResizeObserver | null = null;
   let magnets: MagnetState[] = [];
-  let magnetSize = 88;
+  let magnetSize = 68;
   let activeDrag: DragState | null = null;
 
   // Magnets should feel stuck to a metal surface, not like loose pucks.
@@ -99,7 +99,7 @@
   function updateMagnetSize() {
     const { width, height } = getSurfaceBounds();
     if (!width || !height) return;
-    magnetSize = clamp(Math.min(width, height) * 0.205, 70, 96);
+    magnetSize = clamp(Math.min(width, height) * 0.16, 54, 72);
   }
 
   function createInitialMagnets() {
@@ -336,6 +336,10 @@
       <div class="fridge-seam" aria-hidden="true"></div>
       <div class="fridge-handle fridge-handle--top" aria-hidden="true"></div>
       <div class="fridge-handle fridge-handle--bottom" aria-hidden="true"></div>
+      <div class="fridge-feet" aria-hidden="true">
+        <div class="fridge-foot fridge-foot--left"></div>
+        <div class="fridge-foot fridge-foot--right"></div>
+      </div>
       <div bind:this={fridgeSurfaceEl} class="fridge-surface">
         {#each magnets as magnet (magnet.id)}
           <button
@@ -366,120 +370,147 @@
     width: 100%;
     height: 100%;
     display: grid;
-    place-items: center;
+    align-items: end;
+    justify-items: center;
     perspective: 1400px;
   }
 
   .fridge-stage {
     position: relative;
-    width: clamp(18rem, 28vw, 24rem);
-    height: clamp(28rem, 74vh, 36rem);
+    width: clamp(16.5rem, 24vw, 21rem);
+    height: clamp(30rem, 78vh, 37rem);
   }
 
   .fridge-cast-shadow {
     position: absolute;
-    left: 6%;
-    right: -2%;
-    bottom: -2.6rem;
-    height: 2.4rem;
+    left: 14%;
+    right: 10%;
+    bottom: 0.05rem;
+    height: 1.65rem;
     border-radius: 50%;
     background: rgb(0 0 0 / 0.2);
-    filter: blur(1.1rem);
-    transform: scaleX(0.96);
+    filter: blur(0.95rem);
+    transform: scaleX(1.02);
   }
 
   .fridge-body {
     position: absolute;
-    inset: 0;
-    border-radius: 1.5rem 1.5rem 1.2rem 1.2rem;
-    transform: rotateY(-8deg) rotateX(1.2deg);
+    left: 50%;
+    bottom: 0.65rem;
+    width: 100%;
+    height: calc(100% - 1rem);
+    transform: translateX(-50%);
+    border-radius: 1.35rem 1.35rem 1rem 1rem;
     transform-style: preserve-3d;
   }
 
   .fridge-side {
     position: absolute;
     top: 0.55rem;
-    right: -1.05rem;
+    right: -0.7rem;
     bottom: 0.7rem;
-    width: 1.2rem;
-    border-radius: 0 1rem 0.95rem 0;
-    background: linear-gradient(180deg, #d5d8d6 0%, #b9bfbd 100%);
+    width: 0.85rem;
+    border-radius: 0 0.85rem 0.8rem 0;
+    background: linear-gradient(180deg, #d5d9d7 0%, #c3c8c5 100%);
     box-shadow:
-      inset 1px 0 0 rgb(255 255 255 / 0.55),
-      inset -1px 0 0 rgb(0 0 0 / 0.06);
-    transform: translateZ(-1px);
+      inset 1px 0 0 rgb(255 255 255 / 0.52),
+      inset -1px 0 0 rgb(0 0 0 / 0.05);
   }
 
   .fridge-door {
     position: absolute;
     left: 0;
     right: 0;
-    border: 1px solid rgb(145 149 147 / 0.26);
+    border: 1px solid rgb(148 152 150 / 0.2);
     background:
-      radial-gradient(circle at 18% 12%, rgb(255 255 255 / 0.82), transparent 34%),
-      linear-gradient(180deg, #f3f5f3 0%, #ecefed 42%, #dde2df 100%);
+      radial-gradient(circle at 18% 10%, rgb(255 255 255 / 0.72), transparent 28%),
+      linear-gradient(180deg, #f2f3f1 0%, #e8ebe8 40%, #dde1de 100%);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.8),
-      inset 0 -1px 0 rgb(160 166 163 / 0.22),
-      0 0.75rem 1.8rem rgb(0 0 0 / 0.14);
+      inset 0 1px 0 rgb(255 255 255 / 0.82),
+      inset 0 -1px 0 rgb(145 150 148 / 0.16),
+      0 0.8rem 1.6rem rgb(0 0 0 / 0.11);
   }
 
   .fridge-door--top {
     top: 0;
-    height: 37%;
-    border-radius: 1.5rem 1.5rem 0.55rem 0.55rem;
+    height: 36.5%;
+    border-radius: 1.35rem 1.35rem 0.5rem 0.5rem;
   }
 
   .fridge-door--bottom {
     bottom: 0;
-    height: calc(63% - 0.45rem);
-    border-radius: 0.55rem 0.55rem 1.2rem 1.2rem;
+    height: calc(63.5% - 0.42rem);
+    border-radius: 0.5rem 0.5rem 1rem 1rem;
   }
 
   .fridge-seam {
     position: absolute;
-    left: 0.45rem;
-    right: 0.55rem;
-    top: calc(37% - 0.06rem);
-    height: 0.34rem;
+    left: 0.42rem;
+    right: 0.42rem;
+    top: calc(36.5% - 0.08rem);
+    height: 0.32rem;
     border-radius: 999px;
-    background: linear-gradient(180deg, #8b9190 0%, #c4c9c7 100%);
+    background: linear-gradient(180deg, #8a918f 0%, #bfc4c1 100%);
     box-shadow:
-      0 1px 0 rgb(255 255 255 / 0.55),
-      0 -1px 0 rgb(0 0 0 / 0.08);
+      0 1px 0 rgb(255 255 255 / 0.56),
+      0 -1px 0 rgb(0 0 0 / 0.07);
   }
 
   .fridge-handle {
     position: absolute;
-    left: 1rem;
-    width: 0.62rem;
+    left: 0.95rem;
+    width: 0.52rem;
     border-radius: 999px;
-    background: linear-gradient(180deg, #d8dddb 0%, #bcc3c0 50%, #aab1ae 100%);
+    background: linear-gradient(180deg, #d6dbd8 0%, #c2c7c4 50%, #b3b9b6 100%);
     box-shadow:
-      inset 1px 0 0 rgb(255 255 255 / 0.65),
-      inset -1px 0 0 rgb(0 0 0 / 0.14),
-      0 0.3rem 0.8rem rgb(0 0 0 / 0.08);
+      inset 1px 0 0 rgb(255 255 255 / 0.6),
+      inset -1px 0 0 rgb(0 0 0 / 0.12),
+      0 0.18rem 0.55rem rgb(0 0 0 / 0.06);
   }
 
   .fridge-handle--top {
-    top: 11%;
-    height: 22%;
+    top: 10.5%;
+    height: 21%;
   }
 
   .fridge-handle--bottom {
-    top: 44%;
-    height: 27%;
+    top: 44.5%;
+    height: 26%;
   }
+
+  .fridge-feet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.45rem;
+    height: 0.8rem;
+    pointer-events: none;
+  }
+
+  .fridge-foot {
+    position: absolute;
+    bottom: 0;
+    width: 0.5rem;
+    height: 0.55rem;
+    border-radius: 0.08rem 0.08rem 0.18rem 0.18rem;
+    background: linear-gradient(180deg, #d7d9d7 0%, #afb4b2 100%);
+    box-shadow:
+      inset 1px 0 0 rgb(255 255 255 / 0.6),
+      inset -1px 0 0 rgb(0 0 0 / 0.1);
+  }
+
+  .fridge-foot--left { left: 0.85rem; }
+  .fridge-foot--right { right: 0.85rem; }
 
   .fridge-surface {
     position: absolute;
-    inset: 1.2rem 1rem 1.3rem 2.2rem;
+    inset: 1.1rem 0.95rem 1.2rem 2rem;
     z-index: 5;
     overflow: hidden;
   }
 
   .magnet {
-    --magnet-radius: 0.95rem;
+    --magnet-radius: 0.72rem;
 
     position: absolute;
     display: block;
@@ -496,9 +527,7 @@
     -webkit-user-drag: none;
   }
 
-  .magnet:focus {
-    outline: none;
-  }
+  .magnet:focus { outline: none; }
 
   .magnet--dragging {
     cursor: grabbing;
@@ -507,16 +536,15 @@
 
   .magnet__ambient {
     position: absolute;
-    left: 0.45rem;
-    right: 0.45rem;
-    bottom: -0.3rem;
-    height: 0.72rem;
+    left: 0.3rem;
+    right: 0.3rem;
+    bottom: -0.22rem;
+    height: 0.46rem;
     border-radius: 999px;
-    background: rgb(0 0 0 / 0.2);
-    filter: blur(0.46rem);
-    opacity: 0.48;
+    background: rgb(0 0 0 / 0.14);
+    filter: blur(0.42rem);
+    opacity: 0.38;
     pointer-events: none;
-    transform: translate3d(0, 0, 0);
     transition: opacity 120ms ease, filter 120ms ease, transform 120ms ease;
     backface-visibility: hidden;
   }
@@ -527,11 +555,12 @@
     overflow: hidden;
     border-radius: var(--magnet-radius);
     transform: translate3d(0, 0, 0) scale(1);
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(0 0 0 / 0.02));
     box-shadow:
-      0 0.3rem 0 #151515,
-      0 0.48rem 0.85rem rgb(0 0 0 / 0.2),
-      inset 0 1px 0 rgb(255 255 255 / 0.1),
-      inset 0 -0.12rem 0 rgb(0 0 0 / 0.12);
+      0 0.14rem 0 #202020,
+      0 0.22rem 0.42rem rgb(0 0 0 / 0.17),
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      inset 0 -1px 0 rgb(0 0 0 / 0.08);
     transition:
       transform 100ms cubic-bezier(0.16, 0.84, 0.24, 1),
       box-shadow 100ms cubic-bezier(0.16, 0.84, 0.24, 1),
@@ -540,7 +569,19 @@
     will-change: transform;
   }
 
+  .magnet__keycap::before {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.08), transparent 24%, transparent 76%, rgb(0 0 0 / 0.06));
+    content: '';
+    pointer-events: none;
+    z-index: 1;
+  }
+
   .magnet__image {
+    position: relative;
+    z-index: 0;
     display: block;
     width: 100%;
     height: 100%;
@@ -554,46 +595,46 @@
   }
 
   .magnet:hover .magnet__keycap {
-    filter: brightness(0.95);
+    filter: brightness(0.93) saturate(0.98);
   }
 
   .magnet:hover .magnet__ambient {
-    opacity: 0.62;
-    filter: blur(0.58rem);
-    transform: translate3d(0, 0.05rem, 0) scaleX(1.03);
+    opacity: 0.5;
+    filter: blur(0.5rem);
+    transform: translate3d(0, 0.04rem, 0) scaleX(1.02);
   }
 
   .magnet--pressed .magnet__keycap {
-    transform: translate3d(0, 0.27rem, 0) scale(0.986);
-    filter: brightness(0.82);
+    transform: translate3d(0, 0.16rem, 0) scale(0.988);
+    filter: brightness(0.84);
     box-shadow:
-      0 0.06rem 0 #151515,
-      0 0.12rem 0.28rem rgb(0 0 0 / 0.18),
-      inset 0 0.18rem 0.34rem rgb(0 0 0 / 0.25),
+      0 0.04rem 0 #202020,
+      0 0.1rem 0.22rem rgb(0 0 0 / 0.16),
+      inset 0 0.16rem 0.26rem rgb(0 0 0 / 0.2),
       inset 0 -1px 0 rgb(255 255 255 / 0.05);
   }
 
   .magnet--pressed .magnet__ambient {
-    opacity: 0.4;
-    filter: blur(0.35rem);
-    transform: translate3d(0, 0.11rem, 0) scaleX(0.96);
+    opacity: 0.3;
+    filter: blur(0.3rem);
+    transform: translate3d(0, 0.08rem, 0) scaleX(0.98);
   }
 
   .magnet--dragging .magnet__keycap {
-    filter: brightness(0.94);
+    filter: brightness(0.95);
   }
 
   .magnet__tooltip {
     position: absolute;
     left: 50%;
-    top: calc(100% + 0.54rem);
+    top: calc(100% + 0.42rem);
     min-width: max-content;
-    padding: 0.22rem 0.42rem;
-    border-radius: 0.42rem;
+    padding: 0.16rem 0.36rem;
+    border-radius: 0.36rem;
     background: rgb(255 255 255 / 0.96);
     color: #121212;
     font-family: var(--font-mono);
-    font-size: clamp(0.6rem, 0.72vw, 0.76rem);
+    font-size: clamp(0.54rem, 0.68vw, 0.7rem);
     font-weight: 600;
     letter-spacing: 0.04em;
     line-height: 1;
@@ -601,8 +642,8 @@
     pointer-events: none;
     text-transform: uppercase;
     white-space: nowrap;
-    box-shadow: 0 0.25rem 0.9rem rgb(0 0 0 / 0.14);
-    transform: translateX(-50%) translateY(0.22rem);
+    box-shadow: 0 0.2rem 0.65rem rgb(0 0 0 / 0.13);
+    transform: translateX(-50%) translateY(0.2rem);
     transition: opacity 120ms ease, transform 120ms ease;
   }
 
@@ -611,18 +652,15 @@
     transform: translateX(-50%) translateY(0);
   }
 
-  .magnet--dragging .magnet__tooltip {
-    opacity: 0;
-  }
+  .magnet--dragging .magnet__tooltip { opacity: 0; }
 
   @media (max-width: 52rem) {
     .fridge-stage {
-      width: clamp(16rem, 42vw, 19rem);
-      height: clamp(25rem, 68vh, 32rem);
+      width: clamp(14.5rem, 45vw, 18rem);
+      height: clamp(27rem, 72vh, 33rem);
     }
 
-    .fridge-handle {
-      left: 0.85rem;
-    }
+    .fridge-handle { left: 0.8rem; }
+    .fridge-surface { inset: 0.95rem 0.8rem 1.05rem 1.75rem; }
   }
 </style>

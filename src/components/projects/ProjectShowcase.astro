@@ -129,6 +129,9 @@ let chalkCharacterIndex = 0;
   </article>
 
   <script>
+    const mobileProjectQuery = window.matchMedia('(max-width: 48rem)');
+    let projectFitFrame = 0;
+
     const restartProjectChalkWriting = () => {
       document.querySelectorAll<HTMLElement>('.project-writing__animated').forEach((writing) => {
         writing.classList.remove('is-writing');
@@ -137,10 +140,89 @@ let chalkCharacterIndex = 0;
         writing.classList.add('is-writing');
       });
     };
-  
-    document.addEventListener('astro:after-swap', restartProjectChalkWriting);
+
+    const fitProjectChalkboard = () => {
+      const stage = document.querySelector<HTMLElement>('.project-board-stage');
+      const board = document.querySelector<HTMLElement>('.project-chalkboard-wrap');
+      const copy = document.querySelector<HTMLElement>('.project-chalkboard__copy');
+      if (!stage || !board || !copy) return;
+
+      if (!mobileProjectQuery.matches) {
+        board.style.removeProperty('width');
+        board.style.removeProperty('height');
+        board.style.removeProperty('aspect-ratio');
+        copy.style.removeProperty('width');
+        copy.style.removeProperty('height');
+        copy.style.removeProperty('transform');
+        return;
+      }
+
+      const stageHeight = stage.clientHeight;
+      const landscape = window.innerWidth > window.innerHeight;
+      const ratio = landscape ? 7 / 5 : 5 / 6;
+      const maxWidth = Math.min(window.innerWidth * 0.9, 512);
+      const maxHeight = Math.max(1, stageHeight - 12);
+      const width = Math.min(maxWidth, maxHeight * ratio);
+      const height = width / ratio;
+
+      board.style.width = `${width}px`;
+      board.style.height = `${height}px`;
+      board.style.aspectRatio = `${ratio}`;
+
+      const applyScale = (scale: number) => {
+        const expandedPercent = 100 / scale;
+        copy.style.width = `${expandedPercent}%`;
+        copy.style.height = `${expandedPercent}%`;
+        copy.style.transform = `scale(${scale})`;
+
+        return copy.scrollHeight <= copy.clientHeight + 1 && copy.scrollWidth <= copy.clientWidth + 1;
+      };
+
+      if (applyScale(1)) return;
+
+      // Find the largest readable scale that still guarantees every line and
+      // every project link remains within the visible chalkboard.
+      let fits = 0.36;
+      let overflows = 1;
+
+      // This floor is only a last-resort guard for unusually short landscape
+      // viewports. Normal phone sizes settle much closer to 1.
+      if (!applyScale(fits)) {
+        let emergencyScale = 0.32;
+        while (emergencyScale > 0.2 && !applyScale(emergencyScale)) {
+          emergencyScale -= 0.04;
+        }
+        applyScale(Math.max(0.2, emergencyScale));
+        return;
+      }
+
+      for (let index = 0; index < 12; index += 1) {
+        const candidate = (fits + overflows) / 2;
+        if (applyScale(candidate)) fits = candidate;
+        else overflows = candidate;
+      }
+
+      applyScale(Math.max(0.36, fits - 0.004));
+    };
+
+    const scheduleProjectFit = () => {
+      window.cancelAnimationFrame(projectFitFrame);
+      projectFitFrame = window.requestAnimationFrame(fitProjectChalkboard);
+    };
+
+    const resetProjectPage = () => {
+      scheduleProjectFit();
+      restartProjectChalkWriting();
+    };
+
+    scheduleProjectFit();
+    document.fonts?.ready.then(scheduleProjectFit);
+    document.addEventListener('astro:after-swap', resetProjectPage);
+    window.addEventListener('resize', scheduleProjectFit, { passive: true });
+    window.addEventListener('orientationchange', scheduleProjectFit, { passive: true });
     window.addEventListener('pageshow', (event) => {
-      if (event.persisted) restartProjectChalkWriting();
+      if (event.persisted) resetProjectPage();
+      else scheduleProjectFit();
     });
   </script>
 </BaseLayout>

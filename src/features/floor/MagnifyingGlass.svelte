@@ -9,33 +9,30 @@
 
   const LENS_RADIUS = 38;
   const RING_TUBE_RADIUS = 4.7;
-  const HANDLE_HALF_WIDTH = 8.2;
-  const HANDLE_HALF_HEIGHT = 3.68;
+  const OUTER_RING_RADIUS = LENS_RADIUS + RING_TUBE_RADIUS;
+  const HANDLE_HALF_WIDTH = 7.9;
   const HANDLE_Y = 0.88;
   const HANDLE_CENTER_Z = 111;
   const HANDLE_HALF_LENGTH = 52;
   const FERRULE_CENTER_Z = 49;
   const FERRULE_HALF_LENGTH = 11.5;
-  const FERRULE_HALF_HEIGHT = 3.15;
+  const FERRULE_HALF_HEIGHT = 7.5;
   const FERRULE_Y = 0.35;
   const CAP_CENTER_Z = 166;
   const CAP_HALF_LENGTH = 4.5;
-  const CAP_HALF_HEIGHT = 3.95;
+  const CAP_HALF_HEIGHT = 8.9;
   const CAP_Y = 1.15;
   const CAP_LOCAL = new THREE.Vector3(0, 0, CAP_CENTER_Z + CAP_HALF_LENGTH);
   const GRIP_LOCAL = new THREE.Vector3(0, 0, 147);
   const LENS_VIEW_RADIUS = LENS_RADIUS - RING_TUBE_RADIUS - 2.3;
-  const LENS_PLANE_Y = 0.65;
-  const REST_BODY_CLEARANCE = 2.81;
-  const VIEWPORT_MARGIN = 8;
+  const LENS_PLANE_Y = 0;
+  const REST_BODY_CLEARANCE = OUTER_RING_RADIUS + 0.18;
+  const VIEWPORT_MARGIN = 6;
+  const WALL_PLANE_OFFSET_Z = 10;
   const LENS_CONTOUR_POINTS = 36;
 
-  const HELD_LENS_RADIUS = 78;
-  const HELD_LENS_RADIUS_MOBILE = 61;
-  const HELD_TWIST = -0.44;
   const MAGNIFICATION = 1.82;
   const PICKUP_FOLLOW = 0.2;
-  const HELD_PLANE_DEPTH_FACTOR = 1.78;
   const FIXED_STEP = 1 / 60;
   const GRAVITY = -980;
   const MAX_RELEASE_SPEED = 1320;
@@ -43,9 +40,8 @@
   const FLOOR_RESTITUTION = 0.095;
   const WALL_FRICTION = 0.58;
   const WALL_RESTITUTION = 0.18;
-  const BOUNDS_MARGIN_X = 46;
-  const BOUNDS_MARGIN_BACK = LENS_RADIUS + RING_TUBE_RADIUS + 4;
-  const BOUNDS_MARGIN_FRONT = 182;
+  const BOUNDS_MARGIN_LEFT = OUTER_RING_RADIUS + 4;
+  const BOUNDS_MARGIN_RIGHT = CAP_CENTER_Z + CAP_HALF_LENGTH + 4;
   const METAL_RESTITUTION = 0.31;
   const WOOD_RESTITUTION = 0.11;
   const GLASS_RESTITUTION = 0.045;
@@ -84,7 +80,6 @@
   let preStepVerticalVelocity = 0;
   let lastBounceAssistAt = 0;
   let physicsReady = false;
-  let physicsStartedAt = 0;
   let lastViewportSafeState: BodyState | null = null;
 
   let hitButton: HTMLButtonElement | null = null;
@@ -94,25 +89,21 @@
   let pointerSampleTime = 0;
   let lastTargetPosition: THREE.Vector3 | null = null;
   const filteredReleaseVelocity = new THREE.Vector3();
-  const filteredAngularVelocity = new THREE.Vector3();
   let heldPosition = new THREE.Vector3();
   let heldQuaternion = new THREE.Quaternion();
 
   let overlayRoot: HTMLDivElement | null = null;
   let lensViewport: HTMLDivElement | null = null;
   let snapshotRoom: HTMLElement | null = null;
-  let roomRect: DOMRect | null = null;
 
   let animationFrame = 0;
   let previousFrameTime = 0;
   let physicsAccumulator = 0;
   let destroyed = false;
 
-  const tmpVectorA = new THREE.Vector3();
   const tmpVectorB = new THREE.Vector3();
   const tmpVectorC = new THREE.Vector3();
-  const tmpQuaternion = new THREE.Quaternion();
-  const tmpEuler = new THREE.Euler();
+  const magnifierBoundsLocalVertices: THREE.Vector3[] = [];
 
 
   function captureBodyState(): BodyState | null {
@@ -120,24 +111,23 @@
     const t = rigidBody.translation();
     const r = rigidBody.rotation();
     const lv = rigidBody.linvel();
-    const av = rigidBody.angvel();
     return {
       position: new THREE.Vector3(t.x, t.y, t.z),
       rotation: new THREE.Quaternion(r.x, r.y, r.z, r.w),
-      linvel: new THREE.Vector3(lv.x, lv.y, lv.z),
-      angvel: new THREE.Vector3(av.x, av.y, av.z),
+      linvel: new THREE.Vector3(lv.x, lv.y, 0),
+      angvel: new THREE.Vector3(0, 0, 0),
     };
   }
 
   function applyBodyState(state: BodyState, wake = false) {
     if (!rigidBody) return;
-    rigidBody.setTranslation({ x: state.position.x, y: state.position.y, z: state.position.z }, wake);
+    rigidBody.setTranslation({ x: state.position.x, y: state.position.y, z: wallPlaneZ() }, wake);
     rigidBody.setRotation(
       { x: state.rotation.x, y: state.rotation.y, z: state.rotation.z, w: state.rotation.w },
       wake,
     );
     rigidBody.setLinvel({ x: state.linvel.x, y: state.linvel.y, z: state.linvel.z }, wake);
-    rigidBody.setAngvel({ x: state.angvel.x, y: state.angvel.y, z: state.angvel.z }, wake);
+    rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, wake);
   }
 
   function viewportBoundsInside(bounds: ProjectedBounds | null) {
@@ -215,11 +205,11 @@
     if (!ctx) return null;
 
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
-    gradient.addColorStop(0, '#87502f');
-    gradient.addColorStop(0.28, '#b77749');
-    gradient.addColorStop(0.52, '#c98a5a');
-    gradient.addColorStop(0.76, '#a9653d');
-    gradient.addColorStop(1, '#794329');
+    gradient.addColorStop(0, '#a96f43');
+    gradient.addColorStop(0.28, '#d5a16d');
+    gradient.addColorStop(0.52, '#e0b17d');
+    gradient.addColorStop(0.76, '#c68a59');
+    gradient.addColorStop(1, '#98613a');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -270,39 +260,41 @@
     root.name = 'room-magnifying-glass';
 
     const metal = new THREE.MeshPhysicalMaterial({
-      color: 0xf0ece6,
+      color: 0xf7f5f1,
       metalness: 1,
-      roughness: 0.04,
-      clearcoat: 0.58,
-      clearcoatRoughness: 0.03,
+      roughness: 0.028,
+      clearcoat: 0.78,
+      clearcoatRoughness: 0.018,
     });
     const darkMetal = new THREE.MeshPhysicalMaterial({
-      color: 0x635c56,
-      metalness: 0.98,
-      roughness: 0.08,
-      clearcoat: 0.36,
-      clearcoatRoughness: 0.045,
+      color: 0x77716b,
+      metalness: 1,
+      roughness: 0.055,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.028,
     });
     const woodTexture = createWoodTexture();
     const handleMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xce9564,
+      color: 0xd8a36f,
       map: woodTexture,
       bumpMap: woodTexture,
       bumpScale: 0.14,
       metalness: 0,
-      roughness: 0.42,
-      clearcoat: 0.18,
-      clearcoatRoughness: 0.3,
+      roughness: 0.36,
+      clearcoat: 0.16,
+      clearcoatRoughness: 0.26,
     });
     if (woodTexture) handleMaterial.userData.disposableTexture = woodTexture;
     const glassMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xffffff,
-      transmission: 0.985,
+      transmission: 0.995,
       transparent: true,
-      opacity: 0.075,
-      roughness: 0.004,
-      thickness: 1.1,
+      opacity: 0.11,
+      roughness: 0.008,
+      thickness: 3.2,
       ior: 1.52,
+      attenuationColor: new THREE.Color(0xf1f9ff),
+      attenuationDistance: 38,
       metalness: 0,
       depthWrite: false,
       side: THREE.DoubleSide,
@@ -310,7 +302,7 @@
 
     const ring = new THREE.Mesh(new THREE.TorusGeometry(LENS_RADIUS, RING_TUBE_RADIUS, 28, 96), metal);
     ring.rotation.x = Math.PI / 2;
-    ring.scale.z = 0.92;
+    ring.scale.z = 1;
     ring.castShadow = true;
     ring.renderOrder = 6;
     root.add(ring);
@@ -320,21 +312,22 @@
       darkMetal,
     );
     innerRing.rotation.x = Math.PI / 2;
-    innerRing.scale.z = 0.9;
+    innerRing.scale.z = 1;
     innerRing.position.y = 0.2;
     innerRing.castShadow = true;
     innerRing.renderOrder = 7;
     root.add(innerRing);
 
-    const glass = new THREE.Mesh(new THREE.CircleGeometry(LENS_VIEW_RADIUS, 96), glassMaterial);
-    glass.rotation.x = -Math.PI / 2;
-    glass.position.y = 0.65;
+    const glass = new THREE.Mesh(
+      new THREE.CylinderGeometry(LENS_VIEW_RADIUS, LENS_VIEW_RADIUS, 1.7, 96, 1, false),
+      glassMaterial,
+    );
+    glass.position.y = LENS_PLANE_Y;
     glass.renderOrder = 5;
     root.add(glass);
 
     const ferrule = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 23, 30), darkMetal);
     ferrule.rotation.x = Math.PI / 2;
-    ferrule.scale.z = 0.5;
     ferrule.position.set(0, FERRULE_Y, FERRULE_CENTER_Z);
     ferrule.castShadow = true;
     ferrule.renderOrder = 6;
@@ -342,7 +335,6 @@
 
     const handle = new THREE.Mesh(new THREE.CylinderGeometry(7.9, 7.9, 104, 32), handleMaterial);
     handle.rotation.x = Math.PI / 2;
-    handle.scale.z = 0.52;
     handle.position.set(0, HANDLE_Y, HANDLE_CENTER_Z);
     handle.castShadow = true;
     handle.renderOrder = 6;
@@ -350,11 +342,27 @@
 
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(8.9, 8.9, 8.5, 30), darkMetal);
     cap.rotation.x = Math.PI / 2;
-    cap.scale.z = 0.52;
     cap.position.set(0, CAP_Y, CAP_CENTER_Z);
     cap.castShadow = true;
     cap.renderOrder = 6;
     root.add(cap);
+
+    // Cache every rendered mesh vertex in the magnifier's local coordinate
+    // system. Projecting these exact vertices gives a tight viewport bounding
+    // rectangle for the actual triangles on screen instead of an approximate
+    // world-space box.
+    magnifierBoundsLocalVertices.length = 0;
+    root.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+      child.updateMatrix();
+      const positions = child.geometry.getAttribute('position');
+      if (!positions) return;
+      for (let index = 0; index < positions.count; index += 1) {
+        const vertex = new THREE.Vector3().fromBufferAttribute(positions, index);
+        vertex.applyMatrix4(child.matrix);
+        magnifierBoundsLocalVertices.push(vertex);
+      }
+    });
 
     return root;
   }
@@ -362,16 +370,16 @@
   function createShadow() {
     const texture = createContactShadowTexture();
     if (!texture) return null;
+    texture.center.set(0.5, 0.5);
+    texture.rotation = -Math.PI / 2;
     const material = new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
       depthWrite: false,
-      opacity: 0.5,
+      opacity: 0.22,
     });
     material.userData.disposableTexture = texture;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(190, 286), material);
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.position.y = 0.035;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(286, 190), material);
     mesh.renderOrder = -2;
     return mesh;
   }
@@ -406,9 +414,6 @@
     });
   }
 
-  function quaternionToRapier(quaternion: THREE.Quaternion) {
-    return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
-  }
 
   function addCollider(desc: any, density = 1, restitution = METAL_RESTITUTION) {
     if (!physicsWorld || !rigidBody) return;
@@ -529,64 +534,66 @@
     const host = context.getHostElement();
     const width = host?.getBoundingClientRect().width ?? window.innerWidth;
     const startX = THREE.MathUtils.clamp(
-      context.getCameraX() + Math.min(132, width * 0.15),
-      floor.minX + 190,
-      floor.maxX - 190,
+      context.getCameraX() - Math.min(72, width * 0.08),
+      floor.minX + BOUNDS_MARGIN_LEFT,
+      floor.maxX - BOUNDS_MARGIN_RIGHT,
     );
-    // As close to the back wall as the actual metal tube can physically sit
-    // without beginning the simulation intersecting the wall collider.
-    const startZ = THREE.MathUtils.clamp(
-      floor.minZ + BOUNDS_MARGIN_BACK + 2,
-      floor.minZ + BOUNDS_MARGIN_BACK,
-      floor.maxZ - 210,
-    );
+    const startZ = floor.minZ + WALL_PLANE_OFFSET_Z;
 
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(startX, floor.y + REST_BODY_CLEARANCE, startZ)
-      .setLinearDamping(0.16)
-      .setAngularDamping(0.54)
+      .setLinearDamping(0.14)
+      .setAngularDamping(1.2)
       .setCcdEnabled(true)
-      .setCanSleep(true);
+      .setCanSleep(true)
+      .enabledTranslations(true, true, false)
+      .lockRotations();
     rigidBody = physicsWorld.createRigidBody(bodyDesc);
 
-    // Approximate the ring with tangential boxes. This gives Rapier a thin,
-    // stable footprint without inflating the lens into a solid disk.
-    const ringSegments = 16;
-    const segmentHalfLength = (Math.PI * 2 * LENS_RADIUS) / ringSegments / 2 * 0.9;
+    // The physical body is constrained to the wall-parallel X/Y plane. These
+    // colliders match the camera-facing silhouette: circular metal ring plus a
+    // horizontal ferrule, wood handle, and metal cap pointing to the right.
+    const ringSegments = 24;
+    const segmentHalfLength = (Math.PI * 2 * LENS_RADIUS) / ringSegments / 2 * 0.94;
     for (let index = 0; index < ringSegments; index += 1) {
       const angle = (index / ringSegments) * Math.PI * 2;
-      const tangentAngle = -angle - Math.PI / 2;
-      const collider = RAPIER.ColliderDesc.cuboid(segmentHalfLength, 2.75, RING_TUBE_RADIUS * 0.86)
-        .setTranslation(Math.cos(angle) * LENS_RADIUS, 0, Math.sin(angle) * LENS_RADIUS)
+      const tangentAngle = angle + Math.PI / 2;
+      const collider = RAPIER.ColliderDesc.cuboid(segmentHalfLength, RING_TUBE_RADIUS * 0.88, 2.6)
+        .setTranslation(Math.cos(angle) * LENS_RADIUS, Math.sin(angle) * LENS_RADIUS, 0)
         .setRotation({
           x: 0,
-          y: Math.sin(tangentAngle / 2),
-          z: 0,
+          y: 0,
+          z: Math.sin(tangentAngle / 2),
           w: Math.cos(tangentAngle / 2),
         });
       addCollider(collider, 1.0, METAL_RESTITUTION);
     }
 
-    // A thin contact plate inside the lens makes the physical glass capable of
-    // landing face-down instead of balancing indefinitely on the metal rim.
-    addCollider(RAPIER.ColliderDesc.cuboid(29, 2.72, 29), 0.07, GLASS_RESTITUTION);
-
+    addCollider(RAPIER.ColliderDesc.cuboid(29, 29, 1.0), 0.05, GLASS_RESTITUTION);
     addCollider(
-      RAPIER.ColliderDesc.cuboid(7.2, FERRULE_HALF_HEIGHT, FERRULE_HALF_LENGTH).setTranslation(0, FERRULE_Y, FERRULE_CENTER_Z),
+      RAPIER.ColliderDesc.cuboid(FERRULE_HALF_LENGTH, FERRULE_HALF_HEIGHT, 3.5).setTranslation(
+        FERRULE_CENTER_Z,
+        0,
+        0,
+      ),
       0.72,
       METAL_RESTITUTION,
     );
     addCollider(
-      RAPIER.ColliderDesc.cuboid(HANDLE_HALF_WIDTH, HANDLE_HALF_HEIGHT, HANDLE_HALF_LENGTH).setTranslation(
-        0,
-        HANDLE_Y,
+      RAPIER.ColliderDesc.cuboid(HANDLE_HALF_LENGTH, HANDLE_HALF_WIDTH, 3.9).setTranslation(
         HANDLE_CENTER_Z,
+        0,
+        0,
       ),
       0.24,
       WOOD_RESTITUTION,
     );
     addCollider(
-      RAPIER.ColliderDesc.cuboid(9.2, CAP_HALF_HEIGHT, CAP_HALF_LENGTH).setTranslation(0, CAP_Y, CAP_CENTER_Z),
+      RAPIER.ColliderDesc.cuboid(CAP_HALF_LENGTH, CAP_HALF_HEIGHT, 4.1).setTranslation(
+        CAP_CENTER_Z,
+        0,
+        0,
+      ),
       0.66,
       METAL_RESTITUTION,
     );
@@ -607,20 +614,37 @@
     rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, false);
     rigidBody.sleep();
     physicsReady = true;
-    physicsStartedAt = performance.now();
     mode = 'idle';
     updateLightRig();
     syncVisualFromBody();
+    enforceViewportBounds(false);
+    rememberViewportSafeState();
     updateHitButton();
     context.requestRender();
+  }
+
+  function cameraFacingQuaternion() {
+    const camera = context.getCamera();
+    if (!camera) return new THREE.Quaternion();
+    camera.updateMatrixWorld(true);
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).normalize();
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion).normalize();
+    const towardCamera = new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion).normalize();
+    // Local +Y is the lens normal; local +Z is the handle direction. Mapping
+    // +Z to camera-right makes the wooden handle naturally point right.
+    const basis = new THREE.Matrix4().makeBasis(up, towardCamera, right);
+    return new THREE.Quaternion().setFromRotationMatrix(basis).normalize();
+  }
+
+  function wallPlaneZ() {
+    return (context.getFloorSurface()?.minZ ?? 0) + WALL_PLANE_OFFSET_Z;
   }
 
   function syncVisualFromBody() {
     if (!magnifier || !rigidBody) return;
     const translation = rigidBody.translation();
-    const rotation = rigidBody.rotation();
-    magnifier.position.set(translation.x, translation.y, translation.z);
-    magnifier.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+    magnifier.position.set(translation.x, translation.y, wallPlaneZ());
+    magnifier.quaternion.copy(cameraFacingQuaternion());
     magnifier.updateMatrixWorld(true);
     updateShadow();
   }
@@ -646,30 +670,20 @@
 
   function updateShadow() {
     if (!shadow || !rigidBody || !magnifier) return;
-    const translation = rigidBody.translation();
-    const rotation = rigidBody.rotation();
-    tmpQuaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
-
-    const shadowCenter = worldPointFromLocal(new THREE.Vector3(0, 0, 75));
-    const handleDirection = tmpVectorA.set(0, 0, 1).applyQuaternion(tmpQuaternion);
-    const faceNormal = tmpVectorB.set(0, 1, 0).applyQuaternion(tmpQuaternion);
-    const yaw = Math.atan2(handleDirection.x, handleDirection.z);
-    const floorY = context.getFloorSurface()?.y ?? 0;
-
-    shadow.position.set(
-      shadowCenter?.x ?? translation.x,
-      floorY + 0.035,
-      shadowCenter?.z ?? translation.z + 75,
-    );
-    shadow.rotation.set(-Math.PI / 2, 0, -yaw);
-
-    const height = Math.max(0, translation.y - floorY - 2.8);
-    const proximity = Math.exp(-height / 82);
-    const flatness = Math.abs(faceNormal.y);
-    const spread = 1 + Math.min(0.44, height / 330);
-    shadow.scale.set(spread * (0.48 + 0.52 * flatness), spread, 1);
-    shadow.material.opacity = (0.08 + 0.48 * proximity) * (0.58 + 0.42 * flatness);
-    shadow.visible = mode !== 'held' || translation.y < 120;
+    const camera = context.getCamera();
+    if (!camera) return;
+    const towardCamera = new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion).normalize();
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).normalize();
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion).normalize();
+    shadow.quaternion.copy(camera.quaternion);
+    shadow.position
+      .copy(magnifier.position)
+      .addScaledVector(towardCamera, -3.6)
+      .addScaledVector(right, -2.4)
+      .addScaledVector(up, -3.2);
+    shadow.scale.set(1.015, 1.015, 1);
+    shadow.material.opacity = 0.2;
+    shadow.visible = true;
   }
 
   function updateLightRig() {
@@ -755,48 +769,25 @@
   }
 
   function computeHeldTarget(clientX: number, clientY: number): TransformTarget | null {
-    const camera = context.getCamera();
-    const host = context.getHostElement();
     const ray = pointerRay(clientX, clientY);
-    if (!camera || !host || !ray) return null;
-
-    const rect = host.getBoundingClientRect();
-    const desiredRadius = window.innerWidth <= 672 ? HELD_LENS_RADIUS_MOBILE : HELD_LENS_RADIUS;
-    const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
-    // Keep the carry plane farther back in the room so releases happen closer
-    // to the visible checkerboard near the wall instead of too far toward the viewer.
-    const forwardDepth = ((LENS_RADIUS * rect.height) / (2 * desiredRadius * tanHalfFov)) * HELD_PLANE_DEPTH_FACTOR;
-    const forward = camera.getWorldDirection(tmpVectorA).normalize();
-    const denominator = Math.max(0.16, ray.direction.dot(forward));
-    const rayDistance = forwardDepth / denominator;
-    const capTarget = ray.at(rayDistance, tmpVectorB);
-
-    // Keep one stable hand-held orientation everywhere on screen. The lens
-    // therefore never changes apparent proportions simply because the pointer
-    // moved toward a corner; Rapier is still free to rotate it after release.
-    const faceNormal = camera.getWorldDirection(tmpVectorC).normalize().multiplyScalar(-1);
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), faceNormal);
-    const twist = new THREE.Quaternion().setFromAxisAngle(faceNormal, HELD_TWIST);
-    quaternion.premultiply(twist).normalize();
-
-    const rotatedCap = CAP_LOCAL.clone().applyQuaternion(quaternion);
-    const position = capTarget.clone().sub(rotatedCap);
     const floor = context.getFloorSurface();
-    if (floor) {
-      // Keep the rigid-body origin inside the physical room even when the pointer
-      // is over the navbar or dragged beyond the viewport. Y remains unrestricted
-      // so the prop can still be lifted high and naturally fall under gravity.
-      position.x = THREE.MathUtils.clamp(
-        position.x,
-        floor.minX + BOUNDS_MARGIN_X,
-        floor.maxX - BOUNDS_MARGIN_X,
-      );
-      position.z = THREE.MathUtils.clamp(
-        position.z,
-        floor.minZ + BOUNDS_MARGIN_BACK,
-        floor.maxZ - BOUNDS_MARGIN_FRONT,
-      );
-    }
+    if (!ray || !floor) return null;
+
+    const quaternion = cameraFacingQuaternion();
+    const rotatedCap = CAP_LOCAL.clone().applyQuaternion(quaternion);
+    const rootZ = floor.minZ + WALL_PLANE_OFFSET_Z;
+    const capZ = rootZ + rotatedCap.z;
+    if (Math.abs(ray.direction.z) < 1e-5) return null;
+    const distance = (capZ - ray.origin.z) / ray.direction.z;
+    if (distance <= 0) return null;
+    const capTarget = ray.at(distance, tmpVectorB);
+    const position = capTarget.clone().sub(rotatedCap);
+    position.z = rootZ;
+    position.x = THREE.MathUtils.clamp(
+      position.x,
+      floor.minX + BOUNDS_MARGIN_LEFT,
+      floor.maxX - BOUNDS_MARGIN_RIGHT,
+    );
     return { position, quaternion };
   }
 
@@ -818,7 +809,6 @@
     lensViewport = null;
     overlayRoot?.remove();
     overlayRoot = null;
-    roomRect = null;
   }
 
   function copyCanvasPixels(sourceRoom: HTMLElement, clonedRoom: HTMLElement) {
@@ -845,7 +835,6 @@
     const sourceHeader = document.querySelector<HTMLElement>('.site-header');
     if (!sourceRoom) return;
 
-    roomRect = new DOMRect(0, 0, window.innerWidth, window.innerHeight);
     const snapshot = document.createElement('div');
     snapshot.className = 'room-magnifier-overlay__snapshot';
     snapshot.setAttribute('aria-hidden', 'true');
@@ -900,8 +889,8 @@
     }
 
     // Build the optical aperture from the *actual projected 3D lens circle*.
-    // This remains inside the metal ring whether the magnifier is flat, tilted,
-    // spinning, or viewed in perspective; no screen-space circle can spill out.
+    // The contour is derived from the actual camera-facing lens aperture, so the
+    // zoom can never spill beyond the inner edge of the metal ring.
     const contour: string[] = [];
     for (let index = 0; index < LENS_CONTOUR_POINTS; index += 1) {
       const angle = (index / LENS_CONTOUR_POINTS) * Math.PI * 2;
@@ -939,10 +928,9 @@
     snapshotRoom.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${MAGNIFICATION})`;
   }
 
-  function setBodyTransform(position: THREE.Vector3, quaternion: THREE.Quaternion) {
+  function setBodyTransform(position: THREE.Vector3, _quaternion: THREE.Quaternion) {
     if (!rigidBody) return;
-    rigidBody.setTranslation({ x: position.x, y: position.y, z: position.z }, true);
-    rigidBody.setRotation(quaternionToRapier(quaternion), true);
+    rigidBody.setTranslation({ x: position.x, y: position.y, z: wallPlaneZ() }, true);
     rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
     rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
     syncVisualFromBody();
@@ -958,12 +946,10 @@
     pointerSampleTime = performance.now();
     lastTargetPosition = null;
     filteredReleaseVelocity.set(0, 0, 0);
-    filteredAngularVelocity.set(0, 0, 0);
 
     const t = rigidBody.translation();
-    const r = rigidBody.rotation();
-    heldPosition.set(t.x, t.y, t.z);
-    heldQuaternion.set(r.x, r.y, r.z, r.w);
+    heldPosition.set(t.x, t.y, wallPlaneZ());
+    heldQuaternion.copy(cameraFacingQuaternion());
     rigidBody.wakeUp();
     rigidBody.setGravityScale(0, true);
     mode = 'held';
@@ -992,15 +978,10 @@
     if (target && lastTargetPosition) {
       const dt = Math.max(1 / 240, (now - pointerSampleTime) / 1000);
       const sample = target.position.clone().sub(lastTargetPosition).divideScalar(dt);
+      sample.z = 0;
       if (sample.length() > MAX_RELEASE_SPEED) sample.setLength(MAX_RELEASE_SPEED);
       filteredReleaseVelocity.lerp(sample, 0.4);
 
-      const pointerDX = event.movementX || 0;
-      const pointerDY = event.movementY || 0;
-      filteredAngularVelocity.lerp(
-        new THREE.Vector3(pointerDY * 0.035, -pointerDX * 0.035, pointerDX * 0.02),
-        0.32,
-      );
     }
     if (target) lastTargetPosition = target.position.clone();
     pointerSampleTime = now;
@@ -1010,7 +991,6 @@
     if (mode !== 'held' || event.pointerId !== activePointerId || !rigidBody) return;
     activePointerId = null;
     mode = 'airborne';
-    physicsStartedAt = performance.now();
     rigidBody.setGravityScale(1, true);
     if (!overlayRoot || !snapshotRoom) {
       createOverlay();
@@ -1018,24 +998,12 @@
     }
 
     const linear = filteredReleaseVelocity.clone();
+    linear.z = 0;
     if (linear.length() > MAX_RELEASE_SPEED) linear.setLength(MAX_RELEASE_SPEED);
-    rigidBody.setLinvel({ x: linear.x, y: linear.y, z: linear.z }, true);
-
-    const angular = filteredAngularVelocity.clone();
-    if (angular.lengthSq() < 0.025) {
-      // Even a careful real-world release is never perfectly torque-free. This
-      // tiny bias prevents an unnaturally perfect edge-on fall while remaining
-      // far below the spin generated by an actual throw gesture.
-      angular.set(0.2 + linear.z * 0.00018, 0.07, -0.16 - linear.x * 0.00018);
-    }
-    rigidBody.setAngvel(
-      {
-        x: THREE.MathUtils.clamp(angular.x, -9, 9),
-        y: THREE.MathUtils.clamp(angular.y, -9, 9),
-        z: THREE.MathUtils.clamp(angular.z, -9, 9),
-      },
-      true,
-    );
+    rigidBody.setLinvel({ x: linear.x, y: linear.y, z: 0 }, true);
+    // Orientation is intentionally locked: the lens always remains normal to
+    // the camera instead of pitching/rolling and becoming unusable.
+    rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
     rigidBody.wakeUp();
     startAnimation();
   }
@@ -1049,7 +1017,8 @@
     const target = computeHeldTarget(pointerX, pointerY);
     if (!target) return;
     heldPosition.lerp(target.position, PICKUP_FOLLOW);
-    heldQuaternion.slerp(target.quaternion, PICKUP_FOLLOW).normalize();
+    heldQuaternion.copy(target.quaternion);
+    heldPosition.z = wallPlaneZ();
     setBodyTransform(heldPosition, heldQuaternion);
     enforceViewportBounds(false);
     syncVisualFromBody();
@@ -1087,59 +1056,37 @@
         { x: velocity.x, y: desiredBounce, z: velocity.z },
         true,
       );
-      const angular = rigidBody.angvel();
-      rigidBody.setAngvel(
-        {
-          x: angular.x + THREE.MathUtils.clamp(velocity.z * 0.0007, -0.42, 0.42),
-          y: angular.y,
-          z: angular.z - THREE.MathUtils.clamp(velocity.x * 0.0007, -0.42, 0.42),
-        },
-        true,
-      );
+      rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
       rigidBody.wakeUp();
     }
     lastBounceAssistAt = now;
   }
 
   function projectedMagnifierBounds(): ProjectedBounds | null {
-    if (!magnifier) return null;
+    if (!magnifier || !magnifierBoundsLocalVertices.length) return null;
     magnifier.updateMatrixWorld(true);
-    const bounds = new THREE.Box3().setFromObject(magnifier);
-    if (bounds.isEmpty()) return null;
-
-    const xs = [bounds.min.x, bounds.max.x];
-    const ys = [bounds.min.y, bounds.max.y];
-    const zs = [bounds.min.z, bounds.max.z];
     let left = Infinity;
     let right = -Infinity;
     let top = Infinity;
     let bottom = -Infinity;
     let count = 0;
-    for (const x of xs) {
-      for (const y of ys) {
-        for (const z of zs) {
-          const point = projectWorldPoint(new THREE.Vector3(x, y, z));
-          if (!point) continue;
-          left = Math.min(left, point.x);
-          right = Math.max(right, point.x);
-          top = Math.min(top, point.y);
-          bottom = Math.max(bottom, point.y);
-          count += 1;
-        }
-      }
+    for (const localVertex of magnifierBoundsLocalVertices) {
+      const world = tmpVectorC.copy(localVertex).applyMatrix4(magnifier.matrixWorld);
+      const point = projectWorldPoint(world);
+      if (!point) continue;
+      left = Math.min(left, point.x);
+      right = Math.max(right, point.x);
+      top = Math.min(top, point.y);
+      bottom = Math.max(bottom, point.y);
+      count += 1;
     }
     return count ? { left, right, top, bottom } : null;
   }
 
   function enforceViewportBounds(wake = true) {
     if (!rigidBody || !magnifier) return;
-    const floor = context.getFloorSurface();
-    if (!floor) return;
 
-    // Two short iterations are enough because projection is locally linear at
-    // the prop's depth. Corrections happen before rendering, so no frame exposes
-    // any part of the object outside the viewport.
-    for (let pass = 0; pass < 2; pass += 1) {
+    for (let pass = 0; pass < 5; pass += 1) {
       syncVisualFromBody();
       const bounds = projectedMagnifierBounds();
       if (!bounds) return;
@@ -1154,75 +1101,60 @@
       if (bounds.bottom > window.innerHeight - VIEWPORT_MARGIN) {
         dyPixels -= bounds.bottom - (window.innerHeight - VIEWPORT_MARGIN);
       }
-      if (Math.abs(dxPixels) < 0.35 && Math.abs(dyPixels) < 0.35) return;
+      if (Math.abs(dxPixels) < 0.08 && Math.abs(dyPixels) < 0.08) {
+        rememberViewportSafeState();
+        return;
+      }
 
       const translation = rigidBody.translation();
-      const center = new THREE.Vector3(translation.x, translation.y, translation.z);
+      const center = new THREE.Vector3(translation.x, translation.y, wallPlaneZ());
       const centerScreen = projectWorldPoint(center);
-      if (!centerScreen) return;
-
       const xProbe = projectWorldPoint(center.clone().add(new THREE.Vector3(1, 0, 0)));
-      const zProbe = projectWorldPoint(center.clone().add(new THREE.Vector3(0, 0, 1)));
       const yProbe = projectWorldPoint(center.clone().add(new THREE.Vector3(0, 1, 0)));
-      if (!xProbe || !zProbe || !yProbe) return;
+      if (!centerScreen || !xProbe || !yProbe) break;
 
-      const pixelsPerX = xProbe.x - centerScreen.x;
-      const pixelsPerZ = zProbe.y - centerScreen.y;
-      const pixelsPerY = yProbe.y - centerScreen.y;
-      let nextX = translation.x;
-      let nextY = translation.y;
-      let nextZ = translation.z;
+      const j11 = xProbe.x - centerScreen.x;
+      const j21 = xProbe.y - centerScreen.y;
+      const j12 = yProbe.x - centerScreen.x;
+      const j22 = yProbe.y - centerScreen.y;
+      const determinant = j11 * j22 - j12 * j21;
+      if (Math.abs(determinant) < 1e-6) break;
 
-      if (Math.abs(dxPixels) >= 0.35 && Math.abs(pixelsPerX) > 0.001) {
-        nextX += dxPixels / pixelsPerX;
-      }
-
-      if (Math.abs(dyPixels) >= 0.35 && Math.abs(pixelsPerZ) > 0.001) {
-        const proposedZ = nextZ + dyPixels / pixelsPerZ;
-        const clampedZ = THREE.MathUtils.clamp(
-          proposedZ,
-          floor.minZ + BOUNDS_MARGIN_BACK,
-          floor.maxZ - BOUNDS_MARGIN_FRONT,
-        );
-        nextZ = clampedZ;
-
-        // If Z reached a physical room wall before the whole prop fit on-screen,
-        // use Y for only the remaining correction. This makes the viewport itself
-        // an absolute last-resort boundary without letting the object disappear.
-        const zPixelsApplied = (clampedZ - translation.z) * pixelsPerZ;
-        const remainingY = dyPixels - zPixelsApplied;
-        if (Math.abs(remainingY) >= 0.35 && Math.abs(pixelsPerY) > 0.001) {
-          nextY += remainingY / pixelsPerY;
-          nextY = Math.max(floor.y + REST_BODY_CLEARANCE, nextY);
-        }
-      }
-
-      nextX = THREE.MathUtils.clamp(
-        nextX,
-        floor.minX + BOUNDS_MARGIN_X,
-        floor.maxX - BOUNDS_MARGIN_X,
-      );
-      nextZ = THREE.MathUtils.clamp(
-        nextZ,
-        floor.minZ + BOUNDS_MARGIN_BACK,
-        floor.maxZ - BOUNDS_MARGIN_FRONT,
-      );
-
+      const worldDx = (dxPixels * j22 - j12 * dyPixels) / determinant;
+      const worldDy = (j11 * dyPixels - dxPixels * j21) / determinant;
       const velocity = rigidBody.linvel();
-      const correctedX = Math.abs(nextX - translation.x) > 0.001;
-      const correctedY = Math.abs(nextY - translation.y) > 0.001;
-      const correctedZ = Math.abs(nextZ - translation.z) > 0.001;
-      rigidBody.setTranslation({ x: nextX, y: nextY, z: nextZ }, wake);
-      rigidBody.setLinvel(
+      const hitHorizontal = Math.abs(dxPixels) >= 0.08;
+      const hitVertical = Math.abs(dyPixels) >= 0.08;
+      rigidBody.setTranslation(
         {
-          x: correctedX ? -velocity.x * 0.38 : velocity.x,
-          y: correctedY ? -velocity.y * 0.32 : velocity.y,
-          z: correctedZ ? -velocity.z * 0.38 : velocity.z,
+          x: translation.x + worldDx,
+          y: translation.y + worldDy,
+          z: wallPlaneZ(),
         },
         wake,
       );
+      rigidBody.setLinvel(
+        {
+          x: hitHorizontal ? -velocity.x * 0.46 : velocity.x,
+          y: hitVertical ? -velocity.y * 0.34 : velocity.y,
+          z: 0,
+        },
+        wake,
+      );
+      rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, wake);
     }
+
     syncVisualFromBody();
+    if (!viewportBoundsInside(projectedMagnifierBounds()) && lastViewportSafeState) {
+      const fallback = lastViewportSafeState;
+      rigidBody.setTranslation(
+        { x: fallback.position.x, y: fallback.position.y, z: wallPlaneZ() },
+        wake,
+      );
+      rigidBody.setLinvel({ x: -fallback.linvel.x * 0.35, y: -fallback.linvel.y * 0.28, z: 0 }, wake);
+      rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, wake);
+      syncVisualFromBody();
+    }
   }
 
   function enforceRoomBounds() {
@@ -1231,27 +1163,17 @@
     if (!floor) return;
 
     const translation = rigidBody.translation();
-    const minX = floor.minX + BOUNDS_MARGIN_X;
-    const maxX = floor.maxX - BOUNDS_MARGIN_X;
-    const minZ = floor.minZ + BOUNDS_MARGIN_BACK;
-    const maxZ = floor.maxZ - BOUNDS_MARGIN_FRONT;
+    const minX = floor.minX + BOUNDS_MARGIN_LEFT;
+    const maxX = floor.maxX - BOUNDS_MARGIN_RIGHT;
     const clampedX = THREE.MathUtils.clamp(translation.x, minX, maxX);
-    const clampedZ = THREE.MathUtils.clamp(translation.z, minZ, maxZ);
-    if (clampedX === translation.x && clampedZ === translation.z) return;
-
     const velocity = rigidBody.linvel();
     const hitX = clampedX !== translation.x;
-    const hitZ = clampedZ !== translation.z;
-    rigidBody.setTranslation({ x: clampedX, y: translation.y, z: clampedZ }, true);
-    rigidBody.setLinvel(
-      {
-        x: hitX ? -velocity.x * 0.42 : velocity.x,
-        y: velocity.y,
-        z: hitZ ? -velocity.z * 0.42 : velocity.z,
-      },
-      true,
-    );
-    rigidBody.wakeUp();
+    if (hitX || Math.abs(translation.z - wallPlaneZ()) > 0.001 || Math.abs(velocity.z) > 0.001) {
+      rigidBody.setTranslation({ x: clampedX, y: translation.y, z: wallPlaneZ() }, true);
+      rigidBody.setLinvel({ x: hitX ? -velocity.x * 0.42 : velocity.x, y: velocity.y, z: 0 }, true);
+      rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
+      rigidBody.wakeUp();
+    }
   }
 
   function stepPhysics(deltaSeconds: number) {
@@ -1278,12 +1200,12 @@
         };
         if (hit.left || hit.right) {
           bounced.linvel.x = -fallbackState.linvel.x * 0.42;
-          bounced.angvel.z = -fallbackState.angvel.z * 0.4;
+          bounced.angvel.set(0, 0, 0);
         }
         if (hit.top || hit.bottom) {
-          bounced.linvel.z = -fallbackState.linvel.z * 0.42;
           bounced.linvel.y = Math.abs(fallbackState.linvel.y) * 0.14;
-          bounced.angvel.x = -fallbackState.angvel.x * 0.4;
+          bounced.linvel.z = 0;
+          bounced.angvel.set(0, 0, 0);
         }
         applyBodyState(bounced, true);
         rigidBody.wakeUp();
@@ -1304,21 +1226,21 @@
       const velocity = rigidBody.linvel();
       rigidBody.setTranslation(
         {
-          x: THREE.MathUtils.clamp(translation.x, floor.minX + 60, floor.maxX - 60),
-          y: floor.y + 12,
-          z: THREE.MathUtils.clamp(translation.z, floor.minZ + 50, floor.maxZ - 80),
+          x: THREE.MathUtils.clamp(translation.x, floor.minX + BOUNDS_MARGIN_LEFT, floor.maxX - BOUNDS_MARGIN_RIGHT),
+          y: floor.y + REST_BODY_CLEARANCE + 10,
+          z: wallPlaneZ(),
         },
         true,
       );
-      rigidBody.setLinvel({ x: velocity.x * 0.55, y: Math.abs(velocity.y) * 0.08, z: velocity.z * 0.55 }, true);
-      rigidBody.setAngvel({ x: 0.5, y: 0.15, z: -0.35 }, true);
+      rigidBody.setLinvel({ x: velocity.x * 0.55, y: Math.abs(velocity.y) * 0.08, z: 0 }, true);
+      rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
       syncVisualFromBody();
       return;
     }
     if (mode === 'airborne') {
       // Keep the optical view alive for the complete rigid-body motion: falling,
-      // bouncing, sliding and tumbling. It disappears only once Rapier itself has
-      // put the body to sleep.
+      // bouncing and sliding. Orientation stays camera-facing throughout, and the
+      // overlay disappears only once Rapier itself has put the body to sleep.
       updateLensOverlay();
     }
 
