@@ -15,20 +15,6 @@
   transform-origin: center;
 }
 
-.room-magnifier-hit::after {
-  content: '';
-  position: absolute;
-  inset: 8% 20%;
-  border-radius: 999px;
-  opacity: 0;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wall-light, #fff) 42%, transparent);
-  transition: opacity 120ms ease;
-}
-
-.room-magnifier-hit:hover::after {
-  opacity: 0;
-}
-
 .room-magnifier-hit:focus-visible {
   outline: none;
 }
@@ -52,6 +38,7 @@
   background: transparent;
   clip-path: polygon(0 0, 0 0, 0 0);
   will-change: clip-path;
+  filter: saturate(1.01) contrast(1.01);
 }
 
 .room-magnifier-overlay__snapshot {
@@ -92,12 +79,6 @@ html.is-using-room-magnifier body {
 html.is-hovering-room-magnifier,
 html.is-hovering-room-magnifier body {
   cursor: grab !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .room-magnifier-hit::after {
-    transition: none;
-  }
 }
 
 /* Inside the lens the navbar should read as the same navbar, not as a second

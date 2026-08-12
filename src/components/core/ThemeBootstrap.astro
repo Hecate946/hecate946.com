@@ -23,13 +23,38 @@
       root.style.colorScheme = theme;
     };
 
+    const resolveBrowserThemeColor = () => {
+      const root = document.documentElement;
+      const surface = document.body ?? root;
+      const styles = getComputedStyle(surface);
+      const wallColor = styles.getPropertyValue('--wall-dark').trim();
+
+      // Resolve color-mix()/var() values to a concrete browser-safe color.
+      if (wallColor && document.body) {
+        const probe = document.createElement('span');
+        probe.style.cssText =
+          'position:fixed;pointer-events:none;visibility:hidden;color:var(--wall-dark)';
+        document.body.appendChild(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        if (resolved) return resolved;
+      }
+
+      // Standalone pages such as the 404 do not use the room palette, so use
+      // their own painted page surface instead.
+      const bodyBackground = styles.backgroundColor;
+      if (bodyBackground && bodyBackground !== 'rgba(0, 0, 0, 0)') {
+        return bodyBackground;
+      }
+
+      return getComputedStyle(root).backgroundColor;
+    };
+
     const updateThemeColor = () => {
       requestAnimationFrame(() => {
-        const themeColor = getComputedStyle(document.documentElement)
-          .getPropertyValue('--bg')
-          .trim();
-
+        const themeColor = resolveBrowserThemeColor();
         if (!themeColor) return;
+
         document
           .querySelectorAll('meta[name="theme-color"]')
           .forEach((meta) => meta.setAttribute('content', themeColor));

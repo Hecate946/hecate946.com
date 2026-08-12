@@ -3,17 +3,37 @@
 
   type ColorTheme = 'light' | 'dark';
 
+  function resolveBrowserThemeColor() {
+    const root = document.documentElement;
+    const styles = getComputedStyle(document.body);
+    const wallColor = styles.getPropertyValue('--wall-dark').trim();
+
+    if (wallColor) {
+      const probe = document.createElement('span');
+      probe.style.cssText =
+        'position:fixed;pointer-events:none;visibility:hidden;color:var(--wall-dark)';
+      document.body.appendChild(probe);
+      const resolved = getComputedStyle(probe).color;
+      probe.remove();
+      if (resolved) return resolved;
+    }
+
+    const bodyBackground = styles.backgroundColor;
+    if (bodyBackground && bodyBackground !== 'rgba(0, 0, 0, 0)') {
+      return bodyBackground;
+    }
+
+    return getComputedStyle(root).backgroundColor;
+  }
+
   function updateThemeColor() {
     requestAnimationFrame(() => {
-      const themeColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--bg')
-        .trim();
+      const themeColor = resolveBrowserThemeColor();
+      if (!themeColor) return;
 
-      if (themeColor) {
-        document
-          .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
-          .forEach((meta) => meta.setAttribute('content', themeColor));
-      }
+      document
+        .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
+        .forEach((meta) => meta.setAttribute('content', themeColor));
     });
   }
 

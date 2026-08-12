@@ -24,7 +24,11 @@
   const CAP_Y = 1.15;
   const CAP_LOCAL = new THREE.Vector3(0, 0, CAP_CENTER_Z + CAP_HALF_LENGTH);
   const GRIP_LOCAL = new THREE.Vector3(0, 0, 147);
-  const LENS_VIEW_RADIUS = LENS_RADIUS - RING_TUBE_RADIUS - 2.3;
+  // The physical lens extends under the metal bezel so there is never a visible
+  // air gap. The optical aperture stays just inside the bezel so magnified DOM
+  // content cannot bleed onto the metal ring.
+  const GLASS_RADIUS = LENS_RADIUS - RING_TUBE_RADIUS + 1.15;
+  const LENS_VIEW_RADIUS = LENS_RADIUS - RING_TUBE_RADIUS - 0.55;
   const LENS_PLANE_Y = 0;
   const VIEWPORT_MARGIN = 6;
   const WALL_PLANE_OFFSET_Z = 10;
@@ -32,7 +36,7 @@
   const FLOOR_VISUAL_EPSILON = 0.65;
   const LENS_CONTOUR_POINTS = 36;
 
-  const MAGNIFICATION = 1.82;
+  const MAGNIFICATION = 1.58;
   const PICKUP_FOLLOW = 0.2;
   const FIXED_STEP = 1 / 60;
   const GRAVITY = -980;
@@ -65,7 +69,7 @@
   let magnifier: THREE.Group | null = null;
   let shadow: THREE.Group | null = null;
   let softShadow: THREE.Group | null = null;
-  let hoverOutline: THREE.Group | null = null;
+  let hoverGlow: THREE.Group | null = null;
   let lightRig: THREE.Group | null = null;
   let foregroundScene: THREE.Scene | null = null;
   let foregroundRenderer: THREE.WebGLRenderer | null = null;
@@ -264,42 +268,50 @@
     root.name = 'room-magnifying-glass';
 
     const metal = new THREE.MeshPhysicalMaterial({
-      color: 0xf7f5f1,
+      color: 0xe9e7e2,
       metalness: 1,
-      roughness: 0.028,
-      clearcoat: 0.78,
-      clearcoatRoughness: 0.018,
+      roughness: 0.095,
+      clearcoat: 0.42,
+      clearcoatRoughness: 0.055,
+      reflectivity: 1,
     });
     const darkMetal = new THREE.MeshPhysicalMaterial({
-      color: 0x77716b,
-      metalness: 1,
-      roughness: 0.055,
-      clearcoat: 0.5,
-      clearcoatRoughness: 0.028,
+      color: 0x5b5855,
+      metalness: 0.98,
+      roughness: 0.13,
+      clearcoat: 0.3,
+      clearcoatRoughness: 0.07,
+      reflectivity: 0.92,
     });
     const woodTexture = createWoodTexture();
     const handleMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xd8a36f,
+      color: 0xd1a06f,
       map: woodTexture,
       bumpMap: woodTexture,
-      bumpScale: 0.14,
+      bumpScale: 0.105,
       metalness: 0,
-      roughness: 0.36,
-      clearcoat: 0.16,
-      clearcoatRoughness: 0.26,
+      roughness: 0.44,
+      clearcoat: 0.12,
+      clearcoatRoughness: 0.32,
+      sheen: 0.08,
+      sheenRoughness: 0.7,
+      sheenColor: new THREE.Color(0xffdfbf),
     });
     if (woodTexture) handleMaterial.userData.disposableTexture = woodTexture;
+    // The actual magnified image is a DOM layer beneath this canvas. Keep the
+    // WebGL lens nearly clear and use it only for subtle surface reflections; a
+    // transmissive material would incorrectly refract the transparent WebGL scene
+    // instead of the page behind it.
     const glassMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      transmission: 0.995,
+      color: 0xf5fbff,
       transparent: true,
-      opacity: 0.11,
-      roughness: 0.008,
-      thickness: 3.2,
+      opacity: 0.075,
+      roughness: 0.055,
       ior: 1.52,
-      attenuationColor: new THREE.Color(0xf1f9ff),
-      attenuationDistance: 38,
       metalness: 0,
+      clearcoat: 0.92,
+      clearcoatRoughness: 0.035,
+      reflectivity: 0.16,
       depthWrite: false,
       side: THREE.DoubleSide,
     });
@@ -312,26 +324,36 @@
     ring.renderOrder = 6;
     root.add(ring);
 
-    const innerRing = new THREE.Mesh(
-      new THREE.TorusGeometry(LENS_RADIUS - 4.7, 1.3, 18, 96),
-      darkMetal,
-    );
-    innerRing.name = 'magnifier-inner-ring';
-    innerRing.rotation.x = Math.PI / 2;
-    innerRing.scale.z = 1;
-    innerRing.position.y = 0.2;
-    innerRing.castShadow = true;
-    innerRing.renderOrder = 7;
-    root.add(innerRing);
-
     const glass = new THREE.Mesh(
-      new THREE.CylinderGeometry(LENS_VIEW_RADIUS, LENS_VIEW_RADIUS, 1.7, 96, 1, false),
+      new THREE.CylinderGeometry(GLASS_RADIUS, GLASS_RADIUS, 1.9, 128, 1, false),
       glassMaterial,
     );
     glass.name = 'magnifier-glass';
     glass.position.y = LENS_PLANE_Y;
     glass.renderOrder = 5;
     root.add(glass);
+
+    // A nearly transparent glass edge catches just enough light to make the lens
+    // read as a real piece of glass without drawing a fake outline around it.
+    const glassEdge = new THREE.Mesh(
+      new THREE.TorusGeometry(GLASS_RADIUS - 0.4, 0.62, 12, 128),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xcde7df,
+        transparent: true,
+        opacity: 0.2,
+        roughness: 0.09,
+        ior: 1.52,
+        clearcoat: 0.55,
+        clearcoatRoughness: 0.06,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    );
+    glassEdge.name = 'magnifier-glass-edge';
+    glassEdge.rotation.x = Math.PI / 2;
+    glassEdge.position.y = LENS_PLANE_Y + 0.08;
+    glassEdge.renderOrder = 5;
+    root.add(glassEdge);
 
     const ferrule = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 23, 30), darkMetal);
     ferrule.name = 'magnifier-ferrule';
@@ -386,7 +408,7 @@
   ) {
     const group = new THREE.Group();
     source.traverse((child) => {
-      if (!(child instanceof THREE.Mesh) || child.name === 'magnifier-glass') return;
+      if (!(child instanceof THREE.Mesh) || child.name.startsWith('magnifier-glass')) return;
       const material = new THREE.MeshBasicMaterial({
         color,
         transparent: opacity < 1,
@@ -415,10 +437,71 @@
     return createSilhouetteLayer(source, 0.055, 1.045, 0x090604, THREE.DoubleSide);
   }
 
-  function createHoverOutline(source: THREE.Group) {
-    const outline = createSilhouetteLayer(source, 1, 1.075, 0xfff6df, THREE.BackSide);
-    outline.visible = false;
-    return outline;
+  function createHoverGlowTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 768;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    const drawShape = (alpha: number, blur: number, expansion: number) => {
+      ctx.save();
+      ctx.filter = `blur(${blur}px)`;
+      ctx.strokeStyle = `rgba(255,239,201,${alpha})`;
+      ctx.fillStyle = `rgba(255,239,201,${alpha})`;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      ctx.lineWidth = 25 + expansion;
+      ctx.beginPath();
+      ctx.arc(256, 176, 102, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.lineWidth = 34 + expansion;
+      ctx.beginPath();
+      ctx.moveTo(256, 278);
+      ctx.lineTo(256, 626);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.ellipse(256, 650, 22 + expansion * 0.25, 14 + expansion * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    drawShape(0.16, 24, 12);
+    drawShape(0.12, 12, 5);
+    drawShape(0.08, 5, 1);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    return texture;
+  }
+
+  function createHoverGlow() {
+    const texture = createHoverGlowTexture();
+    if (!texture) return new THREE.Group();
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      opacity: 0.62,
+      depthWrite: false,
+      depthTest: false,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+      side: THREE.DoubleSide,
+    });
+    material.userData.disposableTexture = texture;
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(190, 286), material);
+    plane.rotation.x = -Math.PI / 2;
+    plane.position.z = 75;
+    plane.renderOrder = 4;
+    const group = new THREE.Group();
+    group.add(plane);
+    group.visible = false;
+    return group;
   }
 
   function createForegroundRenderer() {
@@ -431,6 +514,8 @@
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
     renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.04;
     renderer.setPixelRatio(Math.min(2, Math.max(1, window.devicePixelRatio || 1)));
     foregroundRenderer = renderer;
     foregroundScene = new THREE.Scene();
@@ -453,22 +538,27 @@
 
   function setMagnifierHovered(next: boolean) {
     document.documentElement.classList.toggle('is-hovering-room-magnifier', next);
-    if (hoverOutline) hoverOutline.visible = next && mode !== 'held';
+    const visible = next && mode !== 'held';
+    if (hoverGlow) hoverGlow.visible = visible;
     renderForeground();
   }
 
   function createLightRig() {
     const rig = new THREE.Group();
-    const hemi = new THREE.HemisphereLight(0xfaf7f2, 0x3a2821, 1.16);
+    const hemi = new THREE.HemisphereLight(0xfffbf4, 0x322721, 0.9);
     rig.add(hemi);
-    const key = new THREE.PointLight(0xffffff, 1.8, 1250, 1.65);
-    key.position.set(-155, 235, 145);
+
+    // Large, offset highlights make the polished tube read as metal instead of
+    // black plastic. The cooler secondary reflection also gives the glass edge a
+    // convincing neutral/green optical catchlight.
+    const key = new THREE.PointLight(0xfff9ef, 2.05, 1300, 1.55);
+    key.position.set(-205, 260, 175);
     rig.add(key);
-    const coolRim = new THREE.PointLight(0xd9f2ff, 0.82, 980, 1.5);
-    coolRim.position.set(235, 145, 185);
-    rig.add(coolRim);
-    const warmRim = new THREE.PointLight(0xffe1c6, 0.48, 760, 1.7);
-    warmRim.position.set(-250, 70, 260);
+    const fill = new THREE.PointLight(0xdcecff, 1.15, 1100, 1.55);
+    fill.position.set(285, 115, 210);
+    rig.add(fill);
+    const warmRim = new THREE.PointLight(0xffd5ad, 0.52, 840, 1.65);
+    warmRim.position.set(-290, 40, 280);
     rig.add(warmRim);
     return rig;
   }
@@ -691,6 +781,9 @@
     enforceViewportBounds(false);
     rememberViewportSafeState();
     updateHitButton();
+    createOverlay();
+    captureRoomSnapshot();
+    requestAnimationFrame(() => updateLensOverlay());
     context.requestRender();
     renderForeground();
   }
@@ -798,9 +891,9 @@
     place(shadow, 3.2, -4.0, 2.25);
     shadow.visible = true;
     softShadow.visible = true;
-    if (hoverOutline) {
-      hoverOutline.position.copy(magnifier.position);
-      hoverOutline.quaternion.copy(magnifier.quaternion);
+    if (hoverGlow) {
+      hoverGlow.position.copy(magnifier.position);
+      hoverGlow.quaternion.copy(magnifier.quaternion);
     }
   }
 
@@ -1069,7 +1162,6 @@
     rigidBody.wakeUp();
     rigidBody.setGravityScale(0, true);
     mode = 'held';
-    destroyOverlay();
     if (hitButton) hitButton.style.display = 'none';
     setMagnifierHovered(false);
     document.documentElement.classList.add('is-using-room-magnifier');
@@ -1400,8 +1492,10 @@
     // solver has genuinely completed all contact and damping motion.
     if ((mode === 'settling' || mode === 'airborne') && rigidBody.isSleeping()) {
       mode = 'idle';
-      destroyOverlay();
       document.documentElement.classList.remove('is-using-room-magnifier');
+      createOverlay();
+      captureRoomSnapshot();
+      updateLensOverlay();
       updateHitButton();
     }
   }
@@ -1439,7 +1533,7 @@
       }
     }
     if (mode !== 'held') updateHitButton();
-    if (mode === 'held' || mode === 'airborne') updateLensOverlay();
+    if (overlayRoot) updateLensOverlay();
     context.requestRender();
     renderForeground();
   }
@@ -1448,11 +1542,11 @@
     magnifier = createMagnifierModel();
     shadow = createShadow(magnifier);
     softShadow = createSoftShadow(magnifier);
-    hoverOutline = createHoverOutline(magnifier);
+    hoverGlow = createHoverGlow();
     lightRig = createLightRig();
     createForegroundRenderer();
-    if (foregroundScene && softShadow && shadow && hoverOutline && magnifier && lightRig) {
-      foregroundScene.add(softShadow, shadow, hoverOutline, magnifier, lightRig);
+    if (foregroundScene && softShadow && shadow && hoverGlow && magnifier && lightRig) {
+      foregroundScene.add(softShadow, shadow, hoverGlow, magnifier, lightRig);
     }
     resizeForegroundRenderer();
     context.requestRender();
@@ -1491,7 +1585,7 @@
       hitButton = null;
       destroyOverlay();
       foregroundScene?.clear();
-      disposeObject(hoverOutline);
+      disposeObject(hoverGlow);
       disposeObject(softShadow);
       disposeObject(shadow);
       disposeObject(magnifier);
@@ -1500,7 +1594,7 @@
       magnifier = null;
       shadow = null;
       softShadow = null;
-      hoverOutline = null;
+      hoverGlow = null;
       lightRig = null;
       foregroundScene = null;
       foregroundRenderer = null;
