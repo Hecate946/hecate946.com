@@ -3,12 +3,15 @@ export const siteConfig = {
   shortName: 'Cyrus',
   title: 'Cyrus Asasi — Software Engineer & Classical Musician',
   description:
-    'Personal portfolio of Cyrus Asasi, a software engineer and classical musician, featuring projects, performances, live site statistics, and contact information.',
+    'Personal portfolio of Cyrus Asasi, a software engineer and classical musician, featuring selected software projects, resumes, performances, and contact information.',
+  socialDescription:
+    'Software engineer + classical musician. Projects, resumes, and contact.',
   email: 'cyrusasasi@gmail.com',
   locale: 'en-US',
   social: {
     github: 'https://github.com/Hecate946/',
     linkedin: 'https://www.linkedin.com/in/cyrus-asasi/',
+    buyMeACoffee: 'https://buymeacoffee.com/hecate946',
   },
   ui: {
     // Toggle the vertical “elevator” page-change animation for the top nav.

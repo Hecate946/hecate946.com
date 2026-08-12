@@ -1,10 +1,48 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const resumesUrl = new URL('/resumes/', Astro.site).href;
+const resumeStructuredData = {
+  '@type': 'ItemList',
+  '@id': `${resumesUrl}#resumes`,
+  name: 'Cyrus Asasi resumes',
+  numberOfItems: 2,
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      item: {
+        '@type': 'DigitalDocument',
+        name: 'Cyrus Asasi — Software Engineering Resume',
+        encodingFormat: 'application/pdf',
+        url: new URL('/resumes/cyrus-asasi-software-engineering-resume.pdf', Astro.site).href,
+      },
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      item: {
+        '@type': 'DigitalDocument',
+        name: 'Cyrus Asasi — Clarinet Performance Resume',
+        encodingFormat: 'application/pdf',
+        url: new URL('/resumes/cyrus-asasi-clarinet-performance-resume.pdf', Astro.site).href,
+      },
+    },
+  ],
+};
 ---
 
 <BaseLayout
   title="Resumes — Cyrus Asasi"
   description="Software engineering and clarinet performance resumes for Cyrus Asasi."
+  socialTitle="Resumes"
+  socialDescription="Software engineering + clarinet performance."
+  socialImage="/images/social/resumes.jpg"
+  socialImageAlt="Resumes room preview with software engineering and clarinet performance resumes"
+  socialImageWidth={400}
+  socialImageHeight={400}
+  socialImageType="image/jpeg"
+  structuredData={resumeStructuredData}
   mainClass="resume-wall-main"
   bodyClass="resume-wall-page"
 />

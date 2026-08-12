@@ -1,0 +1,68 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { withBase } from '@/lib/paths';
+import { siteConfig } from '@/config/site';
+import '@/styles/privacy.css';
+
+const contactHref = `mailto:${siteConfig.email}?subject=${encodeURIComponent('hecate946.com privacy question')}`;
+---
+
+<BaseLayout
+  title="Privacy — Cyrus Asasi"
+  description="Privacy information for hecate946.com, including how site statistics are collected, retained, and kept privacy-conscious."
+  socialTitle="Privacy"
+  socialDescription="How the privacy-conscious site statistics on hecate946.com work."
+  socialImage="/images/social/stats.jpg"
+  socialImageAlt="Stats room preview for hecate946.com"
+  socialImageWidth={400}
+  socialImageHeight={400}
+  socialImageType="image/jpeg"
+  bodyClass="privacy-page"
+>
+  <article class="privacy interior-page interior-page--eight" aria-labelledby="privacy-title">
+    <header class="interior-page-heading">
+      <h1 id="privacy-title">Privacy</h1>
+    </header>
+
+    <div class="privacy__content interior-page-content interior-page-content--balanced">
+      <p>
+        This site uses a small site-owned analytics system to power the public <a href={withBase('/stats/')}>Stats</a> page and to understand whether the site is working well.
+      </p>
+
+      <h2>What is collected</h2>
+      <p>
+        Page paths, a small set of interaction event names, timestamps, and a random session identifier are sent to the site's Cloudflare Worker. Cloudflare also provides an approximate location for the request; the site rounds coordinates to two decimal places before storing them and uses them only for aggregate map statistics.
+      </p>
+
+      <h2>What is not intentionally collected</h2>
+      <p>
+        The analytics payload does not include your name, email address, cookies, referrer, advertising identifiers, or a persistent cross-session visitor ID. The site does not sell analytics data or share it with advertisers.
+      </p>
+
+      <h2>Retention</h2>
+      <p>
+        Hashed session records and their per-session location associations are automatically removed after 30 days. Aggregate counts, such as total page views and coarse location totals, may be retained longer because they no longer contain the session identifier.
+      </p>
+
+      <h2>Browser storage</h2>
+      <p>
+        A session-scoped random identifier is stored in <code>sessionStorage</code>. Your browser also keeps a local copy of your own personal site statistics in <code>localStorage</code>; that local history stays on your device unless you clear it.
+      </p>
+
+      <h2>Privacy signals</h2>
+      <p>
+        Remote analytics is disabled when the browser reports Do Not Track or Global Privacy Control. Analytics failures never block navigation or site functionality.
+      </p>
+
+      <h2>Third-party requests</h2>
+      <p>
+        The display font is served by Google Fonts, so normal page loads request that font from Google. The custom PDF viewer loads its rendering library from unpkg only when the viewer is opened, and the custom 404 page embeds a YouTube video using YouTube's privacy-enhanced domain. External contact/profile links do not load those sites until you follow the link.
+      </p>
+
+      <h2>Questions</h2>
+      <p>
+        For privacy questions, <a href={contactHref}>email Cyrus Asasi</a>.
+      </p>
+    </div>
+  </article>
+</BaseLayout>

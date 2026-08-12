@@ -89,14 +89,43 @@
     currentRoom = roomForPath(window.location.pathname);
   }
 
+  function warmAboutNow() {
+    aboutMounted = true;
+  }
+
+  const warmAboutDuringIdle = () => {
+    if (aboutMounted) return () => {};
+
+    let fallbackTimer = 0;
+    let idleHandle: number | null = null;
+    const mountAbout = warmAboutNow;
+
+    if ('requestIdleCallback' in window) {
+      idleHandle = window.requestIdleCallback(mountAbout, { timeout: 1_500 });
+    } else {
+      fallbackTimer = window.setTimeout(mountAbout, 450);
+    }
+
+    return () => {
+      if (idleHandle !== null && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+    };
+  };
+
   onMount(() => {
     syncRoute();
+    const cancelAboutWarm = warmAboutDuringIdle();
     document.addEventListener('astro:after-swap', syncRoute);
+    document.addEventListener('hecate:warm-about', warmAboutNow);
     document.addEventListener('astro:page-load', syncRoute);
     window.addEventListener('popstate', syncRoute);
 
     return () => {
+      cancelAboutWarm();
       document.removeEventListener('astro:after-swap', syncRoute);
+      document.removeEventListener('hecate:warm-about', warmAboutNow);
       document.removeEventListener('astro:page-load', syncRoute);
       window.removeEventListener('popstate', syncRoute);
     };

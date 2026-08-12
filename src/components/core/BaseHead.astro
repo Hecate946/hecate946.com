@@ -10,8 +10,16 @@ interface Props {
   imageWidth?: number | undefined;
   imageHeight?: number | undefined;
   imageType?: string | undefined;
+  socialTitle?: string | undefined;
+  socialDescription?: string | undefined;
+  socialImage?: string | undefined;
+  socialImageAlt?: string | undefined;
+  socialImageWidth?: number | undefined;
+  socialImageHeight?: number | undefined;
+  socialImageType?: string | undefined;
   canonicalURL?: URL | undefined;
   noindex?: boolean | undefined;
+  structuredData?: Record<string, unknown> | readonly Record<string, unknown>[] | undefined;
 }
 
 const {
@@ -22,8 +30,16 @@ const {
   imageWidth,
   imageHeight,
   imageType,
+  socialTitle,
+  socialDescription,
+  socialImage,
+  socialImageAlt,
+  socialImageWidth,
+  socialImageHeight,
+  socialImageType,
   canonicalURL = new URL(Astro.url.pathname, Astro.site),
   noindex = false,
+  structuredData: additionalStructuredData,
 } = Astro.props;
 
 const escapeRegExp = (value: string) =>
@@ -32,6 +48,9 @@ const siteNamePattern = escapeRegExp(siteConfig.name);
 const normalizedPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const isHomePage = normalizedPath === '/';
 const isAboutPage = normalizedPath === '/about';
+const isProjectsPage = normalizedPath === '/projects';
+const isResumesPage = normalizedPath === '/resumes';
+const isContactPage = normalizedPath === '/contact';
 
 function getPageName(input: string) {
   const cleanTitle = input.trim();
@@ -61,55 +80,61 @@ function inferImageType(path: string) {
 
 const pageName = getPageName(title);
 const resolvedTitle = isHomePage ? siteConfig.title : `${pageName} | ${siteConfig.name}`;
+const compactSocialTitle = socialTitle ?? (isHomePage ? siteConfig.name : pageName);
+const compactSocialDescription = socialDescription ?? (isHomePage ? siteConfig.socialDescription : description);
 const canonicalHref = canonicalURL.toString();
 const siteUrl = new URL('/', Astro.site).toString();
-const defaultSocialImagePath = withBase('/images/social/cyrus-asasi-og.jpg');
-const resolvedImagePath = image ?? defaultSocialImagePath;
-const socialImage = new URL(resolvedImagePath, Astro.site).toString();
-const socialImageAlt = imageAlt ?? (
-  image
-    ? `${pageName} — project preview by ${siteConfig.name}`
-    : `${siteConfig.name}, software engineer and classical musician`
-);
-const socialImageWidth = imageWidth ?? (image ? undefined : 1200);
-const socialImageHeight = imageHeight ?? (image ? undefined : 630);
-const socialImageType = imageType ?? inferImageType(resolvedImagePath);
+
+// Social cards deliberately use compact 1:1 previews. X/Twitter renders these
+// as the smaller `summary` card, while Open Graph consumers still get an image
+// that represents the current room rather than the site's old profile-card art.
+const defaultSocialImagePath = withBase('/images/social/home.jpg');
+const resolvedImagePath = socialImage ?? image ?? defaultSocialImagePath;
+const resolvedImageAlt =
+  socialImageAlt ??
+  imageAlt ??
+  (isHomePage
+    ? `${siteConfig.name} portfolio room preview`
+    : `${pageName} on ${siteConfig.name}'s portfolio`);
+const resolvedImageWidth = socialImageWidth ?? imageWidth ?? (socialImage || !image ? 400 : undefined);
+const resolvedImageHeight = socialImageHeight ?? imageHeight ?? (socialImage || !image ? 400 : undefined);
+const resolvedImageType = socialImageType ?? imageType ?? inferImageType(resolvedImagePath);
+const socialImageUrl = new URL(resolvedImagePath, Astro.site).toString();
+
 const personId = `${siteUrl}#person`;
 const websiteId = `${siteUrl}#website`;
 const webPageId = `${canonicalHref}#webpage`;
-const portraitUrl = new URL(withBase('/images/about/cyrus-portrait.webp'), Astro.site).toString();
+const portraitUrl = new URL(withBase('/images/about/cyrus-portrait-480.webp'), Astro.site).toString();
 
-const structuredImage = (image || isAboutPage)
-  ? {
-      '@type': 'ImageObject',
-      url: isAboutPage ? portraitUrl : socialImage,
-      contentUrl: isAboutPage ? portraitUrl : socialImage,
-      caption: isAboutPage ? `Portrait of ${siteConfig.name}` : socialImageAlt,
-      ...(isAboutPage
-        ? { width: 400, height: 400 }
-        : {
-            ...(socialImageWidth ? { width: socialImageWidth } : {}),
-            ...(socialImageHeight ? { height: socialImageHeight } : {}),
-          }),
-    }
-  : undefined;
+const pageType = isAboutPage
+  ? 'ProfilePage'
+  : isProjectsPage || isResumesPage
+    ? 'CollectionPage'
+    : isContactPage
+      ? 'ContactPage'
+      : 'WebPage';
+
+const structuredImage = {
+  '@type': 'ImageObject',
+  url: socialImageUrl,
+  contentUrl: socialImageUrl,
+  caption: resolvedImageAlt,
+  ...(resolvedImageWidth ? { width: resolvedImageWidth } : {}),
+  ...(resolvedImageHeight ? { height: resolvedImageHeight } : {}),
+};
 
 const personStructuredData = {
   '@type': 'Person',
   '@id': personId,
   name: siteConfig.name,
   url: siteUrl,
+  image: portraitUrl,
+  jobTitle: 'Software Engineer and Classical Musician',
   sameAs: [siteConfig.social.github, siteConfig.social.linkedin],
-  ...(isAboutPage
-    ? {
-        image: portraitUrl,
-        jobTitle: 'Software Engineer and Classical Musician',
-      }
-    : {}),
 };
 
 const pageStructuredData = {
-  '@type': isAboutPage ? 'ProfilePage' : 'WebPage',
+  '@type': pageType,
   '@id': webPageId,
   url: canonicalHref,
   name: resolvedTitle,
@@ -117,9 +142,15 @@ const pageStructuredData = {
   inLanguage: siteConfig.locale,
   isPartOf: { '@id': websiteId },
   author: { '@id': personId },
+  primaryImageOfPage: structuredImage,
   ...(isAboutPage ? { mainEntity: { '@id': personId } } : {}),
-  ...(structuredImage ? { primaryImageOfPage: structuredImage } : {}),
 };
+
+const additionalGraph = additionalStructuredData
+  ? Array.isArray(additionalStructuredData)
+    ? additionalStructuredData
+    : [additionalStructuredData]
+  : [];
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -136,43 +167,28 @@ const structuredData = {
       creator: { '@id': personId },
     },
     pageStructuredData,
+    ...additionalGraph,
   ],
 };
+
+// Avoid allowing a literal `</script>` sequence from future content edits to
+// terminate the JSON-LD script tag early.
+const structuredDataJson = JSON.stringify(structuredData).replace(/</g, '\\u003c');
 ---
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-<!-- Canonicalize the public site as early as possible. GitHub Pages normally
-     performs the HTTP -> HTTPS redirect before this document is served, but
-     this is a defensive fallback for caches/proxies and also collapses the
-     www host onto the canonical apex origin. Path, query, and hash survive. -->
-<script is:inline>
-  (() => {
-    const url = new URL(window.location.href);
-    const isPublicHost = url.hostname === 'hecate946.com' || url.hostname === 'www.hecate946.com';
-    if (!isPublicHost) return;
-
-    const needsHttps = url.protocol === 'http:';
-    const needsCanonicalHost = url.hostname === 'www.hecate946.com';
-    if (!needsHttps && !needsCanonicalHost) return;
-
-    url.protocol = 'https:';
-    url.hostname = 'hecate946.com';
-    url.port = '';
-    window.location.replace(url.toString());
-  })();
-</script>
 <meta name="description" content={description} />
 <meta name="author" content={siteConfig.name} />
 <meta name="application-name" content={siteConfig.name} />
 <meta name="apple-mobile-web-app-title" content={siteConfig.shortName} />
 <meta name="color-scheme" content="light dark" />
 <meta name="referrer" content="same-origin" />
+<meta name="format-detection" content="telephone=no" />
 <meta
   name="robots"
   content={noindex
-    ? 'noindex'
+    ? 'noindex, nofollow'
     : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}
 />
 <meta
@@ -187,6 +203,8 @@ const structuredData = {
 />
 
 <link rel="canonical" href={canonicalHref} />
+<link rel="sitemap" href={withBase('/sitemap-index.xml')} type="application/xml" />
+<link rel="manifest" href={withBase('/site.webmanifest')} />
 <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" sizes="any" />
 <link rel="icon" href={withBase('/favicon-48.png')} type="image/png" sizes="48x48" />
 <link rel="apple-touch-icon" href={withBase('/apple-touch-icon.png')} sizes="180x180" />
@@ -206,23 +224,25 @@ const structuredData = {
 
 <title>{resolvedTitle}</title>
 
-<meta property="og:type" content="website" />
+<meta property="og:type" content={isAboutPage ? 'profile' : 'website'} />
 <meta property="og:site_name" content={siteConfig.name} />
 <meta property="og:locale" content={siteConfig.locale.replace('-', '_')} />
-<meta property="og:title" content={resolvedTitle} />
-<meta property="og:description" content={description} />
+<meta property="og:title" content={compactSocialTitle} />
+<meta property="og:description" content={compactSocialDescription} />
 <meta property="og:url" content={canonicalHref} />
-<meta property="og:image" content={socialImage} />
-<meta property="og:image:secure_url" content={socialImage} />
-<meta property="og:image:alt" content={socialImageAlt} />
-{socialImageType && <meta property="og:image:type" content={socialImageType} />}
-{socialImageWidth && <meta property="og:image:width" content={String(socialImageWidth)} />}
-{socialImageHeight && <meta property="og:image:height" content={String(socialImageHeight)} />}
+<meta property="og:image" content={socialImageUrl} />
+<meta property="og:image:secure_url" content={socialImageUrl} />
+<meta property="og:image:alt" content={resolvedImageAlt} />
+{resolvedImageType && <meta property="og:image:type" content={resolvedImageType} />}
+{resolvedImageWidth && <meta property="og:image:width" content={String(resolvedImageWidth)} />}
+{resolvedImageHeight && <meta property="og:image:height" content={String(resolvedImageHeight)} />}
+{isAboutPage && <meta property="profile:first_name" content="Cyrus" />}
+{isAboutPage && <meta property="profile:last_name" content="Asasi" />}
 
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content={resolvedTitle} />
-<meta name="twitter:description" content={description} />
-<meta name="twitter:image" content={socialImage} />
-<meta name="twitter:image:alt" content={socialImageAlt} />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content={compactSocialTitle} />
+<meta name="twitter:description" content={compactSocialDescription} />
+<meta name="twitter:image" content={socialImageUrl} />
+<meta name="twitter:image:alt" content={resolvedImageAlt} />
 
-<script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>
+<script is:inline type="application/ld+json" set:html={structuredDataJson}></script>

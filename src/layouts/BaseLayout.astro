@@ -34,6 +34,14 @@ interface Props {
   imageWidth?: number;
   imageHeight?: number;
   imageType?: string;
+  socialTitle?: string;
+  socialDescription?: string;
+  socialImage?: string;
+  socialImageAlt?: string;
+  socialImageWidth?: number;
+  socialImageHeight?: number;
+  socialImageType?: string;
+  structuredData?: Record<string, unknown> | readonly Record<string, unknown>[];
   mainClass?: string;
   bodyClass?: string;
   noindex?: boolean;
@@ -47,6 +55,14 @@ const {
   imageWidth,
   imageHeight,
   imageType,
+  socialTitle,
+  socialDescription,
+  socialImage,
+  socialImageAlt,
+  socialImageWidth,
+  socialImageHeight,
+  socialImageType,
+  structuredData,
   mainClass,
   bodyClass,
   noindex = false,
@@ -68,7 +84,7 @@ const roomThemeClass = pathname.startsWith('/about')
       ? 'room-theme-resume'
       : pathname.startsWith('/contact')
         ? 'room-theme-contact'
-        : pathname.startsWith('/stats')
+        : pathname.startsWith('/stats') || pathname.startsWith('/privacy')
           ? 'room-theme-stats'
           : undefined;
 
@@ -138,7 +154,24 @@ const roomLiftTransition = {
 >
   <head>
     <ThemeBootstrap />
-    <BaseHead {title} {description} {image} {imageAlt} {imageWidth} {imageHeight} {imageType} {noindex} />
+    <BaseHead
+      {title}
+      {description}
+      {image}
+      {imageAlt}
+      {imageWidth}
+      {imageHeight}
+      {imageType}
+      {socialTitle}
+      {socialDescription}
+      {socialImage}
+      {socialImageAlt}
+      {socialImageWidth}
+      {socialImageHeight}
+      {socialImageType}
+      {structuredData}
+      {noindex}
+    />
     <slot name="head" />
     <ClientRouter fallback={clientRouterFallback} />
   </head>
@@ -252,6 +285,20 @@ const roomLiftTransition = {
         setPersistentHeaderCurrentPath(window.location.pathname);
       };
 
+      const warmAboutFromNavigationIntent = (event: Event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+
+        const link = target.closest<HTMLAnchorElement>('.primary-nav a[data-nav-path]');
+        if (!link) return;
+
+        const destination = new URL(link.href, window.location.href);
+        if (destination.origin !== window.location.origin) return;
+        if (normalizePath(destination.pathname) !== '/about') return;
+
+        document.dispatchEvent(new CustomEvent('hecate:warm-about'));
+      };
+
       const reflectPrimaryNavigationIntent = (event: MouseEvent) => {
         if (
           event.button !== 0 ||
@@ -346,6 +393,9 @@ const roomLiftTransition = {
         }
         document.addEventListener('astro:page-load', rewritePdfLinks);
         document.addEventListener('astro:page-load', updatePersistentHeaderCurrentState);
+        document.addEventListener('pointerover', warmAboutFromNavigationIntent, { capture: true });
+        document.addEventListener('focusin', warmAboutFromNavigationIntent, { capture: true });
+        document.addEventListener('pointerdown', warmAboutFromNavigationIntent, { capture: true });
         document.addEventListener('click', reflectPrimaryNavigationIntent, { capture: true });
         document.addEventListener('click', routePdfNavigation, { capture: true });
         document.addEventListener('click', preventRedundantNavigation, { capture: true });

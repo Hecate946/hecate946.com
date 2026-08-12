@@ -1,0 +1,22 @@
+{
+  "name": "Cyrus Asasi",
+  "short_name": "Cyrus",
+  "description": "Portfolio of Cyrus Asasi, software engineer and classical musician.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#fff8e8",
+  "theme_color": "#0d6965",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

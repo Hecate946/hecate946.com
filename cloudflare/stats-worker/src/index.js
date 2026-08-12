@@ -13,7 +13,7 @@ const BOT_PATTERN =
 
 const LEGACY_LOCAL_MATCH = 'local|%';
 const PUBLIC_SITE_HOSTS = new Set(['hecate946.com', 'www.hecate946.com']);
-const PUBLIC_SITE_PROTOCOLS = new Set(['http:', 'https:']);
+const PUBLIC_SITE_PROTOCOLS = new Set(['https:']);
 
 export default {
   async scheduled(_controller, env, context) {
@@ -53,8 +53,21 @@ export default {
         env.DB.prepare(
           `DELETE FROM daily_sessions WHERE day < date('now', '-2 day')`,
         ),
+        // Raw session identifiers and their per-session map associations
+        // are useful only for the recent live view. Remove them after 30 days
+        // while retaining aggregate page/event/location counts.
+        env.DB.prepare(
+          `DELETE FROM visitor_locations
+           WHERE visitor_hash IN (
+             SELECT visitor_hash FROM visitors
+             WHERE last_seen < datetime('now', '-30 day')
+           )`,
+        ),
         env.DB.prepare(
           `DELETE FROM sessions WHERE last_seen < datetime('now', '-30 day')`,
+        ),
+        env.DB.prepare(
+          `DELETE FROM visitors WHERE last_seen < datetime('now', '-30 day')`,
         ),
       ]),
     );

@@ -19,7 +19,8 @@ export default defineConfig({
       filter: (page) =>
         !page.endsWith('/404/') &&
         !page.endsWith('/404.html') &&
-        !page.endsWith('/pdf/'),
+        !page.endsWith('/pdf/') &&
+        !page.endsWith('/resume/'),
     }),
   ],
   vite: {

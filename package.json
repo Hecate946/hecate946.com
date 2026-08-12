@@ -6,13 +6,15 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro check && npm run check:worker && astro build && npm run audit:production",
     "preview": "astro preview",
     "check": "astro check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "site:zip": "node scripts/create-website-source-zip.mjs",
-    "stats:deploy": "node scripts/deploy-stats-worker.mjs"
+    "stats:deploy": "node scripts/deploy-stats-worker.mjs",
+    "audit:production": "node scripts/production-audit.mjs",
+    "check:worker": "node --check cloudflare/stats-worker/src/index.js"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",

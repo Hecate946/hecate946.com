@@ -33,16 +33,61 @@ const projectWriting: Record<Project['slug'], string> = {
 const writing = projectWriting[project.slug];
 const writingWords = writing.split(' ');
 let chalkCharacterIndex = 0;
+
+const projectUrl = new URL(`/projects/${project.slug}/`, Astro.site).href;
+const projectsUrl = new URL('/projects/', Astro.site).href;
+const siteUrl = new URL('/', Astro.site).href;
+const projectImageUrl = new URL(project.image, Astro.site).href;
+const sourceLink = projectLinks.find((link) => /source/i.test(link.label));
+const projectStructuredData = [
+  {
+    '@type': 'SoftwareSourceCode',
+    '@id': `${projectUrl}#project`,
+    name: project.title,
+    description: project.description,
+    abstract: writing,
+    url: projectUrl,
+    image: projectImageUrl,
+    creator: { '@id': `${siteUrl}#person` },
+    programmingLanguage: [...project.technologies],
+    keywords: [...project.technologies, project.category].join(', '),
+    genre: project.category,
+    temporalCoverage: project.period,
+    isAccessibleForFree: true,
+    ...(sourceLink ? { codeRepository: sourceLink.href } : {}),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    '@id': `${projectUrl}#breadcrumb`,
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Projects',
+        item: projectsUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: project.title,
+        item: projectUrl,
+      },
+    ],
+  },
+];
 ---
 
 <BaseLayout
   title={`${project.title} — Project`}
   description={project.description}
-  image={project.image}
-  imageAlt={project.imageAlt}
-  imageWidth={1600}
-  imageHeight={1000}
-  imageType="image/webp"
+  socialTitle={project.title}
+  socialDescription={project.tagline}
+  socialImage={`/images/social/projects/${project.slug}.jpg`}
+  socialImageAlt={`${project.title} project preview`}
+  socialImageWidth={400}
+  socialImageHeight={400}
+  socialImageType="image/jpeg"
+  structuredData={projectStructuredData}
   mainClass="project-detail-main"
   bodyClass={`project-detail-page project-detail-page--${project.slug}`}
 >
