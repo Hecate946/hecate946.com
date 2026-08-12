@@ -1,6 +1,6 @@
 .room-magnifier-hit {
   position: fixed;
-  z-index: 2200;
+  z-index: 13012;
   width: var(--magnifier-hit-width, 2.8rem);
   height: var(--magnifier-hit-height, 4.2rem);
   padding: 0;
@@ -25,19 +25,17 @@
   transition: opacity 120ms ease;
 }
 
-.room-magnifier-hit:hover::after,
-.room-magnifier-hit:focus-visible::after {
-  opacity: 0.58;
+.room-magnifier-hit:hover::after {
+  opacity: 0;
 }
 
 .room-magnifier-hit:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--wall-light, #fff) 72%, transparent);
-  outline-offset: 0.18rem;
+  outline: none;
 }
 
 .room-magnifier-overlay {
   position: fixed;
-  z-index: 2002;
+  z-index: 13010;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
@@ -74,14 +72,16 @@
   user-select: none !important;
 }
 
-/* The magnifier shares FloorScene's transparent WebGL canvas. Keep that canvas
-   above all room installations at all times so the prop can never disappear
-   behind the TV at rest. The checkerboard geometry itself still begins at the
-   floor seam; wall-area pixels remain transparent. */
-.floor-scene {
-  z-index: 2001;
-  contain: none;
-  overflow: visible;
+/* The prop has its own transparent top-level WebGL canvas. Unlike FloorScene,
+   this layer contains no checkerboard, so it can safely sit above the navbar,
+   TV, and room typography without obscuring anything except the prop itself. */
+.room-magnifier-foreground {
+  position: fixed;
+  z-index: 13011;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
 }
 
 html.is-using-room-magnifier,
