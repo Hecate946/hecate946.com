@@ -73,6 +73,14 @@
     }, 210);
   };
 
+  const handlePointerDown = (event: PointerEvent, index: number) => {
+    // Mobile browsers can delay/cancel the synthesized click during very rapid
+    // tapping. Commit the channel request on the physical pointer press so a
+    // second/third tap can always retarget the in-flight TV transition.
+    if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    changeChannel(index);
+  };
+
   onDestroy(clearTimers);
 </script>
 
@@ -111,6 +119,7 @@
               class:is-active={index === selectedIndex}
               aria-label={`Show ${channel.label}`}
               aria-current={index === selectedIndex ? 'true' : undefined}
+              onpointerdown={(event) => handlePointerDown(event, index)}
               onclick={() => changeChannel(index)}
             >
               {channel.label}
