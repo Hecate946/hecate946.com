@@ -13,9 +13,6 @@ export default defineConfig({
     prefetchAll: false,
     defaultStrategy: 'hover',
   },
-  experimental: {
-    clientPrerender: true,
-  },
   integrations: [
     svelte(),
     sitemap({

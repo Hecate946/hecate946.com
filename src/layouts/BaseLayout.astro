@@ -122,19 +122,6 @@ const roomLiftTransition = {
   }
 >
   <head>
-    <script is:inline>
-      (() => {
-        if (!('prerendering' in document) || !document.prerendering) return;
-        document.documentElement.dataset.prerendering = 'true';
-        document.addEventListener(
-          'prerenderingchange',
-          () => {
-            delete document.documentElement.dataset.prerendering;
-          },
-          { once: true },
-        );
-      })();
-    </script>
     <ThemeBootstrap />
     <BaseHead {title} {description} {image} {imageAlt} {imageWidth} {imageHeight} {imageType} {noindex} />
     <slot name="head" />
@@ -363,13 +350,10 @@ const roomLiftTransition = {
       };
 
       // HTML/CSS for the five navbar rooms is prepared by Astro's eager
-      // prefetch/prerender path. Warm the two interactive runtime families as
+      // prefetch path. Warm the two interactive runtime families as
       // well so a fallback browser does not discover their JS only after the
       // user clicks. Dynamic imports keep them off the critical first-paint
       // path while still putting their chunks in the module cache.
-      const isPrerendering =
-        (document as Document & { prerendering?: boolean }).prerendering === true;
-
       const warmPrimaryRooms = () => {
         if (performanceWindow.__hecatePrimaryRoomsWarmed) return;
         performanceWindow.__hecatePrimaryRoomsWarmed = true;
@@ -421,11 +405,7 @@ const roomLiftTransition = {
         );
       };
 
-      if (isPrerendering) {
-        document.addEventListener('prerenderingchange', warmPrimaryRooms, { once: true });
-      } else {
-        warmPrimaryRooms();
-      }
+      warmPrimaryRooms();
 
       const scheduleAnalytics = () => {
         if (performanceWindow.__hecateAnalyticsBootstrapScheduled) return;
@@ -442,13 +422,7 @@ const roomLiftTransition = {
         );
       };
 
-      // Speculative prerender documents must not count as visits. Start
-      // analytics only after the page is actually activated by the user.
-      if (isPrerendering) {
-        document.addEventListener('prerenderingchange', scheduleAnalytics, { once: true });
-      } else {
-        scheduleAnalytics();
-      }
+      scheduleAnalytics();
     </script>
   </body>
 </html>

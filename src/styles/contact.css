@@ -25,6 +25,7 @@ body.room-theme-contact main {
 
   box-sizing: border-box;
   position: relative;
+  z-index: 2;
   height: calc(100svh - var(--header-height));
   min-height: calc(100svh - var(--header-height));
   overflow: hidden;
@@ -39,6 +40,7 @@ body.room-theme-contact main {
 
 .contact-wall {
   position: absolute;
+  z-index: 2;
   inset: 0 0 var(--contact-floor-height);
   display: grid;
   place-items: center;
