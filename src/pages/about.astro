@@ -2,7 +2,7 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import AboutTV from '@/components/about/AboutTV.svelte';
 import WallBackdrop from '@/features/wall/WallBackdrop.svelte';
-import FloorScene from '@/features/floor/FloorScene.svelte';
+import AboutFloor from '@/components/about/AboutFloor.svelte';
 import { withBase } from '@/lib/paths';
 import '@/styles/about.css';
 
@@ -23,7 +23,7 @@ const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
 >
   <div class="about-room wall-room-host">
     <WallBackdrop />
-    <FloorScene client:load />
+    <AboutFloor client:load />
     <AboutTV
       client:load
       {portraitUrl}

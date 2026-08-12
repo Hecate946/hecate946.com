@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, setContext } from 'svelte';
   import * as THREE from 'three';
-  import { FLOOR_SCENE_CONTEXT, type FloorSceneContext } from './floor-scene-context';
+  import { FLOOR_SCENE_CONTEXT, type FloorSceneContext, type FloorSurface } from './floor-scene-context';
   import '@/styles/room-shell.css';
   import '@/styles/floor-scene.css';
 
@@ -55,7 +55,26 @@
     },
     getScene: () => scene,
     getObjectRoot: () => objectRoot,
+    getCamera: () => camera,
+    getHostElement: () => host ?? null,
     getCameraX: () => currentCameraX,
+    getFloorSurface: (): FloorSurface | null => {
+      if (!floorMesh || floorPlaneWidth <= 1 || floorPlaneDepth <= 1) return null;
+      const centerX = floorMesh.position.x;
+      const centerZ = floorMesh.position.z;
+      return {
+        y: floorMesh.position.y,
+        centerX,
+        centerZ,
+        width: floorPlaneWidth,
+        depth: floorPlaneDepth,
+        minX: centerX - floorPlaneWidth / 2,
+        maxX: centerX + floorPlaneWidth / 2,
+        minZ: centerZ - floorPlaneDepth / 2,
+        maxZ: centerZ + floorPlaneDepth / 2,
+      };
+    },
+    requestRender: () => renderThreeScene(),
   };
 
   setContext(FLOOR_SCENE_CONTEXT, context);

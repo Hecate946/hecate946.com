@@ -1,0 +1,95 @@
+.room-magnifier-hit {
+  position: fixed;
+  z-index: 2200;
+  width: var(--magnifier-hit-width, 2.8rem);
+  height: var(--magnifier-hit-height, 4.2rem);
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transform: rotate(var(--magnifier-hit-angle, 0deg));
+  transform-origin: center;
+}
+
+.room-magnifier-hit::after {
+  content: '';
+  position: absolute;
+  inset: 8% 20%;
+  border-radius: 999px;
+  opacity: 0;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wall-light, #fff) 42%, transparent);
+  transition: opacity 120ms ease;
+}
+
+.room-magnifier-hit:hover::after,
+.room-magnifier-hit:focus-visible::after {
+  opacity: 0.58;
+}
+
+.room-magnifier-hit:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--wall-light, #fff) 72%, transparent);
+  outline-offset: 0.18rem;
+}
+
+.room-magnifier-overlay {
+  position: fixed;
+  z-index: 2000;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.room-magnifier-overlay__lens {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 9rem;
+  height: 9rem;
+  overflow: hidden;
+  border-radius: 50%;
+  background: transparent;
+  will-change: transform, width, height;
+}
+
+.room-magnifier-overlay__snapshot {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+  transform-origin: 0 0 !important;
+  will-change: transform;
+}
+
+.room-magnifier-overlay__snapshot,
+.room-magnifier-overlay__snapshot * {
+  animation-play-state: paused !important;
+  transition: none !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* While the prop is in the user's hand or falling, the existing Three.js floor
+   canvas becomes the foreground object layer. The canvas itself remains
+   transparent everywhere except its 3D geometry. */
+html.is-using-room-magnifier .floor-scene {
+  z-index: 2001;
+  contain: none;
+  overflow: visible;
+}
+
+html.is-using-room-magnifier,
+html.is-using-room-magnifier body {
+  cursor: grabbing !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-magnifier-hit::after {
+    transition: none;
+  }
+}

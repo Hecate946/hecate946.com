@@ -11,13 +11,13 @@
     "check": "astro check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "cleanup:obsolete": "bash scripts/cleanup-obsolete-files.sh",
     "site:zip": "node scripts/create-website-source-zip.mjs",
     "stats:deploy": "node scripts/deploy-stats-worker.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
     "@astrojs/svelte": "^9.0.1",
+    "@dimforge/rapier3d-compat": "0.12.0",
     "astro": "^7.1.3",
     "d3-force": "^3.0.0",
     "svelte": "^5.56.7",
