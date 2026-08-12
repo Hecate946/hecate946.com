@@ -5,6 +5,7 @@ import SkipLink from '@/components/core/SkipLink.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import WallRoom from '@/features/wall/WallRoom.svelte';
 import { ClientRouter } from 'astro:transitions';
+import { siteConfig } from '@/config/site';
 import '@/styles/global.css';
 
 interface Props {
@@ -50,6 +51,9 @@ const roomThemeClass = pathname.startsWith('/projects')
         ? 'room-theme-stats'
         : undefined;
 
+const elevatorTabAnimationsEnabled = siteConfig.ui.enableElevatorTabAnimations;
+const clientRouterFallback = elevatorTabAnimationsEnabled ? 'animate' : 'swap';
+
 const roomLiftTransition = {
   forwards: {
     old: {
@@ -86,14 +90,28 @@ const roomLiftTransition = {
 <html
   lang="en-US"
   data-theme="light"
+  data-elevator-tab-animations={elevatorTabAnimationsEnabled ? 'on' : 'off'}
   transition:name="root"
-  transition:animate={roomLiftTransition}
+  transition:animate={
+    elevatorTabAnimationsEnabled
+      ? roomLiftTransition
+      : {
+          forwards: {
+            old: { name: 'none', duration: '1ms', easing: 'linear', fillMode: 'both' },
+            new: { name: 'none', duration: '1ms', easing: 'linear', fillMode: 'both' },
+          },
+          backwards: {
+            old: { name: 'none', duration: '1ms', easing: 'linear', fillMode: 'both' },
+            new: { name: 'none', duration: '1ms', easing: 'linear', fillMode: 'both' },
+          },
+        }
+  }
 >
   <head>
     <ThemeBootstrap />
     <BaseHead {title} {description} {image} {imageAlt} {imageWidth} {imageHeight} {imageType} {noindex} />
     <slot name="head" />
-    <ClientRouter fallback="animate" />
+    <ClientRouter fallback={clientRouterFallback} />
   </head>
 
   <body class:list={[bodyClass, roomThemeClass]}>
@@ -111,6 +129,9 @@ const roomLiftTransition = {
 
     <script>
       import type { TransitionBeforePreparationEvent } from 'astro:transitions/client';
+
+      const elevatorTabAnimationsEnabled =
+        document.documentElement.dataset.elevatorTabAnimations === 'on';
 
       // Primary room order: Home → About → Projects → Resumes → Contact.
       // Moving right reveals the room below; moving left reveals the room above.
@@ -144,6 +165,61 @@ const roomLiftTransition = {
         event.direction = toIndex > fromIndex ? 'forward' : 'back';
       };
 
+      const getPdfViewerUrl = (destinationUrl: URL) => {
+        const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+        const viewerUrl = new URL(`${basePath}/pdf/`, destinationUrl.origin);
+        viewerUrl.searchParams.set(
+          'src',
+          `${destinationUrl.pathname}${destinationUrl.search}${destinationUrl.hash}`,
+        );
+        return viewerUrl;
+      };
+
+      const rewritePdfLink = (link: HTMLAnchorElement) => {
+        if (link.hasAttribute('download')) return false;
+
+        const currentUrl = new URL(window.location.href);
+        const destinationUrl = new URL(link.href, currentUrl);
+
+        if (destinationUrl.origin !== currentUrl.origin) return false;
+        if (!/\.pdf$/i.test(destinationUrl.pathname)) return false;
+
+        link.href = getPdfViewerUrl(destinationUrl).href;
+        return true;
+      };
+
+      const rewritePdfLinks = () => {
+        document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach(rewritePdfLink);
+      };
+
+      const routePdfNavigation = (event: MouseEvent) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+
+        const link = target.closest<HTMLAnchorElement>('a[href]');
+        if (!link) return;
+
+        const targetName = link.target.toLowerCase();
+        if (targetName && targetName !== '_self' && targetName !== '_blank') return;
+
+        const wasRewritten = rewritePdfLink(link);
+        if (!wasRewritten) return;
+
+        // A normal same-tab PDF click leaves the room-transition system
+        // entirely and enters the fullscreen document shell directly.
+        if (
+          (!targetName || targetName === '_self') &&
+          event.button === 0 &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.shiftKey &&
+          !event.altKey
+        ) {
+          event.preventDefault();
+          window.location.assign(link.href);
+        }
+      };
+
       const preventRedundantNavigation = (event: MouseEvent) => {
         if (
           event.button !== 0 ||
@@ -175,7 +251,15 @@ const roomLiftTransition = {
         if (isCurrentPage) event.preventDefault();
       };
 
-      document.addEventListener('astro:before-preparation', setRoomTransitionDirection);
+      if (elevatorTabAnimationsEnabled) {
+        document.addEventListener('astro:before-preparation', setRoomTransitionDirection);
+      }
+      // Rewrite static links up front so context-menu / new-tab actions also
+      // target the site viewer. Repeat after Astro swaps in a new document.
+      rewritePdfLinks();
+      document.addEventListener('astro:page-load', rewritePdfLinks);
+      // Catch dynamically inserted PDF links before their default action.
+      document.addEventListener('click', routePdfNavigation, { capture: true });
       // Capture first so Astro's router never starts a transition for a link that
       // points to the exact page already on screen. Modified clicks stay native.
       document.addEventListener('click', preventRedundantNavigation, { capture: true });

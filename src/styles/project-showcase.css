@@ -1,201 +1,351 @@
-.project-showcase {
-  padding-bottom: clamp(4rem, 7vw, 6rem);
+/*
+ * Project case studies live directly on the same purple brick room as the
+ * Projects gallery. The page behaves like a quiet museum label: no cards,
+ * gradients, or decorative UI competing with the project itself.
+ */
+body.project-detail-page {
+  --project-rule: color-mix(in srgb, var(--wall-light) 22%, transparent);
+  --project-rule-soft: color-mix(in srgb, var(--wall-light) 12%, transparent);
+  --project-muted: color-mix(in srgb, var(--wall-light) 64%, transparent);
+
+  min-height: 100vh;
 }
 
+.project-detail-main {
+  position: relative;
+  z-index: 1;
+  min-height: calc(100vh - var(--header-height));
+  padding: 0 !important;
+}
 
-.project-header {
-  padding-block: clamp(2.5rem, 4.5vw, 3.75rem)
-    clamp(1.5rem, 2.5vw, 2rem);
+.project-case {
+  width: 100%;
+  padding: clamp(1.1rem, 2.4vw, 2rem) var(--site-edge)
+    clamp(7rem, 13vw, 11rem);
+}
+
+.project-case__shell {
+  width: min(100%, 76rem);
+  margin-inline: auto;
+}
+
+.project-case__utility {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: clamp(1rem, 2vw, 1.5rem);
+  border-bottom: 1px solid var(--project-rule);
+}
+
+.project-back-link,
+.project-links a,
+.project-footer-nav a {
+  color: var(--wall-light);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
 }
 
 .project-back-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: clamp(1.9rem, 3.5vw, 2.75rem);
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  text-decoration: none;
-}
-
-.project-back-link:hover {
-  color: var(--accent-strong);
-}
-
-.project-kicker {
-  margin: 0;
-  color: var(--accent-strong);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  line-height: 1.45;
-  text-transform: uppercase;
-}
-
-.project-header h1 {
-  margin: 0.3rem 0 0.6rem;
-  color: var(--accent-strong);
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 7vw, 4.9rem);
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  line-height: 0.96;
-  text-transform: uppercase;
-  text-wrap: balance;
-}
-
-.project-tagline {
-  max-width: 34rem;
-  margin: 0;
-  color: color-mix(in srgb, var(--text) 86%, var(--muted));
-  font-size: clamp(1.08rem, 1.8vw, 1.28rem);
-  line-height: 1.48;
-  text-wrap: pretty;
+  gap: 0.55rem;
 }
 
 .project-links {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 1rem;
-  margin: 1.15rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .project-links a {
-  color: var(--accent-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.project-back-link:hover,
+.project-links a:hover,
+.project-footer-nav a:hover {
+  color: var(--wall-light);
+  opacity: 0.68;
+}
+
+.project-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(24rem, 1.1fr);
+  gap: clamp(2rem, 5vw, 5.25rem);
+  align-items: center;
+  padding-block: clamp(3rem, 7vw, 6.25rem);
+}
+
+.project-hero__copy {
+  min-width: 0;
+}
+
+.project-kicker {
+  margin: 0 0 1rem;
+  color: var(--project-muted);
   font-family: var(--font-mono);
-  font-size: 0.74rem;
-  text-decoration-thickness: 0.06em;
+  font-size: clamp(0.66rem, 0.8vw, 0.74rem);
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  text-transform: uppercase;
 }
 
-.project-image {
-  margin-bottom: clamp(2.75rem, 5vw, 4rem);
+.project-hero h1 {
+  max-width: 9ch;
+  margin: 0;
+  color: var(--wall-light);
+  font-family: var(--font-display);
+  font-size: clamp(3.6rem, 8.2vw, 7.2rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.86;
+  text-transform: uppercase;
+  text-wrap: balance;
 }
 
-.project-image img {
+.project-hero h1.project-title--long {
+  font-size: clamp(3.1rem, 5.2vw, 4.2rem);
+  letter-spacing: -0.045em;
+}
+
+.project-tagline {
+  max-width: 31rem;
+  margin: clamp(1.35rem, 2.4vw, 2rem) 0 0;
+  color: color-mix(in srgb, var(--wall-light) 88%, transparent);
+  font-size: clamp(1.02rem, 1.4vw, 1.2rem);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.project-hero__image {
+  position: relative;
+  margin: 0;
+}
+
+.project-hero__image img {
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 10;
   object-fit: cover;
-  background: var(--surface-strong);
-  border: 1px solid var(--line);
-  box-shadow: 0 0.8rem 2.1rem color-mix(in srgb, var(--text) 7%, transparent);
+  background: #090909;
+  border: 1px solid color-mix(in srgb, var(--wall-light) 28%, #050505);
+  box-shadow:
+    0 0 0 0.42rem #080808,
+    0.8rem 1rem 1.5rem rgb(0 0 0 / 34%);
 }
 
-.project-content {
+.project-facts {
   display: grid;
-  gap: clamp(2.4rem, 5vw, 3.5rem);
-}
-
-.project-content section {
-  padding-top: clamp(1.25rem, 2.5vw, 1.75rem);
-  border-top: 1px solid var(--line);
-}
-
-.project-content h2 {
-  margin: 0 0 0.7rem;
-  color: var(--accent-strong);
-  font-family: var(--font-display);
-  font-size: clamp(1.55rem, 3vw, 2rem);
-  font-weight: 400;
-  letter-spacing: -0.025em;
-  line-height: 1.08;
-}
-
-.project-content p {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
   margin: 0;
-  color: color-mix(in srgb, var(--text) 88%, var(--muted));
-  font-size: clamp(1rem, 1.4vw, 1.07rem);
-  line-height: 1.68;
-  text-wrap: pretty;
+  border-top: 1px solid var(--project-rule);
+  border-bottom: 1px solid var(--project-rule);
 }
 
-.project-meta {
-  display: grid;
-  gap: 0;
-  margin: 1.4rem 0 0;
-  border-top: 1px solid var(--line);
+.project-facts > div {
+  min-width: 0;
+  padding: 1rem clamp(0.9rem, 2vw, 1.35rem);
+  border-left: 1px solid var(--project-rule-soft);
 }
 
-.project-meta div {
-  display: grid;
-  grid-template-columns: 6rem minmax(0, 1fr);
-  gap: 1rem;
-  padding-block: 0.7rem;
-  border-bottom: 1px solid var(--line);
+.project-facts > div:first-child {
+  padding-left: 0;
+  border-left: 0;
 }
 
-.project-meta dt {
-  color: var(--muted);
+.project-facts dt,
+.project-section h2 {
+  color: var(--project-muted);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.07em;
+  font-size: 0.66rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
   text-transform: uppercase;
 }
 
-.project-meta dd {
-  margin: 0;
-  line-height: 1.5;
+.project-facts dt {
+  margin-bottom: 0.35rem;
 }
 
-.project-content ul {
+.project-facts dd {
+  margin: 0;
+  color: var(--wall-light);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.project-sections {
+  margin-top: clamp(3rem, 7vw, 6rem);
+  border-top: 1px solid var(--project-rule);
+}
+
+.project-section {
   display: grid;
-  gap: 0.65rem;
+  grid-template-columns: minmax(7rem, 0.72fr) minmax(0, 2fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: start;
+  padding-block: clamp(2rem, 4vw, 3.25rem);
+  border-bottom: 1px solid var(--project-rule);
+}
+
+.project-section h2 {
+  margin: 0.2rem 0 0;
+}
+
+.project-section p {
+  max-width: 49rem;
   margin: 0;
-  padding-left: 1.1rem;
+  color: color-mix(in srgb, var(--wall-light) 90%, transparent);
+  font-size: clamp(1.02rem, 1.45vw, 1.18rem);
+  line-height: 1.72;
+  text-wrap: pretty;
 }
 
-.project-content li {
-  padding-left: 0.25rem;
-  color: color-mix(in srgb, var(--text) 88%, var(--muted));
-  line-height: 1.62;
+.project-section ol {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: project-highlight;
 }
 
-.project-content li::marker {
-  color: var(--accent-strong);
+.project-section li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.15rem minmax(0, 1fr);
+  gap: 0.8rem;
+  padding: 0.85rem 0;
+  color: color-mix(in srgb, var(--wall-light) 90%, transparent);
+  font-size: clamp(0.98rem, 1.3vw, 1.1rem);
+  line-height: 1.58;
+  counter-increment: project-highlight;
+}
+
+.project-section li:first-child {
+  padding-top: 0;
+}
+
+.project-section li:last-child {
+  padding-bottom: 0;
+}
+
+.project-section li + li {
+  border-top: 1px solid var(--project-rule-soft);
+}
+
+.project-section li::before {
+  color: var(--project-muted);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  content: counter(project-highlight, decimal-leading-zero);
 }
 
 .project-footer-nav {
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--line);
+  padding-top: clamp(2rem, 4vw, 3.5rem);
 }
 
 .project-footer-nav a {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--accent-strong);
-  font-family: var(--font-display);
-  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
-  text-decoration: none;
+  gap: 0.55rem;
 }
 
-.project-footer-nav a:hover {
-  transform: translateX(-0.15rem);
+@media (max-width: 48rem) {
+  .project-case {
+    padding-top: 1rem;
+    padding-inline: 1rem;
+    padding-bottom: 8rem;
+  }
+
+  .project-case__utility {
+    align-items: flex-start;
+  }
+
+  .project-hero {
+    grid-template-columns: 1fr;
+    gap: 2.1rem;
+    padding-block: 2.75rem 3.25rem;
+  }
+
+  .project-hero h1 {
+    max-width: 100%;
+    font-size: clamp(3.5rem, 17vw, 5.75rem);
+  }
+
+  .project-hero h1.project-title--long {
+    font-size: clamp(2.7rem, 11vw, 4.7rem);
+  }
+
+  .project-tagline {
+    max-width: 36rem;
+  }
+
+  .project-facts {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .project-facts > div {
+    padding: 0.9rem 0;
+    border-left: 0;
+  }
+
+  .project-facts > div:nth-child(2) {
+    padding-left: 1rem;
+    border-left: 1px solid var(--project-rule-soft);
+  }
+
+  .project-facts__wide {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--project-rule-soft);
+  }
+
+  .project-section {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .project-section h2 {
+    margin: 0;
+  }
 }
 
-@media (max-width: 39.999rem) {
-  .project-header {
-    padding-block: 2rem 1.4rem;
+@media (max-width: 28rem) {
+  .project-case__utility {
+    display: grid;
+    gap: 0.8rem;
   }
 
-  .project-back-link {
-    margin-bottom: 1.85rem;
+  .project-links {
+    justify-content: flex-start;
   }
 
-  .project-header h1 {
-    font-size: clamp(3rem, 16vw, 4.25rem);
+  .project-facts {
+    grid-template-columns: 1fr;
   }
 
-  .project-image {
-    margin-bottom: 2.75rem;
+  .project-facts > div,
+  .project-facts > div:nth-child(2) {
+    padding: 0.8rem 0;
+    border-top: 1px solid var(--project-rule-soft);
+    border-left: 0;
   }
 
-  .project-meta div {
-    grid-template-columns: 5.2rem minmax(0, 1fr);
+  .project-facts > div:first-child {
+    border-top: 0;
   }
 }

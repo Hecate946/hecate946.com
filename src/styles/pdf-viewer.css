@@ -1,0 +1,151 @@
+/*
+ * Minimal, site-owned PDF surface. PDF pages are rendered into the normal
+ * document flow so the browser itself owns the one and only page scrollbar.
+ * No scrollbar pseudo-elements, gutter compensation, nested scrolling, or
+ * renderer-side masks are used here.
+ */
+html:has(body.pdf-viewer-page) {
+  min-height: 100%;
+  overflow-y: auto;
+  scrollbar-gutter: auto;
+}
+
+body.pdf-viewer-page {
+  --pdf-wall: #fff8e8;
+  --pdf-mortar: #141414;
+  --wall-dark: var(--pdf-wall);
+  --wall-light: var(--pdf-mortar);
+  --wall-baseboard: var(--pdf-wall);
+
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--pdf-wall);
+  overflow: visible;
+}
+
+html[data-theme='light']:has(body.pdf-viewer-page) {
+  color-scheme: light;
+}
+
+html[data-theme='dark']:has(body.pdf-viewer-page) {
+  color-scheme: dark;
+}
+
+html[data-theme='dark'] body.pdf-viewer-page {
+  --pdf-wall: #050505;
+  --pdf-mortar: #fff8e8;
+}
+
+/* The room is fixed behind the normal page scroll. With a one-page PDF there
+   is no overflow and therefore no scrollbar lane or renderer-colored gutter;
+   bricks simply continue to the browser edge. */
+.pdf-viewer-backdrop {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pdf-viewer-document {
+  --pdf-page-gap: 1rem;
+
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--pdf-page-gap);
+  padding: 1rem 0;
+}
+
+.pdf-viewer-document:not([data-ready='true']) {
+  visibility: hidden;
+}
+
+.pdf-viewer-page-canvas {
+  display: block;
+  max-width: calc(100vw - 1rem);
+  height: auto !important;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  background: #fff;
+  box-shadow: none;
+}
+
+.pdf-viewer-controls {
+  position: fixed;
+  z-index: 20;
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: max(0.75rem, env(safe-area-inset-right));
+  left: max(0.75rem, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.pdf-viewer-control {
+  display: grid;
+  width: 2.3rem;
+  height: 2.3rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--pdf-mortar) 34%, transparent);
+  border-radius: 0.42rem;
+  background: color-mix(in srgb, var(--pdf-wall) 88%, transparent);
+  color: var(--pdf-mortar);
+  box-shadow: 0 0.22rem 0.65rem rgb(0 0 0 / 12%);
+  cursor: pointer;
+  pointer-events: auto;
+  text-decoration: none;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    transform 140ms ease;
+}
+
+.pdf-viewer-control:hover,
+.pdf-viewer-control:focus-visible {
+  border-color: color-mix(in srgb, var(--pdf-mortar) 68%, transparent);
+  background: color-mix(in srgb, var(--pdf-wall) 96%, transparent);
+  color: var(--pdf-mortar);
+}
+
+.pdf-viewer-control:active {
+  transform: translateY(1px);
+}
+
+.pdf-viewer-control svg {
+  width: 1.12rem;
+  height: 1.12rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+@media (max-width: 40rem) {
+  .pdf-viewer-document {
+    padding-block: 0.5rem;
+  }
+
+  .pdf-viewer-control {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-viewer-control {
+    transition: none;
+  }
+}

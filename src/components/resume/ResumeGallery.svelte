@@ -19,9 +19,7 @@
       class="resume-frame"
       data-resume-id={resume.id}
       href={resume.pdfUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={`Open ${resume.label} resume in the browser PDF viewer`}
+      aria-label={`Open ${resume.label} resume`}
     >
       <span class="resume-frame__recess" aria-hidden="true">
         <span class="resume-frame__glass">

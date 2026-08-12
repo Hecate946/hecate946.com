@@ -10,3 +10,9 @@ export function isCurrentPath(currentPath: string, targetPath: string) {
     return currentPath === baseTarget || currentPath === `${baseTarget}/`;
   return currentPath.startsWith(baseTarget);
 }
+
+export function pdfViewerHref(pdfPath: string) {
+  const source = pdfPath.startsWith('/') ? withBase(pdfPath) : pdfPath;
+  return `${withBase('/pdf/')}?src=${encodeURIComponent(source)}`;
+}
+

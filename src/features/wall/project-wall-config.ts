@@ -34,10 +34,15 @@ const projectDefinitions = [
     label: 'KeyCAD',
     href: '/projects/keycad/',
     painting: {
-      src: '/images/project-gallery/placeholder-03.svg',
-      name: 'Project placeholder',
-      width: 820,
-      height: 1000,
+      src: '/images/project-gallery/keycad.webp',
+      name: 'Shuttlecock painting',
+      width: 534,
+      height: 640,
+      objectPosition: '56% 43%',
+      sources: [
+        { src: '/images/project-gallery/keycad-480.webp', width: 480 },
+        { src: '/images/project-gallery/keycad.webp', width: 534 },
+      ],
     },
   },
   {
@@ -45,10 +50,15 @@ const projectDefinitions = [
     label: 'Hecate946.com',
     href: '/projects/portfolio/',
     painting: {
-      src: '/images/project-gallery/placeholder-04.svg',
-      name: 'Project placeholder',
-      width: 820,
-      height: 1000,
+      src: '/images/project-gallery/portfolio.webp',
+      name: 'Madonna variant',
+      width: 589,
+      height: 800,
+      objectPosition: '50% 36%',
+      sources: [
+        { src: '/images/project-gallery/portfolio-480.webp', width: 480 },
+        { src: '/images/project-gallery/portfolio.webp', width: 589 },
+      ],
     },
   },
 ] as const;

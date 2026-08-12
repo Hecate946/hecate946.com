@@ -10,4 +10,9 @@ export const siteConfig = {
     github: 'https://github.com/Hecate946/',
     linkedin: 'https://www.linkedin.com/in/cyrus-asasi/',
   },
+  ui: {
+    // Toggle the vertical “elevator” page-change animation for the top nav.
+    // Set this to true whenever you want those transitions back on.
+    enableElevatorTabAnimations: false,
+  },
 } as const;

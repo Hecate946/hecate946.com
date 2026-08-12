@@ -11,6 +11,7 @@
   export let pickleballImageUrl: string;
 
   type Direction = -1 | 1;
+  type PageSide = 'left' | 'right';
   type VisualMode = 'portrait' | 'screen' | 'document' | 'photo';
 
   type Spread = {
@@ -37,10 +38,10 @@
       id: 'about',
       label: 'About',
       eyebrow: 'ABOUT',
-      title: 'Cyrus Asasi.',
+      title: 'Cyrus Asasi',
       paragraphs: [
-        "I'm a software engineer and classical musician who enjoys mastering difficult skills. Whether it's reverse engineering complex systems, performing concertos, or building interactive web experiences, I'm happiest when I'm learning something challenging.",
-        "I completed dual bachelor's degrees in Computer Science and Music Performance at UCLA and am now pursuing a Master's in Music Performance while continuing to build software projects.",
+        "I split most of my time between code and music. I studied Computer Science and clarinet performance at UCLA, and I'm back there now for a master's in clarinet.",
+        "I tend to get obsessed with things that are hard to get exactly right: taking apart strange systems, building something for the web, learning a difficult piece, or chasing a tiny detail until it finally feels right.",
       ],
       visual: {
         src: portraitUrl,
@@ -53,10 +54,10 @@
       id: 'software',
       label: 'Software',
       eyebrow: 'SOFTWARE',
-      title: 'I like taking things apart.',
+      title: 'I like taking things apart',
       paragraphs: [
-        "I love building software that's functional, efficient, and enjoyable to use. Much of my professional experience has been in reverse engineering: understanding complex systems, then rebuilding them in cleaner and more useful ways.",
-        'Outside of work, I build web applications, developer tools, and small experiments whenever I find a problem worth solving.',
+        "I've always liked figuring out how things work. A lot of my work has involved reverse engineering: digging through a system until it makes sense, then rebuilding the useful parts more cleanly.",
+        "Most of my side projects start the same way: something bothers me, I wonder if I can make it better, and I lose a few evenings to it.",
       ],
       visual: {
         src: softwareImageUrl,
@@ -73,10 +74,10 @@
       id: 'music',
       label: 'Music',
       eyebrow: 'MUSIC',
-      title: 'A lifelong obsession.',
+      title: 'Music has always been there',
       paragraphs: [
-        "I'm a clarinetist and pianist currently pursuing a Master's in Music Performance at UCLA. In 2026, I won UCLA's All-Stars Competition and performed as a concerto soloist with the UCLA Philharmonia.",
-        'I almost exclusively listen to classical music. Brahms, Ravel, and Kapustin are current favorites.',
+        "Clarinet has been the constant for most of my life. I'm currently doing my master's at UCLA, where I also did my undergraduate music degree alongside computer science.",
+        "In 2026 I got to solo with the UCLA Philharmonia after winning the All-Stars Competition. I also play piano, mostly because I love chamber music. I listen to an unreasonable amount of Brahms, Ravel, and Kapustin.",
       ],
       visual: {
         src: musicImageUrl,
@@ -94,7 +95,7 @@
       id: 'interests',
       label: 'Elsewhere',
       eyebrow: 'ELSEWHERE',
-      title: 'Off the clock.',
+      title: 'Away from the desk',
       visual: {
         src: pickleballImageUrl,
         alt: 'UCLA Pickleball at the California Collegiate Super Regional',
@@ -117,8 +118,9 @@
   let pointerStartedAt = 0;
   let pointerWidth = 1;
   let pointerMoved = false;
+  let pointerSide: PageSide | null = null;
   let ignoreClicksUntil = 0;
-  let animationTimer = 0;
+  let animationFrame = 0;
 
   const canTurn = (direction: Direction) =>
     direction === 1 ? currentSpread < spreads.length - 1 : currentSpread > 0;
@@ -143,26 +145,53 @@
     return active;
   };
 
+  const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
+
+  const geometryProgress = (direction: Direction | 0, progress: number) => {
+    const clamped = clamp01(progress);
+    return direction === -1 ? 1 - clamped : clamped;
+  };
+
   const leafStyle = (direction: Direction | 0, progress: number) => {
-    const clamped = Math.min(1, Math.max(0, progress));
-    const angle = direction === -1 ? -180 * (1 - clamped) : -180 * clamped;
-    const arc = Math.sin(Math.PI * clamped);
-    const lift = arc * 0.28;
-    const skew = direction === -1 ? -0.35 * arc : 0.35 * arc;
+    const pageProgress = geometryProgress(direction, progress);
+    const arc = Math.sin(Math.PI * pageProgress);
+    const angle = -180 * pageProgress;
+    const lift = arc * 0.24;
+    const depth = arc * 1.35;
+    const skew = Math.sin(Math.PI * pageProgress) * Math.cos(Math.PI * pageProgress) * -1.25;
+    const compression = 1 - arc * 0.045;
+    const curlInset = arc * 2.2;
+    const curlTip = arc * 1.35;
+    const radius = 0.14 + arc * 0.62;
+    const highlightOpacity = arc * 0.14;
+    const edgeOpacity = 0.36 + arc * 0.42;
 
     return [
       `--leaf-angle:${angle.toFixed(3)}deg`,
       `--leaf-lift:${lift.toFixed(3)}rem`,
+      `--leaf-depth:${depth.toFixed(3)}rem`,
       `--leaf-skew:${skew.toFixed(3)}deg`,
-      `--leaf-shadow-opacity:${(0.08 + arc * 0.28).toFixed(3)}`,
-      `--leaf-edge-opacity:${(0.18 + arc * 0.5).toFixed(3)}`,
+      `--leaf-compression:${compression.toFixed(4)}`,
+      `--leaf-curl-inset:${curlInset.toFixed(3)}%`,
+      `--leaf-curl-tip:${curlTip.toFixed(3)}%`,
+      `--leaf-radius:${radius.toFixed(3)}rem`,
+      `--leaf-highlight-opacity:${highlightOpacity.toFixed(3)}`,
+      `--leaf-edge-opacity:${edgeOpacity.toFixed(3)}`,
     ].join(';');
   };
 
-  const clearAnimationTimer = () => {
-    if (!animationTimer) return;
-    window.clearTimeout(animationTimer);
-    animationTimer = 0;
+  const clearAnimationFrame = () => {
+    if (!animationFrame) return;
+    window.cancelAnimationFrame(animationFrame);
+    animationFrame = 0;
+  };
+
+  const finishTurn = (direction: Direction, complete: boolean) => {
+    if (complete) currentSpread += direction;
+    turnDirection = 0;
+    turnProgress = 0;
+    isAnimating = false;
+    animationFrame = 0;
   };
 
   const settleTurn = (direction: Direction, complete: boolean) => {
@@ -173,29 +202,48 @@
       return;
     }
 
-    clearAnimationTimer();
+    clearAnimationFrame();
     isAnimating = true;
-    turnProgress = complete ? 1 : 0;
 
-    const duration = prefersReducedMotion ? 0 : 620;
-    animationTimer = window.setTimeout(() => {
-      if (complete) currentSpread += direction;
-      turnDirection = 0;
-      turnProgress = 0;
-      isAnimating = false;
-      animationTimer = 0;
-    }, duration);
+    const startProgress = turnProgress;
+    const targetProgress = complete ? 1 : 0;
+    const distance = Math.abs(targetProgress - startProgress);
+
+    if (prefersReducedMotion || distance < 0.001) {
+      turnProgress = targetProgress;
+      finishTurn(direction, complete);
+      return;
+    }
+
+    const startedAt = performance.now();
+    const duration = Math.max(260, 960 * distance);
+
+    const tick = (now: number) => {
+      const elapsed = Math.min(1, (now - startedAt) / duration);
+      // Sine ease gives the page enough time around 90° for the bend and
+      // changing underside to be visible instead of reading as a card flip.
+      const eased = 0.5 - Math.cos(Math.PI * elapsed) / 2;
+      turnProgress = startProgress + (targetProgress - startProgress) * eased;
+
+      if (elapsed < 1) {
+        animationFrame = window.requestAnimationFrame(tick);
+      } else {
+        turnProgress = targetProgress;
+        finishTurn(direction, complete);
+      }
+    };
+
+    animationFrame = window.requestAnimationFrame(tick);
   };
 
   const turnPage = (direction: Direction) => {
     if (isAnimating || activePointerId !== null || !canTurn(direction)) return;
 
     turnDirection = direction;
-    turnProgress = direction === -1 ? 0.001 : 0;
+    turnProgress = 0;
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => settleTurn(direction, true));
-    });
+    // Let Svelte mount the physical leaf before advancing its geometry.
+    requestAnimationFrame(() => settleTurn(direction, true));
   };
 
   const isInteractiveTarget = (target: EventTarget | null) =>
@@ -204,22 +252,35 @@
   const resetPointer = () => {
     activePointerId = null;
     pointerMoved = false;
+    pointerSide = null;
   };
 
   const handlePointerDown = (event: PointerEvent) => {
     if (isAnimating || activePointerId !== null || isInteractiveTarget(event.target)) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
 
+    const bounds = bookElement?.getBoundingClientRect();
+    const page = event.target instanceof Element ? event.target.closest('.book-page--left, .book-page--right') : null;
+    if (!bounds || !page) return;
+
+    const side: PageSide = page.classList.contains('book-page--right') ? 'right' : 'left';
+    const direction: Direction = side === 'right' ? 1 : -1;
+
+    // A closed end of the book is deliberately inert. The first spread cannot
+    // be pulled backward and the final spread cannot be pulled forward.
+    if (!canTurn(direction)) return;
+
     activePointerId = event.pointerId;
+    pointerSide = side;
     pointerStartX = event.clientX;
     pointerStartY = event.clientY;
     pointerStartedAt = performance.now();
-    pointerWidth = Math.max(1, (bookElement?.getBoundingClientRect().width ?? 2) / 2);
+    pointerWidth = Math.max(1, bounds.width / 2);
     pointerMoved = false;
   };
 
   const handlePointerMove = (event: PointerEvent) => {
-    if (activePointerId !== event.pointerId || isAnimating) return;
+    if (activePointerId !== event.pointerId || isAnimating || !pointerSide) return;
 
     const dx = event.clientX - pointerStartX;
     const dy = event.clientY - pointerStartY;
@@ -228,6 +289,7 @@
     if (!pointerMoved && distance < 7) return;
 
     if (!pointerMoved && Math.abs(dy) > Math.abs(dx) * 1.15) {
+      ignoreClicksUntil = performance.now() + 250;
       resetPointer();
       turnDirection = 0;
       turnProgress = 0;
@@ -237,16 +299,19 @@
     pointerMoved = true;
     if (event.cancelable) event.preventDefault();
 
-    const direction: Direction = dx < 0 ? 1 : -1;
+    const direction: Direction = pointerSide === 'right' ? 1 : -1;
+    const travel = direction === 1 ? -dx : dx;
 
-    if (!canTurn(direction)) {
+    // Right pages only turn forward (drag left). Left pages only turn backward
+    // (drag right). Pulling a page the wrong way leaves it attached to the book.
+    if (travel <= 0 || !canTurn(direction)) {
       turnDirection = 0;
       turnProgress = 0;
       return;
     }
 
     turnDirection = direction;
-    turnProgress = Math.min(0.985, (Math.abs(dx) / pointerWidth) * 1.08);
+    turnProgress = Math.min(0.985, (travel / pointerWidth) * 1.08);
   };
 
   const releasePointer = (event: PointerEvent, cancelled = false) => {
@@ -283,22 +348,14 @@
     if (performance.now() < ignoreClicksUntil) return;
     if (isAnimating || activePointerId !== null) return;
 
-    const bounds = bookElement?.getBoundingClientRect();
-    if (!bounds) return;
+    const page = event.target instanceof Element ? event.target.closest('.book-page--left, .book-page--right') : null;
+    if (!page) return;
 
-    const relativeX = (event.clientX - bounds.left) / bounds.width;
+    const direction: Direction = page.classList.contains('book-page--right') ? 1 : -1;
 
-    if (currentSpread === 0) {
-      turnPage(1);
-      return;
-    }
-
-    if (currentSpread === spreads.length - 1) {
-      turnPage(-1);
-      return;
-    }
-
-    turnPage(relativeX < 0.5 ? -1 : 1);
+    // Only the physical page itself responds. The binding, boards and page
+    // edges are inert, and canTurn() keeps the closed ends of the book inert.
+    turnPage(direction);
   };
 
   const handleWindowKeyDown = (event: KeyboardEvent) => {
@@ -324,7 +381,6 @@
     if (!book) return;
 
     const handlePointerCancel = (event: PointerEvent) => releasePointer(event, true);
-
     book.addEventListener('pointerdown', handlePointerDown);
     book.addEventListener('click', handleBookClick);
     window.addEventListener('pointermove', handlePointerMove, { passive: false });
@@ -334,7 +390,7 @@
     media.addEventListener('change', updateMotionPreference);
 
     return () => {
-      clearAnimationTimer();
+      clearAnimationFrame();
       book.removeEventListener('pointerdown', handlePointerDown);
       book.removeEventListener('click', handleBookClick);
       window.removeEventListener('pointermove', handlePointerMove);
@@ -369,8 +425,8 @@
           <div>
             <h2>Pickleball</h2>
             <p>
-              I compete at the 5.0 level and captain the UCLA Pickleball Team. A favorite result was winning the
-              California Collegiate Super Regional Championship.
+              Pickleball started as something casual and got a little out of hand. I play around the 5.0 level and
+              captain UCLA's team. Winning the California Collegiate Super Regional is still one of my favorite team memories.
             </p>
             {#if interactive}
               <a href={pickleballArticleUrl} target="_blank" rel="noopener noreferrer">
@@ -387,8 +443,8 @@
           <div>
             <h2>Chess</h2>
             <p>
-              I've played since middle school and reached a peak online rating of 2450. I still love the game for
-              the same pattern recognition and analytical thinking that drew me to computer science.
+              Chess was my first serious obsession. I started in middle school and eventually hit 2450 online. I play
+              less now, but I still love the calculation and pattern recognition that made me stick with it in the first place.
             </p>
             {#if interactive}
               <a href={chessProfileUrl} target="_blank" rel="noopener noreferrer">
@@ -433,11 +489,16 @@
   <div
     class="about-book"
     class:is-dragging={activePointerId !== null}
+    class:can-turn-backward={currentSpread > 0}
+    class:can-turn-forward={currentSpread < spreads.length - 1}
     bind:this={bookElement}
     role="group"
     aria-label={`About spread ${currentSpread + 1} of ${spreads.length}: ${spreads[currentSpread].label}`}
   >
     <div class="about-book__board" aria-hidden="true"></div>
+    <span class="about-book__spine" aria-hidden="true"></span>
+    <span class="book-page-block book-page-block--left" aria-hidden="true"></span>
+    <span class="book-page-block book-page-block--right" aria-hidden="true"></span>
 
     <article class="book-page book-page--left" aria-hidden="true">
       {@render visualPage(spreads[getLeftSpreadIndex(currentSpread, turnDirection)])}
@@ -473,9 +534,4 @@
       </article>
     {/if}
   </div>
-
-  <p class="page-turn-hint" aria-hidden="true">
-    <span class="page-turn-hint__desktop">click a page · drag or swipe to turn</span>
-    <span class="page-turn-hint__mobile">tap a page · swipe to turn</span>
-  </p>
 </section>

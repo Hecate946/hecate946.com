@@ -16,15 +16,16 @@ body.about-room-page {
   --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 5%, transparent);
   --wall-trim-shadow: rgb(34 14 5 / 44%);
 
-  --paper: #f3e8d2;
-  --paper-bright: #fbf4e7;
-  --paper-warm: #eadbc1;
-  --paper-edge: #d3bea0;
-  --paper-ink: #2a211a;
-  --paper-muted: #726052;
-  --paper-accent: #73401f;
-  --paper-shadow: rgb(20 8 3 / 34%);
-  --book-board: #2c160d;
+  --paper: #ead9b8;
+  --paper-bright: #f5e9cf;
+  --paper-warm: #d9c29a;
+  --paper-edge: #a98b61;
+  --paper-ink: #21150e;
+  --paper-muted: #66503e;
+  --paper-accent: #652f27;
+  --paper-shadow: rgb(20 8 3 / 42%);
+  --book-board: #170b08;
+  --book-metal: #745c3c;
 
   --bg: var(--wall-dark);
   --text: var(--paper-ink);
@@ -49,15 +50,16 @@ html[data-theme='dark'] body.about-room-page {
   --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 3.5%, transparent);
   --wall-trim-shadow: rgb(0 0 0 / 54%);
 
-  --paper: #e9d9bc;
-  --paper-bright: #f4e7cf;
-  --paper-warm: #dfcbaa;
-  --paper-edge: #bba17b;
-  --paper-ink: #21170f;
-  --paper-muted: #655140;
-  --paper-accent: #70421f;
-  --paper-shadow: rgb(0 0 0 / 48%);
-  --book-board: #130905;
+  --paper: #dfcda9;
+  --paper-bright: #eadbbb;
+  --paper-warm: #ccb186;
+  --paper-edge: #92734f;
+  --paper-ink: #1b100b;
+  --paper-muted: #5c4635;
+  --paper-accent: #5c2923;
+  --paper-shadow: rgb(0 0 0 / 56%);
+  --book-board: #0d0605;
+  --book-metal: #685033;
 }
 
 .about-room-page main {
@@ -521,6 +523,218 @@ html[data-theme='dark'] body.about-room-page {
   display: none;
 }
 
+/* Gothic book treatment --------------------------------------------------- */
+.about-book {
+  filter:
+    drop-shadow(0 1.55rem 1.8rem rgb(14 5 2 / 31%))
+    drop-shadow(0 0.22rem 0.18rem rgb(0 0 0 / 24%));
+  cursor: default;
+}
+
+.about-book__board {
+  inset: -0.68rem -0.76rem -0.82rem;
+  border: 0.18rem solid color-mix(in srgb, var(--book-board) 78%, #020101);
+  border-radius: 0.42rem 0.48rem 0.5rem 0.42rem;
+  background:
+    radial-gradient(circle at 14% 22%, rgb(255 255 255 / 3.5%), transparent 18%),
+    radial-gradient(circle at 82% 76%, rgb(0 0 0 / 30%), transparent 24%),
+    repeating-linear-gradient(92deg, rgb(255 255 255 / 1.8%) 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, color-mix(in srgb, var(--book-board) 82%, #4b2619), var(--book-board) 44%, #090403);
+  box-shadow:
+    0 0.42rem 0.52rem rgb(0 0 0 / 38%),
+    inset 0 0 0 1px color-mix(in srgb, var(--book-metal) 38%, transparent),
+    inset 0 0 0 0.42rem rgb(0 0 0 / 24%),
+    inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+.about-book__board::before,
+.about-book__board::after {
+  position: absolute;
+  content: '';
+  pointer-events: none;
+}
+
+.about-book__board::before {
+  inset: 0.34rem;
+  border: 1px solid color-mix(in srgb, var(--book-metal) 58%, #24130d);
+  border-radius: 0.18rem;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 42%),
+    0 0 0 1px rgb(255 255 255 / 2.5%);
+}
+
+.about-book__board::after {
+  inset: 0.13rem;
+  opacity: 0.72;
+  background:
+    radial-gradient(circle at 0.55rem 0.55rem, var(--book-metal) 0 0.08rem, transparent 0.095rem),
+    radial-gradient(circle at calc(100% - 0.55rem) 0.55rem, var(--book-metal) 0 0.08rem, transparent 0.095rem),
+    radial-gradient(circle at 0.55rem calc(100% - 0.55rem), var(--book-metal) 0 0.08rem, transparent 0.095rem),
+    radial-gradient(circle at calc(100% - 0.55rem) calc(100% - 0.55rem), var(--book-metal) 0 0.08rem, transparent 0.095rem);
+}
+
+.book-page,
+.book-leaf__face {
+  background-image:
+    radial-gradient(ellipse at center, transparent 54%, rgb(80 49 22 / 8%) 100%),
+    linear-gradient(180deg, rgb(255 255 255 / 15%), transparent 12%, rgb(69 42 19 / 4%) 93%),
+    radial-gradient(circle at 18% 12%, rgb(255 255 255 / 11%) 0 0.08rem, transparent 0.09rem),
+    radial-gradient(circle at 73% 64%, rgb(74 43 20 / 4.5%) 0 0.075rem, transparent 0.08rem),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--paper-bright), var(--paper) 43%, var(--paper-warm));
+  background-size: auto, auto, 4.4rem 4.4rem, 5.2rem 5.2rem, 8rem 8rem, auto;
+}
+
+.book-page::after,
+.book-leaf__face::after {
+  border-color: rgb(255 250 235 / 10%);
+  outline: 1px solid color-mix(in srgb, var(--paper-edge) 55%, transparent);
+  outline-offset: -0.58rem;
+}
+
+.book-page--left,
+.book-page--right {
+  cursor: default;
+}
+
+.about-book.can-turn-backward .book-page--left,
+.about-book.can-turn-forward .book-page--right {
+  cursor: grab;
+}
+
+.about-book.is-dragging .book-page--left,
+.about-book.is-dragging .book-page--right,
+.about-book.is-dragging .book-leaf {
+  cursor: grabbing;
+}
+
+.book-gutter {
+  width: 2rem;
+  background:
+    linear-gradient(90deg, rgb(35 16 8 / 24%), transparent 37% 63%, rgb(35 16 8 / 20%));
+  box-shadow:
+    inset 0 0 0.9rem rgb(28 11 5 / 13%),
+    0 0 0.5rem rgb(255 243 214 / 3%);
+}
+
+.book-leaf {
+  transform:
+    perspective(78rem)
+    translateY(calc(-1 * var(--leaf-lift)))
+    translateZ(var(--leaf-depth))
+    rotateY(var(--leaf-angle))
+    rotateZ(var(--leaf-skew));
+  transition: transform 680ms cubic-bezier(0.24, 0.02, 0.13, 1);
+}
+
+.book-leaf__face {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--leaf-curl-inset)) 0,
+    100% var(--leaf-curl-tip),
+    100% calc(100% - var(--leaf-curl-tip)),
+    calc(100% - var(--leaf-curl-inset)) 100%,
+    0 100%
+  );
+  border-radius: 0 var(--leaf-radius) var(--leaf-radius) 0;
+}
+
+.book-leaf__face::before {
+  position: absolute;
+  z-index: 19;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0 52%, rgb(78 48 24 / 5%) 68%, rgb(47 24 10 / 28%) 100%);
+  content: '';
+  opacity: var(--leaf-curve-opacity);
+  pointer-events: none;
+}
+
+.book-leaf__back::before {
+  background:
+    linear-gradient(90deg, rgb(47 24 10 / 25%) 0%, rgb(78 48 24 / 5%) 30%, transparent 50% 100%);
+}
+
+.book-leaf__edge {
+  width: 3px;
+  background: linear-gradient(90deg, #6f5538, #e8d8b7 48%, #896d48);
+  box-shadow: 0 0 0.5rem rgb(255 238 198 / 16%);
+}
+
+.book-visual__frame {
+  border: 1px solid color-mix(in srgb, var(--paper-ink) 76%, var(--book-metal));
+  background: color-mix(in srgb, var(--paper-warm) 77%, #1b100b);
+  box-shadow:
+    0 0.25rem 0.7rem rgb(37 18 7 / 18%),
+    0 0 0 0.2rem color-mix(in srgb, var(--paper) 74%, var(--paper-edge)),
+    0 0 0 0.27rem color-mix(in srgb, var(--paper-ink) 78%, var(--book-metal));
+}
+
+.book-visual--portrait .book-visual__frame {
+  margin: 7% 7% 10%;
+  padding: 0.28rem;
+  border: 0;
+  background: color-mix(in srgb, var(--paper-ink) 84%, var(--book-metal));
+  box-shadow:
+    0 0.55rem 1rem rgb(35 16 7 / 20%),
+    0 0 0 0.1rem color-mix(in srgb, var(--book-metal) 62%, var(--paper-ink));
+  clip-path: polygon(50% 0%, 97% 13%, 100% 100%, 0 100%, 3% 13%);
+}
+
+.book-visual--portrait .book-visual__frame img {
+  clip-path: polygon(50% 0%, 98% 12%, 100% 100%, 0 100%, 2% 12%);
+  filter: contrast(0.99);
+}
+
+.book-visual__caption-row::before {
+  color: var(--paper-accent);
+  content: '✦';
+  font-family: var(--font-display);
+  font-size: 0.52rem;
+}
+
+.book-copy-page h1 {
+  position: relative;
+  margin-bottom: clamp(1rem, 4%, 1.55rem);
+  padding-bottom: clamp(0.8rem, 3.4%, 1.1rem);
+  font-weight: 500;
+  letter-spacing: -0.018em;
+}
+
+.book-copy-page h1::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background:
+    linear-gradient(90deg, var(--paper-accent) 0 28%, transparent 28% 34%, var(--paper-accent) 34% 38%, transparent 38% 44%, var(--paper-accent) 44% 100%);
+  content: '';
+  opacity: 0.58;
+  transform: scaleX(0.66);
+  transform-origin: left center;
+}
+
+.sheet-eyebrow {
+  color: color-mix(in srgb, var(--paper-muted) 86%, var(--paper-accent));
+  letter-spacing: 0.27em;
+}
+
+.sheet-copy {
+  line-height: 1.52;
+}
+
+.interest-note {
+  border-color: color-mix(in srgb, var(--paper-edge) 68%, var(--paper-accent));
+}
+
+.book-page-number::before,
+.book-page-number::after {
+  color: color-mix(in srgb, var(--paper-accent) 78%, transparent);
+  content: '·';
+  margin-inline: 0.32rem;
+}
+
 @media (max-height: 49rem) and (min-width: 40.001rem) {
   .about-book {
     width: auto;
@@ -685,5 +899,239 @@ html[data-theme='dark'] body.about-room-page {
 @media (prefers-reduced-motion: reduce) {
   .book-leaf {
     transition-duration: 1ms !important;
+  }
+}
+
+/* Continuous paper geometry -----------------------------------------------
+ * The turning leaf is one DOM surface per side. Keeping the page continuous
+ * prevents photos, type and paper texture from being re-rasterized into
+ * separate strips while it moves. Curvature is suggested by the silhouette,
+ * foreshortening and a very soft moving highlight instead of slicing content. */
+
+.about-book__board {
+  inset: -0.32rem -0.38rem -0.42rem;
+  border: 1px solid #090403;
+  border-radius: 0.16rem 0.18rem 0.22rem;
+  background: #1b0e0a;
+  box-shadow:
+    0 0.24rem 0.34rem rgb(0 0 0 / 34%),
+    inset 0 1px 0 rgb(255 255 255 / 4%);
+  transform: none;
+}
+
+.about-book__board::before,
+.about-book__board::after {
+  content: none;
+}
+
+/* The leather spine remains visible only around the top/bottom of the page
+ * block. There is intentionally no inset or cast shadow at the binding. */
+.about-book__spine {
+  position: absolute;
+  z-index: 1;
+  top: -0.3rem;
+  bottom: -0.4rem;
+  left: 50%;
+  width: 0.72rem;
+  border-radius: 0.12rem;
+  background: #21100c;
+  box-shadow: none;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.about-book__spine::before,
+.about-book__spine::after {
+  content: none;
+}
+
+.book-page-block {
+  position: absolute;
+  z-index: 2;
+  top: 0.13rem;
+  bottom: -0.25rem;
+  width: calc(50% - 0.12rem);
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 58%, #29170e);
+  background: color-mix(in srgb, var(--paper) 88%, var(--paper-edge));
+  box-shadow: none;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.book-page-block--left {
+  left: 0.1rem;
+  border-radius: 0.1rem 0 0 0.2rem;
+}
+
+.book-page-block--right {
+  right: 0.1rem;
+  border-radius: 0 0.1rem 0.2rem 0;
+}
+
+/* Keep the resting pages perfectly planar. Tiny opposing rotateY values were
+ * enough to create a dark anti-aliased seam and occasional hairlines. */
+.book-page {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / 14%), transparent 13%, rgb(69 42 19 / 3%) 94%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.13'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--paper-bright), var(--paper) 43%, var(--paper-warm));
+  background-size: auto, 8rem 8rem, auto;
+}
+
+.book-page::after {
+  border: 0;
+  outline: 0;
+}
+
+.book-page--left,
+.book-page--right {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Binding = a quiet paper seam, not a shadow. */
+.book-gutter {
+  z-index: 12;
+  width: 2px;
+  background: color-mix(in srgb, var(--paper-edge) 44%, var(--paper));
+  box-shadow: none;
+  opacity: 0.62;
+}
+
+.book-gutter::before,
+.book-gutter::after {
+  content: none;
+}
+
+.book-turn-shadow {
+  display: none;
+}
+
+.book-leaf {
+  z-index: 16;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  transform:
+    perspective(84rem)
+    translate3d(0, calc(-1 * var(--leaf-lift)), var(--leaf-depth))
+    rotateY(var(--leaf-angle))
+    rotateZ(var(--leaf-skew))
+    scaleX(var(--leaf-compression));
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: none;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.book-leaf__face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid var(--paper-edge);
+  border-radius: 0 var(--leaf-radius) var(--leaf-radius) 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / 14%), transparent 13%, rgb(69 42 19 / 3%) 94%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.13'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--paper-bright), var(--paper) 43%, var(--paper-warm));
+  background-size: auto, 8rem 8rem, auto;
+  box-shadow: none;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--leaf-curl-inset)) 0,
+    100% var(--leaf-curl-tip),
+    100% calc(100% - var(--leaf-curl-tip)),
+    calc(100% - var(--leaf-curl-inset)) 100%,
+    0 100%
+  );
+  isolation: isolate;
+}
+
+.book-leaf__front {
+  border-left: 0;
+}
+
+.book-leaf__back {
+  border-right: 0;
+  transform: rotateY(180deg);
+}
+
+/* A single broad highlight makes the page feel slightly bowed without
+ * changing the geometry of the image/text layer underneath it. */
+.book-leaf__face::before {
+  position: absolute;
+  z-index: 30;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 56%,
+    rgb(255 248 229 / 34%) 80%,
+    rgb(65 34 15 / 20%) 100%
+  );
+  content: '';
+  opacity: var(--leaf-highlight-opacity);
+  pointer-events: none;
+}
+
+.book-leaf__back::before {
+  background: linear-gradient(
+    90deg,
+    rgb(65 34 15 / 17%) 0%,
+    rgb(255 248 229 / 28%) 20%,
+    transparent 45%,
+    transparent 100%
+  );
+}
+
+.book-leaf__face::after {
+  border: 0;
+  outline: 0;
+  background: none;
+}
+
+.book-leaf__edge {
+  position: absolute;
+  z-index: 45;
+  top: var(--leaf-curl-tip);
+  right: -1px;
+  bottom: var(--leaf-curl-tip);
+  left: auto;
+  width: 2px;
+  border-radius: 0 999px 999px 0;
+  background: color-mix(in srgb, var(--paper-edge) 58%, var(--paper-bright));
+  box-shadow: none;
+  opacity: var(--leaf-edge-opacity);
+  pointer-events: none;
+}
+
+.about-book.is-dragging .book-leaf {
+  transition: none;
+}
+
+@media (max-width: 40rem) {
+  .about-book__spine {
+    top: -0.17rem;
+    bottom: -0.23rem;
+    width: 0.46rem;
+  }
+
+  .book-page-block {
+    bottom: -0.13rem;
+  }
+
+  .book-gutter {
+    width: 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-leaf {
+    will-change: auto;
   }
 }

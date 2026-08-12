@@ -1,11 +1,11 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ResumeGallery from '@/components/resume/ResumeGallery.svelte';
-import { withBase } from '@/lib/paths';
+import { pdfViewerHref, withBase } from '@/lib/paths';
 import '@/styles/resume.css';
 
-const softwareResumeUrl = withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf');
-const musicResumeUrl = withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf');
+const softwareResumeUrl = pdfViewerHref('/resumes/cyrus-asasi-software-engineering-resume.pdf');
+const musicResumeUrl = pdfViewerHref('/resumes/cyrus-asasi-clarinet-performance-resume.pdf');
 
 const resumes = [
   {

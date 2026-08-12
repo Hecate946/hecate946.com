@@ -9,7 +9,10 @@ export default defineConfig({
   integrations: [
     svelte(),
     sitemap({
-      filter: (page) => !page.endsWith('/404/') && !page.endsWith('/404.html'),
+      filter: (page) =>
+        !page.endsWith('/404/') &&
+        !page.endsWith('/404.html') &&
+        !page.endsWith('/pdf/'),
     }),
   ],
   vite: {

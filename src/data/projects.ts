@@ -91,7 +91,7 @@ export const projects = [
     status: 'Complete',
     image: '/images/projects/keycad.webp',
     imageAlt:
-      'Pastel pencil artwork showing a horizontal brass key with CAD measurements, model data, and a bitting profile.',
+      'Impressionist painting of a seated child in a coral-red smock, used as the KeyCAD project image.',
     technologies: ['Python', 'OpenCV', 'OpenSCAD', 'Git'],
     highlights: [
       'Created 19 parameterized key-blank models from manufacturer specifications.',
@@ -117,7 +117,7 @@ export const projects = [
     status: 'Active',
     image: '/images/projects/portfolio.webp',
     imageAlt:
-      'Pastel pencil artwork showing the Hecate946.com seasonal interface across spring, summer, autumn, and winter.',
+      'Expressionist print of a pale figure with dark flowing hair inside a vivid orange-red border, with a small seated figure in the lower-left corner, used as the Hecate946.com project image.',
     technologies: ['Astro', 'Svelte', 'TypeScript', 'Canvas', 'CSS'],
     highlights: [
       'Built a statically generated Astro site with selectively hydrated Svelte components.',

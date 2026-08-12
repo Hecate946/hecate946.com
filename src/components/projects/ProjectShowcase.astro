@@ -15,107 +15,117 @@ const imageSrcset = [640, 960, 1200]
   .map((width) => `${withBase(`${imageStem}-${width}.webp`)} ${width}w`)
   .concat(`${image} 1600w`)
   .join(', ');
-const imageSizes = '(max-width: 39.999rem) calc(100vw - 2rem), 50vw';
+const imageSizes = '(max-width: 47.999rem) calc(100vw - 2rem), min(46vw, 42rem)';
 const projectsHref = withBase('/projects/');
 const projectLinks = project.links ?? [];
-const resolveLink = (href: string) => href.startsWith('/') ? withBase(href) : href;
+const resolveLink = (href: string) => (href.startsWith('/') ? withBase(href) : href);
+const longTitle = project.title.length > 10;
 ---
 
 <BaseLayout
-  title={project.title}
+  title={`${project.title} — Project`}
   description={project.description}
   image={project.image}
   imageAlt={project.imageAlt}
   imageWidth={1600}
   imageHeight={1000}
   imageType="image/webp"
+  mainClass="project-detail-main"
+  bodyClass="project-detail-page"
 >
-  <article class="project-showcase interior-page interior-page--six">
-    <header class="project-header interior-page-column">
-      <a class="project-back-link" href={projectsHref}>
-        <span aria-hidden="true">←</span> Projects
-      </a>
+  <article class="project-case">
+    <div class="project-case__shell">
+      <div class="project-case__utility">
+        <a class="project-back-link" href={projectsHref}>
+          <span aria-hidden="true">←</span>
+          <span>Projects</span>
+        </a>
 
-      <p class="project-kicker">{project.category} · {project.period}</p>
-      <h1>{project.title}</h1>
-      <p class="project-tagline">{project.tagline}</p>
+        {
+          projectLinks.length > 0 && (
+            <nav aria-label={`${project.title} links`}>
+              <ul class="project-links">
+                {projectLinks.map((link) => (
+                  <li>
+                    <a
+                      href={resolveLink(link.href)}
+                      target={link.href.startsWith('http') ? '_blank' : undefined}
+                      rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    >
+                      {link.label}<span aria-hidden="true">↗</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )
+        }
+      </div>
 
-      {
-        projectLinks.length > 0 && (
-          <nav aria-label={`${project.title} links`}>
-            <ul class="project-links">
-              {projectLinks.map((link) => (
-                <li>
-                  <a
-                    href={resolveLink(link.href)}
-                    target={link.href.startsWith('http') ? '_blank' : undefined}
-                    rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  >
-                    {link.label} <span aria-hidden="true">↗</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )
-      }
-    </header>
+      <header class="project-hero">
+        <div class="project-hero__copy">
+          <p class="project-kicker">{project.category} · {project.period}</p>
+          <h1 class:list={{ 'project-title--long': longTitle }}>{project.title}</h1>
+          <p class="project-tagline">{project.tagline}</p>
+        </div>
 
-    <figure class="project-image interior-page-column">
-      <img
-        src={image}
-        srcset={imageSrcset}
-        sizes={imageSizes}
-        alt={project.imageAlt}
-        width="1600"
-        height="1000"
-        decoding="async"
-        fetchpriority="high"
-      />
-    </figure>
+        <figure class="project-hero__image">
+          <img
+            src={image}
+            srcset={imageSrcset}
+            sizes={imageSizes}
+            alt={project.imageAlt}
+            width="1600"
+            height="1000"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </figure>
+      </header>
 
-    <div class="project-content interior-page-column">
-      <section class="project-overview" aria-labelledby="overview-heading">
-        <h2 id="overview-heading">Overview</h2>
-        <p>{project.description}</p>
+      <dl class="project-facts" aria-label="Project facts">
+        <div>
+          <dt>Role</dt>
+          <dd>{project.role}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>{project.status}</dd>
+        </div>
+        <div class="project-facts__wide">
+          <dt>Built with</dt>
+          <dd>{project.technologies.join(' · ')}</dd>
+        </div>
+      </dl>
 
-        <dl class="project-meta">
-          <div>
-            <dt>Role</dt>
-            <dd>{project.role}</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>{project.status}</dd>
-          </div>
-          <div>
-            <dt>Built with</dt>
-            <dd>{project.technologies.join(', ')}</dd>
-          </div>
-        </dl>
-      </section>
+      <div class="project-sections">
+        <section class="project-section" aria-labelledby="overview-heading">
+          <h2 id="overview-heading">Overview</h2>
+          <p>{project.description}</p>
+        </section>
 
-      <section aria-labelledby="challenge-heading">
-        <h2 id="challenge-heading">Challenge</h2>
-        <p>{project.challenge}</p>
-      </section>
+        <section class="project-section" aria-labelledby="challenge-heading">
+          <h2 id="challenge-heading">Challenge</h2>
+          <p>{project.challenge}</p>
+        </section>
 
-      <section aria-labelledby="approach-heading">
-        <h2 id="approach-heading">Approach</h2>
-        <p>{project.approach}</p>
-      </section>
+        <section class="project-section" aria-labelledby="approach-heading">
+          <h2 id="approach-heading">Approach</h2>
+          <p>{project.approach}</p>
+        </section>
 
-      <section aria-labelledby="result-heading">
-        <h2 id="result-heading">Result</h2>
-        <p>{project.result}</p>
-      </section>
+        <section class="project-section" aria-labelledby="result-heading">
+          <h2 id="result-heading">Result</h2>
+          <p>{project.result}</p>
+        </section>
 
-      <section aria-labelledby="highlights-heading">
-        <h2 id="highlights-heading">Highlights</h2>
-        <ul>
-          {project.highlights.map((highlight) => <li>{highlight}</li>)}
-        </ul>
-      </section>
+        <section class="project-section project-section--highlights" aria-labelledby="highlights-heading">
+          <h2 id="highlights-heading">Highlights</h2>
+          <ol>
+            {project.highlights.map((highlight) => <li>{highlight}</li>)}
+          </ol>
+        </section>
+      </div>
 
       <footer class="project-footer-nav">
         <a href={projectsHref}><span aria-hidden="true">←</span> All projects</a>

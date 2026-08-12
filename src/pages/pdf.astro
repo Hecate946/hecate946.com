@@ -1,0 +1,186 @@
+---
+import BaseHead from '@/components/core/BaseHead.astro';
+import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
+import WallRoom from '@/features/wall/WallRoom.svelte';
+import { withBase } from '@/lib/paths';
+import '@/styles/global.css';
+import '@/styles/pdf-viewer.css';
+
+const homeUrl = withBase('/');
+---
+
+<!doctype html>
+<html lang="en-US" data-theme="light">
+  <head>
+    <ThemeBootstrap />
+    <BaseHead
+      title="PDF Viewer — Cyrus Asasi"
+      description="Document viewer for hecate946.com."
+      noindex
+    />
+  </head>
+
+  <body class="pdf-viewer-page" data-home-url={homeUrl}>
+    <div class="pdf-viewer-backdrop wall-room-host" aria-hidden="true">
+      <WallRoom showFloor={false} />
+    </div>
+
+    <main id="pdf-document" class="pdf-viewer-document" aria-label="PDF viewer"></main>
+
+    <div class="pdf-viewer-controls" aria-label="Document controls">
+      <button
+        id="pdf-back"
+        class="pdf-viewer-control"
+        type="button"
+        aria-label="Go back"
+        title="Back"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M19 12H5M11 18l-6-6 6-6"></path>
+        </svg>
+      </button>
+
+      <a
+        id="pdf-download"
+        class="pdf-viewer-control"
+        href={homeUrl}
+        aria-label="Download PDF"
+        title="Download"
+        download
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14"></path>
+        </svg>
+      </a>
+    </div>
+
+    <script is:inline type="module">
+      const PDFJS_VERSION = '6.2.108';
+      const PDFJS_BASE = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}`;
+
+      const documentHost = document.querySelector('#pdf-document');
+      const backButton = document.querySelector('#pdf-back');
+      const downloadLink = document.querySelector('#pdf-download');
+      const homeUrl = document.body.dataset.homeUrl || '/';
+      const rawSource = new URL(window.location.href).searchParams.get('src');
+
+      const resolvePdfSource = () => {
+        if (!rawSource) return null;
+
+        try {
+          const source = new URL(rawSource, window.location.origin);
+          const isSameOrigin = source.origin === window.location.origin;
+          const isPdf = /\.pdf$/i.test(source.pathname);
+          return isSameOrigin && isPdf ? source : null;
+        } catch {
+          return null;
+        }
+      };
+
+      const pdfSource = resolvePdfSource();
+
+      if (!pdfSource || !documentHost || !downloadLink) {
+        window.location.replace(homeUrl);
+      } else {
+        const fileName = decodeURIComponent(pdfSource.pathname.split('/').pop() || 'document.pdf');
+        downloadLink.href = pdfSource.href;
+        downloadLink.download = fileName;
+      }
+
+      backButton?.addEventListener('click', () => {
+        let sameSiteReferrer = null;
+
+        try {
+          const referrer = document.referrer ? new URL(document.referrer) : null;
+          if (referrer?.origin === window.location.origin) sameSiteReferrer = referrer;
+        } catch {
+          sameSiteReferrer = null;
+        }
+
+        if (sameSiteReferrer && window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+
+        if (sameSiteReferrer) {
+          window.location.assign(sameSiteReferrer.href);
+          return;
+        }
+
+        window.location.assign(homeUrl);
+      });
+
+      const renderPdf = async () => {
+        if (!pdfSource || !documentHost) return;
+
+        try {
+          const pdfjs = await import(`${PDFJS_BASE}/build/pdf.min.mjs`);
+          pdfjs.GlobalWorkerOptions.workerSrc = `${PDFJS_BASE}/build/pdf.worker.min.mjs`;
+
+          const loadingTask = pdfjs.getDocument({
+            url: pdfSource.href,
+            cMapUrl: `${PDFJS_BASE}/cmaps/`,
+            cMapPacked: true,
+            standardFontDataUrl: `${PDFJS_BASE}/standard_fonts/`,
+            wasmUrl: `${PDFJS_BASE}/wasm/`,
+          });
+
+          const pdf = await loadingTask.promise;
+          const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+          const pageGap = 16;
+          const pagePadding = 16;
+          const desktop = window.innerWidth > 640;
+          const availableWidth = desktop
+            ? Math.min(window.innerWidth * 0.82, window.innerWidth - pagePadding * 2)
+            : window.innerWidth - pagePadding;
+          const availableHeight = Math.max(1, window.innerHeight - pagePadding * 2);
+
+          const fragment = document.createDocumentFragment();
+
+          for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+            const page = await pdf.getPage(pageNumber);
+            const naturalViewport = page.getViewport({ scale: 1 });
+            const cssScale = Math.min(
+              availableWidth / naturalViewport.width,
+              availableHeight / naturalViewport.height,
+            );
+            const cssViewport = page.getViewport({ scale: cssScale });
+            const renderViewport = page.getViewport({ scale: cssScale * pixelRatio });
+
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-viewer-page-canvas';
+            canvas.dataset.page = String(pageNumber);
+            canvas.setAttribute('aria-label', `Page ${pageNumber} of ${pdf.numPages}`);
+            canvas.width = Math.max(1, Math.floor(renderViewport.width));
+            canvas.height = Math.max(1, Math.floor(renderViewport.height));
+            canvas.style.width = `${Math.floor(cssViewport.width)}px`;
+            canvas.style.height = `${Math.floor(cssViewport.height)}px`;
+
+            const context = canvas.getContext('2d', { alpha: false });
+            if (!context) continue;
+
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            await page.render({
+              canvasContext: context,
+              viewport: renderViewport,
+              background: '#ffffff',
+            }).promise;
+
+            fragment.appendChild(canvas);
+          }
+
+          documentHost.style.setProperty('--pdf-page-gap', `${pageGap}px`);
+          documentHost.replaceChildren(fragment);
+          documentHost.dataset.ready = 'true';
+        } catch (error) {
+          console.error('Unable to render PDF in the site viewer.', error);
+          window.location.assign(pdfSource.href);
+        }
+      };
+
+      renderPdf();
+    </script>
+  </body>
+</html>
