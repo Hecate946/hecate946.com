@@ -6,6 +6,7 @@
   export let entering = false;
   export let keyboardAccessible = true;
   export let semantic = true;
+  export let eager = false;
   export let indexLabel: string | undefined = undefined;
   export let onFocus: (destination: WallDestination) => void;
   export let onEnter: (event: MouseEvent, destination: WallDestination) => void;
@@ -42,13 +43,14 @@
         class="wall-window__painting"
         src={withBase(destination.painting.src)}
         srcset={paintingSrcset}
-        sizes="340px"
+        sizes="(max-width: 40rem) 248px, (max-height: 42rem) 266px, (min-height: 50rem) 340px, 306px"
         alt=""
         width={destination.painting.width}
         height={destination.painting.height}
         draggable="false"
         decoding="async"
-        loading="eager"
+        loading={eager ? 'eager' : 'lazy'}
+        fetchpriority={eager ? 'high' : 'low'}
       />
     </span>
     <span class="wall-window__reflection"></span>

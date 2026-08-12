@@ -9,7 +9,10 @@
   const CHECKER_TEXTURE_TILES = 2;
   const CAMERA_FOV_DEGREES = 45;
   const CAMERA_HEIGHT_TO_DISTANCE = 0.4;
-  const MAX_PIXEL_RATIO = 2;
+  // The floor is flat-color geometry; 1.5x DPR is visually indistinguishable
+  // from 2x here while cutting a large amount of fragment work on retina screens.
+  const MAX_PIXEL_RATIO = 1.5;
+  const CHECKER_TEXTURE_SIZE = 128;
   const PLANE_WIDTH_MULTIPLIER = 2.75;
   const MIN_PLANE_WIDTH = 2_400;
 
@@ -114,8 +117,8 @@
 
   function createCheckerTexture() {
     const source = document.createElement('canvas');
-    source.width = 1024;
-    source.height = 1024;
+    source.width = CHECKER_TEXTURE_SIZE;
+    source.height = CHECKER_TEXTURE_SIZE;
     const context2d = source.getContext('2d', { alpha: false });
     if (!context2d) return null;
 
@@ -185,10 +188,9 @@
     camera.lookAt(currentCameraX, targetY, 0);
     camera.updateProjectionMatrix();
 
-    floorMesh.geometry.dispose();
-    const geometry = new THREE.PlaneGeometry(floorPlaneWidth, floorPlaneDepth, 1, 1);
-    geometry.rotateX(-Math.PI / 2);
-    floorMesh.geometry = geometry;
+    // Reuse one unit plane instead of allocating/discarding GPU geometry on
+    // every resize or orientation change.
+    floorMesh.scale.set(floorPlaneWidth, 1, floorPlaneDepth);
     floorMesh.position.set(currentCameraX, 0, floorPlaneDepth / 2);
 
     const texturePeriod = TILE_SIZE_WORLD * CHECKER_TEXTURE_TILES;
@@ -237,8 +239,10 @@
     )
       return;
 
+    // Camera orientation is invariant while panning because the camera and its
+    // target move by the same X delta. Avoid rebuilding the lookAt matrix every
+    // frame; only translate the already-oriented camera and floor.
     camera.position.x = currentCameraX;
-    camera.lookAt(currentCameraX, cameraTargetY, 0);
     floorMesh.position.x = currentCameraX;
 
     const texturePeriod = TILE_SIZE_WORLD * CHECKER_TEXTURE_TILES;
@@ -269,8 +273,10 @@
       renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: true,
-        powerPreference: 'low-power',
+        // Checker edges come from the texture, not geometry silhouettes, so
+        // MSAA only adds GPU cost here.
+        antialias: false,
+        powerPreference: 'high-performance',
       });
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.setClearColor(0x000000, 0);
@@ -283,13 +289,15 @@
 
       floorTexture = createCheckerTexture();
       if (!floorTexture) throw new Error('Could not create floor checker texture.');
-      floorTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      floorTexture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
 
       const material = new THREE.MeshBasicMaterial({
         map: floorTexture,
         side: THREE.FrontSide,
       });
-      floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
+      const floorGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+      floorGeometry.rotateX(-Math.PI / 2);
+      floorMesh = new THREE.Mesh(floorGeometry, material);
       floorMesh.name = 'checkerboard-floor';
       floorMesh.renderOrder = -10;
       scene.add(floorMesh);

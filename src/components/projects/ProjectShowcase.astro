@@ -94,7 +94,9 @@ let chalkCharacterIndex = 0;
 
                 <div class="project-page__links">
                   <a class="project-back-link" href={projectsHref}>
-                    <span aria-hidden="true">←</span>
+                    <svg class="project-link-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                      <path d="M6.5 3.75 2.25 8l4.25 4.25M2.75 8h11" />
+                    </svg>
                     <span>Projects</span>
                   </a>
 
@@ -109,7 +111,7 @@ let chalkCharacterIndex = 0;
                                 target={link.href.startsWith('http') ? '_blank' : undefined}
                                 rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                               >
-                                {link.label}<span aria-hidden="true">↗</span>
+                                {link.label}<svg class="project-link-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M6.25 4H12v5.75" /></svg>
                               </a>
                             </li>
                           ))}
@@ -215,14 +217,24 @@ let chalkCharacterIndex = 0;
       restartProjectChalkWriting();
     };
 
+    type ProjectShowcaseWindow = Window & { __hecateProjectShowcaseHandlersInstalled?: boolean };
+    const projectShowcaseWindow = window as ProjectShowcaseWindow;
+
     scheduleProjectFit();
     document.fonts?.ready.then(scheduleProjectFit);
-    document.addEventListener('astro:after-swap', resetProjectPage);
-    window.addEventListener('resize', scheduleProjectFit, { passive: true });
-    window.addEventListener('orientationchange', scheduleProjectFit, { passive: true });
-    window.addEventListener('pageshow', (event) => {
-      if (event.persisted) resetProjectPage();
-      else scheduleProjectFit();
-    });
+
+    // Keep one set of global listeners across Astro page swaps. Re-entering a
+    // project page still restarts the chalk animation and refits the board, but
+    // repeated visits no longer stack duplicate resize/transition handlers.
+    if (!projectShowcaseWindow.__hecateProjectShowcaseHandlersInstalled) {
+      projectShowcaseWindow.__hecateProjectShowcaseHandlersInstalled = true;
+      document.addEventListener('astro:after-swap', resetProjectPage);
+      window.addEventListener('resize', scheduleProjectFit, { passive: true });
+      window.addEventListener('orientationchange', scheduleProjectFit, { passive: true });
+      window.addEventListener('pageshow', (event) => {
+        if (event.persisted) resetProjectPage();
+        else scheduleProjectFit();
+      });
+    }
   </script>
 </BaseLayout>

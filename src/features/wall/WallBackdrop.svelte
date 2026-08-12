@@ -15,10 +15,9 @@
   }
 
   function renderCamera() {
-    brickPattern?.style.setProperty(
-      '--wall-backdrop-brick-x',
-      `${-modulo(currentCameraX, BRICK_PATTERN_WIDTH_PX)}px`,
-    );
+    if (!brickPattern) return;
+    const offset = -modulo(currentCameraX, BRICK_PATTERN_WIDTH_PX);
+    brickPattern.style.transform = `translate3d(${offset}px, 0, 0)`;
   }
 
   /** Synchronize the repeating brick layer with the room's shared camera. */
@@ -32,7 +31,7 @@
   <div
     bind:this={brickPattern}
     class="wall-stage__brick-pattern"
-    style={`--wall-backdrop-brick-x: ${-modulo(initialCameraX, BRICK_PATTERN_WIDTH_PX)}px;`}
+    style={`transform: translate3d(${-modulo(initialCameraX, BRICK_PATTERN_WIDTH_PX)}px, 0, 0);`}
   ></div>
 </div>
 

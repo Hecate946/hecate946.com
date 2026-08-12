@@ -69,8 +69,7 @@
   const MAX_CAMERA_Z = 9.5;
   const INITIAL_CAMERA_Z = 6.45;
   const SITE_BASE = String(import.meta.env.BASE_URL ?? '/').replace(/\/?$/, '/');
-  const WORLD_TEXTURE_PREVIEW_URL = `${SITE_BASE}generated/globe-world-mask-4096.webp`;
-  const WORLD_TEXTURE_HD_URL = `${SITE_BASE}generated/globe-world-mask-8192.png`;
+  const WORLD_TEXTURE_PREVIEW_URL = `${SITE_BASE}generated/globe-world-mask-2048.webp`;
   const GLOBE_SHELL_BASE_OPACITY = 0.0075;
   const GLOBE_SHELL_EDGE_OPACITY = 0.082;
   const GLOBE_SHELL_OUTER_OPACITY = 0.014;
@@ -198,16 +197,6 @@
     });
   }
 
-  function waitForIdle(timeout = 700) {
-    return new Promise<void>((resolve) => {
-      if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(() => resolve(), { timeout });
-      } else {
-        window.setTimeout(resolve, 80);
-      }
-    });
-  }
-
   const readableTimeFormatter = new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
@@ -269,7 +258,7 @@
       alpha: true,
       powerPreference: 'high-performance',
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -281,7 +270,7 @@
     // coastlines and country borders used by /stats are visible. The map is sampled
     // from true spherical longitude/latitude rather than SphereGeometry UVs, which
     // prevents the equirectangular texture from smearing into a cap at the poles.
-    const globeGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 192, 128);
+    const globeGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 128, 96);
     const initialThemeColors = readThemeColors();
     const globeMaterial = new THREE.MeshBasicMaterial({
       color: initialThemeColors.text,
@@ -301,7 +290,7 @@
     // Keep the transparent-ocean globe, but make the shell feel lighter and
     // cleaner: almost invisible in the center, then gradually more watery toward
     // the silhouette, with only a restrained final edge emphasis.
-    const rimGeometry = new THREE.SphereGeometry(GLOBE_RADIUS * 1.006, 192, 128);
+    const rimGeometry = new THREE.SphereGeometry(GLOBE_RADIUS * 1.006, 128, 96);
     const rimMaterial = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
@@ -431,6 +420,38 @@
       quaternion: globeGroup.quaternion.clone(),
       cameraZ: INITIAL_CAMERA_Z,
     };
+    let frameId = 0;
+
+    function renderFrame() {
+      frameId = 0;
+      if (disposed) return;
+
+      if (!dragging && activePointers.size === 0 && Math.abs(inertiaAngle) > 0.00001) {
+        dragDelta.setFromAxisAngle(inertiaAxis, inertiaAngle);
+        globeGroup.quaternion.premultiply(dragDelta).normalize();
+        inertiaAngle *= 0.90;
+        if (Math.abs(inertiaAngle) <= 0.00001) inertiaAngle = 0;
+      }
+
+      const zoomDelta = targetCameraZ - camera.position.z;
+      if (Math.abs(zoomDelta) > 0.0005) {
+        camera.position.z += zoomDelta * VISITOR_VIEW_ZOOM_EASING;
+      } else {
+        camera.position.z = targetCameraZ;
+      }
+
+      markerMaterial.uniforms.cameraZ.value = camera.position.z;
+      renderer.render(scene, camera);
+
+      if (Math.abs(inertiaAngle) > 0.00001 || Math.abs(targetCameraZ - camera.position.z) > 0.0005) {
+        frameId = requestAnimationFrame(renderFrame);
+      }
+    }
+
+    function scheduleRender() {
+      if (disposed || frameId) return;
+      frameId = requestAnimationFrame(renderFrame);
+    }
 
     function disposeMarkerMesh() {
       if (markerPoints) {
@@ -556,7 +577,10 @@
       disposeMarkerMesh();
       applyDefaultFocus(markerMetadata);
 
-      if (markerMetadata.length === 0) return;
+      if (markerMetadata.length === 0) {
+        scheduleRender();
+        return;
+      }
 
       markerPositions = markerMetadata.map((marker) =>
         markerPosition(marker.latitude, marker.longitude, MARKER_RADIUS),
@@ -592,6 +616,7 @@
       markerPoints.userData.kind = 'visitor-markers';
 
       globeGroup.add(markerPoints);
+      scheduleRender();
     }
 
     applyExternalLocations = (nextLocations, nextTotalVisitors) => {
@@ -608,6 +633,7 @@
       globeMaterial.color.set(colors.text);
       markerMaterial.uniforms.markerColor.value.set(colors.accent);
       rimMaterial.uniforms.rimColor.value.set(colors.text);
+      scheduleRender();
     }
 
     function installWorldTexture(nextTexture: THREE.Texture) {
@@ -620,25 +646,19 @@
       currentTexture?.dispose();
       currentTexture = nextTexture;
       globeMaterial.map = nextTexture;
-      // The shader needs one compile when USE_MAP is introduced. Swapping the
-      // preview for the HD texture does not require another material compile.
+      // The shader only needs one compile when USE_MAP is introduced.
       if (!hadTexture) globeMaterial.needsUpdate = true;
       globe.visible = true;
+      scheduleRender();
     }
 
     async function loadWorldTextures() {
       try {
-        // Show the lightweight lossless 4K preview first so the globe becomes
-        // visible quickly, then keep the existing idle-time HD upgrade.
+        // A 2K equirectangular mask is still far above the globe's normal
+        // on-screen resolution while using roughly one quarter of the decoded
+        // texture memory of the previous 4K asset.
         const previewTexture = await loadWorldTexture(WORLD_TEXTURE_PREVIEW_URL);
         installWorldTexture(previewTexture);
-
-        if (disposed) return;
-        await waitForIdle();
-        if (disposed) return;
-
-        const hdTexture = await loadWorldTexture(WORLD_TEXTURE_HD_URL);
-        installWorldTexture(hdTexture);
       } catch (textureError) {
         console.error(textureError);
       }
@@ -699,6 +719,7 @@
       markerMaterial.uniforms.pixelRatio.value = renderer.getPixelRatio();
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+      scheduleRender();
     }
 
     function pointerDistance() {
@@ -899,6 +920,7 @@
             pinchState.cameraZ,
             pinchState.distance / distance,
           );
+          scheduleRender();
         }
         return;
       }
@@ -921,6 +943,7 @@
           ).normalize();
           inertiaAngle = Math.min(0.045, angle * 0.28);
         }
+        scheduleRender();
         return;
       }
 
@@ -964,6 +987,7 @@
         dragging = false;
         dragLocalVector = null;
       }
+      scheduleRender();
     }
 
     function onWheel(event: WheelEvent) {
@@ -984,6 +1008,7 @@
       const zoomRatio = Math.exp(boundedDelta * VISITOR_VIEW_WHEEL_RATE);
       targetCameraZ = zoomFromSurfaceDistance(targetCameraZ, zoomRatio);
       tooltipVisible = false;
+      scheduleRender();
     }
 
     function onPointerLeave() {
@@ -995,6 +1020,7 @@
       targetCameraZ = zoomFromSurfaceDistance(targetCameraZ, ratio);
       inertiaAngle = 0;
       tooltipVisible = false;
+      scheduleRender();
     };
 
     resetGlobe = () => {
@@ -1003,6 +1029,7 @@
       targetCameraZ = defaultFocus.cameraZ;
       inertiaAngle = 0;
       tooltipVisible = false;
+      scheduleRender();
     };
 
     const resizeObserver = new ResizeObserver(resize);
@@ -1039,23 +1066,7 @@
       }, 60_000);
     }
 
-    let frameId = 0;
-    const animate = () => {
-      if (disposed) return;
-
-      if (!dragging && activePointers.size === 0 && Math.abs(inertiaAngle) > 0.00001) {
-        dragDelta.setFromAxisAngle(inertiaAxis, inertiaAngle);
-        globeGroup.quaternion.premultiply(dragDelta).normalize();
-        inertiaAngle *= 0.90;
-      }
-
-      camera.position.z +=
-        (targetCameraZ - camera.position.z) * VISITOR_VIEW_ZOOM_EASING;
-      markerMaterial.uniforms.cameraZ.value = camera.position.z;
-      renderer.render(scene, camera);
-      frameId = requestAnimationFrame(animate);
-    };
-    animate();
+    scheduleRender();
 
     return () => {
       disposed = true;

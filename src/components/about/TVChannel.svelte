@@ -21,6 +21,9 @@
             class="about-tv-channel__portrait"
             src={channel.portrait.src}
             alt={channel.portrait.alt}
+            width="480"
+            height="480"
+            decoding="async"
           />
         </figure>
       {/if}
@@ -41,7 +44,14 @@
               onpointerdown={(event) => event.stopPropagation()}
               onclick={(event) => event.stopPropagation()}
             >
-              {link.label}<span aria-hidden="true">{link.external ? ' ↗' : ' →'}</span>
+              {link.label}
+              <svg class="about-tv-channel__link-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                {#if link.external}
+                  <path d="M4 12 12 4M6.25 4H12v5.75" />
+                {:else}
+                  <path d="M2.5 8h10.5M9 4l4 4-4 4" />
+                {/if}
+              </svg>
             </a>
           {/each}
         </nav>

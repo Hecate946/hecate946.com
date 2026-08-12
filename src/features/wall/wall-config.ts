@@ -36,7 +36,7 @@ const FRAME_HEIGHT = 420;
  */
 const FRAME_SPACING = 600;
 
-/** Primary site order: About → Projects → Resume → Contact. */
+/** Primary site order: About -> Projects -> Resume -> Contact. */
 const destinationDefinitions = [
   {
     id: 'about',
@@ -73,14 +73,13 @@ const destinationDefinitions = [
     label: 'Resume',
     href: '/resumes/',
     painting: {
-      src: '/paintings/stats-portrait.webp',
+      src: '/paintings/stats-portrait-480.webp',
       name: 'Seated Portrait',
-      width: 960,
-      height: 1203,
+      width: 480,
+      height: 602,
       sources: [
         { src: '/paintings/stats-portrait-480.webp', width: 480 },
         { src: '/paintings/stats-portrait-720.webp', width: 720 },
-        { src: '/paintings/stats-portrait.webp', width: 960 },
       ],
     },
   },

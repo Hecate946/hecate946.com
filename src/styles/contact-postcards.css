@@ -1,0 +1,471 @@
+/*
+ * CONTACT — postcard bulletin board
+ * Intentionally CSS-first: no canvas, no physics loop, no JS required.
+ */
+
+.contact-postcard-room {
+  --contact-ink: #17130f;
+  --contact-paper: #f4eddf;
+  --contact-paper-2: #ebe0ce;
+  --contact-cork: #b87943;
+  --contact-cork-dark: #885128;
+  --contact-frame: #18120d;
+  --contact-pin: #c5362c;
+  --contact-wall: var(--wall-dark, #8f605c);
+
+  position: relative;
+  display: grid;
+  min-height: calc(100dvh - 7rem);
+  place-items: center;
+  overflow: clip;
+  padding:
+    clamp(1.35rem, 3.2vw, 3rem)
+    clamp(1rem, 3vw, 2.5rem)
+    clamp(2rem, 5vw, 4rem);
+  isolation: isolate;
+  background-color: var(--contact-wall);
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 0.025),
+      rgb(0 0 0 / 0.045)
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0 49.55%,
+      color-mix(in srgb, var(--room-ink, #fff) 21%, transparent) 49.55% 50.45%,
+      transparent 50.45%
+    ),
+    linear-gradient(
+      color-mix(in srgb, var(--room-ink, #fff) 20%, transparent) 1px,
+      transparent 1px
+    );
+  background-size:
+    100% 100%,
+    8.8rem 4.4rem,
+    8.8rem 4.4rem;
+}
+
+.contact-postcard-room::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 37%, rgb(255 255 255 / 0.055), transparent 44%),
+    linear-gradient(to bottom, transparent 70%, rgb(0 0 0 / 0.08));
+  content: '';
+  pointer-events: none;
+}
+
+.contact-board-wrap {
+  width: min(76rem, 92vw);
+  max-height: min(72vh, 49rem);
+  aspect-ratio: 16 / 9.4;
+  filter: drop-shadow(0 1.4rem 1rem rgb(0 0 0 / 0.22));
+  transform: translateZ(0);
+}
+
+.contact-board {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: clamp(0.65rem, 1.15vw, 1rem) solid var(--contact-frame);
+  border-radius: 0.16rem;
+  background:
+    radial-gradient(circle at 10% 14%, rgb(255 255 255 / 0.16) 0 0.06rem, transparent 0.07rem),
+    radial-gradient(circle at 77% 61%, rgb(65 32 11 / 0.18) 0 0.05rem, transparent 0.06rem),
+    radial-gradient(circle at 42% 79%, rgb(255 255 255 / 0.12) 0 0.055rem, transparent 0.065rem),
+    linear-gradient(124deg, transparent 0 48%, rgb(74 37 12 / 0.07) 49% 51%, transparent 52%),
+    linear-gradient(18deg, var(--contact-cork), color-mix(in srgb, var(--contact-cork) 82%, #e4b17b));
+  background-size:
+    1.75rem 1.6rem,
+    2.3rem 2rem,
+    2.7rem 2.4rem,
+    7rem 6rem,
+    100% 100%;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.13),
+    inset 0 0.25rem 0.55rem rgb(255 255 255 / 0.08),
+    inset 0 -0.35rem 0.7rem rgb(45 22 7 / 0.18),
+    0 0 0 1px rgb(0 0 0 / 0.65);
+}
+
+.contact-board::before,
+.contact-board::after {
+  position: absolute;
+  z-index: 10;
+  content: '';
+  pointer-events: none;
+}
+
+.contact-board::before {
+  inset: 0.35rem;
+  border: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.contact-board::after {
+  inset: 0;
+  box-shadow: inset 0 0 4rem rgb(55 25 8 / 0.13);
+}
+
+.contact-board__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.28;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(8deg, transparent 0 0.45rem, rgb(85 46 20 / 0.08) 0.47rem 0.49rem),
+    repeating-linear-gradient(93deg, transparent 0 0.72rem, rgb(255 255 255 / 0.035) 0.74rem 0.76rem);
+  mix-blend-mode: multiply;
+}
+
+.postcard {
+  --rotation: 0deg;
+  --hover-shift-x: 0rem;
+  --hover-shift-y: -0.4rem;
+
+  position: absolute;
+  z-index: 2;
+  display: block;
+  width: 33%;
+  aspect-ratio: 1.52 / 1;
+  color: var(--contact-ink);
+  text-decoration: none;
+  transform: rotate(var(--rotation)) translate3d(0, 0, 0);
+  transform-origin: 50% 17%;
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.postcard--1 {
+  --rotation: -2.1deg;
+  top: 10%;
+  left: 10%;
+}
+
+.postcard--2 {
+  --rotation: 1.65deg;
+  top: 11%;
+  right: 9%;
+}
+
+.postcard--3 {
+  --rotation: 1.1deg;
+  bottom: 9%;
+  left: 12%;
+}
+
+.postcard--4 {
+  --rotation: -1.55deg;
+  right: 11%;
+  bottom: 8%;
+}
+
+.postcard:hover,
+.postcard:focus-visible {
+  z-index: 8;
+  filter: drop-shadow(0 0.8rem 0.5rem rgb(0 0 0 / 0.22));
+  outline: none;
+  transform:
+    rotate(0deg)
+    translate3d(var(--hover-shift-x), var(--hover-shift-y), 0)
+    scale(1.018);
+}
+
+.postcard:active {
+  transform: rotate(0deg) translate3d(0, 0.02rem, 0) scale(0.997);
+  transition-duration: 70ms;
+}
+
+.postcard__face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 46% 54%;
+  overflow: hidden;
+  border: 1px solid rgb(32 21 13 / 0.42);
+  border-radius: 0.08rem;
+  background:
+    linear-gradient(90deg, transparent 0 49.7%, rgb(36 25 17 / 0.18) 49.7% 50.2%, transparent 50.2%),
+    repeating-linear-gradient(0deg, rgb(40 26 15 / 0.018) 0 1px, transparent 1px 3px),
+    linear-gradient(145deg, var(--contact-paper), var(--contact-paper-2));
+  box-shadow:
+    0 0.12rem 0.2rem rgb(50 29 15 / 0.22),
+    0 0.5rem 0.65rem rgb(44 23 10 / 0.2),
+    inset 0 0 1.2rem rgb(117 84 54 / 0.08);
+}
+
+.postcard__face::after {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 14% 20%, transparent 0 68%, rgb(103 73 45 / 0.05) 100%),
+    linear-gradient(103deg, transparent 0 62%, rgb(255 255 255 / 0.12) 63%, transparent 65%);
+  content: '';
+  pointer-events: none;
+}
+
+.postcard__pin {
+  position: absolute;
+  z-index: 10;
+  top: -0.58rem;
+  left: 50%;
+  width: 1.18rem;
+  height: 1.5rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.postcard__pin-head {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  width: 1.18rem;
+  height: 1.18rem;
+  border: 1px solid rgb(61 14 11 / 0.65);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 28%, rgb(255 255 255 / 0.62) 0 8%, transparent 9%),
+    radial-gradient(circle at 48% 46%, #e14d43 0 35%, var(--contact-pin) 70%);
+  box-shadow:
+    inset -0.12rem -0.13rem 0.18rem rgb(82 11 9 / 0.25),
+    0 0.12rem 0.12rem rgb(0 0 0 / 0.3);
+}
+
+.postcard__pin-shadow {
+  position: absolute;
+  top: 0.74rem;
+  left: 0.45rem;
+  width: 0.45rem;
+  height: 0.78rem;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.2);
+  filter: blur(0.12rem);
+  transform: rotate(12deg);
+}
+
+.postcard__art {
+  display: grid;
+  place-items: center;
+  padding: 16%;
+  border-right: 1px solid rgb(34 24 16 / 0.13);
+}
+
+.postcard__art svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.84;
+}
+
+.postcard__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14% 10% 12%;
+}
+
+.postcard__eyebrow {
+  margin-bottom: 0.28em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(0.38rem, 0.61vw, 0.68rem);
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  opacity: 0.56;
+}
+
+.postcard__title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.15rem, 2.1vw, 2.35rem);
+  font-weight: 500;
+  line-height: 0.98;
+}
+
+.postcard__detail {
+  max-width: 100%;
+  margin-top: 0.7em;
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(0.42rem, 0.72vw, 0.77rem);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.69;
+}
+
+.postcard__stamp {
+  position: absolute;
+  top: 8%;
+  right: 4.5%;
+  display: grid;
+  width: 13%;
+  aspect-ratio: 0.8;
+  place-items: center;
+  border: 1px dashed currentColor;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(0.48rem, 0.85vw, 0.9rem);
+  opacity: 0.48;
+}
+
+.postcard__stamp::before {
+  position: absolute;
+  inset: 14%;
+  border: 1px solid currentColor;
+  content: '';
+  opacity: 0.52;
+}
+
+.postcard__postmark {
+  position: absolute;
+  top: 18%;
+  right: 15%;
+  width: 26%;
+  height: 30%;
+  opacity: 0.18;
+  transform: rotate(-8deg);
+}
+
+.postcard__postmark-ring {
+  position: absolute;
+  display: grid;
+  width: 2.1rem;
+  max-width: 45%;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(0.32rem, 0.5vw, 0.56rem);
+}
+
+.postcard__postmark-lines {
+  position: absolute;
+  top: 18%;
+  right: 0;
+  width: 62%;
+  height: 55%;
+  background: repeating-linear-gradient(
+    to bottom,
+    currentColor 0 1px,
+    transparent 1px 0.34rem
+  );
+}
+
+.contact-board__mark {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 0.72rem;
+  color: rgb(49 25 10 / 0.35);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(0.45rem, 0.65vw, 0.65rem);
+  letter-spacing: 0.18em;
+  pointer-events: none;
+}
+
+/* Dark theme: keep the cork and paper warm, but lower their luminance so the
+   board still belongs in a saturated dark room. */
+:global(html[data-theme='dark']) .contact-postcard-room {
+  --contact-cork: #895126;
+  --contact-cork-dark: #5f351a;
+  --contact-frame: #090807;
+  --contact-paper: #d6c7ae;
+  --contact-paper-2: #c5b397;
+  --contact-ink: #17120e;
+}
+
+@media (max-width: 740px) {
+  .contact-postcard-room {
+    min-height: calc(100dvh - 6.5rem);
+    padding: 0.8rem 0.72rem 1.1rem;
+    background-size:
+      100% 100%,
+      5.8rem 2.9rem,
+      5.8rem 2.9rem;
+  }
+
+  .contact-board-wrap {
+    width: min(94vw, 34rem);
+    max-height: none;
+    aspect-ratio: 0.78;
+  }
+
+  .postcard {
+    width: 72%;
+  }
+
+  .postcard--1 {
+    top: 5%;
+    left: 7%;
+  }
+
+  .postcard--2 {
+    top: 27.5%;
+    right: 6%;
+  }
+
+  .postcard--3 {
+    top: 50%;
+    bottom: auto;
+    left: 7.5%;
+  }
+
+  .postcard--4 {
+    right: 7%;
+    bottom: 5%;
+  }
+
+  .postcard__face {
+    grid-template-columns: 42% 58%;
+  }
+
+  .postcard__eyebrow {
+    font-size: clamp(0.38rem, 1.6vw, 0.58rem);
+  }
+
+  .postcard__title {
+    font-size: clamp(1.1rem, 5vw, 1.7rem);
+  }
+
+  .postcard__detail {
+    font-size: clamp(0.41rem, 1.75vw, 0.62rem);
+  }
+
+  .postcard__pin {
+    top: -0.44rem;
+    transform: translateX(-50%) scale(0.78);
+  }
+
+  .contact-board__mark {
+    right: 0.55rem;
+    bottom: 0.42rem;
+    font-size: 0.38rem;
+  }
+}
+
+@media (hover: none) {
+  .postcard {
+    transition: transform 100ms ease;
+  }
+
+  .postcard:active {
+    z-index: 8;
+    filter: none;
+    transform: rotate(0deg) scale(0.992);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .postcard {
+    transition: none;
+  }
+}

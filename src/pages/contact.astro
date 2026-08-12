@@ -1,16 +1,16 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import ContactFridge from '@/components/contact/ContactFridge.svelte';
+import ContactChalkboard from '@/components/contact/ContactChalkboard.astro';
 import '@/styles/contact.css';
 ---
 
 <BaseLayout
   title="Contact — Cyrus Asasi"
-  description="Contact Cyrus Asasi through draggable fridge magnets for email, GitHub, LinkedIn, Chess.com, Spotify, and other profile links."
+  description="Contact Cyrus Asasi by email or through GitHub, LinkedIn, Chess.com, Spotify, and other profile links."
 >
   <div class="contact-page interior-page interior-page--open">
-    <section class="contact-wall" aria-label="Contact fridge scene">
-      <ContactFridge client:load />
+    <section class="contact-wall" aria-label="Contact chalkboard">
+      <ContactChalkboard />
     </section>
   </div>
 </BaseLayout>

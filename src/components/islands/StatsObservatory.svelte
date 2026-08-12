@@ -1,9 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import ForceNetwork from '@/components/graphs/ForceNetwork.svelte';
-  import VisitorGlobeClearV2 from '@/components/islands/VisitorGlobeClearV2.svelte';
   import VisitorMap from '@/components/islands/VisitorMap.svelte';
-  import YourPathGraph from '@/components/islands/YourPathTree.svelte';
   import {
     navigationNetworkLinks,
     navigationNetworkNodes,
@@ -85,6 +82,11 @@
   let refreshing = false;
   let utcOffsetMinutes = 0;
   let globeTexturePrewarmed = false;
+  let visitorGlobeComponent: any = null;
+  let visitorGlobeImport: Promise<void> | null = null;
+  let forceNetworkComponent: any = null;
+  let yourPathGraphComponent: any = null;
+  let networkComponentsImport: Promise<void> | null = null;
 
   $: hourly = normalizedHours(liveStats?.hours);
   $: peakHour = hourly.reduce(
@@ -196,12 +198,62 @@
     const image = new Image();
     image.decoding = 'async';
     image.fetchPriority = 'low';
-    image.src = `${base}generated/globe-world-mask-4096.webp`;
+    image.src = `${base}generated/globe-world-mask-2048.webp`;
+  }
+
+  function ensureVisitorGlobe() {
+    if (visitorGlobeComponent) return Promise.resolve();
+    if (visitorGlobeImport) return visitorGlobeImport;
+
+    visitorGlobeImport = import('@/components/islands/VisitorGlobeClearV2.svelte').then((module) => {
+      visitorGlobeComponent = module.default;
+    });
+    return visitorGlobeImport;
   }
 
   function selectEarthView(view: EarthView) {
     earthView = view;
-    if (view === '3d') prewarmGlobePreview();
+    if (view === '3d') {
+      prewarmGlobePreview();
+      void ensureVisitorGlobe();
+    }
+  }
+
+  function ensureNetworkComponents() {
+    if (forceNetworkComponent && yourPathGraphComponent) return Promise.resolve();
+    if (networkComponentsImport) return networkComponentsImport;
+
+    networkComponentsImport = Promise.all([
+      import('@/components/graphs/ForceNetwork.svelte'),
+      import('@/components/islands/YourPathTree.svelte'),
+    ]).then(([forceModule, pathModule]) => {
+      forceNetworkComponent = forceModule.default;
+      yourPathGraphComponent = pathModule.default;
+    });
+    return networkComponentsImport;
+  }
+
+  function loadNetworksWhenNear(node: HTMLElement) {
+    if (!('IntersectionObserver' in window)) {
+      void ensureNetworkComponents();
+      return {};
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        void ensureNetworkComponents();
+      },
+      { rootMargin: '420px 0px' },
+    );
+    observer.observe(node);
+
+    return {
+      destroy() {
+        observer.disconnect();
+      },
+    };
   }
 
   async function readJson<T>(url: string): Promise<T> {
@@ -254,7 +306,7 @@
 
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'visible') void loadLiveStats();
-    }, 20_000);
+    }, 60_000);
 
     return () => {
       window.clearInterval(interval);
@@ -293,12 +345,18 @@
               locations={liveStats.locations}
               totalVisitors={liveStats.summary.estimatedVisitors}
             />
-          {:else}
-            <VisitorGlobeClearV2
+          {:else if visitorGlobeComponent}
+            <svelte:component
+              this={visitorGlobeComponent}
               embedded={true}
               locations={liveStats.locations}
               totalVisitors={liveStats.summary.estimatedVisitors}
             />
+          {:else}
+            <div class="observatory-loading">
+              <span class="observatory-orbit" aria-hidden="true"></span>
+              <span>Loading globe…</span>
+            </div>
           {/if}
         {/key}
       {:else}
@@ -318,33 +376,38 @@
     </div>
   </section>
 
-  <div class="observatory-network-pair">
+  <div class="observatory-network-pair" use:loadNetworksWhenNear>
     <section class="observatory-network-panel" aria-labelledby="page-traffic-title">
       <header class="observatory-section-header">
         <h2 id="page-traffic-title">Page traffic</h2>
       </header>
 
       <div class="network-force-stage traffic-force-stage">
-        <ForceNetwork
-          nodes={trafficGraphNodes}
-          links={navigationNetworkLinks}
-          centerNodeId="home"
-          idPrefix="stats-traffic-network"
-          ariaLabel="Interactive website traffic network with page-view totals"
-          height="min(52svh, 32rem)"
-          showHint={false}
-          settings={{
-            layout: 'radial',
-            radialRadius: 0.33,
-            radialStartAngle: -Math.PI / 2,
-            entranceRadius: 0,
-            chargeStrength: -205,
-            anchorStrength: 0.19,
-            centerAnchorStrength: 0.42,
-            collisionPadding: 18,
-            linkStrength: 0.2,
-          }}
-        />
+        {#if forceNetworkComponent}
+          <svelte:component
+            this={forceNetworkComponent}
+            nodes={trafficGraphNodes}
+            links={navigationNetworkLinks}
+            centerNodeId="home"
+            idPrefix="stats-traffic-network"
+            ariaLabel="Interactive website traffic network with page-view totals"
+            height="min(52svh, 32rem)"
+            showHint={false}
+            settings={{
+              layout: 'radial',
+              radialRadius: 0.33,
+              radialStartAngle: -Math.PI / 2,
+              entranceRadius: 0,
+              chargeStrength: -205,
+              anchorStrength: 0.19,
+              centerAnchorStrength: 0.42,
+              collisionPadding: 18,
+              linkStrength: 0.2,
+            }}
+          />
+        {:else}
+          <div class="observatory-loading"><span>Loading network…</span></div>
+        {/if}
       </div>
     </section>
 
@@ -352,7 +415,13 @@
       <header class="observatory-section-header">
         <h2 id="your-path-title">Your path</h2>
       </header>
-      <YourPathGraph />
+      {#if yourPathGraphComponent}
+        <svelte:component this={yourPathGraphComponent} />
+      {:else}
+        <div class="network-force-stage path-force-stage">
+          <div class="observatory-loading"><span>Loading path…</span></div>
+        </div>
+      {/if}
     </section>
   </div>
 

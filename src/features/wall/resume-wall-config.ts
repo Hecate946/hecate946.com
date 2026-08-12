@@ -10,12 +10,16 @@ const resumeDefinitions = [
     label: 'Software Engineering',
     href: '/resumes/cyrus-asasi-software-engineering-resume.pdf',
     painting: {
-      src: '/images/resume/cyrus-asasi-software-engineering-resume.webp',
+      src: '/images/resume/cyrus-asasi-software-engineering-resume-480.webp',
       name: 'Software engineering resume preview',
-      width: 1454,
-      height: 2048,
+      width: 480,
+      height: 676,
       objectPosition: '50% 50%',
       objectFit: 'contain',
+      sources: [
+        { src: '/images/resume/cyrus-asasi-software-engineering-resume-480.webp', width: 480 },
+        { src: '/images/resume/cyrus-asasi-software-engineering-resume-720.webp', width: 720 },
+      ],
     },
   },
   {
@@ -23,12 +27,16 @@ const resumeDefinitions = [
     label: 'Clarinet Performance',
     href: '/resumes/cyrus-asasi-clarinet-performance-resume.pdf',
     painting: {
-      src: '/images/resume/cyrus-asasi-clarinet-performance-resume.webp',
+      src: '/images/resume/cyrus-asasi-clarinet-performance-resume-480.webp',
       name: 'Clarinet performance resume preview',
-      width: 1338,
-      height: 1885,
+      width: 480,
+      height: 676,
       objectPosition: '50% 50%',
       objectFit: 'contain',
+      sources: [
+        { src: '/images/resume/cyrus-asasi-clarinet-performance-resume-480.webp', width: 480 },
+        { src: '/images/resume/cyrus-asasi-clarinet-performance-resume-720.webp', width: 720 },
+      ],
     },
   },
 ] as const;

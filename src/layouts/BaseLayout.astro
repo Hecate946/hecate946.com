@@ -131,7 +131,7 @@ const roomLiftTransition = {
     {hasSiteRoomBackdrop && (
       <div class="site-room-backdrop wall-room-host" aria-hidden="true">
         <WallBackdrop />
-        <FloorScene client:load />
+        <FloorScene client:idle />
       </div>
     )}
     <SkipLink />
@@ -147,7 +147,7 @@ const roomLiftTransition = {
       const elevatorTabAnimationsEnabled =
         document.documentElement.dataset.elevatorTabAnimations === 'on';
 
-      // Primary room order: Home → About → Projects → Resumes → Contact.
+      // Primary room order: Home -> About -> Projects -> Resumes -> Contact.
       // Moving right reveals the room below; moving left reveals the room above.
       const orderedRoomRoutes = ['/', '/about', '/projects', '/resumes', '/contact'] as const;
 
@@ -265,31 +265,46 @@ const roomLiftTransition = {
         if (isCurrentPage) event.preventDefault();
       };
 
-      if (elevatorTabAnimationsEnabled) {
-        document.addEventListener('astro:before-preparation', setRoomTransitionDirection);
+      type NavigationWindow = Window & { __hecateNavigationHandlersInstalled?: boolean };
+      const navigationWindow = window as NavigationWindow;
+
+      // Astro's router keeps the same document alive across page swaps. Install
+      // these document-level handlers once so repeated navigation can never
+      // accumulate duplicate click/page-load work.
+      if (!navigationWindow.__hecateNavigationHandlersInstalled) {
+        navigationWindow.__hecateNavigationHandlersInstalled = true;
+
+        if (elevatorTabAnimationsEnabled) {
+          document.addEventListener('astro:before-preparation', setRoomTransitionDirection);
+        }
+        document.addEventListener('astro:page-load', rewritePdfLinks);
+        document.addEventListener('click', routePdfNavigation, { capture: true });
+        document.addEventListener('click', preventRedundantNavigation, { capture: true });
       }
-      // Rewrite static links up front so context-menu / new-tab actions also
-      // target the site viewer. Repeat after Astro swaps in a new document.
+
+      // Handle the initial document immediately. Subsequent swaps are covered
+      // by the single astro:page-load listener above.
       rewritePdfLinks();
-      document.addEventListener('astro:page-load', rewritePdfLinks);
-      // Catch dynamically inserted PDF links before their default action.
-      document.addEventListener('click', routePdfNavigation, { capture: true });
-      // Capture first so Astro's router never starts a transition for a link that
-      // points to the exact page already on screen. Modified clicks stay native.
-      document.addEventListener('click', preventRedundantNavigation, { capture: true });
     </script>
 
     <script>
-      const startAnalytics = () => {
-        void import('@/lib/analytics').then(({ initAnalytics }) => {
-          initAnalytics();
-        });
-      };
+      type AnalyticsBootstrapWindow = Window & { __hecateAnalyticsBootstrapScheduled?: boolean };
+      const analyticsBootstrapWindow = window as AnalyticsBootstrapWindow;
 
-      if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(startAnalytics, { timeout: 2_000 });
-      } else {
-        globalThis.setTimeout(startAnalytics, 500);
+      if (!analyticsBootstrapWindow.__hecateAnalyticsBootstrapScheduled) {
+        analyticsBootstrapWindow.__hecateAnalyticsBootstrapScheduled = true;
+
+        const startAnalytics = () => {
+          void import('@/lib/analytics').then(({ initAnalytics }) => {
+            initAnalytics();
+          });
+        };
+
+        if ('requestIdleCallback' in window) {
+          window.requestIdleCallback(startAnalytics, { timeout: 2_000 });
+        } else {
+          globalThis.setTimeout(startAnalytics, 500);
+        }
       }
     </script>
   </body>

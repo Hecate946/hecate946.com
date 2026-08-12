@@ -244,7 +244,7 @@ html[data-theme='dark'] body.about-room-page {
   background-size: 17px 19px, 23px 21px;
   opacity: 0.085;
   mix-blend-mode: multiply;
-  animation: tv-noise-drift 900ms steps(2, end) infinite;
+  /* Static grain keeps the CRT texture without a perpetual compositor animation. */
 }
 
 .about-tv__vignette {
@@ -264,11 +264,6 @@ html[data-theme='dark'] body.about-room-page {
   mix-blend-mode: screen;
 }
 
-@keyframes tv-noise-drift {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(0.35px, -0.25px); }
-  100% { transform: translate(-0.2px, 0.3px); }
-}
 
 /* CRT channel switch. */
 .about-tv-installation.is-powering-down .about-tv__picture {
@@ -352,13 +347,15 @@ html[data-theme='dark'] body.about-room-page {
 .about-tv-channel__portrait-wrap {
   flex: 0 0 auto;
   width: 5.2rem;
+  aspect-ratio: 0.9;
   margin: 0.14rem auto 0;
+  overflow: hidden;
 }
 
 .about-tv-channel__portrait {
   display: block;
   width: 100%;
-  aspect-ratio: 0.9;
+  height: 100%;
   object-fit: cover;
   border: 1px solid rgb(20 31 33 / 13%);
   filter: saturate(0.52) contrast(1.025);
@@ -393,6 +390,25 @@ html[data-theme='dark'] body.about-room-page {
   font-weight: 650;
   letter-spacing: 0;
   text-decoration: none;
+}
+
+
+.about-tv-channel__links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+.about-tv-channel__link-arrow {
+  display: block;
+  width: 0.78em;
+  height: 0.78em;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.45;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .about-tv-channel__links a:hover,

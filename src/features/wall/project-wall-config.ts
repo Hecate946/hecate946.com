@@ -10,11 +10,15 @@ const projectDefinitions = [
     label: 'Neutra',
     href: '/projects/neutra/',
     painting: {
-      src: '/images/project-gallery/neutra.webp',
+      src: '/images/project-gallery/neutra-480.webp',
       name: 'Project painting',
-      width: 627,
-      height: 760,
+      width: 480,
+      height: 582,
       objectPosition: '50% 50%',
+      sources: [
+        { src: '/images/project-gallery/neutra-480.webp', width: 480 },
+        { src: '/images/project-gallery/neutra.webp', width: 627 },
+      ],
     },
   },
   {
@@ -22,11 +26,15 @@ const projectDefinitions = [
     label: 'Sunset',
     href: '/projects/sunset/',
     painting: {
-      src: '/images/project-gallery/sunset.webp',
+      src: '/images/project-gallery/sunset-480.webp',
       name: 'Project painting',
-      width: 834,
-      height: 1024,
+      width: 480,
+      height: 589,
       objectPosition: '50% 50%',
+      sources: [
+        { src: '/images/project-gallery/sunset-480.webp', width: 480 },
+        { src: '/images/project-gallery/sunset-720.webp', width: 720 },
+      ],
     },
   },
   {

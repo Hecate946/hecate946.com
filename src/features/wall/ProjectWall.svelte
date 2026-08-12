@@ -25,6 +25,7 @@
   const DIRECTION_THRESHOLD = 36;
   const INERTIA_TIME_CONSTANT = 0.78;
   const MAX_MANUAL_SPEED = 2_400;
+  const MIN_FRAME_INTERVAL_MS = 10;
 
   let stage: HTMLElement;
   let wallWorld: HTMLElement;
@@ -85,7 +86,9 @@
   }
 
   function refreshRenderDevicePixelRatio() {
-    renderDevicePixelRatio = Math.max(1, window.devicePixelRatio || 1);
+    // More than 2x positioning precision only increases style/WebGL updates on
+    // high-DPR phones without a visible benefit at these frame sizes.
+    renderDevicePixelRatio = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     lastRenderedCameraX = Number.NaN;
     lastLoopBase = Number.NaN;
     renderCamera(true);
@@ -118,6 +121,12 @@
     lastRenderedCameraX = renderedCameraX;
   }
 
+  function ensureAnimationLoop() {
+    if (rafId || document.hidden) return;
+    lastFrame = performance.now();
+    rafId = requestAnimationFrame(animationFrame);
+  }
+
   function toggleMotion() {
     isPaused = !isPaused;
 
@@ -130,7 +139,7 @@
     // back toward the idle speed. Resetting the frame clock also prevents a
     // stale elapsed interval after a backgrounded tab or an Astro page swap.
     velocity = driftDirection * IDLE_DRIFT_SPEED;
-    lastFrame = performance.now();
+    ensureAnimationLoop();
   }
 
   function cancelCameraAnimation() {
@@ -143,6 +152,7 @@
     cancelCameraAnimation();
     markInteracted();
     cameraX += amount;
+    ensureAnimationLoop();
   }
 
   function nearestDelta(targetX: number) {
@@ -160,6 +170,7 @@
       const token = ++cameraAnimationToken;
       programmatic = true;
       velocity = 0;
+      ensureAnimationLoop();
 
       const step = (now: number) => {
         if (token !== cameraAnimationToken) {
@@ -240,6 +251,7 @@
     dragDistance = 0;
     velocity = 0;
     markInteracted();
+    ensureAnimationLoop();
   }
 
   function captureTouchPointer(event: PointerEvent) {
@@ -340,6 +352,7 @@
     lastFrame = performance.now();
     lastRenderedCameraX = Number.NaN;
     renderCamera(true);
+    if (!isPaused) ensureAnimationLoop();
   }
 
   function restoreWallAfterHistoryNavigation() {
@@ -355,6 +368,7 @@
     lastRenderedCameraX = Number.NaN;
     lastLoopBase = Number.NaN;
     renderCamera(true);
+    if (!isPaused) ensureAnimationLoop();
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -390,6 +404,14 @@
 
 
   function animationFrame(now: number) {
+    rafId = 0;
+    // Suppress redundant ultra-high-refresh frames without turning 90Hz displays
+    // into 45Hz animation. Pointer input is still sampled at native event frequency.
+    if (lastFrame && now - lastFrame < MIN_FRAME_INTERVAL_MS) {
+      rafId = requestAnimationFrame(animationFrame);
+      return;
+    }
+
     const elapsedMs = lastFrame ? Math.min(50, Math.max(0, now - lastFrame)) : 16.667;
     const dt = elapsedMs / 1000;
     lastFrame = now;
@@ -402,9 +424,16 @@
       cameraX += velocity * dt;
     }
 
-    // Render exactly once per display frame. Pointer/wheel events only update
-    // world state; they no longer force separate Svelte/DOM updates.
     renderCamera();
+
+    // When the user explicitly pauses the conveyor, stop scheduling frames
+    // entirely once any residual inertia has settled. Pointer/wheel/key input
+    // restarts the loop on demand, so a paused tab costs effectively no CPU.
+    if (isPaused && !dragging && !programmatic && !enteringId && Math.abs(velocity) < 0.01) {
+      velocity = 0;
+      return;
+    }
+
     rafId = requestAnimationFrame(animationFrame);
   }
 
@@ -438,7 +467,7 @@
     window.addEventListener('resize', refreshRenderDevicePixelRatio, { passive: true });
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('pageshow', restoreWallAfterHistoryNavigation);
-    rafId = requestAnimationFrame(animationFrame);
+    ensureAnimationLoop();
 
     return () => {
       stage.removeEventListener('wheel', onWheel);
@@ -492,6 +521,7 @@
             {destination}
             keyboardAccessible={loopIndex === 0}
             semantic={loopIndex === 0}
+            eager={loopIndex === 0 && destinationIndex === 0}
             entering={enteringId === destination.id}
             onFocus={focusDestination}
             onEnter={enterDestination}
