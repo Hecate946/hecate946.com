@@ -15,6 +15,8 @@
   export let stageLabel =
     'Infinite project conveyor. Drag, swipe, or scroll horizontally, then select a framed project.';
   export let trackLabel = 'Selected projects';
+  export let roomKey = 'projects';
+  export let active = true;
 
   const loopCopies = [-1, 0, 1] as const;
   const DRAG_THRESHOLD = 7;
@@ -51,6 +53,9 @@
   let lastRenderedCameraX = Number.NaN;
   let lastLoopBase = Number.NaN;
   let backdropBaseCameraX = startX;
+  let mounted = false;
+  let activeRoomKey = roomKey;
+  const roomCameraPositions = new Map<string, number>();
 
   $: stageStyle = `--loop-width: ${loopWidth}px;`;
 
@@ -89,7 +94,6 @@
     const roomWindow = window as RoomCameraWindow;
     roomWindow.__hecateRoomCameraX = cameraX;
     roomWindow.__hecateSetRoomCameraX?.(cameraX);
-    document.documentElement.style.setProperty('--room-camera-x', `${cameraX}px`);
   }
 
   function renderCamera(force = false) {
@@ -118,6 +122,49 @@
     lastRenderedCameraX = renderedCameraX;
   }
 
+  function switchRoom(nextRoomKey: string) {
+    if (nextRoomKey === activeRoomKey) return;
+
+    roomCameraPositions.set(activeRoomKey, cameraX);
+    const roomWindow = typeof window !== 'undefined' ? (window as RoomCameraWindow) : null;
+    const inheritedBackdrop = roomWindow && Number.isFinite(roomWindow.__hecateRoomCameraX)
+      ? (roomWindow.__hecateRoomCameraX as number)
+      : backdropBaseCameraX + (cameraX - startX);
+
+    activeRoomKey = nextRoomKey;
+    cameraX = roomCameraPositions.get(nextRoomKey) ?? startX;
+    velocity = driftDirection * IDLE_DRIFT_SPEED;
+    programmatic = false;
+    programmaticResolve = null;
+    dragging = false;
+    activePointerId = null;
+    gestureAxis = 'pending';
+    dragDistance = 0;
+
+    // Preserve the backdrop's exact visual phase while the framed content
+    // changes configuration. The next movement continues from that same phase.
+    backdropBaseCameraX = inheritedBackdrop - (cameraX - startX);
+
+    if (mounted) refreshRenderState();
+  }
+
+  function syncActiveState() {
+    if (!mounted) return;
+    if (!active) {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = 0;
+      clearPointerDrag();
+      return;
+    }
+
+    lastFrame = performance.now();
+    refreshRenderState();
+    ensureAnimationLoop();
+  }
+
+  $: if (roomKey !== activeRoomKey) switchRoom(roomKey);
+  $: active, syncActiveState();
+
   function refreshRenderState() {
     lastRenderedCameraX = Number.NaN;
     lastLoopBase = Number.NaN;
@@ -125,7 +172,7 @@
   }
 
   function ensureAnimationLoop() {
-    if (rafId || document.hidden) return;
+    if (rafId || document.hidden || !active) return;
     lastFrame = performance.now();
     rafId = requestAnimationFrame(animationFrame);
   }
@@ -389,6 +436,7 @@
 
   function animationFrame(now: number) {
     rafId = 0;
+    if (!active) return;
 
     // requestAnimationFrame already follows the display's refresh cadence.
     // Do not add a second software frame limiter; doing so causes uneven frame
@@ -440,6 +488,7 @@
   }
 
   onMount(() => {
+    mounted = true;
     // Always begin in the moving state. The visible control is the only thing
     // that pauses this scene, which avoids browser/OS preference mismatches
     // producing a frozen wall with a nonfunctional-looking Pause button.
@@ -466,6 +515,7 @@
     ensureAnimationLoop();
 
     return () => {
+      mounted = false;
       stage.removeEventListener('wheel', onWheel);
       stage.removeEventListener('pointerdown', onPointerDown);
       stage.removeEventListener('pointermove', onPointerMove);
@@ -488,7 +538,9 @@
   class:wall-stage--dragging={dragging}
   class:wall-stage--interacted={hasInteracted}
   class:wall-stage--entering={Boolean(enteringId)}
+  class:wall-stage--inactive={!active}
   class="wall-stage wall-room-host"
+  aria-hidden={!active ? 'true' : undefined}
   style={stageStyle}
   aria-label={stageLabel}
 >

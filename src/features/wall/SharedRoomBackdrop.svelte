@@ -11,10 +11,7 @@
   };
 
   let wallBackdrop: { setCameraX: (cameraX: number) => void };
-  let floorScene: {
-    setCameraX: (cameraX: number) => void;
-    refreshFromCss: () => void;
-  };
+  let floorScene: { setCameraX: (cameraX: number) => void };
 
   function applyCamera(cameraX: number) {
     wallBackdrop?.setCameraX(cameraX);
@@ -37,17 +34,7 @@
 
     roomWindow.__hecateSetRoomCameraX = setCameraX;
 
-    const refreshAfterSwap = () => {
-      // A persisted island is moved into the new body before astro:page-load.
-      // Re-read palette variables and dimensions once the destination body's
-      // route/theme classes are in place so the same canvas can be reused.
-      requestAnimationFrame(() => floorScene?.refreshFromCss());
-    };
-
-    document.addEventListener('astro:page-load', refreshAfterSwap);
-
     return () => {
-      document.removeEventListener('astro:page-load', refreshAfterSwap);
       if (roomWindow.__hecateSetRoomCameraX === setCameraX) {
         delete roomWindow.__hecateSetRoomCameraX;
       }

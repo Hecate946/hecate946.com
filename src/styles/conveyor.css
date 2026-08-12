@@ -400,3 +400,10 @@
       transition: none;
     }
   }
+
+/* A single conveyor island persists between Home, Projects and Resumes. Hide
+   it without destroying its Svelte state while About/Contact are active. */
+.wall-stage--inactive {
+  visibility: hidden;
+  pointer-events: none;
+}

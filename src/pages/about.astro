@@ -1,36 +1,9 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import AboutTV from '@/components/about/AboutTV.svelte';
-import AboutFloor from '@/components/about/AboutFloor.svelte';
-import { siteConfig } from '@/config/site';
-import { withBase } from '@/lib/paths';
-
-const portraitUrl = withBase('/images/about/cyrus-portrait-480.webp');
-const softwareResumeUrl = withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf');
-const projectsUrl = withBase('/projects/');
-const musicResumeUrl = withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf');
-const musicVideoUrl = 'https://www.youtube.com/watch?v=EkgH4zzXoNg';
-const pickleballArticleUrl =
-  'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
-const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
 ---
 
 <BaseLayout
   title="About — Cyrus Asasi"
   description="Software engineer, classical musician, competitive pickleball player, and chess enthusiast."
   bodyClass="about-room-page"
->
-  <div class="about-room wall-room-host">
-    {siteConfig.ui.enableMagnifyingGlass && <AboutFloor client:load />}
-    <AboutTV
-      client:load
-      {portraitUrl}
-      {softwareResumeUrl}
-      {projectsUrl}
-      {musicResumeUrl}
-      {musicVideoUrl}
-      {pickleballArticleUrl}
-      {chessProfileUrl}
-    />
-  </div>
-</BaseLayout>
+/>

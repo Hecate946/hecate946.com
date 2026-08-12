@@ -3,14 +3,14 @@ import BaseHead from '@/components/core/BaseHead.astro';
 import Header from '@/components/core/Header.astro';
 import SkipLink from '@/components/core/SkipLink.astro';
 import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
-import WallBackdrop from '@/features/wall/WallBackdrop.svelte';
-import FloorScene from '@/features/floor/FloorScene.svelte';
 import SharedRoomBackdrop from '@/features/wall/SharedRoomBackdrop.svelte';
+import PrimaryRoomEngine from '@/features/room/PrimaryRoomEngine.svelte';
 import { ClientRouter } from 'astro:transitions';
 import { siteConfig } from '@/config/site';
 import { WALL_START_X } from '@/features/wall/wall-config';
 import { PROJECT_START_X } from '@/features/wall/project-wall-config';
 import { RESUME_START_X } from '@/features/wall/resume-wall-config';
+import { withBase } from '@/lib/paths';
 import '@/styles/global.css';
 // Keep the five primary room styles resident from the first paint. Astro's
 // client router otherwise has to wait for route-specific stylesheets during a
@@ -81,6 +81,17 @@ const primaryRoomInitialCameraX =
         ? WALL_START_X
         : 0;
 
+const primaryRoomAboutProps = {
+  portraitUrl: withBase('/images/about/cyrus-portrait-480.webp'),
+  softwareResumeUrl: withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf'),
+  projectsUrl: withBase('/projects/'),
+  musicResumeUrl: withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf'),
+  musicVideoUrl: 'https://www.youtube.com/watch?v=EkgH4zzXoNg',
+  pickleballArticleUrl:
+    'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers',
+  chessProfileUrl: 'https://www.chess.com/member/Cyrus2020SD/stats?time=0',
+};
+
 const hasSiteRoomBackdrop = !isPrimaryRoom;
 const elevatorTabAnimationsEnabled = siteConfig.ui.enableElevatorTabAnimations;
 const clientRouterFallback = elevatorTabAnimationsEnabled ? 'animate' : 'swap';
@@ -141,18 +152,18 @@ const roomLiftTransition = {
       hasSiteRoomBackdrop && 'has-site-room-backdrop',
     ]}
   >
+    <SharedRoomBackdrop
+      client:load
+      transition:persist="global-room-backdrop"
+      initialCameraX={primaryRoomInitialCameraX}
+    />
     {isPrimaryRoom && (
-      <SharedRoomBackdrop
+      <PrimaryRoomEngine
         client:load
-        transition:persist="primary-room-backdrop"
-        initialCameraX={primaryRoomInitialCameraX}
+        transition:persist="primary-room-engine"
+        initialPath={pathname}
+        {...primaryRoomAboutProps}
       />
-    )}
-    {hasSiteRoomBackdrop && (
-      <div class="site-room-backdrop wall-room-host" aria-hidden="true">
-        <WallBackdrop />
-        <FloorScene client:idle />
-      </div>
     )}
     <SkipLink />
     <Header />
@@ -373,6 +384,7 @@ const roomLiftTransition = {
         scheduleIdle(
           () => {
             void Promise.allSettled([
+              import('@/features/room/PrimaryRoomEngine.svelte'),
               import('@/features/wall/ProjectWall.svelte'),
               import('@/components/about/AboutTV.svelte'),
             ]);
@@ -386,6 +398,10 @@ const roomLiftTransition = {
             const primaryRoomImages = useRetinaCandidates
               ? [
                   '/images/about/cyrus-portrait-480.webp',
+                  '/paintings/the-stare.webp',
+                  '/paintings/pastry-chef.webp',
+                  '/paintings/stats-portrait-720.webp',
+                  '/paintings/madame-le-peletier.webp',
                   '/images/project-gallery/neutra.webp',
                   '/images/project-gallery/sunset-720.webp',
                   '/images/project-gallery/keycad.webp',
@@ -396,6 +412,10 @@ const roomLiftTransition = {
                 ]
               : [
                   '/images/about/cyrus-portrait-480.webp',
+                  '/paintings/the-stare-480.webp',
+                  '/paintings/pastry-chef-480.webp',
+                  '/paintings/stats-portrait-480.webp',
+                  '/paintings/madame-le-peletier-480.webp',
                   '/images/project-gallery/neutra-480.webp',
                   '/images/project-gallery/sunset-480.webp',
                   '/images/project-gallery/keycad-480.webp',

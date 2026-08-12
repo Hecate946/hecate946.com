@@ -1,7 +1,7 @@
 /*
- * Independent 3D floor layer. The canvas spans the room so future objects can
- * rise above the floor without being clipped at the wall/floor boundary. The
- * geometry itself begins at the shared baseboard/floor seam.
+ * Compositor-only checkerboard floor. The previous implementation redrew a
+ * full canvas whenever the conveyor camera changed. This version keeps one
+ * painted checker texture on a 3D CSS plane and changes only its transform.
  */
 .floor-scene {
   position: absolute;
@@ -13,37 +13,52 @@
 }
 
 .floor-scene__underlay,
-.floor-scene__canvas,
+.floor-scene__viewport,
 .floor-scene__lighting {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  top: var(--floor-seam-top);
   pointer-events: none;
 }
 
-/*
- * SSR/loading/error underlay only. This is deliberately a flat fill rather
- * than a second checkerboard implementation, so refreshes can never show the
- * obsolete 2D floor before WebGL paints its first frame.
- */
 .floor-scene__underlay {
   z-index: 1;
-  top: var(--floor-seam-top);
-  height: auto;
   background: var(--wall-dark, #050505);
 }
 
-.floor-scene__canvas {
+.floor-scene__viewport {
   z-index: 2;
-  display: block;
+  overflow: hidden;
+  /* 67.5deg + 109vh reproduces the old 45deg camera's projected 84px
+     checker rows (about 35px / 42px / 51px at a typical desktop seam). */
+  perspective: 109vh;
+  perspective-origin: 50% 0;
+  transform: translateZ(0);
 }
 
-/* Atmospheric pass shared by the floor and future 3D objects. */
+.floor-scene__plane {
+  position: absolute;
+  top: 0;
+  left: -168px;
+  width: calc(100% + 336px);
+  height: 42rem;
+  transform-origin: 50% 0;
+  backface-visibility: hidden;
+  will-change: transform;
+  background:
+    conic-gradient(
+      from 90deg,
+      var(--wall-dark, #050505) 0 25%,
+      var(--wall-light, #f4f1e9) 0 50%,
+      var(--wall-dark, #050505) 0 75%,
+      var(--wall-light, #f4f1e9) 0
+    ) 0 0 / 168px 168px;
+}
+
 .floor-scene__lighting {
   z-index: 3;
-  top: var(--floor-seam-top);
-  height: auto;
   background:
     linear-gradient(180deg, rgb(0 0 0 / 22%), transparent 1.35rem),
     linear-gradient(
@@ -67,31 +82,15 @@
   opacity: 0.14;
 }
 
-/* A measurable CSS anchor gives the renderer the exact DOM seam to match. */
-.floor-scene__horizon-anchor {
-  position: absolute;
-  top: var(--floor-seam-top);
-  left: 0;
-  width: 1px;
-  height: 1px;
-  visibility: hidden;
-  pointer-events: none;
+
+@supports (height: 100dvh) {
+  .floor-scene__viewport {
+    perspective: 109dvh;
+  }
 }
 
-.floor-scene__palette-probe,
-.floor-scene__registrants {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.floor-scene__palette-probe--light {
-  background: var(--wall-light, #f4f1e9);
-}
-
-.floor-scene__palette-probe--dark {
-  background: var(--wall-dark, #050505);
+@media (max-width: 40rem) {
+  .floor-scene__plane {
+    height: 36rem;
+  }
 }

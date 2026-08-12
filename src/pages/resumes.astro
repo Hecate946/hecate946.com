@@ -1,11 +1,5 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import ProjectWall from '@/features/wall/ProjectWall.svelte';
-import {
-  RESUME_LOOP_WIDTH,
-  RESUME_START_X,
-  resumeDestinations,
-} from '@/features/wall/resume-wall-config';
 ---
 
 <BaseLayout
@@ -13,14 +7,4 @@ import {
   description="Software engineering and clarinet performance resumes for Cyrus Asasi."
   mainClass="resume-wall-main"
   bodyClass="resume-wall-page"
->
-  <ProjectWall
-    client:load
-    destinations={resumeDestinations}
-    loopWidth={RESUME_LOOP_WIDTH}
-    startX={RESUME_START_X}
-    heading="Resumes"
-    stageLabel="Infinite resume conveyor. Drag, swipe, or scroll horizontally, then select a framed resume."
-    trackLabel="Resumes"
-  />
-</BaseLayout>
+/>
