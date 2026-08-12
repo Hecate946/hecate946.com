@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { PAGE_ASPECT, preloadBookImages, renderBookFace } from './book-texture';
 import type {
+  BookClosedSide,
   BookLink,
+  BookMotion,
   BookSpread,
   Direction,
   PageFace,
@@ -28,10 +30,17 @@ type CachedFace = {
   hitRegions: PageHitRegion[];
 };
 
-export type BookPageHit = {
-  side: PageSide;
-  uv: { x: number; y: number };
-};
+export type BookSurfaceHit =
+  | {
+      target: 'page';
+      side: PageSide;
+      uv: { x: number; y: number };
+    }
+  | {
+      target: 'cover';
+      side: 'front' | 'back';
+      uv: { x: number; y: number };
+    };
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const smootherstep = (value: number) => {
@@ -52,7 +61,8 @@ export class BookScene {
   private pointerNdc = new THREE.Vector2();
 
   private currentSpread = 0;
-  private turnDirection: Direction | 0 = 0;
+  private closedSide: BookClosedSide = null;
+  private motion: BookMotion | null = null;
   private turnProgress = 0;
   private textureWidth = 0;
   private textureGeneration = 0;
@@ -214,14 +224,20 @@ export class BookScene {
     });
   }
 
-  setState(currentSpread: number, turnDirection: Direction | 0, turnProgress: number) {
+  setState(
+    currentSpread: number,
+    closedSide: BookClosedSide,
+    motion: BookMotion | null,
+    turnProgress: number,
+  ) {
     this.currentSpread = currentSpread;
-    this.turnDirection = turnDirection;
+    this.closedSide = closedSide;
+    this.motion = motion;
     this.turnProgress = clamp01(turnProgress);
     this.applyState();
   }
 
-  pickPage(clientX: number, clientY: number): BookPageHit | null {
+  pickSurface(clientX: number, clientY: number): BookSurfaceHit | null {
     const bounds = this.canvas.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return null;
 
@@ -230,10 +246,22 @@ export class BookScene {
       -((clientY - bounds.top) / bounds.height) * 2 + 1,
     );
     this.raycaster.setFromCamera(this.pointerNdc, this.camera);
+
+    if (this.closedSide && !this.motion) {
+      const hit = this.raycaster.intersectObjects([this.turnFrontMesh, this.turnBackMesh], false)[0];
+      if (!hit?.uv) return null;
+      return {
+        target: 'cover',
+        side: this.closedSide,
+        uv: { x: hit.uv.x, y: 1 - hit.uv.y },
+      };
+    }
+
     const hit = this.raycaster.intersectObjects([this.leftPageMesh, this.rightPageMesh], false)[0];
     if (!hit?.uv) return null;
 
     return {
+      target: 'page',
       side: hit.object === this.rightPageMesh ? 'right' : 'left',
       uv: { x: hit.uv.x, y: 1 - hit.uv.y },
     };
@@ -340,8 +368,21 @@ export class BookScene {
     return { kind: 'content', spread: this.spreads[index], pageNumber: index * 2 + 2 };
   }
 
+  private coverFace(side: 'front' | 'back'): PageFace {
+    return side === 'front'
+      ? {
+          kind: 'cover',
+          side,
+          eyebrow: this.spreads[0]?.eyebrow ?? 'ABOUT',
+          title: this.spreads[0]?.title ?? 'About',
+        }
+      : { kind: 'cover', side };
+  }
+
   private faceKey(face: PageFace) {
-    return `${face.kind}:${face.spread.id}:${face.pageNumber}`;
+    return face.kind === 'cover'
+      ? `cover:${face.side}`
+      : `${face.kind}:${face.spread.id}:${face.pageNumber}`;
   }
 
   private leftTopZ(spreadIndex: number) {
@@ -446,14 +487,18 @@ export class BookScene {
 
   private async renderAllFaces(force = false) {
     const width = this.chooseTextureWidth();
-    if (!force && width === this.textureWidth && this.faceCache.size === this.spreads.length * 2) return;
+    if (!force && width === this.textureWidth && this.faceCache.size === this.spreads.length * 2 + 2) return;
 
     const generation = ++this.textureGeneration;
     this.textureWidth = width;
     preloadBookImages(this.spreads.map((spread) => spread.visual.src));
     await document.fonts?.ready;
 
-    const faces = this.spreads.flatMap((_, index) => [this.visualFace(index), this.contentFace(index)]);
+    const faces: PageFace[] = [
+      this.coverFace('front'),
+      this.coverFace('back'),
+      ...this.spreads.flatMap((_, index) => [this.visualFace(index), this.contentFace(index)]),
+    ];
     const built = await Promise.all(
       faces.map(async (face) => [this.faceKey(face), await this.buildTexture(face, width)] as const),
     );
@@ -625,8 +670,8 @@ export class BookScene {
     mesh.position.set(side === 'left' ? -PAGE_WIDTH / 2 : PAGE_WIDTH / 2, 0, COVER_Z + depth / 2);
   }
 
-  private sceneFaces() {
-    if (!this.turnDirection) {
+  private sceneFaces(direction: Direction | 0) {
+    if (!direction) {
       return {
         left: this.visualFace(this.currentSpread),
         right: this.contentFace(this.currentSpread),
@@ -635,7 +680,7 @@ export class BookScene {
       };
     }
 
-    if (this.turnDirection === 1) {
+    if (direction === 1) {
       return {
         left: this.visualFace(this.currentSpread),
         right: this.contentFace(Math.min(this.spreads.length - 1, this.currentSpread + 1)),
@@ -652,9 +697,88 @@ export class BookScene {
     };
   }
 
-  private applyState() {
-    if (!this.spreads.length) return;
-    const state = this.sceneFaces();
+  private setOpenVisibility() {
+    this.leftPageMesh.visible = true;
+    this.rightPageMesh.visible = true;
+    this.leftBlockMesh.visible = true;
+    this.rightBlockMesh.visible = true;
+    this.leftCoverMesh.visible = true;
+    this.rightCoverMesh.visible = true;
+    this.spineMesh.visible = true;
+  }
+
+  private deformCoverLeaf(
+    closureAmount: number,
+    side: 'front' | 'back',
+    startZ: number,
+    endZ: number,
+  ) {
+    const direction: Direction = side === 'front' ? -1 : 1;
+    const actual = clamp01(closureAmount);
+    const canonical = direction === 1 ? actual : 1 - actual;
+    const angle = Math.PI * canonical;
+    const lift = Math.sin(Math.PI * actual);
+    const stackZ = startZ + (endZ - startZ) * smootherstep(actual);
+    const frontPosition = this.turnFrontGeometry.attributes.position as THREE.BufferAttribute;
+    const backPosition = this.turnBackGeometry.attributes.position as THREE.BufferAttribute;
+    const uv = this.turnFrontGeometry.attributes.uv as THREE.BufferAttribute;
+    let frontColor = this.turnFrontGeometry.getAttribute('color') as THREE.BufferAttribute | undefined;
+    let backColor = this.turnBackGeometry.getAttribute('color') as THREE.BufferAttribute | undefined;
+
+    if (!frontColor) {
+      frontColor = new THREE.BufferAttribute(new Float32Array(frontPosition.count * 3), 3);
+      this.turnFrontGeometry.setAttribute('color', frontColor);
+    }
+    if (!backColor) {
+      backColor = new THREE.BufferAttribute(new Float32Array(backPosition.count * 3), 3);
+      this.turnBackGeometry.setAttribute('color', backColor);
+    }
+
+    for (let index = 0; index < frontPosition.count; index += 1) {
+      const u = uv.getX(index);
+      const v = uv.getY(index);
+      const vertical = (v - 0.5) * 2;
+      const distance = u * PAGE_WIDTH;
+      // A hardcover is mostly rigid, but a tiny shoulder flex keeps the hinge from
+      // reading like a mechanical door when it takes off from the page block.
+      const shoulder = 0.035 * lift * Math.sin(Math.PI * u);
+      const localAngle = angle + (direction === 1 ? shoulder : -shoulder);
+      const x = Math.cos(localAngle) * distance;
+      const y = (v - 0.5) * PAGE_HEIGHT * (1 - 0.003 * lift * u);
+      const z = Math.sin(localAngle) * distance + this.restingSurfaceZ(u, vertical, stackZ);
+
+      frontPosition.setXYZ(index, x, y, z);
+      backPosition.setXYZ(index, x, y, z);
+      const factor = 0.992 + 0.008 * Math.abs(Math.cos(localAngle));
+      frontColor.setXYZ(index, factor, factor, factor);
+      backColor.setXYZ(index, factor, factor, factor);
+    }
+
+    frontPosition.needsUpdate = true;
+    backPosition.needsUpdate = true;
+    frontColor.needsUpdate = true;
+    backColor.needsUpdate = true;
+    this.turnFrontGeometry.computeVertexNormals();
+    this.turnBackGeometry.computeVertexNormals();
+
+    const edgePositions = this.turnEdgeGeometry.attributes.position as THREE.BufferAttribute;
+    for (let row = 0; row <= PAGE_HEIGHT_SEGMENTS; row += 1) {
+      const vertexIndex = row * (PAGE_WIDTH_SEGMENTS + 1) + PAGE_WIDTH_SEGMENTS;
+      edgePositions.setXYZ(
+        row,
+        frontPosition.getX(vertexIndex),
+        frontPosition.getY(vertexIndex),
+        frontPosition.getZ(vertexIndex) + 0.001,
+      );
+    }
+    edgePositions.needsUpdate = true;
+    this.turnEdgeGeometry.computeBoundingSphere();
+  }
+
+  private applyPageState(direction: Direction | 0, progress: number) {
+    this.group.position.x = 0;
+    this.setOpenVisibility();
+    const state = this.sceneFaces(direction);
     this.setMaterialFace(this.leftPageMaterial, state.left);
     this.setMaterialFace(this.rightPageMaterial, state.right);
     this.setStaticPageGeometry(this.leftPageGeometry, 'left', state.leftZ);
@@ -662,30 +786,85 @@ export class BookScene {
     this.updateBlockMesh(this.leftBlockMesh, 'left', state.leftZ);
     this.updateBlockMesh(this.rightBlockMesh, 'right', state.rightZ);
 
-    const active = Boolean(this.turnDirection);
+    const active = Boolean(direction);
     this.turnFrontMesh.visible = active;
     this.turnBackMesh.visible = active;
     this.turnEdgeLine.visible = active;
+    this.turnEdgeMaterial.color.setStyle(this.getCssColor('--paper-edge', '#ad916d'));
+    this.turnEdgeMaterial.opacity = 0.72;
 
-    if (this.turnDirection) {
-      const front =
-        this.turnDirection === 1
-          ? this.contentFace(this.currentSpread)
-          : this.contentFace(Math.max(0, this.currentSpread - 1));
-      const back =
-        this.turnDirection === 1
-          ? this.visualFace(Math.min(this.spreads.length - 1, this.currentSpread + 1))
-          : this.visualFace(this.currentSpread);
-      this.setMaterialFace(this.turnFrontMaterial, front);
-      this.setMaterialFace(this.turnBackMaterial, back);
+    if (!direction) return;
 
-      const startZ =
-        this.turnDirection === 1 ? this.rightTopZ(this.currentSpread) : this.leftTopZ(this.currentSpread);
-      const endZ =
-        this.turnDirection === 1
-          ? this.leftTopZ(this.currentSpread) + LEAF_THICKNESS
-          : this.rightTopZ(this.currentSpread) + LEAF_THICKNESS;
-      this.deformTurningLeaf(this.turnProgress, this.turnDirection, startZ, endZ);
+    const front =
+      direction === 1
+        ? this.contentFace(this.currentSpread)
+        : this.contentFace(Math.max(0, this.currentSpread - 1));
+    const back =
+      direction === 1
+        ? this.visualFace(Math.min(this.spreads.length - 1, this.currentSpread + 1))
+        : this.visualFace(this.currentSpread);
+    this.setMaterialFace(this.turnFrontMaterial, front);
+    this.setMaterialFace(this.turnBackMaterial, back);
+
+    const startZ = direction === 1 ? this.rightTopZ(this.currentSpread) : this.leftTopZ(this.currentSpread);
+    const endZ =
+      direction === 1
+        ? this.leftTopZ(this.currentSpread) + LEAF_THICKNESS
+        : this.rightTopZ(this.currentSpread) + LEAF_THICKNESS;
+    this.deformTurningLeaf(progress, direction, startZ, endZ);
+  }
+
+  private applyCoverState(side: 'front' | 'back', closureAmount: number) {
+    const amount = clamp01(closureAmount);
+    const isFront = side === 'front';
+    const index = isFront ? 0 : this.spreads.length - 1;
+    this.setOpenVisibility();
+    this.group.position.x = (isFront ? -0.5 : 0.5) * amount * PAGE_WIDTH;
+
+    if (isFront) {
+      this.leftPageMesh.visible = false;
+      this.leftBlockMesh.visible = false;
+      this.leftCoverMesh.visible = false;
+      this.setMaterialFace(this.rightPageMaterial, this.contentFace(0));
+      this.setStaticPageGeometry(this.rightPageGeometry, 'right', this.rightTopZ(0));
+      this.updateBlockMesh(this.rightBlockMesh, 'right', this.rightTopZ(0));
+      this.setMaterialFace(this.turnFrontMaterial, this.coverFace('front'));
+      this.setMaterialFace(this.turnBackMaterial, this.visualFace(0));
+    } else {
+      this.rightPageMesh.visible = false;
+      this.rightBlockMesh.visible = false;
+      this.rightCoverMesh.visible = false;
+      this.setMaterialFace(this.leftPageMaterial, this.visualFace(index));
+      this.setStaticPageGeometry(this.leftPageGeometry, 'left', this.leftTopZ(index));
+      this.updateBlockMesh(this.leftBlockMesh, 'left', this.leftTopZ(index));
+      this.setMaterialFace(this.turnFrontMaterial, this.contentFace(index));
+      this.setMaterialFace(this.turnBackMaterial, this.coverFace('back'));
+    }
+
+    this.turnFrontMesh.visible = true;
+    this.turnBackMesh.visible = true;
+    this.turnEdgeLine.visible = true;
+    this.turnEdgeMaterial.color.setStyle(this.getCssColor('--book-leather-light', '#2d1710'));
+    this.turnEdgeMaterial.opacity = 0.9;
+
+    const startZ = isFront ? this.leftTopZ(0) : this.rightTopZ(index);
+    const endZ = isFront
+      ? this.rightTopZ(0) + LEAF_THICKNESS + 0.004
+      : this.leftTopZ(index) + LEAF_THICKNESS + 0.004;
+    this.deformCoverLeaf(amount, side, startZ, endZ);
+  }
+
+  private applyState() {
+    if (!this.spreads.length) return;
+
+    if (this.motion?.kind === 'cover') {
+      const closureAmount = this.motion.opening ? 1 - this.turnProgress : this.turnProgress;
+      this.applyCoverState(this.motion.side, closureAmount);
+    } else if (this.closedSide) {
+      this.applyCoverState(this.closedSide, 1);
+    } else {
+      const direction = this.motion?.kind === 'page' ? this.motion.direction : 0;
+      this.applyPageState(direction, this.motion?.kind === 'page' ? this.turnProgress : 0);
     }
 
     this.render();

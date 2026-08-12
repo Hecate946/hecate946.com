@@ -1,7 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { BookScene } from './book-scene';
-  import type { BookLink, BookSpread, Direction, PageSide } from './book-types';
+  import type {
+    BookClosedSide,
+    BookLink,
+    BookMotion,
+    BookSpread,
+    PageSide,
+  } from './book-types';
 
   export let spreads: BookSpread[] = [];
 
@@ -9,7 +15,8 @@
   let canvasElement: HTMLCanvasElement;
   let bookScene: BookScene | null = null;
   let currentSpread = 0;
-  let turnDirection: Direction | 0 = 0;
+  let closedSide: BookClosedSide = null;
+  let motion: BookMotion | null = null;
   let turnProgress = 0;
   let isAnimating = false;
   let isDragging = false;
@@ -18,7 +25,7 @@
   let prefersReducedMotion = false;
   let animationFrame = 0;
   let activePointerId: number | null = null;
-  let pointerSide: PageSide | null = null;
+  let pointerMotion: BookMotion | null = null;
   let pointerStartX = 0;
   let pointerStartY = 0;
   let pointerStartedAt = 0;
@@ -27,14 +34,12 @@
   let ignoreClicksUntil = 0;
 
   const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
-  const canTurn = (direction: Direction) =>
-    direction === 1 ? currentSpread < spreads.length - 1 : currentSpread > 0;
   const smootherstep = (value: number) => {
     const x = clamp01(value);
     return x * x * x * (x * (x * 6 - 15) + 10);
   };
 
-  const renderState = () => bookScene?.setState(currentSpread, turnDirection, turnProgress);
+  const renderState = () => bookScene?.setState(currentSpread, closedSide, motion, turnProgress);
 
   const clearAnimation = () => {
     if (!animationFrame) return;
@@ -51,9 +56,35 @@
     window.location.assign(link.href);
   };
 
-  const finishTurn = (direction: Direction, complete: boolean) => {
-    if (complete) currentSpread += direction;
-    turnDirection = 0;
+  const pageMotionForSide = (side: PageSide): BookMotion => {
+    if (side === 'left') {
+      return currentSpread === 0
+        ? { kind: 'cover', side: 'front', opening: false }
+        : { kind: 'page', direction: -1 };
+    }
+
+    return currentSpread === spreads.length - 1
+      ? { kind: 'cover', side: 'back', opening: false }
+      : { kind: 'page', direction: 1 };
+  };
+
+  const openMotionForClosedBook = (): BookMotion | null => {
+    if (!closedSide) return null;
+    return { kind: 'cover', side: closedSide, opening: true };
+  };
+
+  const finishMotion = (finishedMotion: BookMotion, complete: boolean) => {
+    if (complete) {
+      if (finishedMotion.kind === 'page') {
+        currentSpread += finishedMotion.direction;
+      } else if (finishedMotion.opening) {
+        closedSide = null;
+      } else {
+        closedSide = finishedMotion.side;
+      }
+    }
+
+    motion = null;
     turnProgress = 0;
     isAnimating = false;
     isDragging = false;
@@ -61,14 +92,10 @@
     renderState();
   };
 
-  const settleTurn = (direction: Direction, complete: boolean) => {
-    if (!turnDirection || !canTurn(direction)) {
-      turnDirection = 0;
-      turnProgress = 0;
-      isAnimating = false;
-      isDragging = false;
+  const settleMotion = (activeMotion: BookMotion, complete: boolean) => {
+    if (!motion) {
+      motion = activeMotion;
       renderState();
-      return;
     }
 
     clearAnimation();
@@ -81,12 +108,14 @@
     if (prefersReducedMotion || distance < 0.001) {
       turnProgress = target;
       renderState();
-      finishTurn(direction, complete);
+      finishMotion(activeMotion, complete);
       return;
     }
 
     const startedAt = performance.now();
-    const duration = Math.max(520, (complete ? 1420 : 980) * distance);
+    const baseDuration = activeMotion.kind === 'cover' ? 1280 : 1420;
+    const cancelDuration = activeMotion.kind === 'cover' ? 860 : 980;
+    const duration = Math.max(500, (complete ? baseDuration : cancelDuration) * distance);
 
     const tick = (now: number) => {
       const elapsed = clamp01((now - startedAt) / duration);
@@ -100,51 +129,57 @@
 
       turnProgress = target;
       renderState();
-      animationFrame = requestAnimationFrame(() => finishTurn(direction, complete));
+      // Keep the exact geometric endpoint on screen for one paint before the
+      // logical state changes. This prevents a one-frame pop at the covers too.
+      animationFrame = requestAnimationFrame(() => finishMotion(activeMotion, complete));
     };
 
     animationFrame = requestAnimationFrame(tick);
   };
 
-  const animateTurn = (direction: Direction) => {
-    if (!ready || isAnimating || isDragging || !canTurn(direction)) return;
-    turnDirection = direction;
+  const animateMotion = (nextMotion: BookMotion) => {
+    if (!ready || isAnimating || isDragging || motion) return;
+    motion = nextMotion;
     turnProgress = 0;
     renderState();
-    animationFrame = requestAnimationFrame(() => settleTurn(direction, true));
+    animationFrame = requestAnimationFrame(() => settleMotion(nextMotion, true));
   };
 
   const resetPointer = () => {
     activePointerId = null;
-    pointerSide = null;
+    pointerMotion = null;
     pointerMoved = false;
     isDragging = false;
   };
 
+  const travelForMotion = (activeMotion: BookMotion, dx: number) => {
+    if (activeMotion.kind === 'page') return activeMotion.direction === 1 ? -dx : dx;
+    if (activeMotion.side === 'front') return activeMotion.opening ? -dx : dx;
+    return activeMotion.opening ? dx : -dx;
+  };
+
   const handlePointerDown = (event: PointerEvent) => {
-    if (!ready || isAnimating || activePointerId !== null || !bookScene) return;
+    if (!ready || isAnimating || motion || activePointerId !== null || !bookScene) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
 
-    const hit = bookScene.pickPage(event.clientX, event.clientY);
+    const hit = bookScene.pickSurface(event.clientX, event.clientY);
     if (!hit) return;
-    const direction: Direction = hit.side === 'right' ? 1 : -1;
-    if (!canTurn(direction)) return;
+
+    const nextMotion = hit.target === 'cover' ? openMotionForClosedBook() : pageMotionForSide(hit.side);
+    if (!nextMotion) return;
 
     activePointerId = event.pointerId;
-    pointerSide = hit.side;
+    pointerMotion = nextMotion;
     pointerStartX = event.clientX;
     pointerStartY = event.clientY;
     pointerStartedAt = performance.now();
     const canvasBounds = canvasElement.getBoundingClientRect();
-    pointerTravelWidth = Math.max(
-      1,
-      Math.min(canvasBounds.width * 0.46, canvasBounds.height * 0.58),
-    );
+    pointerTravelWidth = Math.max(1, Math.min(canvasBounds.width * 0.46, canvasBounds.height * 0.58));
     pointerMoved = false;
   };
 
   const handlePointerMove = (event: PointerEvent) => {
-    if (activePointerId !== event.pointerId || !pointerSide || isAnimating) return;
+    if (activePointerId !== event.pointerId || !pointerMotion || isAnimating) return;
     const dx = event.clientX - pointerStartX;
     const dy = event.clientY - pointerStartY;
     const distance = Math.hypot(dx, dy);
@@ -156,14 +191,13 @@
       return;
     }
 
-    const direction: Direction = pointerSide === 'right' ? 1 : -1;
-    const travel = direction === 1 ? -dx : dx;
-    if (travel <= 0 || !canTurn(direction)) return;
+    const travel = travelForMotion(pointerMotion, dx);
+    if (travel <= 0) return;
 
     if (!pointerMoved) {
       pointerMoved = true;
       isDragging = true;
-      turnDirection = direction;
+      motion = pointerMotion;
       turnProgress = 0;
       renderState();
     }
@@ -181,26 +215,41 @@
     const velocity = Math.abs(dx) / elapsed;
     const moved = pointerMoved;
     const gestureDistance = Math.hypot(dx, dy);
-    const direction = turnDirection;
+    const activeMotion = pointerMotion;
     resetPointer();
 
     if (!moved) {
       if (gestureDistance > 6) ignoreClicksUntil = performance.now() + 260;
       return;
     }
+
     ignoreClicksUntil = performance.now() + 420;
-    if (!direction) return;
-    settleTurn(direction, !cancelled && (turnProgress >= 0.34 || velocity >= 0.40));
+    if (!activeMotion) return;
+    settleMotion(activeMotion, !cancelled && (turnProgress >= 0.34 || velocity >= 0.40));
   };
 
   const handlePointerCancel = (event: PointerEvent) => releasePointer(event, true);
 
   const handleClick = (event: MouseEvent) => {
-    if (!ready || isAnimating || isDragging || !bookScene || performance.now() < ignoreClicksUntil) return;
-    const hit = bookScene.pickPage(event.clientX, event.clientY);
+    if (
+      !ready ||
+      isAnimating ||
+      isDragging ||
+      motion ||
+      !bookScene ||
+      performance.now() < ignoreClicksUntil
+    ) return;
+
+    const hit = bookScene.pickSurface(event.clientX, event.clientY);
     if (!hit) return;
 
-    if (hit.side === 'right') {
+    if (hit.target === 'cover') {
+      const openMotion = openMotionForClosedBook();
+      if (openMotion) animateMotion(openMotion);
+      return;
+    }
+
+    if (!closedSide && hit.side === 'right') {
       const link = bookScene.linkAtCurrentRight(hit.uv);
       if (link) {
         followLink(link);
@@ -208,39 +257,60 @@
       }
     }
 
-    animateTurn(hit.side === 'right' ? 1 : -1);
+    animateMotion(pageMotionForSide(hit.side));
   };
 
   const updateCursor = (event: PointerEvent) => {
-    if (!ready || isAnimating || isDragging || !bookScene) return;
-    const hit = bookScene.pickPage(event.clientX, event.clientY);
+    if (!ready || isAnimating || isDragging || motion || !bookScene) return;
+    const hit = bookScene.pickSurface(event.clientX, event.clientY);
     if (!hit) {
       canvasElement.style.cursor = 'default';
       return;
     }
 
-    if (hit.side === 'right' && bookScene.linkAtCurrentRight(hit.uv)) {
+    if (hit.target === 'cover') {
+      canvasElement.style.cursor = 'grab';
+      return;
+    }
+
+    if (!closedSide && hit.side === 'right' && bookScene.linkAtCurrentRight(hit.uv)) {
       canvasElement.style.cursor = 'pointer';
       return;
     }
 
-    const direction: Direction = hit.side === 'right' ? 1 : -1;
-    canvasElement.style.cursor = canTurn(direction) ? 'grab' : 'default';
+    canvasElement.style.cursor = 'grab';
   };
 
   const isInteractiveTarget = (target: EventTarget | null) =>
     target instanceof Element && Boolean(target.closest('a, button, input, textarea, select'));
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (isInteractiveTarget(event.target)) return;
+    if (isInteractiveTarget(event.target) || isAnimating || isDragging || motion) return;
+
+    if (closedSide === 'front') {
+      if (event.key === 'ArrowRight' || event.key === 'PageDown') {
+        event.preventDefault();
+        const openMotion = openMotionForClosedBook();
+        if (openMotion) animateMotion(openMotion);
+      }
+      return;
+    }
+
+    if (closedSide === 'back') {
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+        event.preventDefault();
+        const openMotion = openMotionForClosedBook();
+        if (openMotion) animateMotion(openMotion);
+      }
+      return;
+    }
+
     if (event.key === 'ArrowRight' || event.key === 'PageDown') {
-      if (!canTurn(1)) return;
       event.preventDefault();
-      animateTurn(1);
+      animateMotion(pageMotionForSide('right'));
     } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
-      if (!canTurn(-1)) return;
       event.preventDefault();
-      animateTurn(-1);
+      animateMotion(pageMotionForSide('left'));
     }
   };
 
@@ -295,6 +365,7 @@
   class="about-webgl-book"
   class:is-ready={ready}
   class:is-dragging={isDragging}
+  class:is-closed={Boolean(closedSide)}
   bind:this={hostElement}
 >
   <canvas
@@ -311,26 +382,30 @@
     </div>
   {/if}
 
-  <div class="about-book-accessible">
-    <h1>{spreads[currentSpread]?.title}</h1>
-    {#each spreads[currentSpread]?.paragraphs ?? [] as paragraph}
-      <p>{paragraph}</p>
-    {/each}
-    {#if spreads[currentSpread]?.link}
-      <a
-        href={spreads[currentSpread].link?.href}
-        target={spreads[currentSpread].link?.external ? '_blank' : undefined}
-        rel={spreads[currentSpread].link?.external ? 'noopener noreferrer' : undefined}
-      >{spreads[currentSpread].link?.label}</a>
+  <div class="about-book-accessible" aria-live="polite">
+    {#if closedSide}
+      <p>About book closed at the {closedSide} cover.</p>
+    {:else}
+      <h1>{spreads[currentSpread]?.title}</h1>
+      {#each spreads[currentSpread]?.paragraphs ?? [] as paragraph}
+        <p>{paragraph}</p>
+      {/each}
+      {#if spreads[currentSpread]?.link}
+        <a
+          href={spreads[currentSpread].link?.href}
+          target={spreads[currentSpread].link?.external ? '_blank' : undefined}
+          rel={spreads[currentSpread].link?.external ? 'noopener noreferrer' : undefined}
+        >{spreads[currentSpread].link?.label}</a>
+      {/if}
+      {#each spreads[currentSpread]?.interests ?? [] as interest}
+        <h2>{interest.title}</h2>
+        <p>{interest.body}</p>
+        <a
+          href={interest.link.href}
+          target={interest.link.external ? '_blank' : undefined}
+          rel={interest.link.external ? 'noopener noreferrer' : undefined}
+        >{interest.link.label}</a>
+      {/each}
     {/if}
-    {#each spreads[currentSpread]?.interests ?? [] as interest}
-      <h2>{interest.title}</h2>
-      <p>{interest.body}</p>
-      <a
-        href={interest.link.href}
-        target={interest.link.external ? '_blank' : undefined}
-        rel={interest.link.external ? 'noopener noreferrer' : undefined}
-      >{interest.link.label}</a>
-    {/each}
   </div>
 </div>

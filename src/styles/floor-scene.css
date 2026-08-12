@@ -1,12 +1,9 @@
 /*
- * Independent floor layer. The canvas spans the room so future 3D objects can
+ * Independent 3D floor layer. The canvas spans the room so future objects can
  * rise above the floor without being clipped at the wall/floor boundary. The
- * actual floor plane begins at the baseboard's lower edge.
+ * geometry itself begins at the shared baseboard/floor seam.
  */
 .floor-scene {
-  --floor-scene-x: 0px;
-  --floor-tile-size: 84px;
-
   position: absolute;
   z-index: 5;
   inset: 0;
@@ -15,8 +12,8 @@
   pointer-events: none;
 }
 
+.floor-scene__underlay,
 .floor-scene__canvas,
-.floor-scene__fallback,
 .floor-scene__lighting {
   position: absolute;
   inset: 0;
@@ -25,65 +22,27 @@
   pointer-events: none;
 }
 
+/*
+ * SSR/loading/error underlay only. This is deliberately a flat fill rather
+ * than a second checkerboard implementation, so refreshes can never show the
+ * obsolete 2D floor before WebGL paints its first frame.
+ */
+.floor-scene__underlay {
+  z-index: 1;
+  top: var(--floor-seam-top);
+  height: auto;
+  background: var(--wall-dark, #050505);
+}
+
 .floor-scene__canvas {
   z-index: 2;
   display: block;
-  opacity: 0;
-}
-
-.floor-scene--ready .floor-scene__canvas {
-  opacity: 1;
-}
-
-/*
- * Progressive fallback: this preserves the old visual if WebGL is unavailable
- * and prevents a blank flash while Three.js initializes. It is removed from
- * painting as soon as the 3D renderer is ready.
- */
-.floor-scene__fallback {
-  z-index: 1;
-  top: calc(
-    100% - var(--floor-height) + var(--floor-top-offset, 0rem) + var(--baseboard-height) + 0.56rem
-  );
-  height: auto;
-  overflow: hidden;
-  perspective: 30rem;
-  perspective-origin: 50% 0;
-}
-
-.floor-scene--ready .floor-scene__fallback {
-  visibility: hidden;
-  opacity: 0;
-}
-
-.floor-scene__fallback-surface {
-  position: absolute;
-  top: -0.2rem;
-  bottom: -1rem;
-  left: -50%;
-  width: 200%;
-  background-color: var(--wall-dark, #050505);
-  background-image: conic-gradient(
-    from 90deg,
-    var(--wall-light, #f4f1e9) 0 25%,
-    var(--wall-dark, #050505) 0 50%,
-    var(--wall-light, #f4f1e9) 0 75%,
-    var(--wall-dark, #050505) 0 100%
-  );
-  background-repeat: repeat;
-  background-size: var(--floor-tile-size) 118px;
-  backface-visibility: hidden;
-  transform: translate3d(var(--floor-scene-x), 0, 0) rotateX(64deg) scaleY(1.28) translateY(14%);
-  transform-origin: 50% 0;
-  will-change: transform;
 }
 
 /* Atmospheric pass shared by the floor and future 3D objects. */
 .floor-scene__lighting {
   z-index: 3;
-  top: calc(
-    100% - var(--floor-height) + var(--floor-top-offset, 0rem) + var(--baseboard-height) + 0.56rem
-  );
+  top: var(--floor-seam-top);
   height: auto;
   background:
     linear-gradient(180deg, rgb(0 0 0 / 22%), transparent 1.35rem),
@@ -111,9 +70,7 @@
 /* A measurable CSS anchor gives the renderer the exact DOM seam to match. */
 .floor-scene__horizon-anchor {
   position: absolute;
-  top: calc(
-    100% - var(--floor-height) + var(--floor-top-offset, 0rem) + var(--baseboard-height) + 0.56rem
-  );
+  top: var(--floor-seam-top);
   left: 0;
   width: 1px;
   height: 1px;
@@ -138,14 +95,3 @@
 .floor-scene__palette-probe--dark {
   background: var(--wall-dark, #050505);
 }
-
-@media (max-width: 40rem) {
-  .floor-scene__fallback,
-  .floor-scene__lighting,
-  .floor-scene__horizon-anchor {
-    top: calc(
-      100% - var(--floor-height) + var(--floor-top-offset, 0rem) + var(--baseboard-height) + 0.76rem
-    );
-  }
-}
-

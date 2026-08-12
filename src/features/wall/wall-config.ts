@@ -29,8 +29,9 @@ const FRAME_HEIGHT = 420;
 
 /**
  * Four evenly spaced destinations. A 600px interval keeps the gallery compact
- * while making the 2400px loop divide cleanly into both the 96px brick repeat
- * and the 120px floor repeat, so a full revolution remains seamless.
+ * while making the 2400px loop divide cleanly into the 96px brick repeat.
+ * The 3D floor uses absolute world coordinates and no longer has a CSS repeat
+ * seam that the gallery loop needs to accommodate.
  */
 const FRAME_SPACING = 600;
 

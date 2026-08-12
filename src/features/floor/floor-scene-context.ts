@@ -5,7 +5,7 @@ export const FLOOR_SCENE_CONTEXT = Symbol('floor-scene');
 
 /**
  * Small, renderer-agnostic surface exposed to descendants of FloorScene.
- * Objects can register before Three.js has finished loading; FloorScene queues
+ * Objects can register before the WebGL scene has initialized; FloorScene queues
  * them and attaches them when its scene graph is ready.
  *
  * Coordinate contract:

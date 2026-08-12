@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, setContext } from 'svelte';
-  import type * as ThreeTypes from 'three';
+  import * as THREE from 'three';
   import { FLOOR_SCENE_CONTEXT, type FloorSceneContext } from './floor-scene-context';
   import '@/styles/room-shell.css';
   import '@/styles/floor-scene.css';
@@ -17,21 +17,18 @@
 
   let host: HTMLElement;
   let canvas: HTMLCanvasElement;
-  let fallbackSurface: HTMLElement;
   let horizonAnchor: HTMLElement;
   let lightProbe: HTMLElement;
   let darkProbe: HTMLElement;
 
-  let THREE: typeof import('three') | null = null;
-  let renderer: ThreeTypes.WebGLRenderer | null = null;
-  let scene: ThreeTypes.Scene | null = null;
-  let camera: ThreeTypes.PerspectiveCamera | null = null;
-  let floorMesh: ThreeTypes.Mesh<ThreeTypes.PlaneGeometry, ThreeTypes.MeshBasicMaterial> | null = null;
-  let floorTexture: ThreeTypes.CanvasTexture | null = null;
-  let objectRoot: ThreeTypes.Group | null = null;
+  let renderer: THREE.WebGLRenderer | null = null;
+  let scene: THREE.Scene | null = null;
+  let camera: THREE.PerspectiveCamera | null = null;
+  let floorMesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null;
+  let floorTexture: THREE.CanvasTexture | null = null;
+  let objectRoot: THREE.Group | null = null;
   let resizeObserver: ResizeObserver | null = null;
   let themeObserver: MutationObserver | null = null;
-  let disposed = false;
   let contextLost = false;
   let currentCameraX = initialCameraX;
   let lastWidth = 0;
@@ -40,17 +37,10 @@
   let cameraTargetY = 0;
   let floorPlaneWidth = 1;
   let floorPlaneDepth = 1;
-  const registeredObjects = new Set<ThreeTypes.Object3D>();
+  const registeredObjects = new Set<THREE.Object3D>();
 
   function modulo(value: number, period: number) {
     return ((value % period) + period) % period;
-  }
-
-  function renderFallbackPosition() {
-    fallbackSurface?.style.setProperty(
-      '--floor-scene-x',
-      `${-modulo(currentCameraX, TILE_SIZE_WORLD)}px`,
-    );
   }
 
   const context: FloorSceneContext = {
@@ -76,7 +66,6 @@
    */
   export function setCameraX(nextCameraX: number) {
     currentCameraX = nextCameraX;
-    renderFallbackPosition();
     renderThreeScene();
   }
 
@@ -105,8 +94,6 @@
   }
 
   function createCheckerTexture() {
-    if (!THREE) return null;
-
     const source = document.createElement('canvas');
     source.width = 1024;
     source.height = 1024;
@@ -143,12 +130,10 @@
     context2d.fillRect(half, 0, half, half);
     context2d.fillRect(0, half, half, half);
     floorTexture.needsUpdate = true;
-
-    renderThreeScene();
   }
 
   function updateFloorGeometry(width: number, height: number) {
-    if (!THREE || !camera || !floorMesh || !floorTexture || !horizonAnchor) return;
+    if (!camera || !floorMesh || !floorTexture || !horizonAnchor) return;
 
     const hostRect = host.getBoundingClientRect();
     const anchorRect = horizonAnchor.getBoundingClientRect();
@@ -224,7 +209,6 @@
   function renderThreeScene() {
     if (
       contextLost ||
-      !THREE ||
       !renderer ||
       !scene ||
       !camera ||
@@ -248,94 +232,79 @@
   }
 
   onMount(() => {
-    let cancelled = false;
-    renderFallbackPosition();
-
     const onContextLost = (event: Event) => {
       event.preventDefault();
       contextLost = true;
-      host?.classList.remove('floor-scene--ready');
     };
 
     const onContextRestored = () => {
       contextLost = false;
       updateCheckerPalette();
       refreshLayout();
-      host?.classList.add('floor-scene--ready');
     };
 
     canvas.addEventListener('webglcontextlost', onContextLost);
     canvas.addEventListener('webglcontextrestored', onContextRestored);
 
-    const initialize = async () => {
-      try {
-        THREE = await import('three');
-        if (cancelled || disposed || !THREE) return;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+        powerPreference: 'low-power',
+      });
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.setClearColor(0x000000, 0);
 
-        renderer = new THREE.WebGLRenderer({
-          canvas,
-          alpha: true,
-          antialias: true,
-          powerPreference: 'low-power',
-        });
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.setClearColor(0x000000, 0);
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(CAMERA_FOV_DEGREES, 1, 0.1, 4_000);
+      objectRoot = new THREE.Group();
+      objectRoot.name = 'floor-objects';
+      scene.add(objectRoot);
 
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(CAMERA_FOV_DEGREES, 1, 0.1, 4_000);
-        objectRoot = new THREE.Group();
-        objectRoot.name = 'floor-objects';
-        scene.add(objectRoot);
+      floorTexture = createCheckerTexture();
+      if (!floorTexture) throw new Error('Could not create floor checker texture.');
+      floorTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
-        floorTexture = createCheckerTexture();
-        if (!floorTexture) throw new Error('Could not create floor checker texture.');
-        floorTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      const material = new THREE.MeshBasicMaterial({
+        map: floorTexture,
+        side: THREE.FrontSide,
+      });
+      floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
+      floorMesh.name = 'checkerboard-floor';
+      floorMesh.renderOrder = -10;
+      scene.add(floorMesh);
 
-        const material = new THREE.MeshBasicMaterial({
-          map: floorTexture,
-          side: THREE.FrontSide,
-        });
-        floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
-        floorMesh.name = 'checkerboard-floor';
-        floorMesh.renderOrder = -10;
-        scene.add(floorMesh);
+      for (const object of registeredObjects) objectRoot.add(object);
 
-        for (const object of registeredObjects) objectRoot.add(object);
+      updateCheckerPalette();
+      refreshLayout();
 
-        updateCheckerPalette();
-        refreshLayout();
-        host.classList.add('floor-scene--ready');
-
-        if ('ResizeObserver' in window) {
-          resizeObserver = new ResizeObserver(refreshLayout);
-          resizeObserver.observe(host);
-        }
-
-        if ('MutationObserver' in window) {
-          themeObserver = new MutationObserver(() => {
-            updateCheckerPalette();
-            refreshLayout();
-          });
-          themeObserver.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['data-theme'],
-          });
-        }
-
-        window.addEventListener('resize', refreshLayout, { passive: true });
-      } catch (error) {
-        // The CSS fallback remains visible if WebGL is unavailable or Three.js
-        // cannot initialize. Avoid turning a decorative enhancement into a
-        // functional failure for the room.
-        console.warn('[FloorScene] Falling back to CSS floor.', error);
+      if ('ResizeObserver' in window) {
+        resizeObserver = new ResizeObserver(refreshLayout);
+        resizeObserver.observe(host);
       }
-    };
 
-    void initialize();
+      if ('MutationObserver' in window) {
+        themeObserver = new MutationObserver(() => {
+          updateCheckerPalette();
+          refreshLayout();
+        });
+        themeObserver.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['data-theme'],
+        });
+      }
+
+      window.addEventListener('resize', refreshLayout, { passive: true });
+    } catch (error) {
+      // The solid underlay is intentionally not a second floor renderer. If
+      // WebGL is unavailable, it simply leaves the room with a quiet dark floor
+      // rather than flashing or reviving the obsolete CSS checkerboard.
+      console.warn('[FloorScene] WebGL floor unavailable; using solid floor underlay.', error);
+    }
 
     return () => {
-      cancelled = true;
-      disposed = true;
       resizeObserver?.disconnect();
       themeObserver?.disconnect();
       window.removeEventListener('resize', refreshLayout);
@@ -354,7 +323,6 @@
       camera = null;
       scene = null;
       renderer = null;
-      THREE = null;
     };
   });
 </script>
@@ -362,18 +330,10 @@
 <div
   bind:this={host}
   class="floor-scene"
-  style={`--floor-tile-size: ${TILE_SIZE_WORLD}px;`}
   aria-hidden="true"
 >
+  <div class="floor-scene__underlay"></div>
   <canvas bind:this={canvas} class="floor-scene__canvas"></canvas>
-
-  <div class="floor-scene__fallback">
-    <div
-      bind:this={fallbackSurface}
-      class="floor-scene__fallback-surface"
-      style={`--floor-scene-x: ${-modulo(initialCameraX, TILE_SIZE_WORLD)}px;`}
-    ></div>
-  </div>
 
   <div class="floor-scene__lighting"></div>
   <div bind:this={horizonAnchor} class="floor-scene__horizon-anchor"></div>

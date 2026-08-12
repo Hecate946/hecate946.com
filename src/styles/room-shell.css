@@ -1,12 +1,19 @@
 /*
  * Shared room geometry. This file intentionally contains only the coordinate
  * system that wall and floor layers agree on. Each renderer owns its own
- * visuals so the DOM wall and the WebGL floor can evolve independently.
+ * visuals so the DOM wall and WebGL floor can evolve independently.
  */
 .wall-room-host {
   --floor-height: clamp(5.2rem, 18%, 9.8rem);
   --baseboard-height: clamp(0.62rem, 1.15vw, 0.92rem);
+  --baseboard-top-overlap: 0.14rem;
+  --baseboard-extra-height: 0.7rem;
   --floor-top-offset: 0rem;
+  --baseboard-top: calc(
+    100% - var(--floor-height) + var(--floor-top-offset) - var(--baseboard-top-overlap)
+  );
+  --baseboard-box-height: calc(var(--baseboard-height) + var(--baseboard-extra-height));
+  --floor-seam-top: calc(var(--baseboard-top) + var(--baseboard-box-height));
 
   position: relative;
   isolation: isolate;
@@ -18,6 +25,7 @@
   .wall-room-host {
     --floor-height: 6.4rem;
     --baseboard-height: 0.78rem;
+    --baseboard-extra-height: 0.9rem;
     --floor-top-offset: -0.25rem;
   }
 }

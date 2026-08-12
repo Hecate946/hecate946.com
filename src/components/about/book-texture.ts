@@ -6,6 +6,20 @@ const DESIGN_HEIGHT = Math.round(DESIGN_WIDTH * PAGE_ASPECT);
 const FONT_SERIF = 'Newsreader, Georgia, "Times New Roman", serif';
 const imageCache = new Map<string, HTMLImageElement>();
 
+
+/**
+ * Page typography/layout lives here. These values are in the 1200px design
+ * coordinate system and are scaled automatically for the final WebGL texture.
+ */
+export const PAGE_STYLE = {
+  titleStart: 78,
+  titleMinimum: 58,
+  bodySize: 36,
+  bodyLineHeight: 49,
+  bodyParagraphGap: 34,
+  pageNumberSize: 23,
+} as const;
+
 type Palette = {
   paper: string;
   paperBright: string;
@@ -15,6 +29,8 @@ type Palette = {
   muted: string;
   accent: string;
   metal: string;
+  leather: string;
+  leatherLight: string;
 };
 
 const getPalette = (host: HTMLElement): Palette => {
@@ -30,6 +46,8 @@ const getPalette = (host: HTMLElement): Palette => {
     muted: read('--paper-muted', '#695442'),
     accent: read('--paper-accent', '#653128'),
     metal: read('--book-metal', '#7b6040'),
+    leather: read('--book-leather', '#180b08'),
+    leatherLight: read('--book-leather-light', '#2d1710'),
   };
 };
 
@@ -150,7 +168,7 @@ const drawPageNumber = (
   context.save();
   context.fillStyle = palette.muted;
   context.globalAlpha = 0.88;
-  context.font = `400 23px ${FONT_SERIF}`;
+  context.font = `400 ${PAGE_STYLE.pageNumberSize}px ${FONT_SERIF}`;
   context.textBaseline = 'middle';
   context.textAlign = align;
   context.fillText(
@@ -215,6 +233,73 @@ const gothicFramePath = (context: CanvasRenderingContext2D, x: number, y: number
   context.lineTo(x, y + shoulder + 54);
   context.quadraticCurveTo(x, y + shoulder + 20, x + 18, y + shoulder);
   context.closePath();
+};
+
+
+
+const drawCoverFace = (
+  context: CanvasRenderingContext2D,
+  face: Extract<PageFace, { kind: 'cover' }>,
+  palette: Palette,
+) => {
+  const gradient = context.createLinearGradient(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
+  gradient.addColorStop(0, palette.leatherLight);
+  gradient.addColorStop(0.48, palette.leather);
+  gradient.addColorStop(1, '#090403');
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
+
+  // Restrained deterministic grain: enough to read as leather at high DPI,
+  // but not so much that it shimmers when the cover rotates.
+  context.save();
+  context.globalAlpha = 0.14;
+  let seed = face.side === 'front' ? 946 : 1946;
+  for (let index = 0; index < 1800; index += 1) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const x = (seed / 4294967296) * DESIGN_WIDTH;
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const y = (seed / 4294967296) * DESIGN_HEIGHT;
+    context.fillStyle = index % 3 === 0 ? palette.leatherLight : '#050201';
+    context.fillRect(x, y, 1.2, 1.2);
+  }
+  context.restore();
+
+  context.save();
+  context.strokeStyle = palette.metal;
+  context.globalAlpha = 0.46;
+  context.lineWidth = 3;
+  context.strokeRect(56, 56, DESIGN_WIDTH - 112, DESIGN_HEIGHT - 112);
+  context.globalAlpha = 0.22;
+  context.lineWidth = 1.5;
+  context.strokeRect(78, 78, DESIGN_WIDTH - 156, DESIGN_HEIGHT - 156);
+  context.restore();
+
+  if (face.side === 'front') {
+    context.save();
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = palette.metal;
+    context.globalAlpha = 0.82;
+    context.font = `500 27px ${FONT_SERIF}`;
+    context.fillText(
+      (face.eyebrow ?? 'ABOUT').toUpperCase().split('').join(' '),
+      DESIGN_WIDTH / 2,
+      DESIGN_HEIGHT * 0.43,
+    );
+    context.globalAlpha = 0.62;
+    context.font = `400 62px ${FONT_SERIF}`;
+    context.fillText(face.title ?? 'About', DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.52);
+    context.restore();
+  } else {
+    context.save();
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = palette.metal;
+    context.globalAlpha = 0.42;
+    context.font = `400 32px ${FONT_SERIF}`;
+    context.fillText('✦', DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2);
+    context.restore();
+  }
 };
 
 const drawVisualFace = async (
@@ -285,9 +370,9 @@ const drawParagraphs = (
   width: number,
   palette: Palette,
 ) => {
-  const bodySize = 36;
-  const lineHeight = 49;
-  const paragraphGap = 34;
+  const bodySize = PAGE_STYLE.bodySize;
+  const lineHeight = PAGE_STYLE.bodyLineHeight;
+  const paragraphGap = PAGE_STYLE.bodyParagraphGap;
 
   context.save();
   context.fillStyle = palette.ink;
@@ -345,7 +430,13 @@ const drawContentFace = (
 
   context.save();
   context.fillStyle = palette.ink;
-  const titleSize = fitFontSize(context, spread.title, width, 78, 58);
+  const titleSize = fitFontSize(
+    context,
+    spread.title,
+    width,
+    PAGE_STYLE.titleStart,
+    PAGE_STYLE.titleMinimum,
+  );
   context.font = `500 ${titleSize}px ${FONT_SERIF}`;
   context.textBaseline = 'alphabetic';
   context.fillText(spread.title, x, 262);
@@ -459,6 +550,11 @@ export const renderBookFace = async (
   context.scale(scale, scale);
 
   const palette = getPalette(host);
+  if (face.kind === 'cover') {
+    drawCoverFace(context, face, palette);
+    return { canvas, hitRegions: [] };
+  }
+
   drawPaper(context, palette);
 
   if (face.kind === 'visual') {

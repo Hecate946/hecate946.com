@@ -1,6 +1,18 @@
 export type Direction = -1 | 1;
 export type PageSide = 'left' | 'right';
+export type BookClosedSide = 'front' | 'back' | null;
 export type VisualMode = 'portrait' | 'screen' | 'document' | 'photo';
+
+export type BookMotion =
+  | {
+      kind: 'page';
+      direction: Direction;
+    }
+  | {
+      kind: 'cover';
+      side: Exclude<BookClosedSide, null>;
+      opening: boolean;
+    };
 
 export type BookLink = {
   href: string;
@@ -40,6 +52,12 @@ export type PageFace =
       kind: 'content';
       spread: BookSpread;
       pageNumber: number;
+    }
+  | {
+      kind: 'cover';
+      side: 'front' | 'back';
+      eyebrow?: string;
+      title?: string;
     };
 
 export type PageHitRegion = {
