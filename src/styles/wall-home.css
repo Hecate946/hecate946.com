@@ -1,20 +1,16 @@
 /*
- * The homepage is one full-viewport room. The transparent header sits over
- * the scene so the moving wall remains visible through the navigation.
+ * The homepage is one full-viewport room. Home keeps the original palette in
+ * themes.css; this file owns only its viewport composition.
  */
 body.wall-home-page {
   position: relative;
-  display: block !important;
   width: 100%;
   height: 100vh;
   min-height: 100vh;
   overflow: hidden;
   overscroll-behavior: none;
 
-  /* Navigation chrome must stay legible over both light and dark wall modes. */
-  --header-text: var(--wall-light);
-  --header-muted: color-mix(in srgb, var(--wall-light) 72%, transparent);
-  --header-line: color-mix(in srgb, var(--wall-light) 22%, transparent);
+  /* Header focus state follows the existing light floor/mortar color. */
   --header-accent: var(--wall-light);
 }
 
@@ -34,29 +30,22 @@ body.wall-home-page {
 
 body.wall-home-page > .site-header {
   position: absolute;
+  z-index: 50;
+  top: 0;
   right: 0;
   left: 0;
-  z-index: 50;
-  background: transparent !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
 }
 
-body.wall-home-page > .site-header {
-  top: 0;
-}
-
-
-.wall-home-main {
+body.wall-home-page .wall-home-main {
   position: absolute;
   inset: 0;
   display: block;
   width: 100%;
   min-width: 0;
   height: 100%;
-  min-height: 0 !important;
+  min-height: 0;
   overflow: hidden;
-  padding: 0 !important;
+  padding: 0;
 }
 
 .wall-home-main > astro-island {
@@ -66,7 +55,6 @@ body.wall-home-page > .site-header {
   min-height: 0;
 }
 
-/* With no footer chrome, the motion control can sit directly above the floor edge. */
 body.wall-home-page .wall-motion-toggle {
   bottom: 0.8rem;
 }

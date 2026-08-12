@@ -1,0 +1,84 @@
+@view-transition {
+  navigation: auto;
+}
+
+/*
+ * Route changes behave like vertically stacked rooms. Astro's ClientRouter
+ * captures both documents, then moves them by exactly one viewport.
+ */
+:root {
+  --room-transition-distance: 100vh;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --room-transition-distance: 100dvh;
+  }
+}
+
+::view-transition-image-pair(root) {
+  isolation: isolate;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 2;
+  box-shadow: 0 1.35rem 2.8rem rgb(0 0 0 / 28%);
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+@keyframes room-lift-out {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, calc(-1 * var(--room-transition-distance)), 0);
+  }
+}
+
+@keyframes room-rise-in {
+  from {
+    transform: translate3d(0, var(--room-transition-distance), 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes room-drop-out {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, var(--room-transition-distance), 0);
+  }
+}
+
+@keyframes room-descend-in {
+  from {
+    transform: translate3d(0, calc(-1 * var(--room-transition-distance)), 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

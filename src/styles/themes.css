@@ -5,7 +5,6 @@
  */
 html[data-theme='light'] {
   --bg: #fff8e8;
-  --surface: rgb(255 253 245 / 78%);
   --surface-strong: #fffdf5;
   --text: #173d3b;
   --muted: #607874;
@@ -13,11 +12,7 @@ html[data-theme='light'] {
   --accent: #0f7773;
   --accent-strong: #07524f;
   --accent-soft: rgb(15 119 115 / 13%);
-  --shadow: 0 1.25rem 3rem rgb(44 73 64 / 12%);
 
-  --header-text: #174b45;
-  --header-muted: #2f6861;
-  --header-line: rgb(23 75 69 / 22%);
   --header-accent: #0f7773;
 
   --wall-dark: color-mix(in srgb, var(--accent) 88%, black);
@@ -32,7 +27,6 @@ html[data-theme='light'] {
 html[data-theme='dark'] {
   color-scheme: dark;
   --bg: #07191d;
-  --surface: rgb(13 39 42 / 80%);
   --surface-strong: #102b2e;
   --text: #eff8f4;
   --muted: #a4bfba;
@@ -40,11 +34,7 @@ html[data-theme='dark'] {
   --accent: #73d0c3;
   --accent-strong: #a7eee2;
   --accent-soft: rgb(115 208 195 / 15%);
-  --shadow: 0 1.25rem 3rem rgb(0 0 0 / 34%);
 
-  --header-text: #eef8f5;
-  --header-muted: #b8d2cd;
-  --header-line: rgb(223 244 239 / 15%);
   --header-accent: #73d0c3;
 
   --wall-dark: #051417;

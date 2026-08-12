@@ -54,6 +54,7 @@ const roomThemeClass = pathname.startsWith('/about')
           ? 'room-theme-stats'
           : undefined;
 
+const hasSiteRoomBackdrop = !isDedicatedRoom;
 const elevatorTabAnimationsEnabled = siteConfig.ui.enableElevatorTabAnimations;
 const clientRouterFallback = elevatorTabAnimationsEnabled ? 'animate' : 'swap';
 
@@ -117,8 +118,15 @@ const roomLiftTransition = {
     <ClientRouter fallback={clientRouterFallback} />
   </head>
 
-  <body class:list={[bodyClass, roomThemeClass]}>
-    {!isDedicatedRoom && (
+  <body
+    class:list={[
+      bodyClass,
+      roomThemeClass && 'room-themed',
+      roomThemeClass,
+      hasSiteRoomBackdrop && 'has-site-room-backdrop',
+    ]}
+  >
+    {hasSiteRoomBackdrop && (
       <div class="site-room-backdrop wall-room-host" aria-hidden="true">
         <WallBackdrop />
         <FloorScene client:load />

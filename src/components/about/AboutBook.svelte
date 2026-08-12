@@ -1,14 +1,22 @@
 <script lang="ts">
-  import PaperStack from './PaperStack.svelte';
-  import { createAboutPaperPages } from './about-book-content';
+  import WebGLBook from './WebGLBook.svelte';
+  import { createAboutBookSpreads } from './about-book-content';
 
+  export let musicVideoUrl: string;
+  export let pickleballArticleUrl: string;
+  export let chessProfileUrl: string;
+  export let resumesUrl: string;
   export let portraitUrl: string;
 
-  $: pages = createAboutPaperPages({
+  $: spreads = createAboutBookSpreads({
+    musicVideoUrl,
+    pickleballArticleUrl,
+    chessProfileUrl,
+    resumesUrl,
     portraitUrl,
   });
 </script>
 
 <section class="about-page-turner" aria-label="About Cyrus Asasi">
-  <PaperStack {pages} />
+  <WebGLBook {spreads} />
 </section>

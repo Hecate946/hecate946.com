@@ -1,0 +1,23 @@
+/*
+ * Shared room backdrop shell for ordinary interior pages. Palette decisions
+ * live in room-palettes.css; this file owns only layering and containment.
+ */
+.site-room-backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  min-height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.has-site-room-backdrop {
+  position: relative;
+  isolation: isolate;
+  background: var(--wall-dark);
+}
+
+.has-site-room-backdrop > main {
+  position: relative;
+  z-index: 1;
+}

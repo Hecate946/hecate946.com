@@ -75,6 +75,7 @@
   .wall-window {
     --room-light-hot: var(--wall-light, #f4f1e9);
     --wall-label-ink: var(--room-label-ink, var(--wall-light, #f4f1e9));
+    --wall-frame-outline: var(--room-outline, var(--wall-light, #f4f1e9));
 
     position: absolute;
     z-index: 3;
@@ -105,7 +106,7 @@
     border: 0.7rem solid #050505;
     background: #020202;
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 7%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--wall-frame-outline) 24%, transparent),
       0 0 0 0.32rem #0b0b0b,
       0.65rem 0.85rem 1.15rem rgb(0 0 0 / 66%),
       0 0 2.6rem color-mix(in srgb, var(--room-light-hot) 8%, transparent),
@@ -122,7 +123,7 @@
     overflow: hidden;
     contain: paint;
     background: #0b0b0a;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 8%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wall-frame-outline) 26%, transparent);
   }
 
   .wall-window__painting {
@@ -169,7 +170,7 @@
     left: -0.65rem;
     height: 0.55rem;
     background: #050505;
-    border-top: 1px solid color-mix(in srgb, var(--wall-light, #f4f1e9) 7%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--wall-frame-outline) 24%, transparent);
     box-shadow: 0 0.5rem 0.65rem rgb(0 0 0 / 58%);
   }
 
@@ -236,7 +237,7 @@
   .wall-window--entering .wall-window__recess {
     border-color: #080808;
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 11%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--wall-frame-outline) 36%, transparent),
       0 0 0 0.32rem #0d0d0d,
       0.65rem 0.85rem 1.15rem rgb(0 0 0 / 68%),
       0 0 2.8rem color-mix(in srgb, var(--room-light-hot) 32%, transparent),
@@ -264,7 +265,7 @@
     .wall-window:hover .wall-window__recess {
       border-color: #080808;
       box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--wall-light, #f4f1e9) 11%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--wall-frame-outline) 36%, transparent),
         0 0 0 0.32rem #0d0d0d,
         0.65rem 0.85rem 1.15rem rgb(0 0 0 / 68%),
         0 0 2.8rem color-mix(in srgb, var(--room-light-hot) 32%, transparent),
@@ -286,7 +287,7 @@
   }
 
   .wall-window:focus-visible .wall-window__recess {
-    outline: 2px solid color-mix(in srgb, var(--wall-label-ink) 82%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--wall-frame-outline) 82%, transparent);
     outline-offset: 0.5rem;
   }
 

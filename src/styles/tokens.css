@@ -12,18 +12,7 @@
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     monospace;
 
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-  --space-8: 4.5rem;
-  --space-9: 7rem;
-
   --radius-sm: 0.5rem;
-  --radius-md: 1rem;
   --radius-lg: 1.5rem;
   --radius-pill: 999px;
 
@@ -36,18 +25,13 @@
   --header-height: calc(var(--brick-course-height) * 2);
 
   --duration-fast: 140ms;
-  --duration-medium: 280ms;
-  --duration-slow: 700ms;
-  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* Felt/noise controls. Set opacity to 0 to disable the texture. */
   --page-noise-opacity: 0; /* 0.045 */ 
   --page-noise-size: 170px;
-  --page-noise-contrast: 118%;
 
   /* Summer-light fallbacks. themes.css replaces these from data attributes. */
   --bg: #fff8e8;
-  --surface: rgba(255, 253, 245, 0.76);
   --surface-strong: #fffdf5;
   --text: #173d3b;
   --muted: #607874;
@@ -55,17 +39,12 @@
   --accent: #0f7773;
   --accent-strong: #07524f;
   --accent-soft: rgba(15, 119, 115, 0.13);
-  --shadow: 0 1.25rem 3rem rgba(44, 73, 64, 0.12);
-  --header-text: #174b45;
-  --header-muted: #2f6861;
-  --header-line: rgba(23, 75, 69, 0.25);
   --header-accent: #e76e5d;
 }
 
 html[data-theme='dark'] {
   color-scheme: dark;
   --page-noise-opacity: 0; /* 0.075 */
-  --page-noise-contrast: 128%;
 }
 
 /* On phones the navigation becomes two architectural rows. Each row remains

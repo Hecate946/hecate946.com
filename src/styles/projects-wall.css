@@ -1,21 +1,14 @@
 /*
- * The Projects index is a second full-viewport gallery room. It deliberately
- * uses the same moving-wall interaction and physical frame system as Home;
- * only the room palette and framed destinations differ.
+ * Full-viewport Projects gallery. Color and linework come from
+ * room-palettes.css; this file owns only the room-specific viewport layout.
  */
 body.projects-wall-page {
   position: relative;
-  display: block !important;
   width: 100%;
   height: 100vh;
   min-height: 100vh;
   overflow: hidden;
   overscroll-behavior: none;
-
-  --header-text: var(--wall-light);
-  --header-muted: color-mix(in srgb, var(--wall-light) 72%, transparent);
-  --header-line: color-mix(in srgb, var(--wall-light) 22%, transparent);
-  --header-accent: var(--wall-light);
 }
 
 @supports (height: 100svh) {
@@ -38,9 +31,6 @@ body.projects-wall-page > .site-header {
   top: 0;
   right: 0;
   left: 0;
-  background: transparent !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
 }
 
 .projects-wall-main {
@@ -50,9 +40,9 @@ body.projects-wall-page > .site-header {
   width: 100%;
   min-width: 0;
   height: 100%;
-  min-height: 0 !important;
+  min-height: 0;
   overflow: hidden;
-  padding: 0 !important;
+  padding: 0;
 }
 
 .projects-wall-main > astro-island {

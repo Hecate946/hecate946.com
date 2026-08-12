@@ -11,6 +11,7 @@
     "check": "astro check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "cleanup:obsolete": "bash scripts/cleanup-obsolete-files.sh",
     "site:zip": "node scripts/create-website-source-zip.mjs",
     "stats:deploy": "node scripts/deploy-stats-worker.mjs"
   },

@@ -554,7 +554,7 @@
 .stats-tabs button:last-child { border-right: 0; }
 .stats-tabs button:hover { background: var(--accent-soft); color: var(--text); }
 .stats-tabs button.active { background: var(--text); color: var(--bg); }
-.stats-tabs button:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--accent-strong); outline-offset: -3px; }
+.stats-tabs button:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--room-outline, var(--accent-strong)); outline-offset: -3px; }
 
 .stats-reset {
   padding: 0.62rem 0.85rem;

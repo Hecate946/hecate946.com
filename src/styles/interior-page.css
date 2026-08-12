@@ -1,0 +1,97 @@
+/* Shared 12-column shell for normal interior pages. */
+.interior-page {
+  --interior-heading-space: clamp(2.5rem, 5vw, 3.75rem);
+  --interior-content-space: clamp(2.25rem, 4.5vw, 3.5rem);
+  --interior-column-start: 4;
+  --interior-column-end: 10;
+
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+}
+
+.interior-page--six {
+  --interior-column-start: 4;
+  --interior-column-end: 10;
+}
+
+.interior-page--eight {
+  --interior-column-start: 3;
+  --interior-column-end: 11;
+}
+
+.interior-page-heading,
+.interior-page-content,
+.interior-page-column {
+  grid-column: var(--interior-column-start) / var(--interior-column-end);
+  width: 100%;
+  justify-self: center;
+}
+
+.interior-page-heading {
+  display: grid;
+  place-items: start;
+  padding-block: var(--interior-heading-space);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.interior-page-heading h1 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-family: var(--font-display);
+  font-size: clamp(2.45rem, 5vw, 3.6rem);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.interior-page-content {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.interior-page-column {
+  min-width: 0;
+  margin-inline: 0;
+}
+
+.interior-page-content--balanced {
+  padding-block: var(--interior-content-space);
+}
+
+/* Full-width room pages keep the grid available to their children. */
+.interior-page--open > .interior-page-heading,
+.interior-page--open > .interior-page-content,
+.interior-page--open > .interior-page-column {
+  grid-column: 1 / -1;
+  width: 100%;
+  justify-self: stretch;
+}
+
+.interior-page--open > .interior-page-heading {
+  padding-block: clamp(1.8rem, 3.5vw, 2.75rem);
+  border-bottom: 0;
+  text-align: left;
+}
+
+.interior-page--open > .interior-page-heading h1 {
+  font-size: clamp(1.65rem, 2.75vw, 2.35rem);
+  letter-spacing: 0.015em;
+  line-height: 1;
+  text-align: left;
+}
+
+@media (max-width: 39.999rem) {
+  .interior-page > .interior-page-heading,
+  .interior-page > .interior-page-content,
+  .interior-page > .interior-page-column {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+}

@@ -8,34 +8,10 @@
  *
  * Home intentionally continues to use src/styles/themes.css unchanged.
  */
-.site-room-backdrop {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  min-height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-body:has(> .site-room-backdrop) {
-  position: relative;
-  isolation: isolate;
-  background: var(--wall-dark);
-}
-
-body:has(> .site-room-backdrop) > main {
-  position: relative;
-  z-index: 1;
-}
-
-:is(
-    .room-theme-about,
-    .room-theme-projects,
-    .room-theme-resume,
-    .room-theme-contact,
-    .room-theme-stats
-  ) {
+.room-themed {
   --wall-light: #fff8ec;
+  --room-outline: #000;
+  --wall-outline: var(--room-outline);
   --room-ink: var(--wall-light);
   --room-nav-ink: var(--room-ink);
   --room-label-ink: var(--room-ink);
@@ -43,39 +19,29 @@ body:has(> .site-room-backdrop) > main {
   --room-surface-base: var(--wall-dark);
   --room-control-bg: color-mix(in srgb, var(--wall-dark) 82%, transparent);
 
-  --header-text: var(--room-nav-ink);
-  --header-muted: color-mix(in srgb, var(--room-nav-ink) 74%, transparent);
-  --header-line: color-mix(in srgb, var(--room-nav-ink) 34%, transparent);
   --header-accent: var(--room-nav-ink);
   --text: var(--room-ink);
   --muted: color-mix(in srgb, var(--room-ink) 68%, var(--wall-dark));
-  --line: color-mix(in srgb, var(--room-ink) 18%, transparent);
-  --surface: color-mix(in srgb, var(--room-surface-base) 84%, transparent);
+  --line: color-mix(in srgb, var(--room-outline) 24%, transparent);
   --surface-strong: var(--room-surface-base);
   --accent: var(--room-ink);
   --accent-strong: var(--room-ink);
-  --accent-soft: color-mix(in srgb, var(--room-ink) 12%, transparent);
+  --accent-soft: color-mix(in srgb, var(--room-outline) 12%, transparent);
   --bg: var(--wall-dark);
-  --shadow: 0 1.25rem 3rem rgb(0 0 0 / 22%);
 
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 86%, #090909);
-  --wall-trim-line: color-mix(in srgb, var(--wall-light) 10%, transparent);
-  --wall-trim-line-soft: color-mix(in srgb, var(--wall-light) 5.5%, transparent);
-  --wall-trim-highlight: color-mix(in srgb, var(--wall-light) 4%, transparent);
+  --wall-trim-line: color-mix(in srgb, var(--room-outline) 28%, transparent);
+  --wall-trim-line-soft: color-mix(in srgb, var(--room-outline) 16%, transparent);
+  --wall-trim-highlight: color-mix(in srgb, var(--room-outline) 10%, transparent);
+  --wall-trim-border-bottom: var(--wall-trim-line-soft);
   --wall-trim-shadow: rgb(0 0 0 / 38%);
 }
 
 /* -------------------------------------------------------------------------- */
-/* LIGHT MODE — macaron palette                                               */
+/* LIGHT MODE — macaron palette + black linework                              */
 /* -------------------------------------------------------------------------- */
-html[data-theme='light']
-  :is(
-    .room-theme-about,
-    .room-theme-projects,
-    .room-theme-resume,
-    .room-theme-contact,
-    .room-theme-stats
-  ) {
+html[data-theme='light'] .room-themed {
+  --room-outline: #000;
   --room-surface-base: color-mix(in srgb, var(--wall-light) 84%, var(--wall-dark));
   --room-control-bg: color-mix(in srgb, var(--wall-light) 76%, transparent);
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 72%, #272321);
@@ -113,17 +79,11 @@ html[data-theme='light'] .room-theme-stats {
 }
 
 /* -------------------------------------------------------------------------- */
-/* DARK MODE — rich, saturated companions                                     */
+/* DARK MODE — rich palette + white linework                                  */
 /* -------------------------------------------------------------------------- */
-html[data-theme='dark']
-  :is(
-    .room-theme-about,
-    .room-theme-projects,
-    .room-theme-resume,
-    .room-theme-contact,
-    .room-theme-stats
-  ) {
+html[data-theme='dark'] .room-themed {
   --wall-light: #fff8e8;
+  --room-outline: #fff;
   --room-ink: var(--wall-light);
   --room-surface-base: color-mix(in srgb, var(--wall-dark) 86%, black);
   --room-control-bg: color-mix(in srgb, var(--wall-dark) 82%, transparent);
@@ -133,7 +93,7 @@ html[data-theme='dark']
 
 /* Rich terracotta. */
 html[data-theme='dark'] .room-theme-about {
-  --wall-dark: #750000;
+  --wall-dark: #570000;
 }
 
 /* Royal plum. */
