@@ -154,17 +154,6 @@ const structuredDataJson = JSON.stringify(structuredData).replace(/</g, '\\u003c
     ? 'noindex, nofollow'
     : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}
 />
-<meta
-  name="theme-color"
-  media="(prefers-color-scheme: light)"
-  content="#0d6965"
-/>
-<meta
-  name="theme-color"
-  media="(prefers-color-scheme: dark)"
-  content="#051417"
-/>
-
 <link rel="canonical" href={canonicalHref} />
 <link rel="sitemap" href={withBase('/sitemap-index.xml')} type="application/xml" />
 <link rel="manifest" href={`${withBase('/site.webmanifest')}?v=pig-20260813`} />
