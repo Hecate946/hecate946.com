@@ -106,11 +106,32 @@ const hasSiteRoomBackdrop = !isPrimaryRoom;
       hasSiteRoomBackdrop && 'has-site-room-backdrop',
     ]}
   >
-    <SharedRoomBackdrop
-      client:load
-      transition:persist="global-room-backdrop"
-      initialCameraX={primaryRoomInitialCameraX}
-    />
+    {isScrollingPrimaryRoom ? (
+      <div class="scrolling-room-scrollport">
+        <div class="scrolling-room-document">
+          <SharedRoomBackdrop
+            client:load
+            transition:persist="global-room-backdrop"
+            initialCameraX={primaryRoomInitialCameraX}
+          />
+          <main id="main-content" class={mainClass}>
+            <slot />
+          </main>
+        </div>
+      </div>
+    ) : (
+      <>
+        <SharedRoomBackdrop
+          client:load
+          transition:persist="global-room-backdrop"
+          initialCameraX={primaryRoomInitialCameraX}
+        />
+        <main id="main-content" class={mainClass}>
+          <slot />
+        </main>
+      </>
+    )}
+
     {isPrimaryRoom && (
       <PrimaryRoomEngine
         client:load
@@ -120,9 +141,5 @@ const hasSiteRoomBackdrop = !isPrimaryRoom;
     )}
     <SkipLink />
     <Header />
-
-    <main id="main-content" class={mainClass}>
-      <slot />
-    </main>
   </body>
 </html>
