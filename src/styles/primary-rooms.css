@@ -1,77 +1,19 @@
 /*
- * Primary room viewport architecture.
+ * Primary room layout.
  *
- * Safari 26 can synthesize a solid "top bar tint" when fixed/sticky page UI
- * borders its obscured browser chrome. The primary rooms therefore keep the
- * navbar as an ordinary absolute overlay and scroll the long room content in
- * a dedicated full-screen scrollport beneath it. No scroll-linked JavaScript
- * or transform compensation is involved.
+ * Home remains a viewport-sized interactive room. About, Projects, Resumes,
+ * and Contact are ordinary document-height pages with the same shared room
+ * backdrop growing behind them. The navbar uses normal CSS sticky positioning
+ * on those scrolling pages; browser chrome and safe areas are left to the
+ * browser rather than being simulated by root-canvas or overscroll rules.
  */
 
-/* -------------------------------------------------------------------------- */
-/* Safari/root-canvas continuation                                            */
-/* -------------------------------------------------------------------------- */
-
-/*
- * viewport-fit=cover lets Safari expose page pixels underneath Liquid Glass,
- * but WebKit can still reveal the root canvas in the browser's obscured edge
- * region. Make that fallback the same 96x48 brick grid instead of a flat
- * color. The SVG is deliberately only 336px tall and repeats horizontally,
- * so the lower root canvas remains the room's solid wall color (the existing
- * footer/underscroll treatment) rather than gaining a new brick extension.
- */
-html:has(body.primary-room-page) {
-  --edge-wall-dark: var(--wall-dark, var(--bg));
-  background-color: var(--edge-wall-dark);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='336' viewBox='0 0 96 336'%3E%3Cdefs%3E%3Cpattern id='p' width='96' height='48' patternUnits='userSpaceOnUse'%3E%3Cg fill='%23fff' fill-opacity='.28'%3E%3Crect x='0' y='0' width='96' height='1'/%3E%3Crect x='0' y='24' width='96' height='1'/%3E%3Crect x='0' y='0' width='1' height='24'/%3E%3Crect x='48' y='0' width='1' height='24'/%3E%3Crect x='24' y='24' width='1' height='24'/%3E%3Crect x='72' y='24' width='1' height='24'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Crect width='96' height='336' fill='url(%23p)'/%3E%3C/svg%3E");
-  background-position: 0 0;
-  background-repeat: repeat-x;
-}
-
-/* Room palette variables normally live on <body>. Mirror only the wall base
-   color onto <html> so Safari's root canvas matches the active room exactly. */
-html[data-theme='light']:has(body.room-theme-about) {
-  --edge-wall-dark: #d897b2;
-}
-
-html[data-theme='light']:has(body.room-theme-projects) {
-  --edge-wall-dark: #b6a6cc;
-}
-
-html[data-theme='light']:has(body.room-theme-resume) {
-  --edge-wall-dark: #dfa06f;
-}
-
-html[data-theme='light']:has(body.room-theme-contact) {
-  --edge-wall-dark: #6d9e92;
-}
-
-html[data-theme='dark']:has(body.room-theme-about) {
-  --edge-wall-dark: #380a12;
-}
-
-html[data-theme='dark']:has(body.room-theme-projects) {
-  --edge-wall-dark: #130a1f;
-}
-
-html[data-theme='dark']:has(body.room-theme-resume) {
-  --edge-wall-dark: #8f3510;
-}
-
-html[data-theme='dark']:has(body.room-theme-contact) {
-  --edge-wall-dark: #041b0b;
-}
-
-/* The actual room renderer supplies all visible page paint. Keeping body
-   transparent prevents a second flat canvas from sitting between it and the
-   brick-patterned root fallback. */
 body.primary-room-page {
   position: relative;
   width: 100%;
   height: 100vh;
   min-height: 100vh;
   overflow: hidden;
-  background: transparent;
 }
 
 @supports (height: 100svh) {
@@ -88,16 +30,12 @@ body.primary-room-page {
   }
 }
 
-/* The navbar has the same visual position as before, but is not fixed/sticky.
-   Since the primary-room body itself never scrolls, absolute positioning is
-   enough to keep it perfectly stationary while room content moves below it. */
 body.primary-room-page > .site-header {
   position: absolute;
   z-index: 50;
   top: 0;
   right: 0;
   left: 0;
-  background: transparent;
 }
 
 body.primary-room-page > main {
@@ -119,15 +57,11 @@ body.primary-room-page > main {
   min-height: 100%;
 }
 
-/* The interactive foreground owns no opaque room paint. The single backdrop
-   underneath it is the only brick/floor renderer in the five primary rooms. */
 body.primary-room-page .wall-stage,
 body.primary-room-page .contact-page {
   background: transparent;
 }
 
-/* The Home wall runtime survives primary navigation so returning home keeps
-   the gallery camera state. Other primary rooms are ordinary page content. */
 .primary-room-engine {
   position: absolute;
   z-index: 2;
@@ -152,8 +86,6 @@ body.primary-room-page .contact-page {
   height: 100%;
 }
 
-/* Contact remains static Astro markup and sits above the dormant persistent
-   engine. Empty primary-page mains do not intercept pointer input. */
 body.primary-room-page > main {
   z-index: 3;
   pointer-events: none;
@@ -167,93 +99,58 @@ body.primary-room-page.contact-room-page > main {
   pointer-events: auto;
 }
 
-/* -------------------------------------------------------------------------- */
-/* About / Projects / Resumes / Contact: native inner room scrolling          */
-/* -------------------------------------------------------------------------- */
-
-html:has(body.scrolling-primary-room) {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
 body.primary-room-page.scrolling-primary-room {
   --room-floor-reserve: clamp(6.6rem, 18vh, 10.4rem);
   width: 100%;
-  height: 100vh;
+  height: auto;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 @supports (height: 100svh) {
   body.primary-room-page.scrolling-primary-room {
-    height: 100svh;
     min-height: 100svh;
   }
 }
 
 @supports (height: 100dvh) {
   body.primary-room-page.scrolling-primary-room {
-    height: 100dvh;
     min-height: 100dvh;
   }
 }
 
-/* This scroll layer begins at y=0 — underneath the transparent navbar and,
-   when Safari exposes the obscured inset, underneath Liquid Glass as well. */
-.scrolling-room-scrollport {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scroll-padding-top: var(--header-height);
-  -webkit-overflow-scrolling: touch;
+body.primary-room-page.scrolling-primary-room > .site-header {
+  position: sticky;
+  top: 0;
 }
 
-.scrolling-room-document {
-  position: relative;
-  isolation: isolate;
-  width: 100%;
-  min-height: 100%;
-}
-
-.scrolling-room-document > .primary-room-backdrop {
-  --floor-height: clamp(5.2rem, 18vh, 9.8rem);
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-}
-
-/* Padding preserves the exact initial layout the old in-flow sticky header
-   created. Once the user scrolls, the real content naturally passes behind
-   the transparent navbar rather than stopping at an artificial top mask. */
-.scrolling-room-document > main {
+body.primary-room-page.scrolling-primary-room > main {
   position: relative;
   z-index: 3;
-  box-sizing: border-box;
+  inset: auto;
   width: 100%;
-  min-height: 100vh;
+  height: auto;
+  min-height: calc(100vh - var(--header-height));
   overflow: visible;
-  padding-top: var(--header-height);
   pointer-events: auto;
 }
 
 @supports (height: 100svh) {
-  .scrolling-room-document > main {
-    min-height: 100svh;
+  body.primary-room-page.scrolling-primary-room > main {
+    min-height: calc(100svh - var(--header-height));
   }
 }
 
 @supports (height: 100dvh) {
-  .scrolling-room-document > main {
-    min-height: 100dvh;
+  body.primary-room-page.scrolling-primary-room > main {
+    min-height: calc(100dvh - var(--header-height));
   }
+}
+
+body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
+  --floor-height: clamp(5.2rem, 18vh, 9.8rem);
+  height: auto;
 }
 
 @media (max-width: 40rem) {
@@ -261,48 +158,7 @@ body.primary-room-page.scrolling-primary-room {
     --room-floor-reserve: 7.25rem;
   }
 
-  .scrolling-room-document > .primary-room-backdrop {
+  body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
     --floor-height: 6.4rem;
   }
 }
-
-/* HECATE IOS EDGE CONTINUATION - BEGIN */
-/*
- * iOS Safari / Liquid Glass edge behavior:
- *
- * The room itself already paints continuously behind the transparent navbar
- * and down through the floor. The old html:has(body.primary-room-page) rule
- * above intentionally painted a separate root-canvas fallback: brick lines
- * for only the first 336px, then a flat --edge-wall-dark color everywhere
- * else. Safari can use that root canvas when composing its obscured top/bottom
- * regions, which is why the page could look like it had solid color caps even
- * though the actual room underneath was continuous.
- *
- * Keep the real page canvas transparent instead, so Safari can composite the
- * rendered room. For rubber-band gaps inside our dedicated room scroller,
- * give the scroller itself matching architectural continuations: bricks at
- * the top and checkerboard at the bottom. These are behind the real room and
- * only become visible when an edge is exposed.
- */
-html:has(body.primary-room-page) {
-  background-color: transparent;
-  background-image: none;
-}
-
-body.primary-room-page.scrolling-primary-room .scrolling-room-scrollport {
-  background-color: var(--wall-dark);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='336' viewBox='0 0 96 336'%3E%3Cdefs%3E%3Cpattern id='p' width='96' height='48' patternUnits='userSpaceOnUse'%3E%3Cg fill='%23fff' fill-opacity='.28'%3E%3Crect x='0' y='0' width='96' height='1'/%3E%3Crect x='0' y='24' width='96' height='1'/%3E%3Crect x='0' y='0' width='1' height='24'/%3E%3Crect x='48' y='0' width='1' height='24'/%3E%3Crect x='24' y='24' width='1' height='24'/%3E%3Crect x='72' y='24' width='1' height='24'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Crect width='96' height='336' fill='url(%23p)'/%3E%3C/svg%3E"),
-    conic-gradient(
-      from 90deg,
-      var(--wall-dark) 0 25%,
-      var(--wall-light) 0 50%,
-      var(--wall-dark) 0 75%,
-      var(--wall-light) 0
-    );
-  background-position: 0 0, 0 100%;
-  background-repeat: repeat-x, repeat-x;
-  background-size: 96px 336px, 168px 168px;
-  overscroll-behavior-y: auto;
-}
-/* HECATE IOS EDGE CONTINUATION - END */

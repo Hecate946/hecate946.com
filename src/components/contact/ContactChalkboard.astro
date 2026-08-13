@@ -56,7 +56,9 @@ const topics = [
     <section class="contact-compose__email" aria-labelledby="contact-email-label">
       <p class="contact-kicker" id="contact-email-label">Email</p>
       <div class="contact-email-row">
-        <a class="contact-email-address" href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>
+        <!--email_off-->
+        <a class="contact-email-address" href="#" data-contact-email-link>{siteConfig.email}</a>
+        <!--/email_off-->
         <button class="contact-copy" type="button" data-contact-copy aria-label="Copy email address">
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <rect x="6.1" y="5.7" width="8.2" height="8.2" rx="1.25" />
@@ -135,9 +137,14 @@ const topics = [
       form.dataset.contactBound = 'true';
 
       const email = form.dataset.email ?? '';
+      const emailLink = form.querySelector<HTMLAnchorElement>('[data-contact-email-link]');
       const copyButton = form.querySelector<HTMLButtonElement>('[data-contact-copy]');
       const copyLabel = form.querySelector<HTMLElement>('[data-contact-copy-label]');
       let copyResetTimer = 0;
+
+      if (emailLink && email) {
+        emailLink.href = `mailto:${email}`;
+      }
 
       copyButton?.addEventListener('click', async () => {
         if (!copyLabel || !email) return;
