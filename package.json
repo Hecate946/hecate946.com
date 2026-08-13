@@ -10,6 +10,7 @@
     "check": "astro check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "site:zip": "node scripts/create-website-source-zip.mjs",
     "audit:production": "node scripts/production-audit.mjs"
   },
   "dependencies": {
