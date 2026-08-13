@@ -58,6 +58,10 @@ const isPrimaryRoom =
   normalizedPathname === '/projects' ||
   normalizedPathname === '/resumes' ||
   normalizedPathname === '/contact';
+const isScrollingPrimaryRoom =
+  normalizedPathname === '/about' ||
+  normalizedPathname === '/projects' ||
+  normalizedPathname === '/resumes';
 const roomThemeClass = pathname.startsWith('/about')
   ? 'room-theme-about'
   : pathname.startsWith('/projects')
@@ -96,6 +100,7 @@ const hasSiteRoomBackdrop = !isPrimaryRoom;
     class:list={[
       bodyClass,
       isPrimaryRoom && 'primary-room-page',
+      isScrollingPrimaryRoom && 'scrolling-primary-room',
       roomThemeClass && 'room-themed',
       roomThemeClass,
       hasSiteRoomBackdrop && 'has-site-room-backdrop',

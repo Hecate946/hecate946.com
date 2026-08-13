@@ -1,48 +1,23 @@
 /*
- * Resumes are intentionally static rather than conveyor-driven. Both documents
- * remain visible at a glance on every viewport while the persistent brick wall
- * and checkerboard floor continue to provide the room composition.
+ * The resumes are two rigid museum pieces rather than miniature UI panels.
+ * Their black recess, sill, and sparse caption deliberately match Home. The
+ * pair stays centered in the usable wall and automatically becomes one column
+ * the moment two full-size frames no longer fit.
  */
 body.resume-wall-page {
   position: relative;
   width: 100%;
-  height: 100vh;
   min-height: 100vh;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-@supports (height: 100svh) {
-  body.resume-wall-page {
-    height: 100svh;
-    min-height: 100svh;
-  }
-}
-
-@supports (height: 100dvh) {
-  body.resume-wall-page {
-    height: 100dvh;
-    min-height: 100dvh;
-  }
-}
-
-body.resume-wall-page > .site-header {
-  position: absolute;
-  z-index: 50;
-  top: 0;
-  right: 0;
-  left: 0;
 }
 
 .resume-wall-main {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  z-index: 3;
   display: block;
   width: 100%;
   min-width: 0;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  min-height: calc(100vh - var(--header-height));
+  overflow: visible;
   padding: 0;
 }
 
@@ -51,125 +26,99 @@ body.resume-wall-page > main.resume-wall-main {
 }
 
 .resume-gallery {
-  --resume-frame: #050505;
-  --resume-frame-mid: #101010;
-  --resume-paper: #f5f0e6;
-  --resume-ink: var(--room-outline, #fff);
-  /* Match the shared room backdrop geometry without applying wall-room-host's
-     opaque background to the foreground gallery. */
-  --floor-height: clamp(5.2rem, 18%, 9.8rem);
+  --resume-card-width: 19rem;
+  --resume-label-ink: var(--room-label-ink, var(--wall-light, #f4f1e9));
+  --resume-frame-outline: var(--room-outline, var(--wall-light, #f4f1e9));
+  --resume-light-hot: var(--wall-light, #f4f1e9);
 
-  position: absolute;
-  inset: var(--header-height) 0 var(--floor-height);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  padding: clamp(0.45rem, 1.5vh, 1rem) clamp(0.8rem, 3vw, 2.2rem) clamp(0.5rem, 1.6vh, 1rem);
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - var(--header-height));
+  padding: 0 1rem var(--room-floor-reserve, 9rem);
   background: transparent;
-  color: var(--resume-ink);
+  color: var(--resume-label-ink);
 }
 
-.resume-gallery__content {
+.resume-gallery__wall-zone {
   display: grid;
-  width: min(74rem, 100%);
-  max-height: 100%;
-  grid-template-rows: minmax(0, 1fr);
-  gap: 0;
-  align-items: center;
+  width: 100%;
+  min-height: calc(100vh - var(--header-height) - var(--room-floor-reserve, 9rem));
+  place-items: center;
+  padding: clamp(2.5rem, 5vh, 4rem) 0;
+}
+
+@supports (height: 100svh) {
+  .resume-wall-main,
+  .resume-gallery {
+    min-height: calc(100svh - var(--header-height));
+  }
+
+  .resume-gallery__wall-zone {
+    min-height: calc(100svh - var(--header-height) - var(--room-floor-reserve, 9rem));
+  }
+}
+
+@supports (height: 100dvh) {
+  .resume-wall-main,
+  .resume-gallery {
+    min-height: calc(100dvh - var(--header-height));
+  }
+
+  .resume-gallery__wall-zone {
+    min-height: calc(100dvh - var(--header-height) - var(--room-floor-reserve, 9rem));
+  }
 }
 
 .resume-gallery__grid {
   display: grid;
-  width: min(56rem, 86vw);
-  min-height: 0;
-  margin-inline: auto;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(1.15rem, 4vw, 4.3rem);
-  align-items: center;
-  justify-items: center;
+  width: min(100%, calc(var(--resume-card-width) * 2 + 4.5rem));
+  grid-template-columns: repeat(auto-fit, var(--resume-card-width));
+  justify-content: center;
+  gap: clamp(3.75rem, 7vw, 5.5rem) 4.5rem;
 }
 
 .resume-card {
-  position: relative;
-  width: min(100%, clamp(14.5rem, 24vw, 21rem));
+  display: block;
+  width: var(--resume-card-width);
   min-width: 0;
-  transform: translate3d(0, 0, 0);
 }
 
 .resume-card__frame {
   position: relative;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto auto;
-  gap: clamp(0.42rem, 0.8vh, 0.62rem);
-  padding: clamp(0.82rem, 1.45vw, 1.02rem) clamp(0.62rem, 1.1vw, 0.86rem) clamp(0.62rem, 1.1vw, 0.86rem);
-  border: clamp(0.42rem, 0.68vw, 0.64rem) solid var(--resume-frame);
-  background: #070807;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--resume-ink) 23%, transparent),
-    0 0 0 clamp(0.18rem, 0.3vw, 0.28rem) var(--resume-frame-mid),
-    0.65rem 0.85rem 1.15rem rgb(0 0 0 / 56%),
-    0 0 2.2rem color-mix(in srgb, var(--wall-light, #fff8ec) 5%, transparent),
-    inset 0 0 1.6rem rgb(0 0 0 / 82%);
-  transition:
-    box-shadow 180ms ease,
-    transform 180ms ease;
-}
-
-.resume-card__title {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(0.38rem, 0.8vw, 0.7rem);
-  margin: 0;
-  padding: clamp(0.3rem, 0.75vh, 0.5rem) 0.2rem clamp(0.24rem, 0.6vh, 0.4rem);
-  color: color-mix(in srgb, var(--resume-ink) 96%, transparent);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(0.76rem, 1.12vw, 1.05rem);
-  font-weight: 600;
-  letter-spacing: 0.105em;
-  line-height: 1.08;
-  text-align: center;
-  text-transform: uppercase;
-  text-wrap: balance;
-  text-shadow:
-    0 0.06rem 0.14rem rgb(0 0 0 / 70%),
-    0 0 0.35rem color-mix(in srgb, var(--resume-ink) 8%, transparent);
-}
-
-.resume-card__title::before,
-.resume-card__title::after {
-  content: '';
-  width: clamp(0.55rem, 1.3vw, 1.15rem);
-  height: 1px;
-  flex: 0 1 auto;
-  background: color-mix(in srgb, var(--resume-ink) 28%, transparent);
-}
-
-
-.resume-card__picture {
-  position: relative;
   display: block;
-  min-height: 0;
-  overflow: hidden;
+  width: 100%;
   aspect-ratio: 480 / 676;
-  background: var(--resume-paper);
-  outline: 2px solid transparent;
-  outline-offset: 0.14rem;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  border: 0.7rem solid #050505;
+  outline: none;
+  background: #020202;
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 11%),
-    0 0 0 0.16rem #111,
-    inset 0 0 0.65rem rgb(0 0 0 / 18%);
+    0 0 0 1px color-mix(in srgb, var(--resume-frame-outline) 24%, transparent),
+    0 0 0 0.32rem #0b0b0b,
+    0.65rem 0.85rem 1.15rem rgb(0 0 0 / 66%),
+    0 0 2.6rem color-mix(in srgb, var(--resume-light-hot) 8%, transparent),
+    inset 0 0 2.2rem rgb(0 0 0 / 88%);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    box-shadow 320ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    border-color 320ms ease;
 }
 
-.resume-card__picture:focus-visible {
-  outline-color: var(--resume-ink);
+.resume-card__glass {
+  position: absolute;
+  inset: 0.3rem;
+  display: block;
+  overflow: hidden;
+  background: #0b0b0a;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--resume-frame-outline) 26%, transparent);
 }
 
-.resume-card__picture img {
+.resume-card__glass img {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -179,268 +128,251 @@ body.resume-wall-page > main.resume-wall-main {
   -webkit-user-drag: none;
 }
 
-.resume-card__glass {
+.resume-card__shade {
   position: absolute;
+  z-index: 2;
   inset: 0;
+  display: block;
+  background: rgb(0 0 0 / 10%);
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 320ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.resume-card__reflection {
+  position: absolute;
+  z-index: 3;
+  inset: 0.45rem;
+  display: block;
   background:
-    linear-gradient(113deg, transparent 12%, rgb(255 255 255 / 8%) 26%, transparent 43%),
-    linear-gradient(180deg, rgb(255 255 255 / 4%), transparent 28% 78%, rgb(0 0 0 / 5%));
+    linear-gradient(112deg, transparent 12%, color-mix(in srgb, var(--resume-light-hot) 6%, transparent) 27%, transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--resume-light-hot) 2%, transparent), transparent 38%);
   pointer-events: none;
 }
 
-.resume-card__actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.36rem, 0.7vw, 0.52rem);
+.resume-card__sill {
+  position: absolute;
+  z-index: 4;
+  right: -0.65rem;
+  bottom: -0.55rem;
+  left: -0.65rem;
+  display: block;
+  height: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, var(--resume-frame-outline) 24%, transparent);
+  background: #050505;
+  box-shadow: 0 0.5rem 0.65rem rgb(0 0 0 / 58%);
 }
 
-.resume-action {
-  display: flex;
-  min-width: 0;
-  min-height: clamp(2rem, 4.4vh, 2.5rem);
+.resume-card__caption {
+  margin-top: 1.35rem;
+}
+
+.resume-card__label {
+  display: grid;
+  grid-template-columns: 1.45rem minmax(0, 1fr) 1rem;
   align-items: center;
-  justify-content: center;
-  gap: 0.38rem;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--resume-ink) 34%, transparent);
-  border-radius: 0.18rem;
-  outline: 2px solid transparent;
-  outline-offset: 0.12rem;
-  background: color-mix(in srgb, var(--wall-dark, #080808) 26%, #040404);
-  color: color-mix(in srgb, var(--resume-ink) 86%, transparent);
+  gap: 0.62rem;
+  color: color-mix(in srgb, var(--resume-label-ink) 86%, transparent);
+  outline: none;
   font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: clamp(0.52rem, 0.65vw, 0.67rem);
-  font-weight: 700;
-  letter-spacing: 0.09em;
+  font-size: 0.73rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   line-height: 1;
   text-decoration: none;
   text-transform: uppercase;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    background 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease,
-    transform 150ms ease;
+  text-shadow: 0 1px 1.5px rgb(0 0 0 / 32%);
+  transition: color 260ms ease;
 }
 
-.resume-action svg {
-  width: 0.95rem;
-  height: 0.95rem;
-  flex: 0 0 auto;
+.resume-card__index {
+  color: color-mix(in srgb, var(--resume-label-ink) 62%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.resume-card__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resume-card__arrow {
+  display: grid;
+  width: 0.9rem;
+  height: 0.9rem;
+  place-items: center;
+  opacity: 0.72;
+  transform: translate(0, 0);
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
+}
+
+.resume-card__arrow svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.7;
+  stroke-width: 1.35;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.resume-action:hover {
-  border-color: color-mix(in srgb, var(--resume-ink) 72%, transparent);
-  background: color-mix(in srgb, var(--resume-ink) 10%, #040404);
-  color: var(--resume-ink);
-  transform: translate3d(0, -1px, 0);
+.resume-card__actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.48rem;
+  flex-wrap: wrap;
+  margin: 0.5rem 0 0 2.07rem;
+  color: color-mix(in srgb, var(--resume-label-ink) 70%, transparent);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  text-shadow: 0 1px 1.5px rgb(0 0 0 / 32%);
 }
 
-.resume-action:focus-visible {
-  border-color: var(--resume-ink);
-  outline-color: var(--resume-ink);
-  color: var(--resume-ink);
+.resume-card__actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  color: inherit;
+  outline: none;
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 42%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18rem;
+  cursor: pointer;
+  transition: color 160ms ease, text-decoration-color 160ms ease;
 }
 
-.resume-action__mobile-label {
-  display: none;
+.resume-card__actions a:hover,
+.resume-card__actions a:focus-visible {
+  color: var(--resume-label-ink);
+  text-decoration-color: currentColor;
+}
+
+
+.resume-card__action-icon {
+  display: inline-block;
+  font-size: 0.92em;
+  line-height: 1;
+  text-decoration: none;
+  transform: translateY(-0.02em);
+}
+
+.resume-card__action-separator {
+  color: color-mix(in srgb, var(--resume-label-ink) 46%, transparent);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .resume-card:has(.resume-action:hover) .resume-card__frame,
-  .resume-card:has(.resume-action:focus-visible) .resume-card__frame {
+  .resume-card:hover .resume-card__frame {
+    border-color: #080808;
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--resume-ink) 38%, transparent),
-      0 0 0 clamp(0.18rem, 0.3vw, 0.28rem) var(--resume-frame-mid),
-      0.65rem 0.85rem 1.15rem rgb(0 0 0 / 60%),
-      0 0 2.8rem color-mix(in srgb, var(--wall-light, #fff8ec) 8%, transparent),
-      inset 0 0 1.6rem rgb(0 0 0 / 82%);
+      0 0 0 1px color-mix(in srgb, var(--resume-frame-outline) 36%, transparent),
+      0 0 0 0.32rem #0d0d0d,
+      0.65rem 0.85rem 1.15rem rgb(0 0 0 / 68%),
+      0 0 2.8rem color-mix(in srgb, var(--resume-light-hot) 26%, transparent),
+      inset 0 0 1.5rem rgb(0 0 0 / 58%);
+  }
+
+  .resume-card:hover .resume-card__shade {
+    opacity: 0;
+  }
+
+  .resume-card:hover .resume-card__label {
+    color: var(--resume-label-ink);
+  }
+
+  .resume-card:hover .resume-card__name {
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18rem;
+  }
+
+  .resume-card:hover .resume-card__arrow {
+    opacity: 1;
+    transform: translate(0.08rem, -0.08rem);
+  }
+
+  .resume-card:hover .resume-card__actions {
+    color: color-mix(in srgb, var(--resume-label-ink) 86%, transparent);
   }
 }
 
-/* Typical desktop/laptop: maximize the two readable previews without letting
-   them collide with either the header above or the floor below. */
-@media (min-width: 40.001rem) and (max-height: 49rem) {
+.resume-card__frame:focus-visible,
+.resume-card__label:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--resume-frame-outline) 82%, transparent);
+  outline-offset: 0.5rem;
+}
+
+.resume-card__label:focus-visible {
+  color: var(--resume-label-ink);
+}
+
+.resume-card__label:focus-visible .resume-card__name {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18rem;
+}
+
+.resume-card__label:focus-visible .resume-card__arrow {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+/* At this width the 38rem of artwork plus the 4.5rem gallery gap and page
+   breathing room can no longer coexist. auto-fit drops to one fixed column,
+   centered without shrinking either resume. */
+@media (max-width: 45rem) {
   .resume-gallery {
-    padding-block: 0.4rem;
+    padding-inline: 0.75rem;
   }
 
-  .resume-gallery__content {
-    gap: 0.42rem;
+  .resume-gallery__wall-zone {
+    padding-block: 2.4rem 3.2rem;
   }
 
   .resume-gallery__grid {
-    width: min(48rem, 80vw);
-    gap: clamp(1rem, 3vw, 2.4rem);
-  }
-
-  .resume-card {
-    /* Preserve the spacious localhost composition on short desktop windows:
-       scale from available height instead of letting the frames crowd the
-       header and floor. */
-    width: min(100%, clamp(10rem, 25vh, 15.5rem));
-  }
-
-  .resume-card__frame {
-    gap: 0.32rem;
-    padding: 0.52rem;
-    border-width: 0.42rem;
-  }
-
-  .resume-action {
-    min-height: 1.85rem;
-    padding-block: 0.28rem;
+    width: min(100%, var(--resume-card-width));
+    grid-template-columns: var(--resume-card-width);
+    gap: 4rem;
   }
 }
 
-/* Mobile is deliberately not a stacked document feed. Both choices stay in
-   view side-by-side, acting as compact covers with immediate View/PDF actions. */
+@media (max-width: 21rem) {
+  .resume-gallery {
+    --resume-card-width: calc(100vw - 2rem);
+    padding-inline: 1rem;
+  }
+
+  .resume-gallery__grid {
+    grid-template-columns: var(--resume-card-width);
+  }
+}
+
 @media (max-width: 40rem) {
-  .resume-gallery {
-    --floor-height: 6.4rem;
-    inset: var(--header-height) 0 var(--floor-height);
-    align-items: center;
-    padding: clamp(0.45rem, 1.4vh, 0.75rem) 0.55rem clamp(0.4rem, 1vh, 0.65rem);
-  }
-
-  .resume-gallery__content {
-    width: 100%;
-    gap: 0;
-  }
-
-  .resume-gallery__grid {
-    width: min(100%, 32rem);
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(0.48rem, 2.2vw, 0.8rem);
-    align-items: center;
-  }
-
-  .resume-card {
-    width: min(100%, 12.5rem);
-  }
-
-  .resume-card__frame {
-    gap: clamp(0.24rem, 0.75vh, 0.38rem);
-    padding: clamp(0.38rem, 1.5vw, 0.52rem) clamp(0.34rem, 1.2vw, 0.48rem) clamp(0.34rem, 1.2vw, 0.48rem);
-    border-width: clamp(0.28rem, 1.1vw, 0.38rem);
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--resume-ink) 20%, transparent),
-      0 0 0 0.15rem var(--resume-frame-mid),
-      0.34rem 0.48rem 0.68rem rgb(0 0 0 / 54%),
-      inset 0 0 1rem rgb(0 0 0 / 82%);
-  }
-
-  .resume-card__title {
-    gap: clamp(0.22rem, 1vw, 0.38rem);
-    padding: clamp(0.22rem, 0.8vh, 0.34rem) 0.08rem clamp(0.18rem, 0.65vh, 0.28rem);
-    font-size: clamp(0.52rem, 2.35vw, 0.72rem);
-    letter-spacing: 0.075em;
-  }
-
-  .resume-card__title::before,
-  .resume-card__title::after {
-    width: clamp(0.28rem, 1.6vw, 0.52rem);
+  .resume-card__label {
+    font-size: 0.75rem;
   }
 
   .resume-card__actions {
-    gap: clamp(0.2rem, 1vw, 0.3rem);
-  }
-
-  .resume-action {
-    min-height: clamp(1.8rem, 6.2vw, 2.1rem);
-    gap: 0.24rem;
-    padding: 0.3rem 0.22rem;
-    font-size: clamp(0.44rem, 2vw, 0.56rem);
-    letter-spacing: 0.06em;
-  }
-
-  .resume-action svg {
-    width: clamp(0.7rem, 3vw, 0.86rem);
-    height: clamp(0.7rem, 3vw, 0.86rem);
-  }
-
-  .resume-action__desktop-label {
-    display: none;
-  }
-
-  .resume-action__mobile-label {
-    display: inline;
-  }
-}
-
-/* Very narrow phones keep both resumes visible by treating the previews as
-   visual covers; they are not expected to be read until View is selected. */
-@media (max-width: 23rem) {
-  .resume-gallery {
-    padding-inline: 0.35rem;
-  }
-
-  .resume-gallery__content {
-    gap: 0.5rem;
-  }
-
-  .resume-gallery__grid {
-    gap: 0.35rem;
-  }
-
-  .resume-card__frame {
-    padding: 0.3rem 0.28rem 0.28rem;
-    border-width: 0.25rem;
-  }
-
-  .resume-action {
-    min-height: 1.62rem;
-    padding-inline: 0.14rem;
-  }
-}
-
-/* Short landscape phones/tablets need width more than title copy. */
-@media (max-height: 34rem) {
-  .resume-gallery {
-    padding-block: 0.28rem;
-  }
-
-  .resume-gallery__content {
-    grid-template-rows: 1fr;
-    gap: 0;
-  }
-
-  .resume-gallery__grid {
-    width: min(44rem, 78vw);
-    gap: clamp(0.8rem, 3vw, 2rem);
-  }
-
-  .resume-card {
-    width: min(100%, clamp(9rem, 30vh, 13rem));
-  }
-
-  .resume-card__frame {
-    gap: 0.24rem;
-    padding: 0.3rem 0.34rem 0.34rem;
-    border-width: 0.3rem;
-  }
-
-  .resume-card__title {
-    padding-block: 0.15rem 0.11rem;
-    font-size: clamp(0.46rem, 1.7vh, 0.58rem);
-    letter-spacing: 0.065em;
-  }
-
-  .resume-action {
-    min-height: 1.55rem;
-    padding-block: 0.2rem;
+    font-size: 0.63rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .resume-card__frame,
-  .resume-action {
+  .resume-card__shade,
+  .resume-card__label,
+  .resume-card__arrow,
+  .resume-card__actions a {
     transition: none;
   }
 }

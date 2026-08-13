@@ -50,8 +50,8 @@ const galleryArt = {
           data-astro-prefetch
           draggable="false"
         >
-          <span class="project-card__frame">
-            <span class="project-card__picture">
+          <span class="project-card__frame" aria-hidden="true">
+            <span class="project-card__glass">
               <img
                 src={withBase(art.src)}
                 srcset={art.srcset
@@ -61,36 +61,36 @@ const galleryArt = {
                     return `${withBase(src)} ${width}`;
                   })
                   .join(', ')}
-                sizes="(max-width: 52rem) 46vw, 22vw"
+                sizes="(max-width: 21rem) calc(100vw - 2rem), 304px"
                 width={art.width}
                 height={art.height}
-                alt={project.imageAlt}
+                alt=""
                 draggable="false"
                 decoding="async"
                 loading={index < 2 ? 'eager' : 'lazy'}
                 fetchpriority={index === 0 ? 'high' : 'auto'}
                 style={`--project-image-position: ${art.position};`}
               />
-              <span class="project-card__glass" aria-hidden="true"></span>
+              <span class="project-card__shade"></span>
+              <span class="project-card__reflection"></span>
             </span>
+            <span class="project-card__sill"></span>
+          </span>
 
-            <span class="project-card__caption">
-              <span class="project-card__meta">
-                <span class="project-card__index">{projectNumber}</span>
-                <span class="project-card__period">{project.period}</span>
-              </span>
-
-              <span class="project-card__title-row">
-                <span class="project-card__title">{project.title}</span>
-                <span class="project-card__arrow" aria-hidden="true">
-                  <svg viewBox="0 0 16 16" width="16" height="16" focusable="false">
-                    <path d="M4 12 12 4M6.25 4H12v5.75" />
-                  </svg>
-                </span>
-              </span>
-
-              <span class="project-card__category">{project.category}</span>
+          <span class="project-card__label">
+            <span class="project-card__index">{projectNumber}</span>
+            <span class="project-card__name">{project.title}</span>
+            <span class="project-card__arrow" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="16" height="16" focusable="false">
+                <path d="M4 12 12 4M6.25 4H12v5.75" />
+              </svg>
             </span>
+          </span>
+
+          <span class="project-card__detail">
+            <span>{project.category}</span>
+            <span aria-hidden="true">·</span>
+            <span>{project.period}</span>
           </span>
         </a>
       );

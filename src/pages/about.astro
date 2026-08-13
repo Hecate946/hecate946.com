@@ -1,5 +1,16 @@
 ---
+import AboutScroll from '@/components/about/AboutScroll.svelte';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { pdfViewerHref, withBase } from '@/lib/paths';
+
+const portraitUrl = withBase('/images/about/cyrus-portrait-480.webp');
+const softwareResumeUrl = pdfViewerHref('/resumes/cyrus-asasi-software-engineering-resume.pdf');
+const projectsUrl = withBase('/projects/');
+const musicResumeUrl = pdfViewerHref('/resumes/cyrus-asasi-clarinet-performance-resume.pdf');
+const musicVideoUrl = 'https://www.youtube.com/watch?v=EkgH4zzXoNg';
+const pickleballArticleUrl =
+  'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers';
+const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
 ---
 
 <BaseLayout
@@ -11,5 +22,17 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
   socialImageAlt="Portrait of Cyrus Asasi"
   socialImageWidth={480}
   socialImageHeight={480}
+  mainClass="about-room-main"
   bodyClass="about-room-page"
-/>
+>
+  <AboutScroll
+    client:load
+    {portraitUrl}
+    {softwareResumeUrl}
+    {projectsUrl}
+    {musicResumeUrl}
+    {musicVideoUrl}
+    {pickleballArticleUrl}
+    {chessProfileUrl}
+  />
+</BaseLayout>

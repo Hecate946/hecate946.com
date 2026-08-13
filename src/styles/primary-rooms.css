@@ -56,14 +56,12 @@ body.primary-room-page > main {
 /* The interactive foreground owns no opaque room paint. The single backdrop
    underneath it is the only brick/floor renderer in the five primary rooms. */
 body.primary-room-page .wall-stage,
-body.primary-room-page .about-room,
 body.primary-room-page .contact-page {
   background: transparent;
 }
 
-/* One foreground runtime survives primary navigation. Home keeps its wall
-   state, while About mounts once on first use and is then only hidden/shown.
-   Projects, Resumes, and Contact remain static Astro content. */
+/* The Home wall runtime survives primary navigation so returning home keeps
+   the gallery camera state. Other primary rooms are ordinary page content. */
 .primary-room-engine {
   position: absolute;
   z-index: 2;
@@ -73,20 +71,17 @@ body.primary-room-page .contact-page {
   pointer-events: none;
 }
 
-.primary-room-engine__wall,
-.primary-room-engine__about {
+.primary-room-engine__wall {
   position: absolute;
   inset: 0;
   pointer-events: auto;
 }
 
-.primary-room-engine__wall[hidden],
-.primary-room-engine__about[hidden] {
+.primary-room-engine__wall[hidden] {
   display: none !important;
 }
 
-.primary-room-engine__wall > .wall-stage,
-.primary-room-engine__about > .about-room {
+.primary-room-engine__wall > .wall-stage {
   width: 100%;
   height: 100%;
 }
@@ -104,4 +99,77 @@ body.primary-room-page > main .contact-page {
 
 body.primary-room-page.contact-room-page > main {
   pointer-events: auto;
+}
+
+/* About, Projects, and Resumes are document-height rooms. Their content may
+   grow naturally; the shared backdrop grows with the document, which keeps the
+   baseboard and checkerboard floor at the physical bottom of the room instead
+   of forcing content into a single viewport. */
+body.primary-room-page.scrolling-primary-room {
+  --room-floor-reserve: clamp(6.6rem, 18vh, 10.4rem);
+  width: 100%;
+  height: auto;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: auto;
+}
+
+@supports (height: 100svh) {
+  body.primary-room-page.scrolling-primary-room {
+    min-height: 100svh;
+  }
+}
+
+@supports (height: 100dvh) {
+  body.primary-room-page.scrolling-primary-room {
+    min-height: 100dvh;
+  }
+}
+
+body.primary-room-page.scrolling-primary-room > .site-header {
+  position: sticky;
+  top: 0;
+}
+
+body.primary-room-page.scrolling-primary-room > main {
+  position: relative;
+  z-index: 3;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  min-height: calc(100vh - var(--header-height));
+  overflow: visible;
+  pointer-events: auto;
+}
+
+@supports (height: 100svh) {
+  body.primary-room-page.scrolling-primary-room > main {
+    min-height: calc(100svh - var(--header-height));
+  }
+}
+
+@supports (height: 100dvh) {
+  body.primary-room-page.scrolling-primary-room > main {
+    min-height: calc(100dvh - var(--header-height));
+  }
+}
+
+/* Percentage floor heights become oversized when the wall is taller than a
+   viewport. Scrolling rooms keep the same apparent floor depth in viewport
+   units while moving the floor itself to the end of the document. */
+body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
+  --floor-height: clamp(5.2rem, 18vh, 9.8rem);
+  height: auto;
+}
+
+@media (max-width: 40rem) {
+  body.primary-room-page.scrolling-primary-room {
+    --room-floor-reserve: 7.25rem;
+  }
+
+  body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
+    --floor-height: 6.4rem;
+  }
 }

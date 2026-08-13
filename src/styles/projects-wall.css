@@ -1,49 +1,24 @@
 /*
- * Projects are a static gallery wall rather than a conveyor. Every project is
- * visible immediately, while the persistent room backdrop continues to own
- * the brick wall and checkerboard floor.
+ * Projects use the same quiet museum-frame language as Home: artwork inside a
+ * deep black recess, a narrow sill, and only the essential label beneath it.
+ * Four projects read best as a centered 2 × 2 gallery on wide screens; because
+ * the cards are deliberately rigid, the gallery becomes one column as soon as
+ * two frames no longer fit comfortably.
  */
 body.projects-wall-page {
   position: relative;
   width: 100%;
-  height: 100vh;
   min-height: 100vh;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-@supports (height: 100svh) {
-  body.projects-wall-page {
-    height: 100svh;
-    min-height: 100svh;
-  }
-}
-
-@supports (height: 100dvh) {
-  body.projects-wall-page {
-    height: 100dvh;
-    min-height: 100dvh;
-  }
-}
-
-body.projects-wall-page > .site-header {
-  position: absolute;
-  z-index: 50;
-  top: 0;
-  right: 0;
-  left: 0;
 }
 
 .projects-wall-main {
-  position: absolute;
+  position: relative;
   z-index: 3;
-  inset: 0;
   display: block;
   width: 100%;
   min-width: 0;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  min-height: calc(100vh - var(--header-height));
+  overflow: visible;
   padding: 0;
 }
 
@@ -52,23 +27,35 @@ body.projects-wall-page > main.projects-wall-main {
 }
 
 .project-gallery {
-  --projects-floor-height: clamp(5.2rem, 18vh, 9.8rem);
-  --project-frame: #050505;
-  --project-frame-mid: #111;
-  --project-surface: #090a09;
-  --project-ink: var(--room-outline, #fff);
-  --project-muted: color-mix(in srgb, var(--project-ink) 62%, transparent);
-  --project-line: color-mix(in srgb, var(--project-ink) 22%, transparent);
+  --project-card-width: 19rem;
+  --project-label-ink: var(--room-label-ink, var(--wall-light, #f4f1e9));
+  --project-frame-outline: var(--room-outline, var(--wall-light, #f4f1e9));
+  --project-light-hot: var(--wall-light, #f4f1e9);
 
-  position: absolute;
-  inset: var(--header-height) 0 var(--projects-floor-height);
+  position: relative;
   display: grid;
-  place-items: center;
-  overflow: hidden;
-  padding: clamp(0.75rem, 2.4vh, 1.45rem) clamp(0.8rem, 2.8vw, 2.25rem)
-    clamp(0.7rem, 2vh, 1.25rem);
+  width: 100%;
+  min-height: calc(100vh - var(--header-height));
+  place-items: start center;
+  overflow: visible;
+  padding: clamp(2.5rem, 5vw, 4rem) 1rem
+    calc(var(--room-floor-reserve, 9rem) + clamp(2.5rem, 5vw, 4rem));
   background: transparent;
-  color: var(--project-ink);
+  color: var(--project-label-ink);
+}
+
+@supports (height: 100svh) {
+  .projects-wall-main,
+  .project-gallery {
+    min-height: calc(100svh - var(--header-height));
+  }
+}
+
+@supports (height: 100dvh) {
+  .projects-wall-main,
+  .project-gallery {
+    min-height: calc(100dvh - var(--header-height));
+  }
 }
 
 .project-gallery__sr-title {
@@ -85,362 +72,287 @@ body.projects-wall-page > main.projects-wall-main {
 
 .project-gallery__grid {
   display: grid;
-  width: min(76rem, 94vw);
-  height: min(100%, 34rem);
-  min-height: 0;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(0.85rem, 2.15vw, 2rem);
-  align-items: stretch;
+  width: min(100%, calc(var(--project-card-width) * 2 + 4rem));
+  grid-template-columns: repeat(2, var(--project-card-width));
+  justify-content: center;
+  gap: clamp(3.4rem, 6vw, 5rem) 4rem;
 }
 
 .project-card {
   position: relative;
   display: block;
+  width: var(--project-card-width);
   min-width: 0;
-  min-height: 0;
-  color: inherit;
+  color: color-mix(in srgb, var(--project-label-ink) 88%, transparent);
+  outline: none;
+  cursor: pointer;
   text-decoration: none;
-  transform: translate3d(0, 0, 0);
-  -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .project-card__frame {
   position: relative;
-  display: grid;
+  display: block;
   width: 100%;
-  height: 100%;
-  min-height: 0;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: clamp(0.38rem, 0.65vw, 0.58rem);
+  /* Match the default Home painting recess proportions (306 × 342). */
+  aspect-ratio: 306 / 342;
   box-sizing: border-box;
-  padding: clamp(0.5rem, 0.8vw, 0.72rem);
-  border: clamp(0.42rem, 0.66vw, 0.62rem) solid var(--project-frame);
-  background: var(--project-surface);
+  border: 0.7rem solid #050505;
+  background: #020202;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--project-ink) 19%, transparent),
-    0 0 0 clamp(0.14rem, 0.25vw, 0.23rem) var(--project-frame-mid),
-    0.58rem 0.76rem 1rem rgb(0 0 0 / 52%),
-    inset 0 0 1.4rem rgb(0 0 0 / 84%);
+    0 0 0 1px color-mix(in srgb, var(--project-frame-outline) 24%, transparent),
+    0 0 0 0.32rem #0b0b0b,
+    0.65rem 0.85rem 1.15rem rgb(0 0 0 / 66%),
+    0 0 2.6rem color-mix(in srgb, var(--project-light-hot) 8%, transparent),
+    inset 0 0 2.2rem rgb(0 0 0 / 88%);
   transition:
-    transform 170ms ease,
-    box-shadow 170ms ease;
-}
-
-.project-card__picture {
-  position: relative;
-  display: block;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  background: #080808;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--project-ink) 20%, transparent),
-    inset 0 0 0 0.16rem #020202;
-}
-
-.project-card__picture img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  object-fit: cover;
-  object-position: var(--project-image-position, 50% 50%);
-  transform: translateZ(0) scale(1.001);
-  filter: saturate(0.96) contrast(1.02);
-  transition:
-    filter 180ms ease,
-    transform 220ms ease;
-  pointer-events: none;
-  -webkit-user-drag: none;
+    box-shadow 320ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    border-color 320ms ease;
 }
 
 .project-card__glass {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(112deg, rgb(255 255 255 / 6%), transparent 24%, transparent 71%, rgb(255 255 255 / 2%)),
-    linear-gradient(180deg, rgb(255 255 255 / 2%), transparent 35%);
-  box-shadow: inset 0 0 1.1rem rgb(0 0 0 / 22%);
-  opacity: 0.7;
+  inset: 0.3rem;
+  display: block;
+  overflow: hidden;
+  background: #0b0b0a;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--project-frame-outline) 26%, transparent);
 }
 
-.project-card__caption {
+.project-card__glass img {
   position: relative;
-  display: grid;
-  min-width: 0;
-  gap: clamp(0.25rem, 0.42vw, 0.34rem);
-  padding: clamp(0.56rem, 0.82vw, 0.72rem) clamp(0.62rem, 0.9vw, 0.8rem)
-    clamp(0.6rem, 0.88vw, 0.76rem);
-  border: 1px solid var(--project-line);
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 3%), transparent 60%),
-    color-mix(in srgb, var(--wall-dark, #111) 20%, #0a0a09);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 4%),
-    inset 0 0 0.55rem rgb(0 0 0 / 28%);
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--project-image-position, 50% 50%);
+  transform: none;
+  filter: saturate(0.98) contrast(1.01);
+  pointer-events: none;
+  -webkit-user-drag: none;
+  transition: filter 320ms ease;
 }
 
-.project-card__meta {
-  display: flex;
-  min-width: 0;
+.project-card__shade {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: block;
+  background: rgb(0 0 0 / 14%);
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 320ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.project-card__reflection {
+  position: absolute;
+  z-index: 3;
+  inset: 0.45rem;
+  display: block;
+  background:
+    linear-gradient(112deg, transparent 12%, color-mix(in srgb, var(--project-light-hot) 6%, transparent) 27%, transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--project-light-hot) 2%, transparent), transparent 38%);
+  pointer-events: none;
+}
+
+.project-card__sill {
+  position: absolute;
+  z-index: 4;
+  right: -0.65rem;
+  bottom: -0.55rem;
+  left: -0.65rem;
+  display: block;
+  height: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, var(--project-frame-outline) 24%, transparent);
+  background: #050505;
+  box-shadow: 0 0.5rem 0.65rem rgb(0 0 0 / 58%);
+}
+
+.project-card__label {
+  display: grid;
+  grid-template-columns: 1.45rem minmax(0, 1fr) 1rem;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  color: var(--project-muted);
+  gap: 0.62rem;
+  margin-top: 1.28rem;
+  color: color-mix(in srgb, var(--project-label-ink) 86%, transparent);
   font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: clamp(0.48rem, 0.58vw, 0.62rem);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  line-height: 1.15;
+  font-size: 0.73rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1;
   text-transform: uppercase;
+  text-shadow: 0 1px 1.5px rgb(0 0 0 / 32%);
+  transition: color 260ms ease;
 }
 
 .project-card__index {
-  color: var(--project-ink);
-  opacity: 0.92;
+  color: color-mix(in srgb, var(--project-label-ink) 62%, transparent);
+  font-variant-numeric: tabular-nums;
 }
 
-.project-card__period {
+.project-card__name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.project-card__title-row {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.55rem;
-  align-items: start;
-}
-
-.project-card__title {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--project-ink);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(0.96rem, 1.45vw, 1.32rem);
-  font-weight: 500;
-  letter-spacing: 0.025em;
-  line-height: 1.12;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-shadow: 0 0.08rem 0.25rem rgb(0 0 0 / 38%);
 }
 
 .project-card__arrow {
   display: grid;
-  width: 1.55rem;
-  aspect-ratio: 1;
+  width: 0.9rem;
+  height: 0.9rem;
   place-items: center;
-  border: 1px solid var(--project-line);
-  border-radius: 999px;
-  color: var(--project-muted);
-  transform: translateY(0.28rem);
+  opacity: 0.72;
+  transform: translate(0, 0);
   transition:
-    border-color 170ms ease,
-    color 170ms ease,
-    background 170ms ease;
+    opacity 260ms ease,
+    transform 260ms ease;
 }
 
 .project-card__arrow svg {
-  width: 0.72rem;
-  height: 0.72rem;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.25;
+  stroke-width: 1.35;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.project-card__category {
+.project-card__detail {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.38rem;
+  margin: 0.5rem 1.62rem 0 2.07rem;
+  color: color-mix(in srgb, var(--project-label-ink) 68%, transparent);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.055em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  text-shadow: 0 1px 1.5px rgb(0 0 0 / 32%);
+}
+
+.project-card__detail span:first-child {
   min-width: 0;
   overflow: hidden;
-  color: var(--project-muted);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: clamp(0.52rem, 0.63vw, 0.67rem);
-  font-weight: 600;
-  letter-spacing: 0.055em;
-  line-height: 1.28;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.project-card__detail span:last-child {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .project-card:hover .project-card__frame {
-    transform: translate3d(0, -0.18rem, 0);
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--project-ink) 31%, transparent),
-      0 0 0 clamp(0.14rem, 0.25vw, 0.23rem) var(--project-frame-mid),
-      0.7rem 0.95rem 1.2rem rgb(0 0 0 / 58%),
-      0 0 1.7rem color-mix(in srgb, var(--project-ink) 4%, transparent),
-      inset 0 0 1.4rem rgb(0 0 0 / 84%);
+  .project-card:hover {
+    color: var(--project-label-ink);
   }
 
-  .project-card:hover .project-card__picture img {
-    filter: saturate(1.03) contrast(1.035);
-    transform: translateZ(0) scale(1.018);
+  .project-card:hover .project-card__frame {
+    border-color: #080808;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--project-frame-outline) 36%, transparent),
+      0 0 0 0.32rem #0d0d0d,
+      0.65rem 0.85rem 1.15rem rgb(0 0 0 / 68%),
+      0 0 2.8rem color-mix(in srgb, var(--project-light-hot) 26%, transparent),
+      inset 0 0 1.5rem rgb(0 0 0 / 58%);
+  }
+
+  .project-card:hover .project-card__glass img {
+    filter: saturate(1.03) contrast(1.025);
+  }
+
+  .project-card:hover .project-card__shade {
+    opacity: 0;
+  }
+
+  .project-card:hover .project-card__label {
+    color: var(--project-label-ink);
+  }
+
+  .project-card:hover .project-card__name {
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18rem;
   }
 
   .project-card:hover .project-card__arrow {
-    border-color: color-mix(in srgb, var(--project-ink) 46%, transparent);
-    background: color-mix(in srgb, var(--project-ink) 7%, transparent);
-    color: var(--project-ink);
+    opacity: 1;
+    transform: translate(0.08rem, -0.08rem);
   }
-}
 
-.project-card:focus-visible {
-  outline: none;
+  .project-card:hover .project-card__detail {
+    color: color-mix(in srgb, var(--project-label-ink) 84%, transparent);
+  }
 }
 
 .project-card:focus-visible .project-card__frame {
-  outline: 2px solid color-mix(in srgb, var(--project-ink) 82%, transparent);
-  outline-offset: 0.3rem;
-  transform: translate3d(0, -0.12rem, 0);
+  outline: 2px solid color-mix(in srgb, var(--project-frame-outline) 82%, transparent);
+  outline-offset: 0.5rem;
 }
 
-@media (max-width: 52rem) {
+.project-card:focus-visible .project-card__label {
+  color: var(--project-label-ink);
+}
+
+.project-card:focus-visible .project-card__name {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18rem;
+}
+
+.project-card:focus-visible .project-card__arrow {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+/* Two rigid 19rem frames plus their 4rem gap need 42rem of actual content
+   width. Stack before surrounding page padding can make that composition feel
+   squeezed. */
+@media (max-width: 44rem) {
   .project-gallery {
-    padding-inline: clamp(0.65rem, 3vw, 1.2rem);
+    padding-top: 2rem;
+    padding-inline: 0.75rem;
   }
 
   .project-gallery__grid {
-    width: min(38rem, 94vw);
-    height: min(100%, 38rem);
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-    gap: clamp(0.62rem, 2vw, 0.95rem);
+    width: min(100%, var(--project-card-width));
+    grid-template-columns: minmax(0, var(--project-card-width));
+    gap: 3.6rem;
   }
+}
 
-  .project-card__title {
-    font-size: clamp(0.9rem, 3vw, 1.12rem);
-  }
-
-  .project-card__meta {
-    font-size: clamp(0.44rem, 1.5vw, 0.56rem);
-  }
-
-  .project-card__category {
-    font-size: clamp(0.48rem, 1.65vw, 0.6rem);
+@media (max-width: 21rem) {
+  .project-gallery {
+    --project-card-width: calc(100vw - 2rem);
+    padding-inline: 1rem;
   }
 }
 
 @media (max-width: 40rem) {
-  .project-gallery {
-    --projects-floor-height: 6.4rem;
-    padding: 0.6rem 0.62rem 0.7rem;
+  .project-card__label {
+    font-size: 0.75rem;
   }
 
-  .project-gallery__grid {
-    width: min(31rem, 96vw);
-    height: min(100%, 34rem);
-    gap: clamp(0.48rem, 2vw, 0.72rem);
-  }
-
-  .project-card__frame {
-    gap: 0.3rem;
-    padding: clamp(0.34rem, 1.4vw, 0.46rem);
-    border-width: clamp(0.3rem, 1.2vw, 0.42rem);
-  }
-
-  .project-card__caption {
-    gap: 0.22rem;
-    padding: 0.46rem 0.5rem 0.5rem;
-  }
-
-  .project-card__title {
-    font-size: clamp(0.78rem, 3.7vw, 1rem);
-  }
-
-  .project-card__arrow {
-    width: clamp(1.2rem, 6vw, 1.42rem);
-  }
-
-  .project-card__arrow svg {
-    width: 0.62rem;
-    height: 0.62rem;
-  }
-}
-
-@media (max-width: 23rem) {
-  .project-gallery {
-    padding-inline: 0.46rem;
-  }
-
-  .project-gallery__grid {
-    width: 97vw;
-    gap: 0.4rem;
-  }
-
-  .project-card__period {
-    display: none;
-  }
-
-  .project-card__category {
-    display: none;
-  }
-}
-
-@media (max-height: 42rem) {
-  .project-gallery {
-    --projects-floor-height: clamp(4rem, 15vh, 6.1rem);
-    padding-block: 0.45rem 0.55rem;
-  }
-
-  .project-gallery__grid {
-    height: 100%;
-  }
-
-  .project-card__caption {
-    gap: 0.18rem;
-    padding-block: 0.4rem;
-  }
-
-  .project-card__category {
-    display: none;
-  }
-}
-
-@media (max-height: 34rem) and (min-width: 40rem) {
-  .project-gallery {
-    --projects-floor-height: clamp(3.6rem, 16vh, 5rem);
-    padding: 0.35rem clamp(0.7rem, 2vw, 1.25rem) 0.42rem;
-  }
-
-  .project-gallery__grid {
-    width: min(72rem, 96vw);
-    height: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: minmax(0, 1fr);
-    gap: clamp(0.55rem, 1.5vw, 1rem);
-  }
-
-  .project-card__frame {
-    gap: 0.28rem;
-    padding: 0.36rem;
-    border-width: 0.34rem;
-  }
-
-  .project-card__caption {
-    padding: 0.36rem 0.46rem 0.4rem;
-  }
-
-  .project-card__meta,
-  .project-card__category {
-    display: none;
-  }
-
-  .project-card__title {
-    font-size: clamp(0.72rem, 1.55vw, 0.96rem);
+  .project-card__detail {
+    font-size: 0.63rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .project-card__frame,
-  .project-card__picture img,
+  .project-card__glass img,
+  .project-card__shade,
+  .project-card__label,
   .project-card__arrow {
     transition: none;
   }
