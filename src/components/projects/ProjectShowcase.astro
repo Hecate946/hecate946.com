@@ -150,83 +150,7 @@ const projectStructuredData = [
   </article>
 
   <script>
-    const mobileProjectQuery = window.matchMedia('(max-width: 48rem)');
     let projectFitFrame = 0;
-
-    const fitProjectChalkboard = () => {
-      const stage = document.querySelector<HTMLElement>('.project-board-stage');
-      const board = document.querySelector<HTMLElement>('.project-chalkboard-wrap');
-      const copy = document.querySelector<HTMLElement>('.project-chalkboard__copy');
-      if (!stage || !board || !copy) return;
-
-      // Mobile boards change aspect ratio so they can use the available screen
-      // area without ever introducing page scrolling. Desktop keeps the CSS
-      // board dimensions, but the copy is still fitted below.
-      if (mobileProjectQuery.matches) {
-        const stageHeight = stage.clientHeight;
-        const landscape = window.innerWidth > window.innerHeight;
-        const ratio = landscape ? 7 / 5 : 5 / 6;
-        const maxWidth = Math.min(window.innerWidth * 0.9, 512);
-        const maxHeight = Math.max(1, stageHeight - 12);
-        const width = Math.min(maxWidth, maxHeight * ratio);
-        const height = width / ratio;
-
-        board.style.width = `${width}px`;
-        board.style.height = `${height}px`;
-        board.style.aspectRatio = `${ratio}`;
-      } else {
-        board.style.removeProperty('width');
-        board.style.removeProperty('height');
-        board.style.removeProperty('aspect-ratio');
-      }
-
-      // Start from the intended typography at 1:1. If the content is too large
-      // for the *actual rendered board*, progressively scale the entire copy
-      // area down. Expanding its layout box by the inverse scale preserves the
-      // visible board dimensions while giving text the correct wrap width.
-      const applyScale = (scale: number) => {
-        const expandedPercent = 100 / scale;
-        copy.style.width = `${expandedPercent}%`;
-        copy.style.height = `${expandedPercent}%`;
-        copy.style.transform = `scale(${scale})`;
-
-        return copy.scrollHeight <= copy.clientHeight + 1 && copy.scrollWidth <= copy.clientWidth + 1;
-      };
-
-      copy.style.removeProperty('width');
-      copy.style.removeProperty('height');
-      copy.style.removeProperty('transform');
-
-      if (applyScale(1)) return;
-
-      // Binary-search the largest scale that fits. The low floor is only an
-      // emergency guard for unusually short landscape windows; ordinary phone
-      // and desktop sizes remain much closer to 1.
-      let fits = 0.34;
-      let overflows = 1;
-
-      if (!applyScale(fits)) {
-        let emergencyScale = 0.3;
-        while (emergencyScale > 0.18 && !applyScale(emergencyScale)) {
-          emergencyScale -= 0.03;
-        }
-        applyScale(Math.max(0.18, emergencyScale));
-        return;
-      }
-
-      for (let index = 0; index < 14; index += 1) {
-        const candidate = (fits + overflows) / 2;
-        if (applyScale(candidate)) fits = candidate;
-        else overflows = candidate;
-      }
-
-      applyScale(Math.max(0.34, fits - 0.003));
-    };
-
-    const scheduleProjectFit = () => {
-      window.cancelAnimationFrame(projectFitFrame);
-      projectFitFrame = window.requestAnimationFrame(fitProjectChalkboard);
-    };
 
     type ProjectShowcaseWindow = Window & {
       __hecateProjectShowcaseHandlersInstalled?: boolean;
@@ -234,20 +158,72 @@ const projectStructuredData = [
     };
     const projectShowcaseWindow = window as ProjectShowcaseWindow;
 
+    const fitProjectChalkboard = () => {
+      const stage = document.querySelector<HTMLElement>('.project-board-stage');
+      const board = document.querySelector<HTMLElement>('.project-chalkboard-wrap');
+      const copy = document.querySelector<HTMLElement>('.project-chalkboard__copy');
+      if (!stage || !board || !copy) return;
+
+      /*
+       * The board now follows the copy's natural height, so short content stays
+       * compact. Only when that natural board would exceed the actual room do
+       * we reduce the copy's real font-size. Because this changes layout rather
+       * than applying transform: scale(), the paragraph and footer can never
+       * visually occupy the same space.
+       */
+      copy.style.removeProperty('font-size');
+
+      const baseFontSize = Number.parseFloat(getComputedStyle(copy).fontSize) || 16;
+      const availableHeight = Math.max(1, stage.clientHeight - 8);
+      const fits = () => board.getBoundingClientRect().height <= availableHeight + 0.5;
+
+      if (fits()) return;
+
+      const setScale = (scale: number) => {
+        copy.style.fontSize = `${baseFontSize * scale}px`;
+        return fits();
+      };
+
+      let low = 0.56;
+      let high = 1;
+
+      // Very short landscape windows may need a smaller emergency floor.
+      if (!setScale(low)) {
+        low = 0.46;
+        if (!setScale(low)) {
+          setScale(0.4);
+          return;
+        }
+      }
+
+      for (let index = 0; index < 14; index += 1) {
+        const candidate = (low + high) / 2;
+        if (setScale(candidate)) low = candidate;
+        else high = candidate;
+      }
+
+      setScale(Math.max(0.4, low - 0.004));
+    };
+
+    const scheduleProjectFit = () => {
+      window.cancelAnimationFrame(projectFitFrame);
+      projectFitFrame = window.requestAnimationFrame(fitProjectChalkboard);
+    };
+
     const observeCurrentProjectBoard = () => {
       projectShowcaseWindow.__hecateProjectShowcaseResizeObserver?.disconnect();
 
       if ('ResizeObserver' in window) {
         const observer = new ResizeObserver(scheduleProjectFit);
         const stage = document.querySelector<HTMLElement>('.project-board-stage');
-        const board = document.querySelector<HTMLElement>('.project-chalkboard-wrap');
         if (stage) observer.observe(stage);
-        if (board) observer.observe(board);
         projectShowcaseWindow.__hecateProjectShowcaseResizeObserver = observer;
       }
     };
 
     const resetProjectPage = () => {
+      const copy = document.querySelector<HTMLElement>('.project-chalkboard__copy');
+      copy?.style.removeProperty('font-size');
       observeCurrentProjectBoard();
       scheduleProjectFit();
     };
@@ -255,8 +231,6 @@ const projectStructuredData = [
     resetProjectPage();
     document.fonts?.ready.then(scheduleProjectFit);
 
-    // Keep one set of global listeners across Astro page swaps. The observer is
-    // rebound to whichever project board is currently in the document.
     if (!projectShowcaseWindow.__hecateProjectShowcaseHandlersInstalled) {
       projectShowcaseWindow.__hecateProjectShowcaseHandlersInstalled = true;
       document.addEventListener('astro:after-swap', resetProjectPage);
