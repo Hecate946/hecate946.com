@@ -55,8 +55,6 @@ body.resume-wall-page > main.resume-wall-main {
   --resume-frame-mid: #101010;
   --resume-paper: #f5f0e6;
   --resume-ink: var(--room-outline, #fff);
-  --resume-muted: color-mix(in srgb, var(--resume-ink) 62%, transparent);
-  --resume-line: color-mix(in srgb, var(--resume-ink) 23%, transparent);
   /* Match the shared room backdrop geometry without applying wall-room-host's
      opaque background to the foreground gallery. */
   --floor-height: clamp(5.2rem, 18%, 9.8rem);

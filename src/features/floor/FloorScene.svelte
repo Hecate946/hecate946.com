@@ -19,12 +19,6 @@
     plane.style.transform = `translate3d(${-phase}px, 0, 0) rotateX(67.5deg)`;
   }
 
-  /** Kept for the persisted backdrop API; CSS variables update palette automatically. */
-  export function refreshFromCss() {
-    renderCamera();
-  }
-
-  /** Move only the composited checker plane; no canvas rasterization occurs. */
   export function setCameraX(nextCameraX: number) {
     if (nextCameraX === currentCameraX) return;
     currentCameraX = nextCameraX;

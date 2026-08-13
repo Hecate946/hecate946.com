@@ -13,11 +13,6 @@
     monospace;
 
   --radius-sm: 0.5rem;
-  --radius-lg: 1.5rem;
-  --radius-pill: 999px;
-
-  --content-width: 72rem;
-  --reading-width: 46rem;
 
   /* The navigation is deliberately exactly two courses of the shared 24px
      brick module. This keeps its top and bottom rails on mortar lines. */
@@ -26,15 +21,11 @@
 
   --duration-fast: 140ms;
 
-  /* Felt/noise controls. Set opacity to 0 to disable the texture. */
-  --page-noise-opacity: 0; /* 0.045 */ 
-  --page-noise-size: 170px;
 
   /* Summer-light fallbacks. themes.css replaces these from data attributes. */
   --bg: #fff8e8;
   --surface-strong: #fffdf5;
   --text: #173d3b;
-  --muted: #607874;
   --line: rgba(24, 92, 87, 0.2);
   --accent: #0f7773;
   --accent-strong: #07524f;
@@ -42,10 +33,6 @@
   --header-accent: #e76e5d;
 }
 
-html[data-theme='dark'] {
-  color-scheme: dark;
-  --page-noise-opacity: 0; /* 0.075 */
-}
 
 /* On phones the navigation becomes two architectural rows. Each row remains
    exactly two brick courses tall, so the header stays locked to the wall's

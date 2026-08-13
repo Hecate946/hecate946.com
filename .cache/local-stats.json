@@ -1,0 +1,381 @@
+{
+  "version": 2,
+  "firstEventAt": "2026-08-10T18:46:42.363Z",
+  "updatedAt": "2026-08-13T02:54:34.241Z",
+  "visitors": {
+    "7fb083efc71dcb23109c37d5560cf1877919ba4ab1550e47986b0e2a674d474c": {
+      "firstSeen": "2026-08-10T18:46:42.363Z",
+      "lastSeen": "2026-08-11T02:02:32.836Z"
+    },
+    "0401af8785f538a2d4aa5f7863a9b8229b81d6c9345cc6fbb7d370e2e0ba1e1d": {
+      "firstSeen": "2026-08-10T22:42:04.153Z",
+      "lastSeen": "2026-08-12T00:52:45.734Z"
+    },
+    "00c806b7582d8cdde00277e528f5df001022e4005f87272a5abd599439154269": {
+      "firstSeen": "2026-08-11T07:44:09.235Z",
+      "lastSeen": "2026-08-11T07:44:09.614Z"
+    },
+    "e56fa74dea0bf41668bf83e9b55ff30678cb5f5ac84ce8cd86760789a317232b": {
+      "firstSeen": "2026-08-11T07:44:17.218Z",
+      "lastSeen": "2026-08-11T17:02:23.808Z"
+    },
+    "855d363b0283ef9cef4b8fb9019823f4bb9f1d809007888e1c6216b5d0aeb040": {
+      "firstSeen": "2026-08-11T23:57:23.070Z",
+      "lastSeen": "2026-08-13T02:33:51.373Z"
+    },
+    "e578c872230ec89910d645112ad7839b72ccfd3b6cd4b2aef885758f72ec6514": {
+      "firstSeen": "2026-08-13T02:44:10.837Z",
+      "lastSeen": "2026-08-13T02:44:11.091Z"
+    },
+    "032dcd914e5dc7b04c990cc5fd736fd0edd3ce73d6608c143b108cabd6266f93": {
+      "firstSeen": "2026-08-13T02:46:12.004Z",
+      "lastSeen": "2026-08-13T02:53:42.790Z"
+    },
+    "ef21c2ebd2614e733e9dfa975c6d311f95ab12f4059a6fae0e84459df9205c49": {
+      "firstSeen": "2026-08-13T02:52:26.635Z",
+      "lastSeen": "2026-08-13T02:52:27.036Z"
+    },
+    "55bd7395c3aeb2d580a05994bb988d85b0d64993f9c51032dc831ee030c77840": {
+      "firstSeen": "2026-08-13T02:52:29.099Z",
+      "lastSeen": "2026-08-13T02:54:34.241Z"
+    },
+    "4e470e14beec06fb3e9d32ed726975c6354983584af75c1c6f0e2d1751a41f65": {
+      "firstSeen": "2026-08-13T02:52:47.867Z",
+      "lastSeen": "2026-08-13T02:52:47.867Z"
+    }
+  },
+  "sessions": {
+    "c2f9cf3806f70dc548e89f48cec863fee14b44d21b22c970af680697f3503bc0": {
+      "visitorHash": "7fb083efc71dcb23109c37d5560cf1877919ba4ab1550e47986b0e2a674d474c",
+      "firstSeen": "2026-08-10T18:46:42.363Z",
+      "lastSeen": "2026-08-10T20:45:41.969Z",
+      "pageViews": 95
+    },
+    "c33cece579276826f8dbfa68b0ee2fcc7174e89aa83f6d48610bf55a5cd0b236": {
+      "visitorHash": "7fb083efc71dcb23109c37d5560cf1877919ba4ab1550e47986b0e2a674d474c",
+      "firstSeen": "2026-08-10T22:09:29.285Z",
+      "lastSeen": "2026-08-11T02:02:32.836Z",
+      "pageViews": 25
+    },
+    "7cecd5d2d62e067d40bebcbbaf501b64da536ff6a21c47f2d1cabe1a629921fd": {
+      "visitorHash": "0401af8785f538a2d4aa5f7863a9b8229b81d6c9345cc6fbb7d370e2e0ba1e1d",
+      "firstSeen": "2026-08-10T22:42:04.153Z",
+      "lastSeen": "2026-08-12T00:52:45.734Z",
+      "pageViews": 1232
+    },
+    "c0529a43a9fb2abc81a744b9a7c93d1666346d9ce4e6501201164c153a74e5fc": {
+      "visitorHash": "00c806b7582d8cdde00277e528f5df001022e4005f87272a5abd599439154269",
+      "firstSeen": "2026-08-11T07:44:09.235Z",
+      "lastSeen": "2026-08-11T07:44:09.614Z",
+      "pageViews": 1
+    },
+    "c1c0139cb51c45b0c4dc7525605c87a770f98c4a54039e617322694870758b70": {
+      "visitorHash": "e56fa74dea0bf41668bf83e9b55ff30678cb5f5ac84ce8cd86760789a317232b",
+      "firstSeen": "2026-08-11T07:44:17.218Z",
+      "lastSeen": "2026-08-11T17:02:23.808Z",
+      "pageViews": 65
+    },
+    "48044968decbb4098881defb225669dae65d43fa0f53d68db0bf3db5f9a75fcb": {
+      "visitorHash": "855d363b0283ef9cef4b8fb9019823f4bb9f1d809007888e1c6216b5d0aeb040",
+      "firstSeen": "2026-08-11T23:57:23.070Z",
+      "lastSeen": "2026-08-13T02:33:51.373Z",
+      "pageViews": 1166
+    },
+    "512fd22a0bc395b0b5063246a6283f48123c135c2094762dc489bf825eb6193c": {
+      "visitorHash": "e578c872230ec89910d645112ad7839b72ccfd3b6cd4b2aef885758f72ec6514",
+      "firstSeen": "2026-08-13T02:44:10.837Z",
+      "lastSeen": "2026-08-13T02:44:11.091Z",
+      "pageViews": 1
+    },
+    "106072471a6a136df06444678b407f38d2246022356dd2eaaa3509140d8adea6": {
+      "visitorHash": "032dcd914e5dc7b04c990cc5fd736fd0edd3ce73d6608c143b108cabd6266f93",
+      "firstSeen": "2026-08-13T02:46:12.004Z",
+      "lastSeen": "2026-08-13T02:53:42.790Z",
+      "pageViews": 9
+    },
+    "86bf27da3c0050d7e28f7e5f40d5d385a4e7f4eac6814eef84eb3aeb7815bd12": {
+      "visitorHash": "ef21c2ebd2614e733e9dfa975c6d311f95ab12f4059a6fae0e84459df9205c49",
+      "firstSeen": "2026-08-13T02:52:26.635Z",
+      "lastSeen": "2026-08-13T02:52:27.036Z",
+      "pageViews": 1
+    },
+    "ac2d8200e7cc266c78ca40221d9392aa09259fe7e5307b0a859759eca9a551e2": {
+      "visitorHash": "55bd7395c3aeb2d580a05994bb988d85b0d64993f9c51032dc831ee030c77840",
+      "firstSeen": "2026-08-13T02:52:29.099Z",
+      "lastSeen": "2026-08-13T02:54:34.241Z",
+      "pageViews": 6
+    },
+    "27604d73a1c4fb4512365fc4ce0cbbeec3a39ee1afb12b51b3cbb10603fb68de": {
+      "visitorHash": "4e470e14beec06fb3e9d32ed726975c6354983584af75c1c6f0e2d1751a41f65",
+      "firstSeen": "2026-08-13T02:52:47.867Z",
+      "lastSeen": "2026-08-13T02:52:47.867Z",
+      "pageViews": 1
+    }
+  },
+  "daily": {
+    "2026-08-10": {
+      "pageViews": 162,
+      "events": 226,
+      "visitors": [
+        "7fb083efc71dcb23109c37d5560cf1877919ba4ab1550e47986b0e2a674d474c",
+        "0401af8785f538a2d4aa5f7863a9b8229b81d6c9345cc6fbb7d370e2e0ba1e1d"
+      ],
+      "sessions": [
+        "c2f9cf3806f70dc548e89f48cec863fee14b44d21b22c970af680697f3503bc0",
+        "c33cece579276826f8dbfa68b0ee2fcc7174e89aa83f6d48610bf55a5cd0b236",
+        "7cecd5d2d62e067d40bebcbbaf501b64da536ff6a21c47f2d1cabe1a629921fd"
+      ]
+    },
+    "2026-08-11": {
+      "pageViews": 1180,
+      "events": 1515,
+      "visitors": [
+        "0401af8785f538a2d4aa5f7863a9b8229b81d6c9345cc6fbb7d370e2e0ba1e1d",
+        "7fb083efc71dcb23109c37d5560cf1877919ba4ab1550e47986b0e2a674d474c",
+        "00c806b7582d8cdde00277e528f5df001022e4005f87272a5abd599439154269",
+        "e56fa74dea0bf41668bf83e9b55ff30678cb5f5ac84ce8cd86760789a317232b",
+        "855d363b0283ef9cef4b8fb9019823f4bb9f1d809007888e1c6216b5d0aeb040"
+      ],
+      "sessions": [
+        "7cecd5d2d62e067d40bebcbbaf501b64da536ff6a21c47f2d1cabe1a629921fd",
+        "c33cece579276826f8dbfa68b0ee2fcc7174e89aa83f6d48610bf55a5cd0b236",
+        "c0529a43a9fb2abc81a744b9a7c93d1666346d9ce4e6501201164c153a74e5fc",
+        "c1c0139cb51c45b0c4dc7525605c87a770f98c4a54039e617322694870758b70",
+        "48044968decbb4098881defb225669dae65d43fa0f53d68db0bf3db5f9a75fcb"
+      ]
+    },
+    "2026-08-12": {
+      "pageViews": 1124,
+      "events": 1469,
+      "visitors": [
+        "0401af8785f538a2d4aa5f7863a9b8229b81d6c9345cc6fbb7d370e2e0ba1e1d",
+        "855d363b0283ef9cef4b8fb9019823f4bb9f1d809007888e1c6216b5d0aeb040"
+      ],
+      "sessions": [
+        "7cecd5d2d62e067d40bebcbbaf501b64da536ff6a21c47f2d1cabe1a629921fd",
+        "48044968decbb4098881defb225669dae65d43fa0f53d68db0bf3db5f9a75fcb"
+      ]
+    },
+    "2026-08-13": {
+      "pageViews": 136,
+      "events": 172,
+      "visitors": [
+        "855d363b0283ef9cef4b8fb9019823f4bb9f1d809007888e1c6216b5d0aeb040",
+        "e578c872230ec89910d645112ad7839b72ccfd3b6cd4b2aef885758f72ec6514",
+        "032dcd914e5dc7b04c990cc5fd736fd0edd3ce73d6608c143b108cabd6266f93",
+        "ef21c2ebd2614e733e9dfa975c6d311f95ab12f4059a6fae0e84459df9205c49",
+        "55bd7395c3aeb2d580a05994bb988d85b0d64993f9c51032dc831ee030c77840",
+        "4e470e14beec06fb3e9d32ed726975c6354983584af75c1c6f0e2d1751a41f65"
+      ],
+      "sessions": [
+        "48044968decbb4098881defb225669dae65d43fa0f53d68db0bf3db5f9a75fcb",
+        "512fd22a0bc395b0b5063246a6283f48123c135c2094762dc489bf825eb6193c",
+        "106072471a6a136df06444678b407f38d2246022356dd2eaaa3509140d8adea6",
+        "86bf27da3c0050d7e28f7e5f40d5d385a4e7f4eac6814eef84eb3aeb7815bd12",
+        "ac2d8200e7cc266c78ca40221d9392aa09259fe7e5307b0a859759eca9a551e2",
+        "27604d73a1c4fb4512365fc4ce0cbbeec3a39ee1afb12b51b3cbb10603fb68de"
+      ]
+    }
+  },
+  "pages": {
+    "/stats/": {
+      "pageViews": 130,
+      "updatedAt": "2026-08-12T20:21:27.427Z"
+    },
+    "/": {
+      "pageViews": 448,
+      "updatedAt": "2026-08-13T02:54:34.241Z"
+    },
+    "/about/": {
+      "pageViews": 701,
+      "updatedAt": "2026-08-13T02:33:47.636Z"
+    },
+    "/contact/": {
+      "pageViews": 427,
+      "updatedAt": "2026-08-13T02:33:51.373Z"
+    },
+    "/resume/": {
+      "pageViews": 73,
+      "updatedAt": "2026-08-11T20:38:12.697Z"
+    },
+    "/projects/": {
+      "pageViews": 436,
+      "updatedAt": "2026-08-13T02:33:48.032Z"
+    },
+    "/lab/": {
+      "pageViews": 30,
+      "updatedAt": "2026-08-11T16:43:27.193Z"
+    },
+    "/graph/": {
+      "pageViews": 10,
+      "updatedAt": "2026-08-11T09:04:47.700Z"
+    },
+    "/house/": {
+      "pageViews": 2,
+      "updatedAt": "2026-08-11T00:03:56.636Z"
+    },
+    "/d3/": {
+      "pageViews": 2,
+      "updatedAt": "2026-08-11T01:16:58.082Z"
+    },
+    "/lab/stats/": {
+      "pageViews": 1,
+      "updatedAt": "2026-08-11T01:28:41.039Z"
+    },
+    "/projects/neutra/": {
+      "pageViews": 29,
+      "updatedAt": "2026-08-13T00:18:46.423Z"
+    },
+    "/navigation/": {
+      "pageViews": 1,
+      "updatedAt": "2026-08-11T07:20:02.830Z"
+    },
+    "/rooms/": {
+      "pageViews": 4,
+      "updatedAt": "2026-08-11T09:24:55.905Z"
+    },
+    "/resumes/": {
+      "pageViews": 264,
+      "updatedAt": "2026-08-13T02:51:36.089Z"
+    },
+    "/projects/sunset/": {
+      "pageViews": 22,
+      "updatedAt": "2026-08-12T20:28:09.602Z"
+    },
+    "/projects/portfolio/": {
+      "pageViews": 5,
+      "updatedAt": "2026-08-12T01:18:17.003Z"
+    },
+    "/projects/keycad/": {
+      "pageViews": 4,
+      "updatedAt": "2026-08-13T01:54:11.183Z"
+    },
+    "/tv/": {
+      "pageViews": 2,
+      "updatedAt": "2026-08-13T01:52:27.965Z"
+    },
+    "/about": {
+      "pageViews": 11,
+      "updatedAt": "2026-08-13T01:53:37.571Z"
+    }
+  },
+  "events": {
+    "page_view": 2602,
+    "season_changed": 99,
+    "color_theme_changed": 490,
+    "resume_download": 189,
+    "command_palette_opened": 2
+  },
+  "visitorLocations": {
+    "7fb083efc71dcb23109c37d5560cf1877919ba4ab1550e47986b0e2a674d474c": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-11T02:02:32.836Z"
+    },
+    "0401af8785f538a2d4aa5f7863a9b8229b81d6c9345cc6fbb7d370e2e0ba1e1d": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-12T00:52:45.734Z"
+    },
+    "00c806b7582d8cdde00277e528f5df001022e4005f87272a5abd599439154269": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-11T07:44:09.235Z"
+    },
+    "e56fa74dea0bf41668bf83e9b55ff30678cb5f5ac84ce8cd86760789a317232b": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-11T17:02:23.808Z"
+    },
+    "855d363b0283ef9cef4b8fb9019823f4bb9f1d809007888e1c6216b5d0aeb040": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-13T02:33:51.373Z"
+    },
+    "e578c872230ec89910d645112ad7839b72ccfd3b6cd4b2aef885758f72ec6514": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-13T02:44:10.837Z"
+    },
+    "032dcd914e5dc7b04c990cc5fd736fd0edd3ce73d6608c143b108cabd6266f93": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-13T02:53:20.607Z"
+    },
+    "ef21c2ebd2614e733e9dfa975c6d311f95ab12f4059a6fae0e84459df9205c49": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-13T02:52:26.635Z"
+    },
+    "55bd7395c3aeb2d580a05994bb988d85b0d64993f9c51032dc831ee030c77840": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-13T02:54:34.241Z"
+    },
+    "4e470e14beec06fb3e9d32ed726975c6354983584af75c1c6f0e2d1751a41f65": {
+      "key": "timezone:America/Los_Angeles",
+      "city": null,
+      "region": "Pacific Time · local",
+      "country": "Local development",
+      "countryCode": null,
+      "latitude": 37,
+      "longitude": -120,
+      "timeZone": "America/Los_Angeles",
+      "updatedAt": "2026-08-13T02:52:47.867Z"
+    }
+  }
+}

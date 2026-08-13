@@ -6,17 +6,5 @@ dist/
 !.env.example
 .DS_Store
 *.log
-
 hecate946-source*.zip
 secrets.txt
-
-# Local development analytics cache
-.cache/
-
-# Retired generated code statistics (kept ignored if regenerated locally).
-public/generated/code-stats.json
-
-# Python bytecode/cache files created by local tooling.
-__pycache__/
-*.py[cod]
-*$py.class

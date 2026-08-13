@@ -1,14 +1,13 @@
 ---
 import { siteConfig } from '@/config/site';
-import { headerNavigation, type HeaderNavItem } from '@/config/navigation';
+import { headerNavigation } from '@/config/navigation';
 import { isCurrentPath, withBase } from '@/lib/paths';
-import ColorModeToggle from '@/components/islands/ColorModeToggle.svelte';
-import '@/styles/layout.css';
+import ColorModeToggle from './ColorModeToggle.svelte';
 import '@/styles/header.css';
 
 const currentPath = Astro.url.pathname;
 
-function isHeaderItemCurrent(item: HeaderNavItem) {
+function isHeaderItemCurrent(item: (typeof headerNavigation)[number]) {
   return isCurrentPath(currentPath, item.href);
 }
 ---
@@ -33,7 +32,6 @@ function isHeaderItemCurrent(item: HeaderNavItem) {
                 href={withBase(item.href)}
                 aria-current={isHeaderItemCurrent(item) ? 'page' : undefined}
                 data-astro-prefetch="load"
-                data-nav-path={item.href}
               >
                 <span class="ui-text">{item.label}</span>
               </a>

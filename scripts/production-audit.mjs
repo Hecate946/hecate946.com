@@ -86,7 +86,6 @@ const requiredFiles = [
   'favicon-48.png',
   'apple-touch-icon.png',
   'icon-192.png',
-  'icon-512.png',
   'images/social/home.jpg',
 ];
 
@@ -137,7 +136,7 @@ for (const sitemapFile of sitemapFiles) {
   if (/http:\/\/(?:www\.)?hecate946\.com/i.test(sitemap)) {
     errors.push(`${path.basename(sitemapFile)} contains a non-HTTPS canonical-domain URL.`);
   }
-  for (const forbidden of ['/404/', '/pdf/', '/resume/']) {
+  for (const forbidden of ['/404/', '/pdf/']) {
     if (sitemap.includes(`${canonicalOrigin}${forbidden}`)) {
       errors.push(`${path.basename(sitemapFile)} contains non-canonical/noindex route ${forbidden}.`);
     }

@@ -61,18 +61,6 @@
       });
     };
 
-    // Retire preferences from removed UI systems without touching the one
-    // remaining appearance preference.
-    try {
-      localStorage.removeItem('season-preference');
-      localStorage.removeItem('html-mode');
-      localStorage.removeItem('site-audio:music-volume');
-      localStorage.removeItem('site-audio:sfx-volume');
-      localStorage.removeItem('site-sound');
-    } catch {
-      // Storage may be unavailable; the visual theme still works normally.
-    }
-
     applyTheme();
 
     if (!window.__cyrusThemeBootstrapInstalled) {
@@ -86,6 +74,8 @@
         applyTheme();
         updateThemeColor();
       });
+
+      document.addEventListener('hecate:theme-change', updateThemeColor);
 
       document.addEventListener(
         'DOMContentLoaded',

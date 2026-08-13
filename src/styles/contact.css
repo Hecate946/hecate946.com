@@ -19,16 +19,13 @@ body.room-theme-contact main {
   --contact-floor-height: clamp(5.2rem, 18dvh, 9.8rem);
   --chalk-white: #dedbd0;
   --chalk-white-strong: #f0ede2;
-  --chalk-white-muted: rgb(222 219 208 / 63%);
   --chalk-accent: #f7f4e9;
   --chalk-accent-soft: rgb(247 244 233 / 10%);
   --chalk-detail-gray: #aeb0ad;
   --chalkboard-blue: #081319;
-  --chalkboard-deep: #050c10;
   --frame-black: #050505;
   --frame-mid: #111;
   --chalk-line: rgb(222 219 208 / 48%);
-  --chalk-line-soft: rgb(222 219 208 / 24%);
 
   box-sizing: border-box;
   position: relative;

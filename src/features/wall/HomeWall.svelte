@@ -2,17 +2,13 @@
   import { onMount } from 'svelte';
   import { withBase } from '@/lib/paths';
   import WallWindow from './WallWindow.svelte';
-  import type { WallDestination } from './wall-config';
   import { WALL_LOOP_WIDTH, WALL_START_X, wallDestinations } from './wall-config';
 
-  export let destinations: readonly WallDestination[] = wallDestinations;
-  export let loopWidth = WALL_LOOP_WIDTH;
-  export let startX = WALL_START_X;
-  export let heading = 'Cyrus Asasi';
-  export let stageLabel =
-    'Infinite navigation wall. Drag or scroll horizontally, then select a lit window to enter a page.';
-  export let trackLabel = 'Website destinations';
   export let active = true;
+
+  const destinations = wallDestinations;
+  const loopWidth = WALL_LOOP_WIDTH;
+  const startX = WALL_START_X;
 
   const loopCopies = [-1, 0, 1] as const;
   const DRAG_THRESHOLD = 7;
@@ -42,7 +38,6 @@
   let gestureAxis: 'pending' | 'horizontal' | 'vertical' = 'pending';
   let dragDistance = 0;
   let hasInteracted = false;
-  let enteringId: string | null = null;
   let rafId = 0;
   let lastFrame = 0;
   let programmatic = false;
@@ -215,7 +210,6 @@
   }
 
   function moveBy(amount: number) {
-    if (enteringId) return;
     cancelCameraAnimation();
     markInteracted();
     cameraX += amount;
@@ -244,12 +238,12 @@
     });
   }
 
-  function focusDestination(_destination: WallDestination) {
+  function focusDestination() {
     if (dragging) return;
     markInteracted();
   }
 
-  function enterDestination(event: MouseEvent, _destination: WallDestination) {
+  function enterDestination(event: MouseEvent) {
     // A drag must never accidentally activate the underlying link. For a real
     // click, leave the anchor alone so Astro's ClientRouter handles navigation
     // exactly like the links in the navbar.
@@ -263,7 +257,6 @@
   }
 
   function onWheel(event: WheelEvent) {
-    if (enteringId) return;
 
     // Vertical wheel/trackpad movement belongs to the page so the footer can
     // be reached naturally. Only a clearly horizontal gesture moves the wall.
@@ -280,7 +273,7 @@
   }
 
   function onPointerDown(event: PointerEvent) {
-    if (enteringId || event.button !== 0) return;
+    if (event.button !== 0) return;
 
     // Svelte 5 delegates event handlers while this scene also uses native
     // pointer listeners for low-latency dragging. Ignore the motion button at
@@ -312,7 +305,7 @@
   }
 
   function onPointerMove(event: PointerEvent) {
-    if (!dragging || activePointerId !== event.pointerId || enteringId) return;
+    if (!dragging || activePointerId !== event.pointerId) return;
 
     const deltaX = event.clientX - pointerX;
     if (gestureAxis === 'pending') {
@@ -404,7 +397,6 @@
 
   function restoreWallAfterHistoryNavigation() {
     cancelCameraAnimation();
-    enteringId = null;
     programmatic = false;
     dragging = false;
     activePointerId = null;
@@ -417,7 +409,6 @@
   }
 
   function onKeydown(event: KeyboardEvent) {
-    if (enteringId) return;
 
     const target = event.target;
     if (
@@ -471,7 +462,7 @@
         programmaticResolve = null;
         resolve?.();
       }
-    } else if (!dragging && !enteringId) {
+    } else if (!dragging) {
       const driftVelocity = getDriftVelocity();
       const easing = 1 - Math.exp(-dt / INERTIA_TIME_CONSTANT);
       velocity += (driftVelocity - velocity) * easing;
@@ -483,7 +474,7 @@
 
     // When the user explicitly pauses the conveyor, stop scheduling frames
     // entirely once residual inertia has settled. Input restarts it on demand.
-    if (isPaused && !dragging && !programmatic && !enteringId && Math.abs(velocity) < 0.01) {
+    if (isPaused && !dragging && !programmatic && Math.abs(velocity) < 0.01) {
       velocity = 0;
       return;
     }
@@ -559,20 +550,19 @@
   bind:this={stage}
   class:wall-stage--dragging={dragging}
   class:wall-stage--interacted={hasInteracted}
-  class:wall-stage--entering={Boolean(enteringId)}
   class:wall-stage--inactive={!active}
   class="wall-stage wall-stage--home wall-room-host"
   aria-hidden={!active ? 'true' : undefined}
   style={stageStyle}
-  aria-label={stageLabel}
+  aria-label="Interactive navigation wall"
 >
-  <h1 class="visually-hidden">{heading}</h1>
+  <h1 class="visually-hidden">Cyrus Asasi</h1>
 
 
   <div
     bind:this={wallWorld}
     class="wall-world"
-    aria-label={trackLabel}
+    aria-label="Website destinations"
     style={`--loop-base: 0px; transform: translate3d(${-startX}px, 0, 0);`}
   >
     {#each loopCopies as loopIndex}
@@ -587,10 +577,8 @@
         {#each destinations as destination, destinationIndex (destination.id)}
           <WallWindow
             {destination}
-            keyboardAccessible={loopIndex === 0}
-            semantic={loopIndex === 0}
+            primary={loopIndex === 0}
             eager={loopIndex === 0 && destinationIndex === 0}
-            entering={enteringId === destination.id}
             onFocus={focusDestination}
             onEnter={enterDestination}
             indexLabel={String(destinationIndex + 1).padStart(2, '0')}

@@ -1,8 +1,4 @@
-/*
- * Compositor-only checkerboard floor. The previous implementation redrew a
- * full canvas whenever the conveyor camera changed. This version keeps one
- * painted checker texture on a 3D CSS plane and changes only its transform.
- */
+/* Composited CSS checkerboard floor. */
 .floor-scene {
   position: absolute;
   z-index: 5;

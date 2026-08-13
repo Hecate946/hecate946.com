@@ -3,39 +3,29 @@
   import { withBase } from '@/lib/paths';
 
   export let destination: WallDestination;
-  export let entering = false;
-  export let keyboardAccessible = true;
-  export let semantic = true;
+  export let primary = true;
   export let eager = false;
-  export let indexLabel: string | undefined = undefined;
-  export let onFocus: (destination: WallDestination) => void;
-  export let onEnter: (event: MouseEvent, destination: WallDestination) => void;
+  export let indexLabel: string;
+  export let onFocus: () => void;
+  export let onEnter: (event: MouseEvent) => void;
 
-  const displayIndex = indexLabel ?? wallIndex(destination.id);
   const paintingSrcset = destination.painting.sources
-    ?.map((source) => `${withBase(source.src)} ${source.width}w`)
+    .map((source) => `${withBase(source.src)} ${source.width}w`)
     .join(', ');
-
-  function wallIndex(id: string) {
-    const order = ['about', 'projects', 'resume', 'contact'];
-    const index = order.indexOf(id);
-    return String(index + 1).padStart(2, '0');
-  }
 </script>
 
 <a
-  class:wall-window--entering={entering}
   class="wall-window"
   href={withBase(destination.href)}
-  aria-label={semantic ? `Enter ${destination.label}` : undefined}
-  aria-hidden={semantic ? undefined : 'true'}
+  aria-label={primary ? `Enter ${destination.label}` : undefined}
+  aria-hidden={primary ? undefined : 'true'}
   data-wall-window={destination.id}
-  data-astro-prefetch={semantic ? true : undefined}
+  data-astro-prefetch={primary ? true : undefined}
   draggable="false"
-  tabindex={keyboardAccessible ? undefined : -1}
-  onfocus={() => keyboardAccessible && onFocus(destination)}
-  style={`left: ${destination.x}px; --painting-position: ${destination.painting.objectPosition ?? '50% 50%'}; --painting-fit: ${destination.painting.objectFit ?? 'cover'};`}
-  onclick={(event) => onEnter(event, destination)}
+  tabindex={primary ? undefined : -1}
+  onfocus={() => primary && onFocus()}
+  style={`left: ${destination.x}px;`}
+  onclick={onEnter}
 >
   <span class="wall-window__recess" aria-hidden="true">
     <span class="wall-window__glass">
@@ -57,12 +47,12 @@
   </span>
 
   <span class="wall-window__sill" aria-hidden="true"></span>
-  <span class:wall-window__label--clone={!semantic} class="wall-window__label">
-    {#if semantic}
-      <span class="wall-window__index">{displayIndex}</span>
+  <span class:wall-window__label--clone={!primary} class="wall-window__label">
+    {#if primary}
+      <span class="wall-window__index">{indexLabel}</span>
       <span class="wall-window__name">{destination.label}</span>
     {:else}
-      <span class="wall-window__index" data-display-text={displayIndex}></span>
+      <span class="wall-window__index" data-display-text={indexLabel}></span>
       <span class="wall-window__name" data-display-text={destination.label}></span>
     {/if}
     <span class="wall-window__arrow" aria-hidden="true">

@@ -5,12 +5,9 @@ export interface WallPaintingSource {
 
 export interface WallPainting {
   src: string;
-  name: string;
   width: number;
   height: number;
-  objectPosition?: string;
-  objectFit?: 'cover' | 'contain';
-  sources?: readonly WallPaintingSource[];
+  sources: readonly WallPaintingSource[];
 }
 
 export interface WallDestination {
@@ -18,15 +15,10 @@ export interface WallDestination {
   label: string;
   href: string;
   x: number;
-  width: number;
-  height: number;
   painting: WallPainting;
 }
 
-type WallDestinationDefinition = Omit<WallDestination, 'x' | 'width' | 'height'>;
-
-const FRAME_WIDTH = 340;
-const FRAME_HEIGHT = 420;
+type WallDestinationDefinition = Omit<WallDestination, 'x'>;
 
 /**
  * Four evenly spaced destinations. A 600px interval keeps the gallery compact
@@ -44,7 +36,6 @@ const destinationDefinitions = [
     href: '/about/',
     painting: {
       src: '/paintings/the-stare.webp',
-      name: 'The Stare',
       width: 886,
       height: 1080,
       sources: [
@@ -59,7 +50,6 @@ const destinationDefinitions = [
     href: '/projects/',
     painting: {
       src: '/paintings/pastry-chef.webp',
-      name: 'Pastry Chef',
       width: 540,
       height: 600,
       sources: [
@@ -73,13 +63,12 @@ const destinationDefinitions = [
     label: 'Resume',
     href: '/resumes/',
     painting: {
-      src: '/paintings/stats-portrait-480.webp',
-      name: 'Seated Portrait',
+      src: '/paintings/resume-portrait-480.webp',
       width: 480,
       height: 602,
       sources: [
-        { src: '/paintings/stats-portrait-480.webp', width: 480 },
-        { src: '/paintings/stats-portrait-720.webp', width: 720 },
+        { src: '/paintings/resume-portrait-480.webp', width: 480 },
+        { src: '/paintings/resume-portrait-720.webp', width: 720 },
       ],
     },
   },
@@ -89,7 +78,6 @@ const destinationDefinitions = [
     href: '/contact/',
     painting: {
       src: '/paintings/madame-le-peletier.webp',
-      name: 'Madame Le Peletier',
       width: 564,
       height: 694,
       sources: [
@@ -110,7 +98,5 @@ export const wallDestinations: readonly WallDestination[] = destinationDefinitio
   (destination, index) => ({
     ...destination,
     x: WALL_START_X + FRAME_SPACING * index,
-    width: FRAME_WIDTH,
-    height: FRAME_HEIGHT,
   }),
 );

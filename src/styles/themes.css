@@ -7,7 +7,6 @@ html[data-theme='light'] {
   --bg: #fff8e8;
   --surface-strong: #fffdf5;
   --text: #173d3b;
-  --muted: #607874;
   --line: rgb(24 92 87 / 20%);
   --accent: #0f7773;
   --accent-strong: #07524f;
@@ -29,7 +28,6 @@ html[data-theme='dark'] {
   --bg: #07191d;
   --surface-strong: #102b2e;
   --text: #eff8f4;
-  --muted: #a4bfba;
   --line: rgb(218 241 235 / 15%);
   --accent: #73d0c3;
   --accent-strong: #a7eee2;

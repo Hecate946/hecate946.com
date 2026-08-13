@@ -1,8 +1,4 @@
-/*
- * Shared room geometry. This file intentionally contains only the coordinate
- * system that wall and floor layers agree on. Each renderer owns its own
- * visuals so the DOM wall and WebGL floor can evolve independently.
- */
+/* Shared wall/floor geometry. */
 .wall-room-host {
   --floor-height: clamp(5.2rem, 18%, 9.8rem);
   --baseboard-height: clamp(0.62rem, 1.15vw, 0.92rem);

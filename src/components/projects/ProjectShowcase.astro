@@ -27,7 +27,7 @@ const projectWriting: Record<Project['slug'], string> = {
   keycad:
     'KeyCAD started with a question I found interesting: could a photograph contain enough information to recreate useful physical geometry? I built a library of 19 parameterized key blanks in OpenSCAD, then wrote an OpenCV pipeline that corrected scale, found measurement points in an image, and transferred those measurements onto the matching model to produce printable geometry. What I like most about the project is the bridge between two very different kinds of computation—interpreting pixels on one side and generating a precise physical object on the other.',
   portfolio:
-    'I built Hecate946.com because I wanted a personal website to feel less like a document and more like a place. The site is statically generated with Astro, with Svelte and WebGL used only where interaction earns the extra complexity, and I keep rebuilding parts of it whenever I find a visual idea worth exploring. It has become an ongoing experiment in animation, interface design, accessibility, performance, and how much personality a website can have without becoming difficult to use. More than a portfolio, it is the project where I let myself treat the browser as a creative medium.',
+    'I built Hecate946.com because I wanted a personal website to feel less like a document and more like a place. The site is statically generated with Astro, with Svelte and CSS used only where interaction earns the extra complexity, and I keep rebuilding parts of it whenever I find a visual idea worth exploring. It has become an ongoing experiment in animation, interface design, accessibility, performance, and how much personality a website can have without becoming difficult to use. More than a portfolio, it is the project where I let myself treat the browser as a creative medium.',
 };
 
 const writing = projectWriting[project.slug];
@@ -35,7 +35,8 @@ const writing = projectWriting[project.slug];
 const projectUrl = new URL(`/projects/${project.slug}/`, Astro.site).href;
 const projectsUrl = new URL('/projects/', Astro.site).href;
 const siteUrl = new URL('/', Astro.site).href;
-const projectImageUrl = new URL(project.image, Astro.site).href;
+const projectSocialImagePath = `/images/social/projects/${project.slug}.jpg`;
+const projectSocialImageUrl = new URL(projectSocialImagePath, Astro.site).href;
 const sourceLink = projectLinks.find((link) => /source/i.test(link.label));
 const projectStructuredData = [
   {
@@ -45,7 +46,7 @@ const projectStructuredData = [
     description: project.description,
     abstract: writing,
     url: projectUrl,
-    image: projectImageUrl,
+    image: projectSocialImageUrl,
     creator: { '@id': `${siteUrl}#person` },
     programmingLanguage: [...project.technologies],
     keywords: [...project.technologies, project.category].join(', '),
@@ -80,11 +81,10 @@ const projectStructuredData = [
   description={project.description}
   socialTitle={project.title}
   socialDescription={project.tagline}
-  socialImage={`/images/social/projects/${project.slug}.jpg`}
+  socialImage={projectSocialImagePath}
   socialImageAlt={`${project.title} project preview`}
   socialImageWidth={400}
   socialImageHeight={400}
-  socialImageType="image/jpeg"
   structuredData={projectStructuredData}
   mainClass="project-detail-main"
   bodyClass={`project-detail-page project-detail-page--${project.slug}`}

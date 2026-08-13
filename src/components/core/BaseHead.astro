@@ -3,71 +3,46 @@ import { siteConfig } from '@/config/site';
 import { withBase } from '@/lib/paths';
 
 interface Props {
-  title?: string | undefined;
-  description?: string | undefined;
-  image?: string | undefined;
-  imageAlt?: string | undefined;
-  imageWidth?: number | undefined;
-  imageHeight?: number | undefined;
-  imageType?: string | undefined;
-  socialTitle?: string | undefined;
-  socialDescription?: string | undefined;
-  socialImage?: string | undefined;
-  socialImageAlt?: string | undefined;
-  socialImageWidth?: number | undefined;
-  socialImageHeight?: number | undefined;
-  socialImageType?: string | undefined;
-  canonicalURL?: URL | undefined;
-  noindex?: boolean | undefined;
-  structuredData?: Record<string, unknown> | readonly Record<string, unknown>[] | undefined;
+  title?: string;
+  description?: string;
+  socialTitle?: string;
+  socialDescription?: string;
+  socialImage?: string;
+  socialImageAlt?: string;
+  socialImageWidth?: number;
+  socialImageHeight?: number;
+  canonicalURL?: URL;
+  noindex?: boolean;
+  structuredData?: Record<string, unknown> | readonly Record<string, unknown>[];
 }
 
 const {
-  title = siteConfig.title,
+  title = 'Home',
   description = siteConfig.description,
-  image,
-  imageAlt,
-  imageWidth,
-  imageHeight,
-  imageType,
   socialTitle,
   socialDescription,
   socialImage,
   socialImageAlt,
   socialImageWidth,
   socialImageHeight,
-  socialImageType,
   canonicalURL = new URL(Astro.url.pathname, Astro.site),
   noindex = false,
   structuredData: additionalStructuredData,
 } = Astro.props;
 
-const escapeRegExp = (value: string) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const siteNamePattern = escapeRegExp(siteConfig.name);
 const normalizedPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const isHomePage = normalizedPath === '/';
 const isAboutPage = normalizedPath === '/about';
 const isProjectsPage = normalizedPath === '/projects';
 const isResumesPage = normalizedPath === '/resumes';
 const isContactPage = normalizedPath === '/contact';
-
-function getPageName(input: string) {
-  const cleanTitle = input.trim();
-
-  if (!cleanTitle || cleanTitle === siteConfig.name || cleanTitle === siteConfig.title) {
-    return siteConfig.name;
-  }
-
-  return (
-    cleanTitle
-      .replace(
-        new RegExp(`\\s*(?:\\||—|–|-)\\s*${siteNamePattern}\\s*$`, 'i'),
-        '',
-      )
-      .trim() || siteConfig.name
-  );
-}
+const pageName = title.trim() || 'Home';
+const resolvedTitle = `${pageName} | ${siteConfig.name}`;
+const compactSocialTitle = socialTitle ?? (isHomePage ? siteConfig.name : pageName);
+const compactSocialDescription =
+  socialDescription ?? (isHomePage ? siteConfig.socialDescription : description);
+const canonicalHref = canonicalURL.toString();
+const siteUrl = new URL('/', Astro.site).toString();
 
 function inferImageType(path: string) {
   const cleanPath = path.split(/[?#]/, 1)[0]?.toLowerCase() ?? '';
@@ -78,29 +53,16 @@ function inferImageType(path: string) {
   return undefined;
 }
 
-const pageName = getPageName(title);
-const resolvedTitle = isHomePage
-  ? `Home | ${siteConfig.name}`
-  : `${pageName} | ${siteConfig.name}`;
-const compactSocialTitle = socialTitle ?? (isHomePage ? siteConfig.name : pageName);
-const compactSocialDescription = socialDescription ?? (isHomePage ? siteConfig.socialDescription : description);
-const canonicalHref = canonicalURL.toString();
-const siteUrl = new URL('/', Astro.site).toString();
-
-// Social cards deliberately use compact 1:1 previews. X/Twitter renders these
-// as the smaller `summary` card, while Open Graph consumers still get an image
-// that represents the current room rather than the site's old profile-card art.
 const defaultSocialImagePath = withBase('/images/social/home.jpg');
-const resolvedImagePath = socialImage ?? image ?? defaultSocialImagePath;
+const resolvedImagePath = socialImage ?? defaultSocialImagePath;
 const resolvedImageAlt =
   socialImageAlt ??
-  imageAlt ??
   (isHomePage
     ? `${siteConfig.name} portfolio room preview`
     : `${pageName} on ${siteConfig.name}'s portfolio`);
-const resolvedImageWidth = socialImageWidth ?? imageWidth ?? (socialImage || !image ? 400 : undefined);
-const resolvedImageHeight = socialImageHeight ?? imageHeight ?? (socialImage || !image ? 400 : undefined);
-const resolvedImageType = socialImageType ?? imageType ?? inferImageType(resolvedImagePath);
+const resolvedImageWidth = socialImageWidth ?? 400;
+const resolvedImageHeight = socialImageHeight ?? 400;
+const resolvedImageType = inferImageType(resolvedImagePath);
 const socialImageUrl = new URL(resolvedImagePath, Astro.site).toString();
 
 const personId = `${siteUrl}#person`;
@@ -121,8 +83,8 @@ const structuredImage = {
   url: socialImageUrl,
   contentUrl: socialImageUrl,
   caption: resolvedImageAlt,
-  ...(resolvedImageWidth ? { width: resolvedImageWidth } : {}),
-  ...(resolvedImageHeight ? { height: resolvedImageHeight } : {}),
+  width: resolvedImageWidth,
+  height: resolvedImageHeight,
 };
 
 const personStructuredData = {
@@ -173,10 +135,9 @@ const structuredData = {
   ],
 };
 
-// Avoid allowing a literal `</script>` sequence from future content edits to
-// terminate the JSON-LD script tag early.
 const structuredDataJson = JSON.stringify(structuredData).replace(/</g, '\\u003c');
 ---
+
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
