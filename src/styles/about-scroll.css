@@ -197,19 +197,18 @@ html[data-theme='dark'] .about-scroll-installation {
   width: 100%;
   aspect-ratio: 1;
   box-sizing: border-box;
-  border: 0.7rem solid #050505;
+  border: 0.26rem solid #050505;
   background: #020202;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--about-frame-outline) 24%, transparent),
-    0 0 0 0.32rem #0b0b0b,
-    0.55rem 0.72rem 0.95rem rgb(0 0 0 / 34%),
-    0 0 1.8rem color-mix(in srgb, var(--about-frame-hot) 7%, transparent),
-    inset 0 0 1.7rem rgb(0 0 0 / 84%);
+    0 0 0 1px color-mix(in srgb, var(--about-frame-outline) 26%, transparent),
+    0.34rem 0.46rem 0.72rem rgb(0 0 0 / 30%),
+    0 0 1.15rem color-mix(in srgb, var(--about-frame-hot) 6%, transparent),
+    inset 0 0 0.85rem rgb(0 0 0 / 72%);
 }
 
 .about-scroll-portrait-glass {
   position: absolute;
-  inset: 0.3rem;
+  inset: 0.14rem;
   display: block;
   overflow: hidden;
   background: #0b0b0a;
@@ -237,7 +236,7 @@ html[data-theme='dark'] .about-scroll-installation {
 .about-scroll-portrait-reflection {
   position: absolute;
   z-index: 3;
-  inset: 0.45rem;
+  inset: 0.24rem;
   display: block;
   background:
     linear-gradient(112deg, transparent 12%, rgb(255 255 255 / 5%) 27%, transparent 42%),
@@ -248,35 +247,14 @@ html[data-theme='dark'] .about-scroll-installation {
 .about-scroll-portrait-sill {
   position: absolute;
   z-index: 4;
-  right: -0.65rem;
-  bottom: -0.55rem;
-  left: -0.65rem;
+  right: -0.28rem;
+  bottom: -0.24rem;
+  left: -0.28rem;
   display: block;
-  height: 0.55rem;
+  height: 0.24rem;
   border-top: 1px solid color-mix(in srgb, var(--about-frame-outline) 24%, transparent);
   background: #050505;
-  box-shadow: 0 0.45rem 0.58rem rgb(0 0 0 / 34%);
-}
-
-.about-scroll-portrait-label {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 0.7rem;
-  margin-top: 1.15rem;
-  color: color-mix(in srgb, var(--paper-accent) 68%, var(--paper-ink));
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.62rem;
-  font-weight: 400;
-  letter-spacing: 0.16em;
-  line-height: 1;
-  text-align: left;
-  text-transform: uppercase;
-}
-
-.about-scroll-portrait-label span:first-child {
-  color: color-mix(in srgb, var(--paper-accent) 46%, var(--paper-ink));
-  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0.24rem 0.4rem rgb(0 0 0 / 28%);
 }
 
 .about-scroll-intro {

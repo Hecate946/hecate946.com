@@ -61,10 +61,6 @@
                   </span>
                   <span class="about-scroll-portrait-sill"></span>
                 </span>
-                <figcaption class="about-scroll-portrait-label">
-                  <span>01</span>
-                  <span>About</span>
-                </figcaption>
                 <span class="visually-hidden">{intro.portrait.alt}</span>
               </figure>
             {/if}

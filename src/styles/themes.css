@@ -12,9 +12,9 @@ html[data-theme='light'] {
   --accent-strong: #07524f;
   --accent-soft: rgb(15 119 115 / 13%);
 
-  --header-accent: #0f7773;
+  --header-accent: #0f7777;
 
-  --wall-dark: color-mix(in srgb, var(--accent) 88%, black);
+  --wall-dark: #52a4b9;
   --wall-light: var(--bg);
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 82%, #3f4140);
   --wall-trim-line: rgb(76 80 80 / 22%);

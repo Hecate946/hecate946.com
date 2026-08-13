@@ -46,7 +46,7 @@ html[data-theme='light'] .room-themed {
 
 /* Peach macaron. */
 html[data-theme='light'] .room-theme-about {
-  --wall-dark: #c05151;
+  --wall-dark: #d897b2;
 }
 
 /* Lavender macaron. */
@@ -56,12 +56,12 @@ html[data-theme='light'] .room-theme-projects {
 
 /* Butter macaron. */
 html[data-theme='light'] .room-theme-resume {
-  --wall-dark: #c2b589;
+  --wall-dark: #afafaf;
 }
 
 /* Pistachio macaron. */
 html[data-theme='light'] .room-theme-contact {
-  --wall-dark: #739e6d;
+  --wall-dark: #6d9e92;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -76,7 +76,7 @@ html[data-theme='dark'] .room-themed {
 
 /* Rich terracotta. */
 html[data-theme='dark'] .room-theme-about {
-  --wall-dark: #570000;
+  --wall-dark: #380a12;
 }
 
 /* Royal plum. */
@@ -86,7 +86,7 @@ html[data-theme='dark'] .room-theme-projects {
 
 /* Deep amber. */
 html[data-theme='dark'] .room-theme-resume {
-  --wall-dark: #8b6b00;
+  --wall-dark: #664e00;
 }
 
 /* Saturated emerald. */
