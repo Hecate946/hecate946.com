@@ -81,10 +81,13 @@
     position: absolute;
     z-index: 12;
     left: 50%;
-    bottom: calc(var(--floor-height) + clamp(3.25rem, 8vh, 5.25rem));
+    /* Lock the hint to the center of the third brick course above the
+       baseboard. The shared brick course is 24px tall, so this remains clear
+       of mortar lines at every viewport height. */
+    top: calc(var(--baseboard-top) - 60px);
     max-width: calc(100vw - 7rem);
     margin: 0;
-    transform: translate(-50%, 50%);
+    transform: translate(-50%, -50%);
     color: #d0d0d0;
     font-family: var(--font-sans);
     font-size: clamp(0.68rem, 1vw, 0.78rem);
