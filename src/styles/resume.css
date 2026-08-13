@@ -72,10 +72,13 @@ body.resume-wall-page > main.resume-wall-main {
 
 .resume-gallery__grid {
   display: grid;
-  width: min(100%, calc(var(--resume-card-width) * 2 + 4.5rem));
-  grid-template-columns: repeat(auto-fit, var(--resume-card-width));
-  justify-content: center;
-  gap: clamp(3.75rem, 7vw, 5.5rem) 4.5rem;
+  /* The two resumes occupy a centered wall zone with equal space to the left,
+     between the frames, and to the right. Their dimensions stay rigid. */
+  width: min(100%, 52rem);
+  grid-template-columns: repeat(2, var(--resume-card-width));
+  justify-content: space-evenly;
+  column-gap: 0;
+  row-gap: clamp(3.75rem, 7vw, 5.5rem);
 }
 
 .resume-card {
@@ -178,7 +181,8 @@ body.resume-wall-page > main.resume-wall-main {
   font-size: 0.73rem;
   font-weight: 500;
   letter-spacing: 0.16em;
-  line-height: 1;
+  line-height: 1.22;
+  padding-block: 0.08rem 0.03rem;
   text-decoration: none;
   text-transform: uppercase;
   text-shadow: 0 1px 1.5px rgb(0 0 0 / 32%);
@@ -192,8 +196,6 @@ body.resume-wall-page > main.resume-wall-main {
 
 .resume-card__name {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -219,56 +221,6 @@ body.resume-wall-page > main.resume-wall-main {
   stroke-width: 1.35;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.resume-card__actions {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.48rem;
-  flex-wrap: wrap;
-  margin: 0.5rem 0 0 2.07rem;
-  color: color-mix(in srgb, var(--resume-label-ink) 70%, transparent);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.62rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  line-height: 1.25;
-  text-transform: uppercase;
-  text-shadow: 0 1px 1.5px rgb(0 0 0 / 32%);
-}
-
-.resume-card__actions a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.18rem;
-  color: inherit;
-  outline: none;
-  text-decoration-line: underline;
-  text-decoration-color: color-mix(in srgb, currentColor 42%, transparent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18rem;
-  cursor: pointer;
-  transition: color 160ms ease, text-decoration-color 160ms ease;
-}
-
-.resume-card__actions a:hover,
-.resume-card__actions a:focus-visible {
-  color: var(--resume-label-ink);
-  text-decoration-color: currentColor;
-}
-
-
-.resume-card__action-icon {
-  display: inline-block;
-  font-size: 0.92em;
-  line-height: 1;
-  text-decoration: none;
-  transform: translateY(-0.02em);
-}
-
-.resume-card__action-separator {
-  color: color-mix(in srgb, var(--resume-label-ink) 46%, transparent);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -301,9 +253,6 @@ body.resume-wall-page > main.resume-wall-main {
     transform: translate(0.08rem, -0.08rem);
   }
 
-  .resume-card:hover .resume-card__actions {
-    color: color-mix(in srgb, var(--resume-label-ink) 86%, transparent);
-  }
 }
 
 .resume-card__frame:focus-visible,
@@ -327,9 +276,8 @@ body.resume-wall-page > main.resume-wall-main {
   transform: translate(0, 0);
 }
 
-/* At this width the 38rem of artwork plus the 4.5rem gallery gap and page
-   breathing room can no longer coexist. auto-fit drops to one fixed column,
-   centered without shrinking either resume. */
+/* Once two rigid frames no longer have comfortable equal spacing, switch to
+   one fixed centered column rather than squeezing the pair. */
 @media (max-width: 45rem) {
   .resume-gallery {
     padding-inline: 0.75rem;
@@ -342,6 +290,7 @@ body.resume-wall-page > main.resume-wall-main {
   .resume-gallery__grid {
     width: min(100%, var(--resume-card-width));
     grid-template-columns: var(--resume-card-width);
+    justify-content: center;
     gap: 4rem;
   }
 }
@@ -361,18 +310,13 @@ body.resume-wall-page > main.resume-wall-main {
   .resume-card__label {
     font-size: 0.75rem;
   }
-
-  .resume-card__actions {
-    font-size: 0.63rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .resume-card__frame,
   .resume-card__shade,
   .resume-card__label,
-  .resume-card__arrow,
-  .resume-card__actions a {
+  .resume-card__arrow {
     transition: none;
   }
 }

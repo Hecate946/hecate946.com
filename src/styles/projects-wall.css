@@ -1,9 +1,10 @@
 /*
  * Projects use the same quiet museum-frame language as Home: artwork inside a
  * deep black recess, a narrow sill, and only the essential label beneath it.
- * Four projects read best as a centered 2 × 2 gallery on wide screens; because
- * the cards are deliberately rigid, the gallery becomes one column as soon as
- * two frames no longer fit comfortably.
+ * The four projects form one rigid horizontal gallery on wide screens, echoing
+ * a real wall-hung exhibition. Rather than introducing an intermediate grid,
+ * the gallery becomes one centered column as soon as all four frames no longer
+ * fit comfortably.
  */
 body.projects-wall-page {
   position: relative;
@@ -36,7 +37,10 @@ body.projects-wall-page > main.projects-wall-main {
   display: grid;
   width: 100%;
   min-height: calc(100vh - var(--header-height));
-  place-items: start center;
+  /* Center the exhibition in the actual wall area above the floor. The equal
+     top/bottom wall breathing room is already encoded in the padding; the
+     floor reserve is excluded by the larger bottom padding. */
+  place-items: center;
   overflow: visible;
   padding: clamp(2.5rem, 5vw, 4rem) 1rem
     calc(var(--room-floor-reserve, 9rem) + clamp(2.5rem, 5vw, 4rem));
@@ -72,10 +76,13 @@ body.projects-wall-page > main.projects-wall-main {
 
 .project-gallery__grid {
   display: grid;
-  width: min(100%, calc(var(--project-card-width) * 2 + 4rem));
-  grid-template-columns: repeat(2, var(--project-card-width));
-  justify-content: center;
-  gap: clamp(3.4rem, 6vw, 5rem) 4rem;
+  /* Give all four rigid frames equal wall spacing, including the two outer
+     margins, instead of packing the group around a fixed gap. */
+  width: min(100%, 94rem);
+  grid-template-columns: repeat(4, var(--project-card-width));
+  justify-content: space-evenly;
+  column-gap: 0;
+  row-gap: 0;
 }
 
 .project-card {
@@ -182,7 +189,8 @@ body.projects-wall-page > main.projects-wall-main {
   font-size: 0.73rem;
   font-weight: 500;
   letter-spacing: 0.16em;
-  line-height: 1;
+  line-height: 1.22;
+  padding-block: 0.08rem 0.03rem;
   text-transform: uppercase;
   text-shadow: 0 1px 1.5px rgb(0 0 0 / 32%);
   transition: color 260ms ease;
@@ -195,8 +203,6 @@ body.projects-wall-page > main.projects-wall-main {
 
 .project-card__name {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -222,34 +228,6 @@ body.projects-wall-page > main.projects-wall-main {
   stroke-width: 1.35;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.project-card__detail {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.38rem;
-  margin: 0.5rem 1.62rem 0 2.07rem;
-  color: color-mix(in srgb, var(--project-label-ink) 68%, transparent);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.62rem;
-  font-weight: 500;
-  letter-spacing: 0.055em;
-  line-height: 1.25;
-  text-transform: uppercase;
-  text-shadow: 0 1px 1.5px rgb(0 0 0 / 32%);
-}
-
-.project-card__detail span:first-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.project-card__detail span:last-child {
-  flex: 0 0 auto;
-  font-variant-numeric: tabular-nums;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -290,9 +268,6 @@ body.projects-wall-page > main.projects-wall-main {
     transform: translate(0.08rem, -0.08rem);
   }
 
-  .project-card:hover .project-card__detail {
-    color: color-mix(in srgb, var(--project-label-ink) 84%, transparent);
-  }
 }
 
 .project-card:focus-visible .project-card__frame {
@@ -315,10 +290,11 @@ body.projects-wall-page > main.projects-wall-main {
   transform: translate(0, 0);
 }
 
-/* Two rigid 19rem frames plus their 4rem gap need 42rem of actual content
-   width. Stack before surrounding page padding can make that composition feel
-   squeezed. */
-@media (max-width: 44rem) {
+/* Four rigid 19rem frames plus three 1.5rem gaps need 80.5rem of actual
+   gallery width. Once that single exhibition row no longer fits comfortably,
+   switch directly to one centered column instead of compressing the art or
+   creating a temporary 2 × 2 layout. */
+@media (max-width: 82.5rem) {
   .project-gallery {
     padding-top: 2rem;
     padding-inline: 0.75rem;
@@ -327,6 +303,7 @@ body.projects-wall-page > main.projects-wall-main {
   .project-gallery__grid {
     width: min(100%, var(--project-card-width));
     grid-template-columns: minmax(0, var(--project-card-width));
+    justify-content: center;
     gap: 3.6rem;
   }
 }
@@ -343,9 +320,6 @@ body.projects-wall-page > main.projects-wall-main {
     font-size: 0.75rem;
   }
 
-  .project-card__detail {
-    font-size: 0.63rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

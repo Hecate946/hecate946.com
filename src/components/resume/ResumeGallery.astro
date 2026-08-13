@@ -67,17 +67,6 @@ const resumes = [
               </span>
             </a>
 
-            <div class="resume-card__actions" aria-label={`${resume.eyebrow} resume actions`}>
-              <a href={pdfViewerHref(resume.pdf)} data-astro-prefetch>
-                <span>View resume</span>
-                <span class="resume-card__action-icon" aria-hidden="true">↗</span>
-              </a>
-              <span class="resume-card__action-separator" aria-hidden="true">·</span>
-              <a href={withBase(resume.pdf)} download>
-                <span>Download PDF</span>
-                <span class="resume-card__action-icon" aria-hidden="true">↓</span>
-              </a>
-            </div>
           </div>
         </article>
       ))}

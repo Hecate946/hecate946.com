@@ -79,7 +79,6 @@ const requiredFiles = [
   'robots.txt',
   'sitemap-index.xml',
   'site.webmanifest',
-  'CNAME',
   '.well-known/security.txt',
   'favicon.ico',
   'favicon.png',
