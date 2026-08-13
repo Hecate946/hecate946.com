@@ -716,35 +716,75 @@ body.primary-room-page.contact-room-page .contact-wall {
 }
 
 /* HECATE CONTACT MOBILE FULL-SCREEN COMPOSE - BEGIN */
-@media (max-width: 40rem) {
-  body.room-theme-contact {
-    height: auto;
+/*
+ * Contact now uses BaseLayout's scrolling-room scrollport, exactly like About
+ * and Resumes. The room backdrop grows with this document, so brickwork stays
+ * continuous and the checkerboard floor naturally lands after the final cards.
+ */
+body.primary-room-page.scrolling-primary-room.contact-room-page
+  .scrolling-room-document > main {
+  box-sizing: border-box;
+  min-height: 100vh;
+  overflow: visible;
+  padding-top: var(--header-height);
+}
+
+@supports (height: 100svh) {
+  body.primary-room-page.scrolling-primary-room.contact-room-page
+    .scrolling-room-document > main {
     min-height: 100svh;
-    overflow-x: hidden;
-    overflow-y: auto;
   }
+}
 
-  body.room-theme-contact main {
-    min-height: 0;
-    overflow: visible;
+@supports (height: 100dvh) {
+  body.primary-room-page.scrolling-primary-room.contact-room-page
+    .scrolling-room-document > main {
+    min-height: 100dvh;
   }
+}
 
-  body.primary-room-page.contact-room-page .contact-page {
-    height: auto;
+body.primary-room-page.scrolling-primary-room.contact-room-page .contact-page {
+  height: auto;
+  min-height: calc(100vh - var(--header-height));
+  overflow: visible;
+}
+
+body.primary-room-page.scrolling-primary-room.contact-room-page .contact-wall {
+  position: relative;
+  inset: auto;
+  top: auto;
+  display: grid;
+  box-sizing: border-box;
+  min-height: calc(100vh - var(--header-height));
+  place-items: center;
+  padding:
+    clamp(0.75rem, 1.6vw, 1.1rem)
+    clamp(0.75rem, 1.6vw, 1.1rem)
+    calc(var(--room-floor-reserve, 9rem) + 1rem);
+}
+
+@supports (height: 100svh) {
+  body.primary-room-page.scrolling-primary-room.contact-room-page .contact-page,
+  body.primary-room-page.scrolling-primary-room.contact-room-page .contact-wall {
     min-height: calc(100svh - var(--header-height));
-    overflow: visible;
   }
+}
 
-  body.primary-room-page.contact-room-page .contact-wall {
-    position: relative;
-    inset: auto;
-    top: auto;
+@supports (height: 100dvh) {
+  body.primary-room-page.scrolling-primary-room.contact-room-page .contact-page,
+  body.primary-room-page.scrolling-primary-room.contact-room-page .contact-wall {
+    min-height: calc(100dvh - var(--header-height));
+  }
+}
+
+@media (max-width: 40rem) {
+  body.primary-room-page.scrolling-primary-room.contact-room-page .contact-wall {
     display: block;
-    box-sizing: border-box;
+    min-height: 0;
     padding:
-      0
+      0.9rem
       max(0.85rem, env(safe-area-inset-right))
-      calc(var(--contact-floor-height) + 1.25rem)
+      calc(var(--room-floor-reserve, 7.25rem) + 1.5rem)
       max(0.85rem, env(safe-area-inset-left));
   }
 
@@ -755,13 +795,29 @@ body.primary-room-page.contact-room-page .contact-wall {
     gap: 1rem;
   }
 
+  /*
+   * The composer occupies approximately one usable phone viewport beneath
+   * the navbar. Social cards then continue below it in normal document flow.
+   */
   .contact-compose {
     box-sizing: border-box;
     display: flex;
-    min-height: calc(100svh - var(--header-height) - 1rem);
+    min-height: calc(100vh - var(--header-height) - 1.8rem);
     flex-direction: column;
     justify-content: center;
     padding: clamp(1.35rem, 6vw, 1.8rem);
+  }
+
+  @supports (height: 100svh) {
+    .contact-compose {
+      min-height: calc(100svh - var(--header-height) - 1.8rem);
+    }
+  }
+
+  @supports (height: 100dvh) {
+    .contact-compose {
+      min-height: calc(100dvh - var(--header-height) - 1.8rem);
+    }
   }
 
   .contact-kicker,

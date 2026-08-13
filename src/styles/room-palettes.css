@@ -54,9 +54,9 @@ html[data-theme='light'] .room-theme-projects {
   --wall-dark: #b6a6cc;
 }
 
-/* Butter macaron. */
+/* Airy apricot. */
 html[data-theme='light'] .room-theme-resume {
-  --wall-dark: #afafaf;
+  --wall-dark: #dfa06f;
 }
 
 /* Pistachio macaron. */
@@ -84,9 +84,9 @@ html[data-theme='dark'] .room-theme-projects {
   --wall-dark: #130a1f;
 }
 
-/* Antique metallic gold / brass. */
+/* Deep burnt orange. */
 html[data-theme='dark'] .room-theme-resume {
-  --wall-dark: #8a7427;
+  --wall-dark: #8f3510;
 }
 
 /* Saturated emerald. */

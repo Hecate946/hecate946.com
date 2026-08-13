@@ -39,7 +39,7 @@ html[data-theme='light']:has(body.room-theme-projects) {
 }
 
 html[data-theme='light']:has(body.room-theme-resume) {
-  --edge-wall-dark: #afafaf;
+  --edge-wall-dark: #dfa06f;
 }
 
 html[data-theme='light']:has(body.room-theme-contact) {
@@ -55,7 +55,7 @@ html[data-theme='dark']:has(body.room-theme-projects) {
 }
 
 html[data-theme='dark']:has(body.room-theme-resume) {
-  --edge-wall-dark: #664e00;
+  --edge-wall-dark: #8f3510;
 }
 
 html[data-theme='dark']:has(body.room-theme-contact) {
@@ -168,7 +168,7 @@ body.primary-room-page.contact-room-page > main {
 }
 
 /* -------------------------------------------------------------------------- */
-/* About / Projects / Resumes: native inner room scrolling                    */
+/* About / Projects / Resumes / Contact: native inner room scrolling          */
 /* -------------------------------------------------------------------------- */
 
 html:has(body.scrolling-primary-room) {

@@ -61,7 +61,8 @@ const isPrimaryRoom =
 const isScrollingPrimaryRoom =
   normalizedPathname === '/about' ||
   normalizedPathname === '/projects' ||
-  normalizedPathname === '/resumes';
+  normalizedPathname === '/resumes' ||
+  normalizedPathname === '/contact';
 const roomThemeClass = pathname.startsWith('/about')
   ? 'room-theme-about'
   : pathname.startsWith('/projects')
