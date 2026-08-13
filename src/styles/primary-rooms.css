@@ -165,6 +165,14 @@ body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
 }
 
 @media (max-width: 40rem) {
+  /* iOS 26 Safari paints a flat sampled-color extension above viewport-edge
+     sticky/fixed content. Keep scrolling-room navigation in normal document
+     flow on phones so the real brick wall can continue beneath browser chrome. */
+  body.primary-room-page.scrolling-primary-room > .site-header {
+    position: relative;
+    top: auto;
+  }
+
   body.primary-room-page.scrolling-primary-room {
     --room-floor-reserve: 7.25rem;
   }
