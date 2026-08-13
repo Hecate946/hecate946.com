@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import ResumeGallery from '@/components/resume/ResumeGallery.astro';
 
 const resumesUrl = new URL('/resumes/', Astro.site).href;
 const resumeStructuredData = {
@@ -45,4 +46,6 @@ const resumeStructuredData = {
   structuredData={resumeStructuredData}
   mainClass="resume-wall-main"
   bodyClass="resume-wall-page"
-/>
+>
+  <ResumeGallery />
+</BaseLayout>

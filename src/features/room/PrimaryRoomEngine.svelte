@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import AboutScroll from '@/components/about/AboutScroll.svelte';
+  import AboutTV from '@/components/about/AboutTV.svelte';
   import ProjectWall from '@/features/wall/ProjectWall.svelte';
   import { WALL_LOOP_WIDTH, WALL_START_X, wallDestinations } from '@/features/wall/wall-config';
   import {
@@ -8,11 +8,6 @@
     PROJECT_START_X,
     projectDestinations,
   } from '@/features/wall/project-wall-config';
-  import {
-    RESUME_LOOP_WIDTH,
-    RESUME_START_X,
-    resumeDestinations,
-  } from '@/features/wall/resume-wall-config';
 
   export let initialPath = '/';
   export let portraitUrl: string;
@@ -59,29 +54,18 @@
         'Infinite project conveyor. Drag, swipe, or scroll horizontally, then select a framed project.',
       trackLabel: 'Selected projects',
     },
-    resumes: {
-      destinations: resumeDestinations,
-      loopWidth: RESUME_LOOP_WIDTH,
-      startX: RESUME_START_X,
-      heading: 'Resumes',
-      stageLabel:
-        'Infinite resume conveyor. Drag, swipe, or scroll horizontally, then select a framed resume.',
-      trackLabel: 'Resumes',
-    },
   } as const;
 
   let currentRoom: PrimaryRoom = roomForPath(initialPath);
   let aboutMounted = currentRoom === 'about';
-  let wallMounted =
-    currentRoom === 'home' || currentRoom === 'projects' || currentRoom === 'resumes';
-  let wallRoom: keyof typeof wallConfigs =
-    currentRoom === 'projects' || currentRoom === 'resumes' ? currentRoom : 'home';
+  let wallMounted = currentRoom === 'home' || currentRoom === 'projects';
+  let wallRoom: keyof typeof wallConfigs = currentRoom === 'projects' ? currentRoom : 'home';
 
-  $: if (currentRoom === 'home' || currentRoom === 'projects' || currentRoom === 'resumes') {
+  $: if (currentRoom === 'home' || currentRoom === 'projects') {
     wallRoom = currentRoom;
   }
   $: wallConfig = wallConfigs[wallRoom];
-  $: wallActive = currentRoom === 'home' || currentRoom === 'projects' || currentRoom === 'resumes';
+  $: wallActive = currentRoom === 'home' || currentRoom === 'projects';
   $: if (wallActive) wallMounted = true;
   $: if (currentRoom === 'about') aboutMounted = true;
 
@@ -151,7 +135,7 @@
   {#if aboutMounted}
     <div class="primary-room-engine__about" hidden={currentRoom !== 'about'}>
       <div class="about-room wall-room-host">
-        <AboutScroll
+        <AboutTV
           {portraitUrl}
           {softwareResumeUrl}
           {projectsUrl}

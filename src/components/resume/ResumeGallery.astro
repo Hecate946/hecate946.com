@@ -1,0 +1,104 @@
+---
+import { pdfViewerHref, withBase } from '@/lib/paths';
+
+const resumes = [
+  {
+    id: 'software',
+    eyebrow: 'Software Engineering',
+    title: 'Software',
+    fullTitle: 'Software Engineering Resume',
+    pdf: '/resumes/cyrus-asasi-software-engineering-resume.pdf',
+    preview: '/images/resume/cyrus-asasi-software-engineering-resume-480.webp',
+    preview720: '/images/resume/cyrus-asasi-software-engineering-resume-720.webp',
+    alt: 'Preview of Cyrus Asasi’s software engineering resume',
+  },
+  {
+    id: 'clarinet',
+    eyebrow: 'Clarinet Performance',
+    title: 'Clarinet',
+    fullTitle: 'Clarinet Performance Resume',
+    pdf: '/resumes/cyrus-asasi-clarinet-performance-resume.pdf',
+    preview: '/images/resume/cyrus-asasi-clarinet-performance-resume-480.webp',
+    preview720: '/images/resume/cyrus-asasi-clarinet-performance-resume-720.webp',
+    alt: 'Preview of Cyrus Asasi’s clarinet performance resume',
+  },
+] as const;
+---
+
+<section class="resume-gallery wall-room-host" aria-labelledby="resume-gallery-title">
+  <div class="resume-gallery__content">
+    <header class="resume-gallery__heading">
+      <p class="resume-gallery__kicker">Two disciplines, one portfolio</p>
+      <h1 id="resume-gallery-title">Resumes</h1>
+      <p class="resume-gallery__intro">Choose a resume to view it full size or download the PDF.</p>
+    </header>
+
+    <div class="resume-gallery__grid" aria-label="Resume choices">
+      {resumes.map((resume) => (
+        <article class={`resume-card resume-card--${resume.id}`}>
+          <span class="resume-card__lamp" aria-hidden="true">
+            <span class="resume-card__lamp-glow"></span>
+          </span>
+
+          <div class="resume-card__frame">
+            <a
+              class="resume-card__picture"
+              href={pdfViewerHref(resume.pdf)}
+              aria-label={`View ${resume.fullTitle}`}
+              data-astro-prefetch
+            >
+              <img
+                src={withBase(resume.preview)}
+                srcset={`${withBase(resume.preview)} 480w, ${withBase(resume.preview720)} 720w`}
+                sizes="(max-width: 40rem) 42vw, (max-height: 43rem) 28vw, 22rem"
+                alt={resume.alt}
+                width="480"
+                height="676"
+                draggable="false"
+                decoding="async"
+              />
+              <span class="resume-card__glass" aria-hidden="true"></span>
+            </a>
+
+            <div class="resume-card__plate">
+              <span class="resume-card__eyebrow">{resume.eyebrow}</span>
+              <h2>
+                <span class="resume-card__title-desktop">{resume.fullTitle}</span>
+                <span class="resume-card__title-mobile">{resume.title}</span>
+              </h2>
+            </div>
+
+            <div class="resume-card__actions">
+              <a
+                class="resume-action resume-action--view"
+                href={pdfViewerHref(resume.pdf)}
+                aria-label={`View ${resume.fullTitle}`}
+                data-astro-prefetch
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M2.5 12s3.45-5.1 9.5-5.1 9.5 5.1 9.5 5.1-3.45 5.1-9.5 5.1S2.5 12 2.5 12Z"></path>
+                  <circle cx="12" cy="12" r="2.65"></circle>
+                </svg>
+                <span class="resume-action__desktop-label">View resume</span>
+                <span class="resume-action__mobile-label">View</span>
+              </a>
+
+              <a
+                class="resume-action resume-action--download"
+                href={withBase(resume.pdf)}
+                download
+                aria-label={`Download ${resume.fullTitle} PDF`}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"></path>
+                </svg>
+                <span class="resume-action__desktop-label">Download PDF</span>
+                <span class="resume-action__mobile-label">PDF</span>
+              </a>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
