@@ -2,6 +2,17 @@
  * The homepage is one full-viewport room. Home keeps the original palette in
  * themes.css; this file owns only its viewport composition.
  */
+/* Keep the browser/root canvas behind the fixed Home room on the same solid
+   wall color. This matters during rubber-band/overscroll and around viewport
+   safe areas, where Chromium/Safari can briefly expose the html/body canvas.
+   Other primary rooms already get this through room-palettes.css; Home light
+   mode intentionally owns its palette in themes.css, so it needs this explicit
+   root-canvas override. */
+html[data-theme='light']:has(body.wall-home-page),
+html[data-theme='light'] body.wall-home-page {
+  background-color: var(--wall-dark);
+}
+
 body.wall-home-page {
   position: relative;
   width: 100%;
@@ -62,11 +73,13 @@ body.wall-home-page .wall-home-main {
 }
 
 body.wall-home-page .wall-motion-toggle {
-  bottom: 0.8rem;
+  /* Keep the motion control attached to the wall, directly above the floor,
+     matching the sound control on the opposite corner. */
+  bottom: calc(var(--floor-height) + clamp(0.7rem, 1.7vh, 1.05rem));
 }
 
 @media (max-width: 40rem) {
   body.wall-home-page .wall-motion-toggle {
-    bottom: 0.6rem;
+    bottom: calc(var(--floor-height) + 0.48rem);
   }
 }

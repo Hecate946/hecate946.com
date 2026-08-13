@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { withBase } from '@/lib/paths';
   import WallWindow from './WallWindow.svelte';
   import type { WallDestination } from './wall-config';
   import {
@@ -25,6 +26,8 @@
   const DIRECTION_THRESHOLD = 36;
   const INERTIA_TIME_CONSTANT = 0.78;
   const MAX_MANUAL_SPEED = 2_400;
+  const HOME_MUSIC_URL = withBase('/audio/brahms-violin-sonata-no-3-mvt-3.mp3');
+  const HOME_MUSIC_VOLUME = 0.58;
 
   let stage: HTMLElement;
   let wallWorld: HTMLElement;
@@ -32,6 +35,9 @@
   let velocity = 0;
   let driftDirection = 1;
   let isPaused = false;
+  let musicAudio: HTMLAudioElement | null = null;
+  let musicPlaying = false;
+  let musicUnavailable = false;
   let dragging = false;
   let activePointerId: number | null = null;
   let pointerX = 0;
@@ -125,6 +131,7 @@
   function switchRoom(nextRoomKey: string) {
     if (nextRoomKey === activeRoomKey) return;
 
+    if (nextRoomKey !== 'home') pauseHomeMusic();
     roomCameraPositions.set(activeRoomKey, cameraX);
     const roomWindow = typeof window !== 'undefined' ? (window as RoomCameraWindow) : null;
     const inheritedBackdrop = roomWindow && Number.isFinite(roomWindow.__hecateRoomCameraX)
@@ -151,6 +158,7 @@
   function syncActiveState() {
     if (!mounted) return;
     if (!active) {
+      pauseHomeMusic();
       if (rafId) cancelAnimationFrame(rafId);
       rafId = 0;
       clearPointerDrag();
@@ -190,6 +198,51 @@
     // stale elapsed interval after a backgrounded tab or an Astro page swap.
     velocity = driftDirection * IDLE_DRIFT_SPEED;
     ensureAnimationLoop();
+  }
+
+
+  function pauseHomeMusic() {
+    if (!musicAudio) return;
+    musicAudio.pause();
+    musicPlaying = false;
+  }
+
+  function ensureHomeMusic() {
+    if (musicAudio) return musicAudio;
+
+    const audio = new Audio(HOME_MUSIC_URL);
+    audio.preload = 'metadata';
+    audio.loop = true;
+    audio.volume = HOME_MUSIC_VOLUME;
+    audio.addEventListener('error', () => {
+      musicUnavailable = true;
+      musicPlaying = false;
+    });
+    musicAudio = audio;
+    return audio;
+  }
+
+  async function toggleHomeMusic() {
+    if (roomKey !== 'home') return;
+
+    const audio = ensureHomeMusic();
+    if (!audio.paused) {
+      pauseHomeMusic();
+      return;
+    }
+
+    try {
+      await audio.play();
+      musicPlaying = true;
+      musicUnavailable = false;
+    } catch (error) {
+      musicPlaying = false;
+      musicUnavailable = true;
+      console.warn(
+        `Home music could not be played. Add the audio file at ${HOME_MUSIC_URL}.`,
+        error,
+      );
+    }
   }
 
   function cancelCameraAnimation() {
@@ -272,7 +325,7 @@
     // pointer listeners for low-latency dragging. Ignore the motion button at
     // the scene level so a tap/click can never be mistaken for the beginning
     // of a wall drag before the delegated button handler runs.
-    if (event.target instanceof Element && event.target.closest('.wall-motion-toggle')) return;
+    if (event.target instanceof Element && event.target.closest('.wall-corner-control')) return;
 
     cancelCameraAnimation();
     dragging = true;
@@ -487,6 +540,16 @@
     toggleMotion();
   }
 
+
+  function handleSoundTogglePointerDown(event: PointerEvent) {
+    event.stopPropagation();
+  }
+
+  function handleSoundToggleClick(event: MouseEvent) {
+    event.stopPropagation();
+    void toggleHomeMusic();
+  }
+
   onMount(() => {
     mounted = true;
     // Always begin in the moving state. The visible control is the only thing
@@ -527,6 +590,8 @@
       window.removeEventListener('resize', refreshRenderState);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pageshow', restoreWallAfterHistoryNavigation);
+      pauseHomeMusic();
+      musicAudio = null;
       cancelAnimationFrame(rafId);
     };
   });
@@ -539,6 +604,7 @@
   class:wall-stage--interacted={hasInteracted}
   class:wall-stage--entering={Boolean(enteringId)}
   class:wall-stage--inactive={!active}
+  class:wall-stage--home={roomKey === 'home'}
   class="wall-stage wall-room-host"
   aria-hidden={!active ? 'true' : undefined}
   style={stageStyle}
@@ -579,8 +645,40 @@
   </div>
 
 
+  {#if roomKey === 'home'}
+    <p class="wall-navigation-hint">Click a painting to navigate</p>
+  {/if}
+
+  {#if roomKey === 'home'}
+    <button
+      class="wall-sound-toggle wall-corner-control"
+      type="button"
+      aria-label={musicPlaying ? 'Pause Brahms Violin Sonata No. 3, third movement' : 'Play Brahms Violin Sonata No. 3, third movement'}
+      aria-pressed={musicPlaying}
+      title={musicUnavailable
+        ? 'Audio file unavailable'
+        : musicPlaying
+          ? 'Pause Johannes Brahms — Violin Sonata No. 3 in D minor, Op. 108 — III. Un poco presto e con sentimento'
+          : 'Play Johannes Brahms — Violin Sonata No. 3 in D minor, Op. 108 — III. Un poco presto e con sentimento'}
+      onpointerdown={handleSoundTogglePointerDown}
+      onclick={handleSoundToggleClick}
+    >
+      {#if musicPlaying}
+        <svg class="wall-corner-control__icon" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
+          <path d="M5 9.5h3.4L13 5.8v12.4l-4.6-3.7H5z" fill="currentColor" />
+          <path d="M16.2 9.1a4.1 4.1 0 0 1 0 5.8M18.5 6.8a7.3 7.3 0 0 1 0 10.4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
+        </svg>
+      {:else}
+        <svg class="wall-corner-control__icon" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
+          <path d="M5 9.5h3.4L13 5.8v12.4l-4.6-3.7H5z" fill="currentColor" />
+          <path d="m16.2 9.2 4.3 5.6M20.5 9.2l-4.3 5.6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+        </svg>
+      {/if}
+    </button>
+  {/if}
+
   <button
-    class="wall-motion-toggle"
+    class="wall-motion-toggle wall-corner-control"
     type="button"
     aria-label={isPaused ? 'Play wall animation' : 'Pause wall animation'}
     aria-pressed={isPaused}
@@ -589,11 +687,11 @@
     onclick={handleMotionToggleClick}
   >
     {#if isPaused}
-      <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
+      <svg class="wall-corner-control__icon" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
         <path d="M8 5.5v13l10-6.5z" fill="currentColor" />
       </svg>
     {:else}
-      <svg class="wall-motion-toggle__icon" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
+      <svg class="wall-corner-control__icon" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" focusable="false">
         <rect x="6.5" y="5" width="4" height="14" rx="1" fill="currentColor" />
         <rect x="13.5" y="5" width="4" height="14" rx="1" fill="currentColor" />
       </svg>
