@@ -152,6 +152,14 @@ html[data-theme='dark'] .about-scroll-installation {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Keep text selection readable on the pale paper. The room-wide selection
+ * colors are intentionally white, which would turn About text white as well. */
+.about-scroll-paper__viewport ::selection {
+  background: color-mix(in srgb, var(--paper-accent) 22%, var(--paper-light));
+  color: var(--paper-ink);
+  text-shadow: none;
+}
+
 .about-scroll-paper__viewport::-webkit-scrollbar { width: 0.28rem; }
 .about-scroll-paper__viewport::-webkit-scrollbar-track { background: transparent; }
 .about-scroll-paper__viewport::-webkit-scrollbar-thumb {
