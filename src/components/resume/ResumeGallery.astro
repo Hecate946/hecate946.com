@@ -5,7 +5,6 @@ const resumes = [
   {
     id: 'software',
     eyebrow: 'Software Engineering',
-    title: 'Software',
     fullTitle: 'Software Engineering Resume',
     pdf: '/resumes/cyrus-asasi-software-engineering-resume.pdf',
     preview: '/images/resume/cyrus-asasi-software-engineering-resume-480.webp',
@@ -15,7 +14,6 @@ const resumes = [
   {
     id: 'clarinet',
     eyebrow: 'Clarinet Performance',
-    title: 'Clarinet',
     fullTitle: 'Clarinet Performance Resume',
     pdf: '/resumes/cyrus-asasi-clarinet-performance-resume.pdf',
     preview: '/images/resume/cyrus-asasi-clarinet-performance-resume-480.webp',
@@ -25,21 +23,11 @@ const resumes = [
 ] as const;
 ---
 
-<section class="resume-gallery wall-room-host" aria-labelledby="resume-gallery-title">
+<section class="resume-gallery wall-room-host" aria-label="Resumes">
   <div class="resume-gallery__content">
-    <header class="resume-gallery__heading">
-      <p class="resume-gallery__kicker">Two disciplines, one portfolio</p>
-      <h1 id="resume-gallery-title">Resumes</h1>
-      <p class="resume-gallery__intro">Choose a resume to view it full size or download the PDF.</p>
-    </header>
-
     <div class="resume-gallery__grid" aria-label="Resume choices">
       {resumes.map((resume) => (
         <article class={`resume-card resume-card--${resume.id}`}>
-          <span class="resume-card__lamp" aria-hidden="true">
-            <span class="resume-card__lamp-glow"></span>
-          </span>
-
           <div class="resume-card__frame">
             <a
               class="resume-card__picture"
@@ -60,13 +48,7 @@ const resumes = [
               <span class="resume-card__glass" aria-hidden="true"></span>
             </a>
 
-            <div class="resume-card__plate">
-              <span class="resume-card__eyebrow">{resume.eyebrow}</span>
-              <h2>
-                <span class="resume-card__title-desktop">{resume.fullTitle}</span>
-                <span class="resume-card__title-mobile">{resume.title}</span>
-              </h2>
-            </div>
+            <h2 class="resume-card__title">{resume.eyebrow}</h2>
 
             <div class="resume-card__actions">
               <a
