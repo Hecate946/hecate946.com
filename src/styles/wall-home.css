@@ -72,14 +72,3 @@ body.wall-home-page .wall-home-main {
   min-height: 0;
 }
 
-body.wall-home-page .wall-motion-toggle {
-  /* Keep the motion control attached to the wall, directly above the floor,
-     matching the sound control on the opposite corner. */
-  bottom: calc(var(--floor-height) + clamp(0.7rem, 1.7vh, 1.05rem));
-}
-
-@media (max-width: 40rem) {
-  body.wall-home-page .wall-motion-toggle {
-    bottom: calc(var(--floor-height) + 0.48rem);
-  }
-}

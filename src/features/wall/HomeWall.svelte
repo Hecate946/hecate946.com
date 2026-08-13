@@ -3,20 +3,15 @@
   import { withBase } from '@/lib/paths';
   import WallWindow from './WallWindow.svelte';
   import type { WallDestination } from './wall-config';
-  import {
-    PROJECT_LOOP_WIDTH,
-    PROJECT_START_X,
-    projectDestinations,
-  } from './project-wall-config';
+  import { WALL_LOOP_WIDTH, WALL_START_X, wallDestinations } from './wall-config';
 
-  export let destinations: readonly WallDestination[] = projectDestinations;
-  export let loopWidth = PROJECT_LOOP_WIDTH;
-  export let startX = PROJECT_START_X;
-  export let heading = 'Projects';
+  export let destinations: readonly WallDestination[] = wallDestinations;
+  export let loopWidth = WALL_LOOP_WIDTH;
+  export let startX = WALL_START_X;
+  export let heading = 'Cyrus Asasi';
   export let stageLabel =
-    'Infinite project conveyor. Drag, swipe, or scroll horizontally, then select a framed project.';
-  export let trackLabel = 'Selected projects';
-  export let roomKey = 'projects';
+    'Infinite navigation wall. Drag or scroll horizontally, then select a lit window to enter a page.';
+  export let trackLabel = 'Website destinations';
   export let active = true;
 
   const loopCopies = [-1, 0, 1] as const;
@@ -58,10 +53,7 @@
   let programmaticResolve: (() => void) | null = null;
   let lastRenderedCameraX = Number.NaN;
   let lastLoopBase = Number.NaN;
-  let backdropBaseCameraX = startX;
   let mounted = false;
-  let activeRoomKey = roomKey;
-  const roomCameraPositions = new Map<string, number>();
 
   $: stageStyle = `--loop-width: ${loopWidth}px;`;
 
@@ -120,39 +112,11 @@
 
     wallWorld?.style.setProperty('transform', `translate3d(${-renderedCameraX}px, 0, 0)`);
 
-    // One persistent room backdrop is shared by Home, Projects, Resumes,
-    // About and Contact. Updating it imperatively avoids remounting/repainting
-    // a second wall/floor engine during every tab switch.
-    syncSharedBackdrop(backdropBaseCameraX + (renderedCameraX - startX));
+    // The Home wall is the only place that drives the shared backdrop camera.
+    // Every other room resets that backdrop to its static default phase.
+    syncSharedBackdrop(renderedCameraX);
 
     lastRenderedCameraX = renderedCameraX;
-  }
-
-  function switchRoom(nextRoomKey: string) {
-    if (nextRoomKey === activeRoomKey) return;
-
-    if (nextRoomKey !== 'home') pauseHomeMusic();
-    roomCameraPositions.set(activeRoomKey, cameraX);
-    const roomWindow = typeof window !== 'undefined' ? (window as RoomCameraWindow) : null;
-    const inheritedBackdrop = roomWindow && Number.isFinite(roomWindow.__hecateRoomCameraX)
-      ? (roomWindow.__hecateRoomCameraX as number)
-      : backdropBaseCameraX + (cameraX - startX);
-
-    activeRoomKey = nextRoomKey;
-    cameraX = roomCameraPositions.get(nextRoomKey) ?? startX;
-    velocity = driftDirection * IDLE_DRIFT_SPEED;
-    programmatic = false;
-    programmaticResolve = null;
-    dragging = false;
-    activePointerId = null;
-    gestureAxis = 'pending';
-    dragDistance = 0;
-
-    // Preserve the backdrop's exact visual phase while the framed content
-    // changes configuration. The next movement continues from that same phase.
-    backdropBaseCameraX = inheritedBackdrop - (cameraX - startX);
-
-    if (mounted) refreshRenderState();
   }
 
   function syncActiveState() {
@@ -170,7 +134,6 @@
     ensureAnimationLoop();
   }
 
-  $: if (roomKey !== activeRoomKey) switchRoom(roomKey);
   $: active, syncActiveState();
 
   function refreshRenderState() {
@@ -223,8 +186,6 @@
   }
 
   async function toggleHomeMusic() {
-    if (roomKey !== 'home') return;
-
     const audio = ensureHomeMusic();
     if (!audio.paused) {
       pauseHomeMusic();
@@ -556,10 +517,6 @@
     // that pauses this scene, which avoids browser/OS preference mismatches
     // producing a frozen wall with a nonfunctional-looking Pause button.
     isPaused = false;
-    const roomWindow = window as RoomCameraWindow;
-    backdropBaseCameraX = Number.isFinite(roomWindow.__hecateRoomCameraX)
-      ? (roomWindow.__hecateRoomCameraX as number)
-      : startX;
     velocity = driftDirection * IDLE_DRIFT_SPEED;
     lastFrame = performance.now();
     refreshRenderState();
@@ -604,8 +561,7 @@
   class:wall-stage--interacted={hasInteracted}
   class:wall-stage--entering={Boolean(enteringId)}
   class:wall-stage--inactive={!active}
-  class:wall-stage--home={roomKey === 'home'}
-  class="wall-stage wall-room-host"
+  class="wall-stage wall-stage--home wall-room-host"
   aria-hidden={!active ? 'true' : undefined}
   style={stageStyle}
   aria-label={stageLabel}
@@ -645,11 +601,8 @@
   </div>
 
 
-  {#if roomKey === 'home'}
-    <p class="wall-navigation-hint">Click a painting to navigate</p>
-  {/if}
+  <p class="wall-navigation-hint">Click a painting to navigate</p>
 
-  {#if roomKey === 'home'}
     <button
       class="wall-sound-toggle wall-corner-control"
       type="button"
@@ -675,7 +628,6 @@
         </svg>
       {/if}
     </button>
-  {/if}
 
   <button
     class="wall-motion-toggle wall-corner-control"

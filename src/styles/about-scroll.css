@@ -5,15 +5,15 @@
  * renderer. This file only draws the wall-mounted parchment and its content.
  */
 .about-scroll-installation {
-  --paper: #f1e4c5;
-  --paper-light: #fbf3dd;
-  --paper-mid: #e7d5ae;
-  --paper-deep: #cdb785;
-  --paper-edge: #ad9568;
+  --paper: #faf9f4;
+  --paper-light: #fffefa;
+  --paper-mid: #f1eee6;
+  --paper-deep: #ddd8cc;
+  --paper-edge: #bdb6aa;
   --paper-ink: #35261d;
   --paper-muted: var(--paper-ink);
   --paper-rule: rgb(73 54 42 / 31%);
-  --paper-accent: #6f302c;
+  --paper-accent: var(--wall-dark);
 
   position: absolute;
   z-index: 20;
@@ -29,15 +29,15 @@
 }
 
 html[data-theme='dark'] .about-scroll-installation {
-  --paper: #ead9b4;
-  --paper-light: #f7ecd2;
-  --paper-mid: #dcc59b;
-  --paper-deep: #bda16f;
-  --paper-edge: #92784f;
+  --paper: #f7f6f1;
+  --paper-light: #fffefa;
+  --paper-mid: #ece9e1;
+  --paper-deep: #d5d0c5;
+  --paper-edge: #aaa397;
   --paper-ink: #302219;
   --paper-muted: var(--paper-ink);
   --paper-rule: rgb(61 43 31 / 34%);
-  --paper-accent: #6a2926;
+  --paper-accent: var(--wall-dark);
 }
 
 .about-scroll-hanging {
@@ -68,16 +68,16 @@ html[data-theme='dark'] .about-scroll-installation {
   border-radius: 0.16rem 0.16rem 0.18rem 0.18rem;
   background:
     radial-gradient(140% 14% at 50% 0%, rgb(255 255 255 / 34%) 0 20%, transparent 58%),
-    radial-gradient(140% 18% at 50% 100%, rgb(95 64 31 / 10%) 0 20%, transparent 60%),
-    linear-gradient(90deg, rgb(91 67 38 / 12%), transparent 4.2% 95.8%, rgb(91 67 38 / 13%)),
-    linear-gradient(180deg, rgb(117 78 36 / 5%), transparent 6.5% 92%, rgb(100 67 31 / 8%)),
+    radial-gradient(140% 18% at 50% 100%, rgb(76 70 61 / 7%) 0 20%, transparent 60%),
+    linear-gradient(90deg, rgb(83 78 69 / 8%), transparent 4.2% 95.8%, rgb(83 78 69 / 9%)),
+    linear-gradient(180deg, rgb(91 84 73 / 3.5%), transparent 6.5% 92%, rgb(79 72 63 / 5%)),
     linear-gradient(180deg, var(--paper-light), var(--paper) 16% 78%, var(--paper-mid));
   box-shadow:
-    inset 1rem 0 1.15rem rgb(102 74 39 / 8%),
-    inset -1rem 0 1.15rem rgb(102 74 39 / 9%),
-    inset 0 0.9rem 1.2rem rgb(100 68 34 / 4%),
-    inset 0 -0.95rem 1.25rem rgb(89 59 28 / 6%),
-    inset 0 0 2rem rgb(105 77 42 / 8%),
+    inset 1rem 0 1.15rem rgb(84 78 68 / 6%),
+    inset -1rem 0 1.15rem rgb(84 78 68 / 6.5%),
+    inset 0 0.9rem 1.2rem rgb(84 78 68 / 3%),
+    inset 0 -0.95rem 1.25rem rgb(76 70 61 / 4%),
+    inset 0 0 2rem rgb(86 80 70 / 5%),
     0 0 0 1px rgb(57 34 18 / 12%);
 }
 

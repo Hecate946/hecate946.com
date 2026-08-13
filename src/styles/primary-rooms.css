@@ -61,9 +61,9 @@ body.primary-room-page .contact-page {
   background: transparent;
 }
 
-/* One foreground runtime survives swaps between the five navbar rooms. Home,
-   Projects and Resumes share the same conveyor instance; About mounts once on
-   first use and is then only hidden/shown. */
+/* One foreground runtime survives primary navigation. Home keeps its wall
+   state, while About mounts once on first use and is then only hidden/shown.
+   Projects, Resumes, and Contact remain static Astro content. */
 .primary-room-engine {
   position: absolute;
   z-index: 2;

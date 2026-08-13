@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { createAboutTVChannels } from './about-tv-content';
+  import { createAboutSections } from './about-content';
 
   export let portraitUrl: string;
   export let softwareResumeUrl: string;
@@ -13,7 +13,7 @@
   let openSectionIds = new Set<string>();
   let accordionScrollFrame: number | null = null;
 
-  $: channels = createAboutTVChannels({
+  $: sections = createAboutSections({
     portraitUrl,
     softwareResumeUrl,
     projectsUrl,
@@ -22,8 +22,8 @@
     pickleballArticleUrl,
     chessProfileUrl,
   });
-  $: intro = channels[0];
-  $: interests = channels.slice(1);
+  $: intro = sections[0];
+  $: interests = sections.slice(1);
 
   const cancelAccordionScroll = () => {
     if (accordionScrollFrame !== null) {

@@ -18,6 +18,11 @@
     floorScene?.setCameraX(cameraX);
   }
 
+  function normalizePath(pathname: string) {
+    if (pathname === '/') return '/';
+    return pathname.replace(/\/+$/, '');
+  }
+
   onMount(() => {
     const roomWindow = window as RoomCameraWindow;
     const inheritedCameraX = Number.isFinite(roomWindow.__hecateRoomCameraX)
@@ -34,7 +39,16 @@
 
     roomWindow.__hecateSetRoomCameraX = setCameraX;
 
+    const resetStaticRoomBackdrop = () => {
+      if (normalizePath(window.location.pathname) === '/') return;
+      setCameraX(0);
+    };
+
+    document.addEventListener('astro:page-load', resetStaticRoomBackdrop);
+    resetStaticRoomBackdrop();
+
     return () => {
+      document.removeEventListener('astro:page-load', resetStaticRoomBackdrop);
       if (roomWindow.__hecateSetRoomCameraX === setCameraX) {
         delete roomWindow.__hecateSetRoomCameraX;
       }

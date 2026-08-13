@@ -17,9 +17,5 @@ export const siteConfig = {
     // Toggle the vertical “elevator” page-change animation for the top nav.
     // Set this to true whenever you want those transitions back on.
     enableElevatorTabAnimations: false,
-
-    // Keep the About-page magnifier implementation available without loading
-    // its Three.js/Rapier feature chunk until this is explicitly enabled.
-    enableMagnifyingGlass: false,
   },
 } as const;

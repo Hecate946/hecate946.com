@@ -1,0 +1,99 @@
+---
+import { projects } from '@/data/projects';
+import { withBase } from '@/lib/paths';
+
+const galleryArt = {
+  neutra: {
+    src: '/images/project-gallery/neutra-480.webp',
+    srcset: '/images/project-gallery/neutra-480.webp 480w, /images/project-gallery/neutra.webp 627w',
+    width: 480,
+    height: 582,
+    position: '50% 50%',
+  },
+  sunset: {
+    src: '/images/project-gallery/sunset-480.webp',
+    srcset: '/images/project-gallery/sunset-480.webp 480w, /images/project-gallery/sunset-720.webp 720w',
+    width: 480,
+    height: 589,
+    position: '50% 50%',
+  },
+  keycad: {
+    src: '/images/project-gallery/keycad-480.webp',
+    srcset: '/images/project-gallery/keycad-480.webp 480w, /images/project-gallery/keycad.webp 534w',
+    width: 480,
+    height: 575,
+    position: '56% 43%',
+  },
+  portfolio: {
+    src: '/images/project-gallery/portfolio-480.webp',
+    srcset: '/images/project-gallery/portfolio-480.webp 480w, /images/project-gallery/portfolio.webp 589w',
+    width: 480,
+    height: 652,
+    position: '50% 36%',
+  },
+} as const;
+---
+
+<section class="project-gallery" aria-labelledby="project-gallery-title">
+  <h1 class="project-gallery__sr-title" id="project-gallery-title">Selected projects</h1>
+
+  <div class="project-gallery__grid">
+    {projects.map((project, index) => {
+      const art = galleryArt[project.slug];
+      const projectNumber = String(index + 1).padStart(2, '0');
+
+      return (
+        <a
+          class={`project-card project-card--${project.slug}`}
+          href={withBase(`/projects/${project.slug}/`)}
+          aria-label={`View ${project.title}: ${project.tagline}`}
+          data-astro-prefetch
+          draggable="false"
+        >
+          <span class="project-card__frame">
+            <span class="project-card__picture">
+              <img
+                src={withBase(art.src)}
+                srcset={art.srcset
+                  .split(', ')
+                  .map((entry) => {
+                    const [src, width] = entry.split(' ');
+                    return `${withBase(src)} ${width}`;
+                  })
+                  .join(', ')}
+                sizes="(max-width: 52rem) 46vw, 22vw"
+                width={art.width}
+                height={art.height}
+                alt={project.imageAlt}
+                draggable="false"
+                decoding="async"
+                loading={index < 2 ? 'eager' : 'lazy'}
+                fetchpriority={index === 0 ? 'high' : 'auto'}
+                style={`--project-image-position: ${art.position};`}
+              />
+              <span class="project-card__glass" aria-hidden="true"></span>
+            </span>
+
+            <span class="project-card__caption">
+              <span class="project-card__meta">
+                <span class="project-card__index">{projectNumber}</span>
+                <span class="project-card__period">{project.period}</span>
+              </span>
+
+              <span class="project-card__title-row">
+                <span class="project-card__title">{project.title}</span>
+                <span class="project-card__arrow" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" width="16" height="16" focusable="false">
+                    <path d="M4 12 12 4M6.25 4H12v5.75" />
+                  </svg>
+                </span>
+              </span>
+
+              <span class="project-card__category">{project.category}</span>
+            </span>
+          </span>
+        </a>
+      );
+    })}
+  </div>
+</section>

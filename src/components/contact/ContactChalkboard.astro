@@ -140,31 +140,25 @@ const topics = [
       let copyResetTimer = 0;
 
       copyButton?.addEventListener('click', async () => {
-        let copied = false;
+        if (!copyLabel || !email) return;
 
-        try {
-          await navigator.clipboard.writeText(email);
-          copied = true;
-        } catch {
-          const helper = document.createElement('textarea');
-          helper.value = email;
-          helper.setAttribute('readonly', '');
-          helper.style.position = 'fixed';
-          helper.style.opacity = '0';
-          document.body.append(helper);
-          helper.select();
-          copied = document.execCommand('copy');
-          helper.remove();
+        let copied = false;
+        if (navigator.clipboard?.writeText) {
+          try {
+            await navigator.clipboard.writeText(email);
+            copied = true;
+          } catch {
+            // Clipboard access can be denied by the browser or page permissions.
+          }
         }
 
-        if (!copyLabel || !copied) return;
         window.clearTimeout(copyResetTimer);
-        copyLabel.textContent = 'Copied';
-        copyButton.dataset.copied = 'true';
+        copyLabel.textContent = copied ? 'Copied' : 'Unavailable';
+        copyButton.dataset.copied = copied ? 'true' : 'false';
         copyResetTimer = window.setTimeout(() => {
           copyLabel.textContent = 'Copy';
           delete copyButton.dataset.copied;
-        }, 1400);
+        }, copied ? 1400 : 2200);
       });
 
       form.addEventListener('submit', (event) => {

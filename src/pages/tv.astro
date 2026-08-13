@@ -1,27 +1,24 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import AboutTV from '@/components/about/AboutTV.svelte';
 import { withBase } from '@/lib/paths';
 
-const aboutTVProps = {
-  portraitUrl: withBase('/images/about/cyrus-portrait-480.webp'),
-  softwareResumeUrl: withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf'),
-  projectsUrl: withBase('/projects/'),
-  musicResumeUrl: withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf'),
-  musicVideoUrl: 'https://www.youtube.com/watch?v=EkgH4zzXoNg',
-  pickleballArticleUrl:
-    'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers',
-  chessProfileUrl: 'https://www.chess.com/member/Cyrus2020SD/stats?time=0',
-};
+const destination = withBase('/about/');
+const canonical = new URL(destination, Astro.site ?? Astro.url).href;
 ---
 
-<BaseLayout
-  title="About TV Archive — Cyrus Asasi"
-  description="Archived television version of the About page."
-  bodyClass="about-room-page room-themed room-theme-about about-tv-archive-page"
-  noindex={true}
->
-  <div class="about-room wall-room-host">
-    <AboutTV client:load {...aboutTVProps} />
-  </div>
-</BaseLayout>
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <meta
+      name="description"
+      content="This archived About URL redirects to the current About page."
+    />
+    <meta http-equiv="refresh" content={`0;url=${destination}`} />
+    <link rel="canonical" href={canonical} />
+    <title>About — Cyrus Asasi</title>
+  </head>
+  <body>
+    <p>This page moved to <a href={destination}>About</a>.</p>
+  </body>
+</html>

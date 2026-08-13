@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import ProjectGallery from '@/components/projects/ProjectGallery.astro';
 import { projects } from '@/data/projects';
 
 const projectsUrl = new URL('/projects/', Astro.site).href;
@@ -30,4 +31,6 @@ const itemListStructuredData = {
   structuredData={itemListStructuredData}
   mainClass="projects-wall-main"
   bodyClass="projects-wall-page"
-/>
+>
+  <ProjectGallery />
+</BaseLayout>

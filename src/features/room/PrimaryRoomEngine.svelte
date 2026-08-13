@@ -1,13 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import AboutTV from '@/components/about/AboutTV.svelte';
-  import ProjectWall from '@/features/wall/ProjectWall.svelte';
+  import AboutScroll from '@/components/about/AboutScroll.svelte';
+  import HomeWall from '@/features/wall/HomeWall.svelte';
   import { WALL_LOOP_WIDTH, WALL_START_X, wallDestinations } from '@/features/wall/wall-config';
-  import {
-    PROJECT_LOOP_WIDTH,
-    PROJECT_START_X,
-    projectDestinations,
-  } from '@/features/wall/project-wall-config';
 
   export let initialPath = '/';
   export let portraitUrl: string;
@@ -18,7 +13,7 @@
   export let pickleballArticleUrl: string;
   export let chessProfileUrl: string;
 
-  type PrimaryRoom = 'home' | 'about' | 'projects' | 'resumes' | 'contact' | 'other';
+  type PrimaryRoom = 'home' | 'about' | 'other';
 
   const normalizePath = (pathname: string) => {
     if (pathname === '/') return '/';
@@ -29,43 +24,14 @@
     const path = normalizePath(pathname);
     if (path === '/') return 'home';
     if (path === '/about') return 'about';
-    if (path === '/projects') return 'projects';
-    if (path === '/resumes') return 'resumes';
-    if (path === '/contact') return 'contact';
     return 'other';
   };
 
-  const wallConfigs = {
-    home: {
-      destinations: wallDestinations,
-      loopWidth: WALL_LOOP_WIDTH,
-      startX: WALL_START_X,
-      heading: 'Cyrus Asasi',
-      stageLabel:
-        'Infinite navigation wall. Drag or scroll horizontally, then select a lit window to enter a page.',
-      trackLabel: 'Website destinations',
-    },
-    projects: {
-      destinations: projectDestinations,
-      loopWidth: PROJECT_LOOP_WIDTH,
-      startX: PROJECT_START_X,
-      heading: 'Projects',
-      stageLabel:
-        'Infinite project conveyor. Drag, swipe, or scroll horizontally, then select a framed project.',
-      trackLabel: 'Selected projects',
-    },
-  } as const;
-
   let currentRoom: PrimaryRoom = roomForPath(initialPath);
   let aboutMounted = currentRoom === 'about';
-  let wallMounted = currentRoom === 'home' || currentRoom === 'projects';
-  let wallRoom: keyof typeof wallConfigs = currentRoom === 'projects' ? currentRoom : 'home';
+  let wallMounted = currentRoom === 'home';
 
-  $: if (currentRoom === 'home' || currentRoom === 'projects') {
-    wallRoom = currentRoom;
-  }
-  $: wallConfig = wallConfigs[wallRoom];
-  $: wallActive = currentRoom === 'home' || currentRoom === 'projects';
+  $: wallActive = currentRoom === 'home';
   $: if (wallActive) wallMounted = true;
   $: if (currentRoom === 'about') aboutMounted = true;
 
@@ -119,14 +85,13 @@
 <div class="primary-room-engine" data-primary-room={currentRoom}>
   {#if wallMounted}
     <div class="primary-room-engine__wall" hidden={!wallActive}>
-      <ProjectWall
-        destinations={wallConfig.destinations}
-        loopWidth={wallConfig.loopWidth}
-        startX={wallConfig.startX}
-        heading={wallConfig.heading}
-        stageLabel={wallConfig.stageLabel}
-        trackLabel={wallConfig.trackLabel}
-        roomKey={wallRoom}
+      <HomeWall
+        destinations={wallDestinations}
+        loopWidth={WALL_LOOP_WIDTH}
+        startX={WALL_START_X}
+        heading="Cyrus Asasi"
+        stageLabel="Infinite navigation wall. Drag or scroll horizontally, then select a lit window to enter a page."
+        trackLabel="Website destinations"
         active={wallActive}
       />
     </div>
@@ -135,7 +100,7 @@
   {#if aboutMounted}
     <div class="primary-room-engine__about" hidden={currentRoom !== 'about'}>
       <div class="about-room wall-room-host">
-        <AboutTV
+        <AboutScroll
           {portraitUrl}
           {softwareResumeUrl}
           {projectsUrl}

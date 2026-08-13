@@ -8,15 +8,12 @@ import PrimaryRoomEngine from '@/features/room/PrimaryRoomEngine.svelte';
 import { ClientRouter } from 'astro:transitions';
 import { siteConfig } from '@/config/site';
 import { WALL_START_X } from '@/features/wall/wall-config';
-import { PROJECT_START_X } from '@/features/wall/project-wall-config';
-import { RESUME_START_X } from '@/features/wall/resume-wall-config';
 import { withBase } from '@/lib/paths';
 import '@/styles/global.css';
-// Keep the five primary room styles resident from the first paint. Astro's
-// client router otherwise has to wait for route-specific stylesheets during a
-// swap, which makes a cached navigation still feel slower than a native tab.
+// Keep the primary room styles resident from the first paint. Astro's client
+// router otherwise has to wait for route-specific stylesheets during a swap,
+// which makes a cached navigation still feel slower than a native tab.
 import '@/styles/wall-home.css';
-import '@/styles/about.css';
 import '@/styles/about-scroll.css';
 import '@/styles/projects-wall.css';
 import '@/styles/resume.css';
@@ -89,14 +86,7 @@ const roomThemeClass = pathname.startsWith('/about')
           ? 'room-theme-stats'
           : undefined;
 
-const primaryRoomInitialCameraX =
-  normalizedPathname === '/projects'
-    ? PROJECT_START_X
-    : normalizedPathname === '/resumes'
-      ? RESUME_START_X
-      : normalizedPathname === '/'
-        ? WALL_START_X
-        : 0;
+const primaryRoomInitialCameraX = normalizedPathname === '/' ? WALL_START_X : 0;
 
 const primaryRoomAboutProps = {
   portraitUrl: withBase('/images/about/cyrus-portrait-480.webp'),
@@ -423,11 +413,11 @@ const roomLiftTransition = {
         }
       };
 
-      // HTML/CSS for the five navbar rooms is prepared by Astro's eager
-      // prefetch path. Warm the two interactive runtime families as
-      // well so a fallback browser does not discover their JS only after the
-      // user clicks. Dynamic imports keep them off the critical first-paint
-      // path while still putting their chunks in the module cache.
+      // HTML/CSS for the primary rooms is prepared by Astro's eager prefetch
+      // path. Warm the two interactive runtime families as well so a fallback
+      // browser does not discover their JS only after the user clicks. Dynamic
+      // imports keep them off the critical first-paint path while still putting
+      // their chunks in the module cache.
       const warmPrimaryRooms = () => {
         if (performanceWindow.__hecatePrimaryRoomsWarmed) return;
         performanceWindow.__hecatePrimaryRoomsWarmed = true;
@@ -436,8 +426,7 @@ const roomLiftTransition = {
           () => {
             void Promise.allSettled([
               import('@/features/room/PrimaryRoomEngine.svelte'),
-              import('@/features/wall/ProjectWall.svelte'),
-              import('@/components/about/AboutTV.svelte'),
+              import('@/components/about/AboutScroll.svelte'),
             ]);
 
             // The remaining primary-room imagery is small after the responsive

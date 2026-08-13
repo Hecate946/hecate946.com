@@ -1,9 +1,10 @@
-/* Extracted from ProjectWall.svelte; kept global/resident for reliable production swaps. */
+/* Home conveyor presentation; kept global/resident for reliable production swaps. */
 .wall-stage {
     --window-width: 306px;
     --window-height: 378px;
     --window-offset-x: -153px;
     --window-offset-y: -189px;
+    --wall-control-bottom-gap: clamp(0.7rem, 1.7vh, 1.05rem);
 
     width: 100%;
     height: 100%;
@@ -80,10 +81,10 @@
     position: absolute;
     z-index: 12;
     left: 50%;
-    bottom: calc(var(--floor-height) + clamp(0.55rem, 1.6vh, 0.9rem));
+    bottom: calc(var(--floor-height) + var(--wall-control-bottom-gap) + 1.1rem);
     max-width: calc(100vw - 7rem);
     margin: 0;
-    transform: translateX(-50%);
+    transform: translate(-50%, 50%);
     color: color-mix(in srgb, var(--room-label-ink, var(--wall-light, #f4f1e9)) 82%, transparent);
     font-family: var(--font-sans);
     font-size: clamp(0.68rem, 1vw, 0.78rem);
@@ -112,7 +113,7 @@
 
     position: absolute;
     z-index: 13;
-    bottom: calc(var(--floor-height) + clamp(0.7rem, 1.7vh, 1.05rem));
+    bottom: calc(var(--floor-height) + var(--wall-control-bottom-gap));
     display: grid;
     width: 2.2rem;
     height: 2.2rem;
@@ -134,11 +135,17 @@
   }
 
   .wall-motion-toggle {
-    right: clamp(0.9rem, 2.4vw, 1.7rem);
+    right: max(
+      clamp(0.9rem, 2.4vw, 1.7rem),
+      calc(env(safe-area-inset-right, 0px) + 0.75rem)
+    );
   }
 
   .wall-sound-toggle {
-    left: clamp(0.9rem, 2.4vw, 1.7rem);
+    left: max(
+      clamp(0.9rem, 2.4vw, 1.7rem),
+      calc(env(safe-area-inset-left, 0px) + 0.75rem)
+    );
   }
 
   .wall-corner-control:hover,
@@ -161,14 +168,6 @@
     overflow: visible;
   }
 
-  /* The speaker glyph has more visual weight on its right side because of
-     the sound-wave/mute marks. Nudge the SVG's optical center back onto the
-     button center while keeping the button itself perfectly grid-centered. */
-  .wall-sound-toggle .wall-corner-control__icon {
-    transform: translateX(-0.08rem);
-  }
-
-
 
   @media (min-height: 50rem) and (min-width: 40.001rem) {
     .wall-stage {
@@ -190,7 +189,6 @@
 
   @media (max-width: 40rem) {
     .wall-navigation-hint {
-      bottom: calc(var(--floor-height) + 0.45rem);
       max-width: calc(100vw - 5.5rem);
       font-size: 0.66rem;
       letter-spacing: 0.035em;
@@ -201,14 +199,16 @@
       --window-height: 308px;
       --window-offset-x: -124px;
       --window-offset-y: -154px;
+      --wall-control-bottom-gap: 0.48rem;
     }
 
-    .wall-corner-control {
-      bottom: calc(var(--floor-height) + 0.48rem);
+    .wall-motion-toggle {
+      right: max(0.75rem, calc(env(safe-area-inset-right, 0px) + 0.6rem));
     }
 
-    .wall-motion-toggle { right: 0.75rem; }
-    .wall-sound-toggle { left: 0.75rem; }
+    .wall-sound-toggle {
+      left: max(0.75rem, calc(env(safe-area-inset-left, 0px) + 0.6rem));
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -454,8 +454,8 @@
     }
   }
 
-/* A single conveyor island persists between Home, Projects and Resumes. Hide
-   it without destroying its Svelte state while About/Contact are active. */
+/* Keep the Home wall mounted across primary-room swaps so its camera position,
+   pause state, and audio state are not destroyed by navigation. */
 .wall-stage--inactive {
   visibility: hidden;
   pointer-events: none;

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Removes files retired by the August 2026 room-theme/CSS refactor.
+# Removes files retired by the August 2026 room/runtime cleanup.
 #
 # This script is intentionally conservative: it only removes the exact files
 # known to be obsolete, so it is safe to run after extracting the new source
@@ -17,6 +17,26 @@ if [[ ! -f "$PROJECT_ROOT/package.json" ]] || \
 fi
 
 obsolete_files=(
+  "public/favicon.svg"
+  "public/images/social/about.jpg"
+  "src/components/about/about-tv-content.ts"
+  "src/features/wall/ProjectWall.svelte"
+  "public/audio/.gitkeep"
+  "public/images/about/cyrus-portrait.webp"
+  "public/pdfs/scroll-test-10-pages.pdf"
+  "src/components/about/AboutFloor.svelte"
+  "src/components/about/AboutTV.svelte"
+  "src/components/about/TVChannel.svelte"
+  "src/features/floor/LegacyFloorScene.svelte"
+  "src/features/floor/MagnifyingGlass.svelte"
+  "src/features/floor/floor-scene-context.ts"
+  "src/features/floor/README.md"
+  "src/features/wall/InfiniteWall.svelte"
+  "src/features/wall/project-wall-config.ts"
+  "src/features/wall/resume-wall-config.ts"
+  "src/styles/about.css"
+  "src/styles/contact-postcards.css"
+  "src/styles/magnifying-glass.css"
   "public/assets/world-map-hires.svg"
   "public/generated/globe-world-mask-4096.png"
   "public/images/about/cyrus-portrait.png"
@@ -60,7 +80,9 @@ done
 # Remove directories only when the cleanup left them empty. Never recurse here.
 empty_dirs=(
   "src/components/projects"
+  "src/features/floor"
   "public/images/project-gallery"
+  "public/pdfs"
 )
 
 for relative_dir in "${empty_dirs[@]}"; do
