@@ -79,7 +79,9 @@ function inferImageType(path: string) {
 }
 
 const pageName = getPageName(title);
-const resolvedTitle = isHomePage ? siteConfig.title : `${pageName} | ${siteConfig.name}`;
+const resolvedTitle = isHomePage
+  ? `Home | ${siteConfig.name}`
+  : `${pageName} | ${siteConfig.name}`;
 const compactSocialTitle = socialTitle ?? (isHomePage ? siteConfig.name : pageName);
 const compactSocialDescription = socialDescription ?? (isHomePage ? siteConfig.socialDescription : description);
 const canonicalHref = canonicalURL.toString();

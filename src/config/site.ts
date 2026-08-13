@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: 'Cyrus Asasi',
   shortName: 'Cyrus',
-  title: 'Cyrus Asasi — Software Engineer & Classical Musician',
+  title: 'Home | Cyrus Asasi',
   description:
     'Personal portfolio of Cyrus Asasi, a software engineer and classical musician, featuring selected software projects, resumes, performances, and contact information.',
   socialDescription:

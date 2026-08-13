@@ -57,6 +57,9 @@ body.resume-wall-page > main.resume-wall-main {
   --resume-ink: var(--room-outline, #fff);
   --resume-muted: color-mix(in srgb, var(--resume-ink) 62%, transparent);
   --resume-line: color-mix(in srgb, var(--resume-ink) 23%, transparent);
+  /* Match the shared room backdrop geometry without applying wall-room-host's
+     opaque background to the foreground gallery. */
+  --floor-height: clamp(5.2rem, 18%, 9.8rem);
 
   position: absolute;
   inset: var(--header-height) 0 var(--floor-height);
@@ -280,7 +283,10 @@ body.resume-wall-page > main.resume-wall-main {
   }
 
   .resume-card {
-    width: min(100%, clamp(12.5rem, 33vh, 17.5rem));
+    /* Preserve the spacious localhost composition on short desktop windows:
+       scale from available height instead of letting the frames crowd the
+       header and floor. */
+    width: min(100%, clamp(10rem, 25vh, 15.5rem));
   }
 
   .resume-card__frame {
@@ -299,6 +305,7 @@ body.resume-wall-page > main.resume-wall-main {
    view side-by-side, acting as compact covers with immediate View/PDF actions. */
 @media (max-width: 40rem) {
   .resume-gallery {
+    --floor-height: 6.4rem;
     inset: var(--header-height) 0 var(--floor-height);
     align-items: center;
     padding: clamp(0.45rem, 1.4vh, 0.75rem) 0.55rem clamp(0.4rem, 1vh, 0.65rem);

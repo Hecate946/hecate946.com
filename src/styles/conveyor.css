@@ -168,6 +168,13 @@
     overflow: visible;
   }
 
+  /* The mute/speaker glyph is geometrically right-heavy inside its SVG
+     viewBox. Compensate for that optical center so the icon sits exactly in
+     the middle of the square control. */
+  .wall-sound-toggle .wall-corner-control__icon {
+    transform: translateX(-1.5px);
+  }
+
 
   @media (min-height: 50rem) and (min-width: 40.001rem) {
     .wall-stage {
