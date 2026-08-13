@@ -128,9 +128,19 @@ body.primary-room-page.scrolling-primary-room {
   }
 }
 
+/* Scrolling rooms deliberately avoid fixed/sticky positioning here. Safari 26
+   adds a flat browser-chrome color extension whenever viewport-constrained
+   content touches the obscured top edge. The header stays CSS-absolute and a
+   tiny scroll synchronizer in Header.astro offsets it by the document scroll.
+   Visually it remains locked to the viewport while the real brick wall scrolls
+   underneath it, without opting into Safari's fixed/sticky tint behavior. */
 body.primary-room-page.scrolling-primary-room > .site-header {
-  position: sticky;
+  position: absolute;
   top: 0;
+  right: 0;
+  left: 0;
+  transform: translate3d(0, var(--absolute-nav-scroll-y, 0px), 0);
+  will-change: transform;
 }
 
 body.primary-room-page.scrolling-primary-room > main {
@@ -139,20 +149,21 @@ body.primary-room-page.scrolling-primary-room > main {
   inset: auto;
   width: 100%;
   height: auto;
-  min-height: calc(100vh - var(--header-height));
+  min-height: 100vh;
   overflow: visible;
+  padding-top: var(--header-height);
   pointer-events: auto;
 }
 
 @supports (height: 100svh) {
   body.primary-room-page.scrolling-primary-room > main {
-    min-height: calc(100svh - var(--header-height));
+    min-height: 100svh;
   }
 }
 
 @supports (height: 100dvh) {
   body.primary-room-page.scrolling-primary-room > main {
-    min-height: calc(100dvh - var(--header-height));
+    min-height: 100dvh;
   }
 }
 
@@ -165,14 +176,6 @@ body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
 }
 
 @media (max-width: 40rem) {
-  /* iOS 26 Safari paints a flat sampled-color extension above viewport-edge
-     sticky/fixed content. Keep scrolling-room navigation in normal document
-     flow on phones so the real brick wall can continue beneath browser chrome. */
-  body.primary-room-page.scrolling-primary-room > .site-header {
-    position: relative;
-    top: auto;
-  }
-
   body.primary-room-page.scrolling-primary-room {
     --room-floor-reserve: 7.25rem;
   }
