@@ -61,7 +61,7 @@ export const projects = [
     period: '2026–Present',
     category: 'Interactive web experience',
     imageAlt:
-      'Expressionist print of a pale figure with dark flowing hair inside a vivid orange-red border, with a small seated figure in the lower-left corner, used as the Hecate946.com project image.',
+      'Portrait of a woman dressed in black beneath a broad black hat, set against an olive-green background, used as the Hecate946.com project image.',
     technologies: ['Astro', 'Svelte', 'TypeScript', 'CSS'],
     links: [
       { label: 'View source', href: 'https://github.com/Hecate946/hecate946.com' },
