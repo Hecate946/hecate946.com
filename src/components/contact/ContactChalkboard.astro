@@ -1,138 +1,186 @@
 ---
-import { withBase } from '@/lib/paths';
 import { siteConfig } from '@/config/site';
+import { withBase } from '@/lib/paths';
 
-type ContactLink = {
-  id: 'email' | 'github' | 'linkedin' | 'coffee';
-  label: string;
-  hint: string;
-  href: string;
-  target?: '_blank';
-  rel?: string;
-  icon: string;
-};
-
-// The silhouettes stay vector-sharp while a shared SVG filter gives every
-// mark a slightly dusty, imperfect chalk edge. The white tile itself remains
-// perfectly consistent so all four contact buttons share one radius/size.
-const icons = {
-  email: String.raw`<svg viewBox="0 0 24 24" role="presentation" aria-hidden="true">
-    <rect class="chalk-icon-stroke" x="3.25" y="5.65" width="17.5" height="12.7" rx="1.2" />
-    <path class="chalk-icon-stroke" d="m4.5 7 7.5 6.1L19.5 7M4.45 17l5.25-5.05M19.55 17l-5.25-5.05" />
-  </svg>`,
-  github: String.raw`<svg viewBox="0 0 24 24" role="presentation" aria-hidden="true">
-    <path class="chalk-icon-fill" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-  </svg>`,
-  linkedin: String.raw`<svg viewBox="0 0 24 24" role="presentation" aria-hidden="true">
-    <circle class="chalk-icon-fill" cx="5.35" cy="5.5" r="2.15" />
-    <path class="chalk-icon-fill" d="M3.55 9.3h3.6v11.15h-3.6zM9.45 9.3h3.45v1.52h.05c.48-.91 1.66-1.88 3.42-1.88 3.66 0 4.33 2.41 4.33 5.55v5.96h-3.6v-5.28c0-1.26-.02-2.88-1.76-2.88-1.76 0-2.03 1.37-2.03 2.79v5.37h-3.6V9.3z" />
-  </svg>`,
-  coffee: String.raw`<svg viewBox="0 0 24 24" role="presentation" aria-hidden="true">
-    <path class="chalk-icon-accent" d="M6.7 9.35h10.6l-1.15 10.1a2 2 0 0 1-1.99 1.78H9.84a2 2 0 0 1-1.99-1.78L6.7 9.35Z" />
-    <path class="chalk-icon-stroke" d="M7.1 9.35h9.8M6.4 6.15h11.2l.55 3.2H5.85l.55-3.2ZM8.15 3.45c1.15-.4 2.43-.6 3.85-.6 1.43 0 2.72.2 3.85.6l.4 2.7h-8.5l.4-2.7Z" />
-  </svg>`,
-};
-
-const links: ContactLink[] = [
-  {
-    id: 'email',
-    label: 'Mail',
-    hint: 'say hello',
-    href: `mailto:${siteConfig.email}`,
-    icon: icons.email,
-  },
+const socialLinks = [
   {
     id: 'github',
     label: 'GitHub',
-    hint: 'see my code',
+    detail: '@Hecate946',
     href: siteConfig.social.github,
-    target: '_blank',
     rel: 'me noopener noreferrer',
-    icon: icons.github,
+    icon: String.raw`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7a11.4 11.4 0 0 0-3.6 22.2c.57.1.78-.25.78-.55v-2.18c-3.18.7-3.85-1.35-3.85-1.35-.52-1.32-1.27-1.67-1.27-1.67-1.04-.7.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.54-.29-5.21-1.27-5.21-5.66 0-1.25.44-2.27 1.18-3.07-.12-.29-.51-1.45.11-3.03 0 0 .96-.3 3.14 1.17a10.9 10.9 0 0 1 5.72 0c2.18-1.48 3.13-1.17 3.13-1.17.63 1.58.24 2.74.12 3.03.73.8 1.17 1.82 1.17 3.07 0 4.4-2.68 5.36-5.23 5.65.41.36.78 1.05.78 2.12v3.14c0 .3.2.66.79.55A11.4 11.4 0 0 0 12 .7Z"/></svg>`,
   },
   {
     id: 'linkedin',
     label: 'LinkedIn',
-    hint: "let's connect",
+    detail: 'Cyrus Asasi',
     href: siteConfig.social.linkedin,
-    target: '_blank',
     rel: 'me noopener noreferrer',
-    icon: icons.linkedin,
+    icon: String.raw`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.3 7.9A2.2 2.2 0 1 0 5.3 3.5a2.2 2.2 0 0 0 0 4.4ZM3.45 9.55h3.7V20.5h-3.7V9.55Zm5.8 0h3.54v1.5h.05c.49-.93 1.7-1.9 3.5-1.9 3.75 0 4.44 2.47 4.44 5.68v5.67h-3.69v-5.03c0-1.2-.02-2.75-1.68-2.75-1.68 0-1.94 1.31-1.94 2.66v5.12H9.25V9.55Z"/></svg>`,
   },
   {
     id: 'coffee',
-    label: 'Buy coffee',
-    hint: 'support me ♡',
+    label: 'Buy me a coffee',
+    detail: 'Support the experiments',
     href: siteConfig.social.buyMeACoffee,
-    target: '_blank',
     rel: 'noopener noreferrer',
-    icon: icons.coffee,
   },
-];
+] as const;
+
+const topics = [
+  ['Software opportunity', 'Software opportunity'],
+  ['Music collaboration', 'Music collaboration'],
+  ['Creative project', 'Creative project'],
+  ['Just saying hello', 'Just saying hello'],
+] as const;
 ---
 
-<div class="contact-chalkboard-wrap">
-  <svg class="contact-chalkboard__filters" aria-hidden="true" focusable="false">
-    <filter id="contact-chalk-rough" x="-28%" y="-28%" width="156%" height="156%" color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.78 0.46" numOctaves="3" seed="17" result="edgeNoise" />
-      <feDisplacementMap
-        in="SourceGraphic"
-        in2="edgeNoise"
-        scale="0.95"
-        xChannelSelector="R"
-        yChannelSelector="G"
-        result="wobbled"
-      />
-      <feTurbulence type="fractalNoise" baseFrequency="1.15" numOctaves="4" seed="29" result="chalkNoise" />
-      <feColorMatrix in="chalkNoise" type="luminanceToAlpha" result="chalkLuma" />
-      <feComponentTransfer in="chalkLuma" result="chalkMask">
-        <feFuncA type="table" tableValues="0.12 0.38 0.68 0.96" />
-      </feComponentTransfer>
-      <feComposite in="wobbled" in2="chalkMask" operator="in" result="grainyStroke" />
-      <feGaussianBlur in="wobbled" stdDeviation="0.42" result="softDust" />
-      <feComponentTransfer in="softDust" result="faintDust">
-        <feFuncA type="linear" slope="0.13" />
-      </feComponentTransfer>
-      <feBlend in="grainyStroke" in2="faintDust" mode="screen" />
+<div class="contact-station">
+  <svg class="contact-chalk-filters" aria-hidden="true" focusable="false">
+    <filter id="contact-chalk-rough" x="-24%" y="-24%" width="148%" height="148%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.86 0.52" numOctaves="3" seed="19" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0.72" xChannelSelector="R" yChannelSelector="G" result="rough" />
+      <feGaussianBlur in="rough" stdDeviation="0.18" result="dust" />
+      <feBlend in="rough" in2="dust" mode="screen" />
     </filter>
   </svg>
 
-  <div class="contact-chalkboard__recess">
-    <div class="contact-chalkboard__glass">
-      <div class="contact-chalkboard" aria-label="Contact links chalkboard">
-        <img
-          class="contact-chalkboard__texture"
-          src={withBase('/images/contact/chalkboard-photo.webp')}
-          alt=""
-          width="1600"
-          height="1000"
-          draggable="false"
-          decoding="async"
-        />
-        <div class="contact-chalkboard__drawing-layer" data-chalk-drawing-layer aria-hidden="true"></div>
-
-        <nav class="contact-chalkboard__links" aria-label="Contact and profile links">
-          {links.map((link) => {
-            const hintId = `contact-${link.id}-hint`;
-            return (
-              <a
-                class={`chalk-link chalk-link--${link.id}`}
-                href={link.href}
-                target={link.target}
-                rel={link.rel}
-                aria-label={link.label}
-                aria-describedby={hintId}
-              >
-                <span class="chalk-link__mark" aria-hidden="true" set:html={link.icon} />
-                <span class="chalk-link__label">{link.label}</span>
-                <span class="chalk-link__hint" id={hintId}>{link.hint}</span>
-              </a>
-            );
-          })}
-        </nav>
+  <form
+    class="contact-compose contact-board"
+    action={`mailto:${siteConfig.email}`}
+    method="get"
+    data-contact-compose
+    data-email={siteConfig.email}
+  >
+    <section class="contact-compose__email" aria-labelledby="contact-email-label">
+      <p class="contact-kicker" id="contact-email-label">Email</p>
+      <div class="contact-email-row">
+        <a class="contact-email-address" href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>
+        <button class="contact-copy" type="button" data-contact-copy aria-label="Copy email address">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <rect x="6.1" y="5.7" width="8.2" height="8.2" rx="1.25" />
+            <path d="M5.4 11.8H4.8a1.6 1.6 0 0 1-1.6-1.6V4.8a1.6 1.6 0 0 1 1.6-1.6h5.4a1.6 1.6 0 0 1 1.6 1.6v.6" />
+          </svg>
+          <span data-contact-copy-label>Copy</span>
+        </button>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="contact-chalkboard__sill" aria-hidden="true"></div>
+    <div class="contact-rule" aria-hidden="true"></div>
+
+    <fieldset class="contact-topics">
+      <legend>What are we talking about?</legend>
+      <div class="contact-topic-grid">
+        {topics.map(([label, value], index) => (
+          <label class="contact-topic">
+            <input type="radio" name="subject" value={value} checked={index === 0} />
+            <span class="contact-topic__dot" aria-hidden="true"></span>
+            <span>{label}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+
+    <label class="contact-note">
+      <span>A quick note</span>
+      <textarea
+        name="body"
+        rows="4"
+        placeholder="Tell me a little about what you have in mind..."
+        aria-label="A quick note"
+      ></textarea>
+    </label>
+
+    <button class="contact-compose-button" type="submit">
+      <span>Compose email</span>
+      <span class="contact-compose-button__arrow" aria-hidden="true">↗</span>
+    </button>
+  </form>
+
+  <nav class="contact-social-grid" aria-label="Other ways to connect">
+    {socialLinks.map((link) => (
+      <a
+        class={`contact-social-card contact-board contact-social-card--${link.id}`}
+        href={link.href}
+        target="_blank"
+        rel={link.rel}
+      >
+        {link.id === 'coffee' ? (
+          <span class="contact-social-card__cup" aria-hidden="true">
+            <img
+              src={withBase('/images/contact/buy-me-a-coffee-cup.png')}
+              alt=""
+              width="252"
+              height="360"
+              decoding="async"
+              draggable="false"
+            />
+          </span>
+        ) : (
+          <span class="contact-social-card__icon" aria-hidden="true" set:html={link.icon}></span>
+        )}
+        <span class="contact-social-card__title">{link.label}</span>
+        <span class="contact-social-card__detail">{link.detail}</span>
+      </a>
+    ))}
+  </nav>
 </div>
+
+<script>
+  const setupContactStation = () => {
+    document.querySelectorAll<HTMLFormElement>('[data-contact-compose]').forEach((form) => {
+      if (form.dataset.contactBound === 'true') return;
+      form.dataset.contactBound = 'true';
+
+      const email = form.dataset.email ?? '';
+      const copyButton = form.querySelector<HTMLButtonElement>('[data-contact-copy]');
+      const copyLabel = form.querySelector<HTMLElement>('[data-contact-copy-label]');
+      let copyResetTimer = 0;
+
+      copyButton?.addEventListener('click', async () => {
+        let copied = false;
+
+        try {
+          await navigator.clipboard.writeText(email);
+          copied = true;
+        } catch {
+          const helper = document.createElement('textarea');
+          helper.value = email;
+          helper.setAttribute('readonly', '');
+          helper.style.position = 'fixed';
+          helper.style.opacity = '0';
+          document.body.append(helper);
+          helper.select();
+          copied = document.execCommand('copy');
+          helper.remove();
+        }
+
+        if (!copyLabel || !copied) return;
+        window.clearTimeout(copyResetTimer);
+        copyLabel.textContent = 'Copied';
+        copyButton.dataset.copied = 'true';
+        copyResetTimer = window.setTimeout(() => {
+          copyLabel.textContent = 'Copy';
+          delete copyButton.dataset.copied;
+        }, 1400);
+      });
+
+      form.addEventListener('submit', (event) => {
+        if (!email) return;
+        event.preventDefault();
+
+        const data = new FormData(form);
+        const subject = String(data.get('subject') ?? 'Hello');
+        const body = String(data.get('body') ?? '').trim();
+        const params = new URLSearchParams({ subject });
+        if (body) params.set('body', body);
+
+        window.location.href = `mailto:${email}?${params.toString()}`;
+      });
+    });
+  };
+
+  setupContactStation();
+  document.addEventListener('astro:page-load', setupContactStation);
+</script>

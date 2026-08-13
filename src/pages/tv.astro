@@ -1,0 +1,27 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import AboutTV from '@/components/about/AboutTV.svelte';
+import { withBase } from '@/lib/paths';
+
+const aboutTVProps = {
+  portraitUrl: withBase('/images/about/cyrus-portrait-480.webp'),
+  softwareResumeUrl: withBase('/resumes/cyrus-asasi-software-engineering-resume.pdf'),
+  projectsUrl: withBase('/projects/'),
+  musicResumeUrl: withBase('/resumes/cyrus-asasi-clarinet-performance-resume.pdf'),
+  musicVideoUrl: 'https://www.youtube.com/watch?v=EkgH4zzXoNg',
+  pickleballArticleUrl:
+    'https://www.dupr.com/post/california-super-regional-recap-ucla-rises-hawaii-makes-history-and-the-west-coast-delivers',
+  chessProfileUrl: 'https://www.chess.com/member/Cyrus2020SD/stats?time=0',
+};
+---
+
+<BaseLayout
+  title="About TV Archive — Cyrus Asasi"
+  description="Archived television version of the About page."
+  bodyClass="about-room-page room-themed room-theme-about about-tv-archive-page"
+  noindex={true}
+>
+  <div class="about-room wall-room-host">
+    <AboutTV client:load {...aboutTVProps} />
+  </div>
+</BaseLayout>

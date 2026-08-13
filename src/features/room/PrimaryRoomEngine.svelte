@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import AboutTV from '@/components/about/AboutTV.svelte';
+  import AboutScroll from '@/components/about/AboutScroll.svelte';
   import ProjectWall from '@/features/wall/ProjectWall.svelte';
   import { WALL_LOOP_WIDTH, WALL_START_X, wallDestinations } from '@/features/wall/wall-config';
   import {
@@ -151,7 +151,7 @@
   {#if aboutMounted}
     <div class="primary-room-engine__about" hidden={currentRoom !== 'about'}>
       <div class="about-room wall-room-host">
-        <AboutTV
+        <AboutScroll
           {portraitUrl}
           {softwareResumeUrl}
           {projectsUrl}

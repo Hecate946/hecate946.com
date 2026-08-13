@@ -20,7 +20,8 @@ export default defineConfig({
         !page.endsWith('/404/') &&
         !page.endsWith('/404.html') &&
         !page.endsWith('/pdf/') &&
-        !page.endsWith('/resume/'),
+        !page.endsWith('/resume/') &&
+        !page.endsWith('/tv/'),
     }),
   ],
   vite: {
