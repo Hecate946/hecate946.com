@@ -99,30 +99,35 @@ body.primary-room-page.contact-room-page > main {
   pointer-events: auto;
 }
 
+/*
+ * Scrolling rooms intentionally follow the simple architecture used by
+ * commit 4e1f4f8563ef18ddc0942247d644aa6c23f8aeb5:
+ *
+ * - the browser/window owns vertical scrolling;
+ * - the header is a normal CSS sticky element at top: 0;
+ * - page content remains in ordinary document flow and passes beneath it;
+ * - the room backdrop is absolute inside the document, so the bricks/floor
+ *   travel with the page rather than living in a separate scroll container.
+ *
+ * Keep the current museum navbar appearance; copy only the proven scrolling
+ * and background-layer behavior from that commit.
+ */
 body.primary-room-page.scrolling-primary-room {
   --room-floor-reserve: clamp(6.6rem, 18vh, 10.4rem);
+  position: relative;
   width: 100%;
   height: auto;
   min-height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
 
-@supports (height: 100svh) {
-  body.primary-room-page.scrolling-primary-room {
-    min-height: 100svh;
-  }
-}
-
-@supports (height: 100dvh) {
-  body.primary-room-page.scrolling-primary-room {
-    min-height: 100dvh;
-  }
+  /* Critical: do not turn <body> into a nested scroll container. */
+  overflow: visible;
 }
 
 body.primary-room-page.scrolling-primary-room > .site-header {
   position: sticky;
   top: 0;
+  z-index: 50;
+  width: 100%;
 }
 
 body.primary-room-page.scrolling-primary-room > main {
@@ -136,18 +141,12 @@ body.primary-room-page.scrolling-primary-room > main {
   pointer-events: auto;
 }
 
-@supports (height: 100svh) {
-  body.primary-room-page.scrolling-primary-room > main {
-    min-height: calc(100svh - var(--header-height));
-  }
-}
-
-@supports (height: 100dvh) {
-  body.primary-room-page.scrolling-primary-room > main {
-    min-height: calc(100dvh - var(--header-height));
-  }
-}
-
+/*
+ * The shared room backdrop stays attached to the document. Its base
+ * .site-room-backdrop rule is position:absolute; inset:0; min-height:100%,
+ * so it naturally spans the full scrolling page while the sticky navbar
+ * remains stationary above the moving content.
+ */
 body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
   --floor-height: clamp(5.2rem, 18vh, 9.8rem);
   height: auto;
