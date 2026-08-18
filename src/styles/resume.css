@@ -7,7 +7,6 @@
 body.resume-wall-page {
   position: relative;
   width: 100%;
-  min-height: 100vh;
 }
 
 .resume-wall-main {
@@ -16,7 +15,6 @@ body.resume-wall-page {
   display: block;
   width: 100%;
   min-width: 0;
-  min-height: calc(100vh - var(--header-height));
   overflow: visible;
   padding: 0;
 }
@@ -34,7 +32,6 @@ body.resume-wall-page > main.resume-wall-main {
   position: relative;
   display: block;
   width: 100%;
-  min-height: calc(100vh - var(--header-height));
   padding: 0 1rem var(--room-floor-reserve, 9rem);
   background: transparent;
   color: var(--resume-label-ink);
@@ -43,31 +40,8 @@ body.resume-wall-page > main.resume-wall-main {
 .resume-gallery__wall-zone {
   display: grid;
   width: 100%;
-  min-height: calc(100vh - var(--header-height) - var(--room-floor-reserve, 9rem));
   place-items: center;
   padding: clamp(2.5rem, 5vh, 4rem) 0;
-}
-
-@supports (height: 100svh) {
-  .resume-wall-main,
-  .resume-gallery {
-    min-height: calc(100svh - var(--header-height));
-  }
-
-  .resume-gallery__wall-zone {
-    min-height: calc(100svh - var(--header-height) - var(--room-floor-reserve, 9rem));
-  }
-}
-
-@supports (height: 100dvh) {
-  .resume-wall-main,
-  .resume-gallery {
-    min-height: calc(100dvh - var(--header-height));
-  }
-
-  .resume-gallery__wall-zone {
-    min-height: calc(100dvh - var(--header-height) - var(--room-floor-reserve, 9rem));
-  }
 }
 
 .resume-gallery__grid {

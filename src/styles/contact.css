@@ -17,46 +17,20 @@ body.room-theme-contact main {
   box-sizing: border-box;
   position: relative;
   z-index: 2;
-  min-height: calc(100vh - var(--header-height));
   overflow: visible;
   color: var(--chalk-white);
-}
-
-@supports (height: 100svh) {
-  .contact-page {
-    min-height: calc(100svh - var(--header-height));
-  }
-}
-
-@supports (height: 100dvh) {
-  .contact-page {
-    min-height: calc(100dvh - var(--header-height));
-  }
 }
 
 .contact-wall {
   position: relative;
   z-index: 2;
   display: grid;
-  min-height: calc(100vh - var(--header-height));
   place-items: center;
   box-sizing: border-box;
   padding:
     clamp(0.75rem, 1.6vw, 1.1rem)
     clamp(0.75rem, 1.6vw, 1.1rem)
-    calc(var(--room-floor-reserve, 9rem) + 1rem);
-}
-
-@supports (height: 100svh) {
-  .contact-wall {
-    min-height: calc(100svh - var(--header-height));
-  }
-}
-
-@supports (height: 100dvh) {
-  .contact-wall {
-    min-height: calc(100dvh - var(--header-height));
-  }
+    var(--room-floor-reserve, 9rem);
 }
 
 .contact-station {
@@ -452,7 +426,7 @@ body.room-theme-contact main {
 /* The LinkedIn glyph has more built-in whitespace than the GitHub mark, so a
    tiny optical correction makes the two read as the same size. */
 .contact-social-card--linkedin .contact-social-card__icon {
-  color: #0077b5;
+  color: #0a66c2;
 }
 
 .contact-social-card--linkedin .contact-social-card__icon svg {
@@ -713,8 +687,7 @@ body.room-theme-contact main {
 /* HECATE CONTACT MOBILE COMPOSITION - BEGIN */
 @media (max-width: 40rem) {
   .contact-wall {
-    min-height: 0;
-    padding: 0.9rem 0.85rem calc(var(--room-floor-reserve, 7.25rem) + 1.5rem);
+    padding: 0.9rem 0.85rem var(--room-floor-reserve, 7.25rem);
   }
 
   .contact-station {
@@ -727,7 +700,6 @@ body.room-theme-contact main {
   .contact-compose {
     box-sizing: border-box;
     display: flex;
-    min-height: calc(100svh - var(--header-height) - 1.8rem);
     flex-direction: column;
     justify-content: center;
     padding: clamp(1.35rem, 6vw, 1.8rem);
@@ -831,4 +803,5 @@ body.room-theme-contact main {
     font-size: clamp(0.4rem, 1.55vw, 0.53rem);
   }
 }
+
 /* HECATE CONTACT MOBILE COMPOSITION - END */

@@ -9,7 +9,6 @@
 body.projects-wall-page {
   position: relative;
   width: 100%;
-  min-height: 100vh;
 }
 
 .projects-wall-main {
@@ -18,7 +17,6 @@ body.projects-wall-page {
   display: block;
   width: 100%;
   min-width: 0;
-  min-height: calc(100vh - var(--header-height));
   overflow: visible;
   padding: 0;
 }
@@ -36,30 +34,14 @@ body.projects-wall-page > main.projects-wall-main {
   position: relative;
   display: grid;
   width: 100%;
-  min-height: calc(100vh - var(--header-height));
-  /* Center the exhibition in the actual wall area above the floor. The equal
-     top/bottom wall breathing room is already encoded in the padding; the
-     floor reserve is excluded by the larger bottom padding. */
+  /* The gallery is sized by its own content. The bottom padding is exactly the
+     floor clearance -- nothing is stacked on top of it to pad the room out to
+     a viewport height. */
   place-items: center;
   overflow: visible;
-  padding: clamp(2.5rem, 5vw, 4rem) 1rem
-    calc(var(--room-floor-reserve, 9rem) + clamp(2.5rem, 5vw, 4rem));
+  padding: clamp(2.5rem, 5vw, 4rem) 1rem var(--room-floor-reserve, 9rem);
   background: transparent;
   color: var(--project-label-ink);
-}
-
-@supports (height: 100svh) {
-  .projects-wall-main,
-  .project-gallery {
-    min-height: calc(100svh - var(--header-height));
-  }
-}
-
-@supports (height: 100dvh) {
-  .projects-wall-main,
-  .project-gallery {
-    min-height: calc(100dvh - var(--header-height));
-  }
 }
 
 .project-gallery__sr-title {

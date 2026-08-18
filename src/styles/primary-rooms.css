@@ -8,7 +8,14 @@
  * browser rather than being simulated by root-canvas or overscroll rules.
  */
 
-body.primary-room-page {
+/*
+ * Only the non-scrolling room (Home) is locked to the viewport. The selectors
+ * below are scoped with :not(.scrolling-primary-room) so that About/Projects/
+ * Resumes/Contact never inherit a viewport-height floor that they then have to
+ * fight -- previously the base `min-height` here leaked through and left a
+ * strip of empty scroll beneath the room floor on mobile.
+ */
+body.primary-room-page:not(.scrolling-primary-room) {
   position: relative;
   width: 100%;
   height: 100vh;
@@ -17,14 +24,14 @@ body.primary-room-page {
 }
 
 @supports (height: 100svh) {
-  body.primary-room-page {
+  body.primary-room-page:not(.scrolling-primary-room) {
     height: 100svh;
     min-height: 100svh;
   }
 }
 
 @supports (height: 100dvh) {
-  body.primary-room-page {
+  body.primary-room-page:not(.scrolling-primary-room) {
     height: 100dvh;
     min-height: 100dvh;
   }
@@ -113,11 +120,17 @@ body.primary-room-page.contact-room-page > main {
  * and background-layer behavior from that commit.
  */
 body.primary-room-page.scrolling-primary-room {
+  /*
+   * --room-floor-reserve is *only* the clearance content needs so it does not
+   * sit on top of the checkerboard floor at the bottom of the document. It is
+   * deliberately tied to --floor-height below and nothing stacks extra padding
+   * on top of it. It is not a layout spacer.
+   */
   --room-floor-reserve: clamp(6.6rem, 18vh, 10.4rem);
   position: relative;
   width: 100%;
   height: auto;
-  min-height: 100vh;
+  min-height: 0;
 
   /* Critical: do not turn <body> into a nested scroll container. */
   overflow: visible;
@@ -136,7 +149,6 @@ body.primary-room-page.scrolling-primary-room > main {
   inset: auto;
   width: 100%;
   height: auto;
-  min-height: calc(100vh - var(--header-height));
   overflow: visible;
   pointer-events: auto;
 }
@@ -148,7 +160,12 @@ body.primary-room-page.scrolling-primary-room > main {
  * remains stationary above the moving content.
  */
 body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
-  --floor-height: clamp(5.2rem, 18vh, 9.8rem);
+  /*
+   * svh, not vh/dvh: dvh re-measures while the mobile URL bar collapses, which
+   * resized the floor band mid-scroll and shifted the whole page under the
+   * reader's finger. svh is a fixed number for the life of the page.
+   */
+  --floor-height: clamp(5.2rem, 18svh, 9.8rem);
   height: auto;
 }
 
