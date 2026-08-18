@@ -126,7 +126,9 @@ body.primary-room-page.scrolling-primary-room {
    * deliberately tied to --floor-height below and nothing stacks extra padding
    * on top of it. It is not a layout spacer.
    */
-  --room-floor-reserve: clamp(6.6rem, 18vh, 10.4rem);
+  --room-floor-reserve: calc(
+    clamp(6.6rem, 18svh, 10.4rem) + env(safe-area-inset-bottom, 0px)
+  );
   position: relative;
   width: 100%;
   height: auto;
@@ -143,6 +145,19 @@ body.primary-room-page.scrolling-primary-room > .site-header {
   width: 100%;
 }
 
+/*
+ * Edge-to-edge (Safari 26 / "liquid glass").
+ *
+ * viewport-fit=cover in BaseHead widens the layout viewport to the whole
+ * screen, so the document's first and last pixel rows sit underneath Safari's
+ * floating top bar and bottom toolbar. Because the wall/floor backdrop is an
+ * absolutely positioned child of <body> spanning inset: 0, the brickwork and
+ * the checkerboard are what those translucent bars sample -- instead of the
+ * flat --bg fallback Safari paints when a page has not opted in.
+ *
+ * html/body keep an explicit background as the fallback for the moment before
+ * the backdrop paints, and for any browser without the glass treatment.
+ */
 body.primary-room-page.scrolling-primary-room > main {
   position: relative;
   z-index: 3;
@@ -165,16 +180,21 @@ body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
    * resized the floor band mid-scroll and shifted the whole page under the
    * reader's finger. svh is a fixed number for the life of the page.
    */
-  --floor-height: clamp(5.2rem, 18svh, 9.8rem);
+  --floor-height: calc(
+    clamp(5.2rem, 18svh, 9.8rem) + env(safe-area-inset-bottom, 0px)
+  );
   height: auto;
 }
 
 @media (max-width: 40rem) {
   body.primary-room-page.scrolling-primary-room {
-    --room-floor-reserve: 7.25rem;
+    --room-floor-reserve: calc(7.25rem + env(safe-area-inset-bottom, 0px));
   }
 
   body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
-    --floor-height: 6.4rem;
+    /* The floor keeps its designed height and then bleeds past the bottom of
+       the screen, so the checkerboard continues under the toolbar instead of
+       ending at a visible seam. */
+    --floor-height: calc(6.4rem + env(safe-area-inset-bottom, 0px));
   }
 }

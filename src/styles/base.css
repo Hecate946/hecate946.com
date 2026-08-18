@@ -1,5 +1,7 @@
 html {
-  scroll-padding-top: calc(var(--header-height) + 1.5rem);
+  scroll-padding-top: calc(
+    var(--header-height) + env(safe-area-inset-top, 0px) + 1.5rem
+  );
 }
 
 body {
@@ -50,7 +52,8 @@ b {
   /* Keep fixed architecture full-bleed; pad only ordinary page content. */
   main {
     box-sizing: border-box;
-    padding-inline: clamp(0.75rem, 3.5vw, 1rem);
+    padding-left: max(clamp(0.75rem, 3.5vw, 1rem), env(safe-area-inset-left, 0px));
+    padding-right: max(clamp(0.75rem, 3.5vw, 1rem), env(safe-area-inset-right, 0px));
   }
 }
 
