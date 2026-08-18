@@ -204,6 +204,16 @@
       letter-spacing: 0.035em;
     }
 
+    /* The brick mask is anchored to the top of the viewport, while the
+       baseboard lands at a viewport-dependent Y position. Snap to the last
+       actual mortar line above the baseboard before moving up 2.5 courses, so
+       the hint is geometrically centered in the third complete brick row. */
+    @supports (top: round(down, 100%, 24px)) {
+      .wall-navigation-hint {
+        top: calc(round(down, var(--baseboard-top), var(--brick-course-height)) - 60px);
+      }
+    }
+
     .wall-stage {
       --window-width: 248px;
       --window-height: 308px;
