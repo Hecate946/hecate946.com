@@ -4,9 +4,15 @@
   box-sizing: border-box;
 }
 
+/*
+ * No background here. --bg on :root resolves to the *global* theme colour, not
+ * the per-room palette (.room-themed sets --bg on <body>), so painting <html>
+ * pinned the canvas to the wrong colour -- the teal slab under a red room. With
+ * <html> unset the browser propagates <body>'s background to the canvas
+ * instead, so overscroll and any uncovered area match the room's own wall.
+ */
 html {
   min-width: 20rem;
-  background: var(--bg);
   scroll-behavior: smooth;
 }
 

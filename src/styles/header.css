@@ -14,21 +14,9 @@
   z-index: 50;
   box-sizing: border-box;
   width: 100%;
-  /*
-   * viewport-fit=cover puts y=0 of the document underneath the status bar /
-   * notch. The bar itself stays flush with the true top of the screen so the
-   * brickwork runs edge to edge behind Safari's glass, and the inset is taken
-   * as padding so the actual nav row still starts below the system UI.
-   */
-  height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
+  height: var(--header-height);
   border: 0;
   border-bottom: 1px solid var(--nav-border-color);
-  /*
-   * Deliberately transparent. Safari 26 samples fixed/sticky elements near a
-   * viewport edge to tint the adjacent toolbar; leaving this transparent makes
-   * it sample the wall behind instead of tinting the chrome a flat color.
-   */
   background: transparent;
   color: var(--nav-ink);
   font-family: var(--font-sans);
