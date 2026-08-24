@@ -8,8 +8,7 @@
   --nav-border-color: color-mix(in srgb, var(--nav-outline) 62%, transparent);
   --nav-underline-color: color-mix(in srgb, var(--nav-ink) 72%, transparent);
 
-  position: sticky;
-  top: 0;
+  position: relative;
   isolation: isolate;
   z-index: 50;
   box-sizing: border-box;

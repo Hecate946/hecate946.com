@@ -5,13 +5,13 @@
 }
 
 /*
- * Keep Safari's exposed page area (above the navbar / below the footer) on
- * the global theme background. Room colors are painted by the room backdrop,
- * never by the root canvas.
+ * Leave the browser canvas neutral. `Canvas` is the user-agent/system default
+ * background for the active color scheme; room colors are painted only by the
+ * actual wall renderer.
  */
 html {
   min-width: 20rem;
-  background: var(--bg);
+  background: Canvas;
   scroll-behavior: smooth;
 }
 

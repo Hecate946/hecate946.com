@@ -1,8 +1,11 @@
+<meta name="theme-color" content="#ffffff" data-browser-theme-color />
+
 <script is:inline>
   (() => {
     const THEME_STORAGE_KEY = 'color-theme';
     const themeNames = new Set(['light', 'dark']);
     const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const browserChromeColor = { light: '#ffffff', dark: '#000000' };
 
     const readPreference = () => {
       try {
@@ -21,6 +24,9 @@
       root.dataset.theme = theme;
       root.dataset.themeReady = 'true';
       root.style.colorScheme = theme;
+
+      const themeColor = targetDocument.querySelector('[data-browser-theme-color]');
+      themeColor?.setAttribute('content', browserChromeColor[theme]);
     };
 
     applyTheme();
@@ -46,6 +52,10 @@
 
       darkModeQuery.addEventListener('change', () => {
         if (readPreference()) return;
+        applyTheme();
+      });
+
+      document.addEventListener('hecate:theme-change', () => {
         applyTheme();
       });
     }

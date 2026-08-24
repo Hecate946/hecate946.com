@@ -3,8 +3,8 @@
  *
  * Home remains a viewport-sized interactive room. About, Projects, Resumes,
  * and Contact are ordinary document-height pages with the same shared room
- * backdrop growing behind them. The navbar uses normal CSS sticky positioning
- * on those scrolling pages; browser chrome and safe areas are left to the
+ * backdrop growing behind them. The navbar participates in ordinary document
+ * flow on those scrolling pages; browser chrome and safe areas are left to the
  * browser rather than being simulated by root-canvas or overscroll rules.
  */
 
@@ -111,8 +111,8 @@ body.primary-room-page.contact-room-page > main {
  * commit 4e1f4f8563ef18ddc0942247d644aa6c23f8aeb5:
  *
  * - the browser/window owns vertical scrolling;
- * - the header is a normal CSS sticky element at top: 0;
- * - page content remains in ordinary document flow and passes beneath it;
+ * - the header is a normal document-flow element and scrolls away with content;
+ * - page content remains in ordinary document flow beneath it;
  * - the room backdrop is absolute inside the document, so the bricks/floor
  *   travel with the page rather than living in a separate scroll container.
  *
@@ -148,8 +148,7 @@ body.primary-room-page.scrolling-primary-room {
 }
 
 body.primary-room-page.scrolling-primary-room > .site-header {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 50;
   width: 100%;
 }
@@ -167,8 +166,8 @@ body.primary-room-page.scrolling-primary-room > main {
 /*
  * The shared room backdrop stays attached to the document. Its base
  * .site-room-backdrop rule is position:absolute; inset:0; min-height:100%,
- * so it naturally spans the full scrolling page while the sticky navbar
- * remains stationary above the moving content.
+ * so it naturally spans the full scrolling page while the navbar scrolls
+ * with the rest of the document.
  */
 body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
   /*

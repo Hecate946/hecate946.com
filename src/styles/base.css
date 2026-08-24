@@ -3,7 +3,6 @@ html {
 }
 
 body {
-  background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
   font-optical-sizing: auto;
