@@ -5,15 +5,20 @@
 }
 
 /*
- * No background here. --bg on :root resolves to the *global* theme colour, not
- * the per-room palette (.room-themed sets --bg on <body>), so painting <html>
- * pinned the canvas to the wrong colour -- the teal slab under a red room. With
- * <html> unset the browser propagates <body>'s background to the canvas
- * instead, so overscroll and any uncovered area match the room's own wall.
+ * Desktop keeps the room-colored browser canvas behavior. On mobile, however,
+ * the exposed area above the navbar should be a stable neutral surface rather
+ * than inheriting whichever room is active. --bg resolves on <html> to the
+ * global light/dark theme color; room-specific overrides live only on <body>.
  */
 html {
   min-width: 20rem;
   scroll-behavior: smooth;
+}
+
+@media (max-width: 40rem) {
+  html {
+    background: var(--bg);
+  }
 }
 
 /*

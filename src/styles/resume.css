@@ -30,8 +30,10 @@ body.resume-wall-page > main.resume-wall-main {
   --resume-light-hot: var(--wall-light, #f4f1e9);
 
   position: relative;
-  display: block;
+  display: grid;
   width: 100%;
+  min-height: calc(100svh - var(--header-height));
+  place-items: center;
   padding: 0 1rem var(--room-floor-reserve, 9rem);
   background: transparent;
   color: var(--resume-label-ink);
@@ -41,7 +43,7 @@ body.resume-wall-page > main.resume-wall-main {
   display: grid;
   width: 100%;
   place-items: center;
-  padding: clamp(2.5rem, 5vh, 4rem) 0;
+  padding: 0;
 }
 
 .resume-gallery__grid {

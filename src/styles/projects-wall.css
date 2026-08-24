@@ -34,12 +34,13 @@ body.projects-wall-page > main.projects-wall-main {
   position: relative;
   display: grid;
   width: 100%;
-  /* The gallery is sized by its own content. The bottom padding is exactly the
-     floor clearance -- nothing is stacked on top of it to pad the room out to
-     a viewport height. */
+  /* Fill the viewport below the navbar, then center the artwork in the actual
+     back-wall area above the floor. If a narrow layout is taller than the
+     viewport, normal document flow still grows naturally. */
+  min-height: calc(100svh - var(--header-height));
   place-items: center;
   overflow: visible;
-  padding: clamp(2.5rem, 5vw, 4rem) 1rem var(--room-floor-reserve, 9rem);
+  padding: 0 1rem var(--room-floor-reserve, 9rem);
   background: transparent;
   color: var(--project-label-ink);
 }

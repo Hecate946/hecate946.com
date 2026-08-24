@@ -25,12 +25,10 @@ body.room-theme-contact main {
   position: relative;
   z-index: 2;
   display: grid;
+  min-height: calc(100svh - var(--header-height));
   place-items: center;
   box-sizing: border-box;
-  padding:
-    clamp(0.75rem, 1.6vw, 1.1rem)
-    clamp(0.75rem, 1.6vw, 1.1rem)
-    var(--room-floor-reserve, 9rem);
+  padding: 0 clamp(0.75rem, 1.6vw, 1.1rem) var(--room-floor-reserve, 9rem);
 }
 
 .contact-station {
