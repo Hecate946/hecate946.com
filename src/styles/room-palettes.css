@@ -25,7 +25,6 @@
   --accent: var(--room-outline);
   --accent-strong: var(--room-outline);
   --accent-soft: color-mix(in srgb, var(--room-outline) 12%, transparent);
-  --bg: var(--wall-dark);
 
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 86%, #090909);
   --wall-trim-line: color-mix(in srgb, var(--room-outline) 28%, transparent);

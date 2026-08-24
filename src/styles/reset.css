@@ -5,20 +5,14 @@
 }
 
 /*
- * Desktop keeps the room-colored browser canvas behavior. On mobile, however,
- * the exposed area above the navbar should be a stable neutral surface rather
- * than inheriting whichever room is active. --bg resolves on <html> to the
- * global light/dark theme color; room-specific overrides live only on <body>.
+ * Keep Safari's exposed page area (above the navbar / below the footer) on
+ * the global theme background. Room colors are painted by the room backdrop,
+ * never by the root canvas.
  */
 html {
   min-width: 20rem;
+  background: var(--bg);
   scroll-behavior: smooth;
-}
-
-@media (max-width: 40rem) {
-  html {
-    background: var(--bg);
-  }
 }
 
 /*
