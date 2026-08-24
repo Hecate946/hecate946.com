@@ -6,66 +6,177 @@ const resumes = [
     id: 'software',
     fullTitle: 'Software Engineering Resume',
     pdf: '/resumes/cyrus-asasi-software-engineering-resume.pdf',
-    preview: '/images/resume/cyrus-asasi-software-engineering-resume-480.webp',
-    preview720:
-      '/images/resume/cyrus-asasi-software-engineering-resume-720.webp',
+    svg: '/images/resume/software-resume.svg',
     alt: 'Cyrus Asasi’s software engineering resume',
   },
   {
     id: 'clarinet',
     fullTitle: 'Clarinet Performance Resume',
     pdf: '/resumes/cyrus-asasi-clarinet-performance-resume.pdf',
-    preview: '/images/resume/cyrus-asasi-clarinet-performance-resume-480.webp',
-    preview720:
-      '/images/resume/cyrus-asasi-clarinet-performance-resume-720.webp',
+    svg: '/images/resume/clarinet-resume.svg',
     alt: 'Cyrus Asasi’s clarinet performance resume',
   },
 ] as const;
 ---
 
 <section class="resume-scrolls" aria-label="Resumes">
-  <div class="resume-scrolls__grid">
-    {
-      resumes.map((resume) => (
-        <article
-          class={`about-scroll-paper resume-scroll resume-scroll--${resume.id}`}
-          aria-label={resume.fullTitle}
-        >
-          <div
-            class="about-scroll-paper__roll about-scroll-paper__roll--top"
-            aria-hidden="true"
-          />
-
-          <div class="about-scroll-paper__sheet resume-scroll__sheet">
-            <a
-              class="resume-scroll__document"
-              href={pdfViewerHref(resume.pdf)}
-              aria-label={`View ${resume.fullTitle}`}
-              data-astro-prefetch
+  <div class="resume-gallery" data-resume-gallery>
+    <div class="resume-switcher">
+      <div
+        class="resume-switcher__tabs"
+        role="tablist"
+        aria-label="Choose a resume"
+      >
+        {
+          resumes.map((resume, index) => (
+            <button
+              class="resume-switcher__tab"
+              id={`resume-tab-${resume.id}`}
+              type="button"
+              role="tab"
+              aria-controls={`resume-panel-${resume.id}`}
+              aria-selected={index === 0 ? 'true' : 'false'}
+              tabindex={index === 0 ? 0 : -1}
+              data-resume-tab
+              data-resume-id={resume.id}
+              data-download-href={withBase(resume.pdf)}
+              data-resume-title={resume.fullTitle}
             >
-              <picture>
-                <source
-                  media="(max-width: 32rem)"
-                  srcset={withBase(resume.preview)}
-                />
+              {resume.id === 'software'
+                ? 'Software Engineering'
+                : 'Clarinet Performance'}
+            </button>
+          ))
+        }
+      </div>
+
+      <a
+        class="resume-switcher__download"
+        href={withBase(resumes[0].pdf)}
+        download
+        aria-label={`Download ${resumes[0].fullTitle}`}
+        data-resume-download
+      >
+        <span>Download PDF</span>
+        <span class="resume-switcher__download-icon" aria-hidden="true">↓</span>
+      </a>
+    </div>
+
+    <div class="resume-scrolls__stage">
+      {
+        resumes.map((resume, index) => (
+          <article
+            class={`about-scroll-paper resume-scroll resume-scroll--${resume.id}`}
+            id={`resume-panel-${resume.id}`}
+            role="tabpanel"
+            aria-labelledby={`resume-tab-${resume.id}`}
+            aria-label={resume.fullTitle}
+            tabindex="0"
+            hidden={index !== 0}
+            data-resume-panel
+            data-resume-id={resume.id}
+          >
+            <div
+              class="about-scroll-paper__roll about-scroll-paper__roll--top"
+              aria-hidden="true"
+            />
+
+            <div class="about-scroll-paper__sheet resume-scroll__sheet">
+              <a
+                class="resume-scroll__document"
+                href={pdfViewerHref(resume.pdf)}
+                aria-label={`View ${resume.fullTitle}`}
+                data-astro-prefetch
+              >
                 <img
-                  src={withBase(resume.preview720)}
+                  src={withBase(resume.svg)}
                   alt={resume.alt}
-                  width="720"
-                  height="1018"
+                  width="595"
+                  height="842"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  fetchpriority={index === 0 ? 'high' : 'auto'}
                   draggable="false"
                   decoding="async"
                 />
-              </picture>
-            </a>
-          </div>
+              </a>
+            </div>
 
-          <div
-            class="about-scroll-paper__roll about-scroll-paper__roll--bottom"
-            aria-hidden="true"
-          />
-        </article>
-      ))
-    }
+            <div
+              class="about-scroll-paper__roll about-scroll-paper__roll--bottom"
+              aria-hidden="true"
+            />
+          </article>
+        ))
+      }
+    </div>
   </div>
 </section>
+
+<script>
+  function initializeResumeGalleries() {
+    document
+      .querySelectorAll<HTMLElement>(
+        '[data-resume-gallery]:not([data-resume-ready])',
+      )
+      .forEach((gallery) => {
+        gallery.dataset.resumeReady = 'true';
+
+        const tabs = Array.from(
+          gallery.querySelectorAll<HTMLButtonElement>('[data-resume-tab]'),
+        );
+        const panels = Array.from(
+          gallery.querySelectorAll<HTMLElement>('[data-resume-panel]'),
+        );
+        const download = gallery.querySelector<HTMLAnchorElement>(
+          '[data-resume-download]',
+        );
+
+        function selectResume(tab: HTMLButtonElement, moveFocus = false) {
+          const resumeId = tab.dataset.resumeId;
+
+          tabs.forEach((candidate) => {
+            const isSelected = candidate === tab;
+            candidate.setAttribute('aria-selected', String(isSelected));
+            candidate.tabIndex = isSelected ? 0 : -1;
+          });
+
+          panels.forEach((panel) => {
+            panel.hidden = panel.dataset.resumeId !== resumeId;
+          });
+
+          if (download) {
+            download.href = tab.dataset.downloadHref ?? '#';
+            download.setAttribute(
+              'aria-label',
+              `Download ${tab.dataset.resumeTitle ?? 'resume'}`,
+            );
+          }
+
+          if (moveFocus) tab.focus();
+        }
+
+        tabs.forEach((tab, index) => {
+          tab.addEventListener('click', () => selectResume(tab));
+          tab.addEventListener('keydown', (event) => {
+            let nextIndex: number | undefined;
+
+            if (event.key === 'ArrowRight')
+              nextIndex = (index + 1) % tabs.length;
+            if (event.key === 'ArrowLeft')
+              nextIndex = (index - 1 + tabs.length) % tabs.length;
+            if (event.key === 'Home') nextIndex = 0;
+            if (event.key === 'End') nextIndex = tabs.length - 1;
+            if (nextIndex === undefined) return;
+
+            event.preventDefault();
+            selectResume(tabs[nextIndex], true);
+          });
+        });
+
+        if (tabs[0]) selectResume(tabs[0]);
+      });
+  }
+
+  initializeResumeGalleries();
+  document.addEventListener('astro:page-load', initializeResumeGalleries);
+</script>
