@@ -16,6 +16,11 @@ body.wall-home-page {
   --room-nav-ink: var(--room-outline);
   --room-label-ink: var(--room-outline);
   --room-control-ink: var(--room-outline);
+  --room-structural-line: color-mix(
+    in srgb,
+    var(--room-outline) 22%,
+    transparent
+  );
   --header-accent: var(--room-outline);
 }
 
@@ -32,7 +37,6 @@ body.wall-home-page {
     min-height: 100dvh;
   }
 }
-
 
 body.wall-home-page .wall-home-main {
   position: absolute;

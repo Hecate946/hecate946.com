@@ -2,6 +2,7 @@
 import { siteConfig } from '@/config/site';
 import { headerNavigation } from '@/config/navigation';
 import { isCurrentPath, withBase } from '@/lib/paths';
+import AudioToggle from './AudioToggle.svelte';
 import ColorModeToggle from './ColorModeToggle.svelte';
 import '@/styles/header.css';
 
@@ -41,7 +42,12 @@ function isHeaderItemCurrent(item: (typeof headerNavigation)[number]) {
       </ul>
     </nav>
 
-    <div class="mode-slot header-region" role="group" aria-label="Appearance">
+    <div
+      class="mode-slot header-region"
+      role="group"
+      aria-label="Sound and appearance"
+    >
+      <AudioToggle client:load transition:persist="global-audio-toggle" />
       <ColorModeToggle client:idle />
     </div>
   </div>

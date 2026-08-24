@@ -1,454 +1,461 @@
 /* Home conveyor presentation; kept global/resident for reliable production swaps. */
 .wall-stage {
-    --window-width: 306px;
-    --window-height: 378px;
-    --window-offset-x: -153px;
-    --window-offset-y: -189px;
-    --wall-control-bottom-gap: clamp(0.7rem, 1.7vh, 1.05rem);
-    --wall-control-safe-bottom: max(
-      var(--wall-control-bottom-gap),
-      calc(env(safe-area-inset-bottom, 0px) + var(--wall-control-bottom-gap))
-    );
+  --window-width: 306px;
+  --window-height: 378px;
+  --window-offset-x: -153px;
+  --window-offset-y: -189px;
+  --wall-control-bottom-gap: clamp(0.7rem, 1.7vh, 1.05rem);
+  --wall-control-safe-bottom: max(
+    var(--wall-control-bottom-gap),
+    calc(env(safe-area-inset-bottom, 0px) + var(--wall-control-bottom-gap))
+  );
 
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    min-height: 25rem;
-    overflow: hidden;
-    cursor: grab;
-    touch-action: pan-y;
-    overscroll-behavior-x: contain;
-    user-select: none;
-  }
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  min-height: 25rem;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+  overscroll-behavior-x: contain;
+  user-select: none;
+}
 
-  .wall-stage--dragging {
-    cursor: grabbing;
-  }
+.wall-stage--dragging {
+  cursor: grabbing;
+}
 
-  .wall-world {
-    position: absolute;
-    z-index: 4;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 100%;
-    backface-visibility: hidden;
-    contain: layout style;
-    /* The destination track is the only moving compositor layer. Frames and
+.wall-world {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100%;
+  backface-visibility: hidden;
+  contain: layout style;
+  /* The destination track is the only moving compositor layer. Frames and
        paintings stay untransformed inside it so they cannot drift against one
        another during slow subpixel motion. */
-    will-change: transform;
-  }
+  will-change: transform;
+}
 
-  .wall-loop {
-    position: absolute;
-    z-index: 3;
-    inset: 0 auto 0 0;
-    width: var(--loop-width);
-    transform: translate3d(calc(var(--loop-base, 0px) + var(--loop-offset)), 0, 0);
-    pointer-events: none;
-  }
+.wall-loop {
+  position: absolute;
+  z-index: 3;
+  inset: 0 auto 0 0;
+  width: var(--loop-width);
+  transform: translate3d(
+    calc(var(--loop-base, 0px) + var(--loop-offset)),
+    0,
+    0
+  );
+  pointer-events: none;
+}
 
-  .wall-loop .wall-window {
-    pointer-events: auto;
-  }
+.wall-loop .wall-window {
+  pointer-events: auto;
+}
 
-  .wall-loop__seam {
-    position: absolute;
-    bottom: calc(var(--floor-height) + 1.2rem);
-    width: 1px;
-    background: linear-gradient(
-      180deg,
-      transparent,
-      color-mix(in srgb, var(--room-outline, var(--wall-light, #f4f1e9)) 18%, transparent) 18% 83%,
-      transparent
-    );
-    opacity: 0.32;
-  }
+.wall-loop__seam {
+  position: absolute;
+  bottom: calc(var(--floor-height) + 1.2rem);
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(
+        in srgb,
+        var(--room-outline, var(--wall-light, #f4f1e9)) 18%,
+        transparent
+      )
+      18% 83%,
+    transparent
+  );
+  opacity: 0.32;
+}
 
-  .wall-loop__seam--a {
-    left: 10%;
-    height: 41%;
-  }
+.wall-loop__seam--a {
+  left: 10%;
+  height: 41%;
+}
 
-  .wall-loop__seam--b {
-    left: 88%;
-    height: 55%;
-  }
+.wall-loop__seam--b {
+  left: 88%;
+  height: 55%;
+}
 
-
-  .wall-navigation-hint {
-    position: absolute;
-    z-index: 12;
-    left: 50%;
-    /* Lock the hint to the center of the third brick course above the
+.wall-navigation-hint {
+  position: absolute;
+  z-index: 12;
+  left: 50%;
+  /* Lock the hint to the center of the third brick course above the
        baseboard. The shared brick course is 24px tall, so this remains clear
        of mortar lines at every viewport height. */
-    top: calc(var(--baseboard-top) - 60px);
-    max-width: calc(100vw - 7rem);
-    margin: 0;
-    transform: translate(-50%, calc(-50% + 0.075em));
-    color: #d0d0d0;
-    font-family: var(--font-sans);
-    font-size: clamp(0.68rem, 1vw, 0.78rem);
-    font-weight: 400;
-    letter-spacing: 0.045em;
-    line-height: 1;
-    text-align: center;
-    text-shadow: 0 1px 2px rgb(0 0 0 / 58%);
-    white-space: nowrap;
-    opacity: 0.86;
-    pointer-events: none;
-    transition: opacity 320ms ease;
+  top: calc(var(--baseboard-top) - 60px);
+  max-width: calc(100vw - 7rem);
+  margin: 0;
+  transform: translate(-50%, calc(-50% + 0.075em));
+  color: #d0d0d0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.68rem, 1vw, 0.78rem);
+  font-weight: 400;
+  letter-spacing: 0.045em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 58%);
+  white-space: nowrap;
+  opacity: 0.86;
+  pointer-events: none;
+  transition: opacity 320ms ease;
+}
+
+.wall-stage--interacted .wall-navigation-hint {
+  opacity: 0.5;
+}
+
+.wall-corner-control {
+  --wall-control-ink: var(--room-control-ink, var(--wall-light, #f4f1e9));
+  --wall-control-outline: var(--room-outline, var(--wall-control-ink));
+  --wall-control-bg: var(
+    --room-control-bg,
+    color-mix(in srgb, var(--wall-dark, #050505) 82%, transparent)
+  );
+
+  position: absolute;
+  z-index: 13;
+  bottom: var(--wall-control-safe-bottom);
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid
+    color-mix(in srgb, var(--wall-control-outline) 28%, transparent);
+  border-radius: 0.56rem;
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  background: var(--wall-control-bg);
+  color: color-mix(in srgb, var(--wall-control-ink) 68%, transparent);
+  cursor: pointer;
+  opacity: 0.84;
+  transition:
+    opacity 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    outline-color 160ms ease;
+}
+
+.wall-motion-toggle {
+  right: max(
+    clamp(0.9rem, 2.4vw, 1.7rem),
+    calc(env(safe-area-inset-right, 0px) + 0.75rem)
+  );
+}
+
+.wall-corner-control:hover,
+.wall-corner-control:focus-visible {
+  border-color: color-mix(
+    in srgb,
+    var(--wall-control-outline) 46%,
+    transparent
+  );
+  color: color-mix(in srgb, var(--wall-control-ink) 90%, transparent);
+  opacity: 1;
+}
+
+.wall-corner-control:focus-visible {
+  outline: 1px solid var(--wall-control-outline);
+  outline-offset: 0.18rem;
+}
+
+.wall-corner-control__icon {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  overflow: visible;
+}
+
+@media (min-height: 50rem) and (min-width: 40.001rem) {
+  .wall-stage {
+    --window-width: 340px;
+    --window-height: 420px;
+    --window-offset-x: -170px;
+    --window-offset-y: -210px;
+  }
+}
+
+@media (max-height: 42rem) and (min-width: 40.001rem) {
+  .wall-stage {
+    --window-width: 266px;
+    --window-height: 328px;
+    --window-offset-x: -133px;
+    --window-offset-y: -164px;
+  }
+}
+
+@media (max-width: 40rem) {
+  .wall-navigation-hint {
+    max-width: calc(100vw - 5.5rem);
+    font-size: 0.66rem;
+    letter-spacing: 0.035em;
   }
 
-  .wall-stage--interacted .wall-navigation-hint {
-    opacity: 0.5;
-  }
-
-  .wall-corner-control {
-    --wall-control-ink: var(--room-control-ink, var(--wall-light, #f4f1e9));
-    --wall-control-outline: var(--room-outline, var(--wall-control-ink));
-    --wall-control-bg: var(
-      --room-control-bg,
-      color-mix(in srgb, var(--wall-dark, #050505) 82%, transparent)
-    );
-
-    position: absolute;
-    z-index: 13;
-    bottom: var(--wall-control-safe-bottom);
-    display: grid;
-    width: 2.2rem;
-    height: 2.2rem;
-    place-items: center;
-    padding: 0;
-    border: 1px solid color-mix(in srgb, var(--wall-control-outline) 28%, transparent);
-    border-radius: 0.56rem;
-    outline: 2px solid transparent;
-    outline-offset: 1px;
-    background: var(--wall-control-bg);
-    color: color-mix(in srgb, var(--wall-control-ink) 68%, transparent);
-    cursor: pointer;
-    opacity: 0.84;
-    transition:
-      opacity 160ms ease,
-      border-color 160ms ease,
-      color 160ms ease,
-      outline-color 160ms ease;
-  }
-
-  .wall-motion-toggle {
-    right: max(
-      clamp(0.9rem, 2.4vw, 1.7rem),
-      calc(env(safe-area-inset-right, 0px) + 0.75rem)
-    );
-  }
-
-  .wall-sound-toggle {
-    left: max(
-      clamp(0.9rem, 2.4vw, 1.7rem),
-      calc(env(safe-area-inset-left, 0px) + 0.75rem)
-    );
-  }
-
-  .wall-corner-control:hover,
-  .wall-corner-control:focus-visible {
-    border-color: color-mix(in srgb, var(--wall-control-outline) 46%, transparent);
-    color: color-mix(in srgb, var(--wall-control-ink) 90%, transparent);
-    opacity: 1;
-  }
-
-  .wall-corner-control:focus-visible {
-    outline: 1px solid var(--wall-control-outline);
-    outline-offset: 0.18rem;
-  }
-
-  .wall-corner-control__icon {
-    display: block;
-    width: 1.15rem;
-    height: 1.15rem;
-    margin: 0;
-    overflow: visible;
-  }
-
-  /* The mute/speaker glyph is geometrically right-heavy inside its SVG
-     viewBox. Compensate for that optical center so the icon sits exactly in
-     the middle of the square control. */
-  .wall-sound-toggle .wall-corner-control__icon {
-    transform: translateX(-1.5px);
-  }
-
-
-  @media (min-height: 50rem) and (min-width: 40.001rem) {
-    .wall-stage {
-      --window-width: 340px;
-      --window-height: 420px;
-      --window-offset-x: -170px;
-      --window-offset-y: -210px;
-    }
-  }
-
-  @media (max-height: 42rem) and (min-width: 40.001rem) {
-    .wall-stage {
-      --window-width: 266px;
-      --window-height: 328px;
-      --window-offset-x: -133px;
-      --window-offset-y: -164px;
-    }
-  }
-
-  @media (max-width: 40rem) {
-    .wall-navigation-hint {
-      max-width: calc(100vw - 5.5rem);
-      font-size: 0.66rem;
-      letter-spacing: 0.035em;
-    }
-
-    /* The brick mask is anchored to the top of the viewport, while the
+  /* The brick mask is anchored to the top of the viewport, while the
        baseboard lands at a viewport-dependent Y position. Snap to the last
        actual mortar line above the baseboard before moving up 2.5 courses, so
        the hint is geometrically centered in the third complete brick row. */
-    @supports (top: round(down, 100%, 24px)) {
-      .wall-navigation-hint {
-        top: calc(round(down, var(--baseboard-top), var(--brick-course-height)) - 60px);
-      }
-    }
-
-    .wall-stage {
-      --window-width: 248px;
-      --window-height: 308px;
-      --window-offset-x: -124px;
-      --window-offset-y: -154px;
-      --wall-control-bottom-gap: 0.48rem;
-    }
-
-    .wall-motion-toggle {
-      right: max(0.75rem, calc(env(safe-area-inset-right, 0px) + 0.6rem));
-    }
-
-    .wall-sound-toggle {
-      left: max(0.75rem, calc(env(safe-area-inset-left, 0px) + 0.6rem));
+  @supports (top: round(down, 100%, 24px)) {
+    .wall-navigation-hint {
+      top: calc(
+        round(down, var(--baseboard-top), var(--brick-course-height)) - 60px
+      );
     }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .wall-navigation-hint,
-    .wall-corner-control {
-      transition: none;
-    }
+  .wall-stage {
+    --window-width: 248px;
+    --window-height: 308px;
+    --window-offset-x: -124px;
+    --window-offset-y: -154px;
+    --wall-control-bottom-gap: 0.48rem;
   }
 
+  .wall-motion-toggle {
+    right: max(0.75rem, calc(env(safe-area-inset-right, 0px) + 0.6rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall-navigation-hint,
+  .wall-corner-control {
+    transition: none;
+  }
+}
 
 /* Extracted from WallWindow.svelte; kept global/resident for reliable production swaps. */
 .wall-window {
-    --room-light-hot: var(--wall-light, #f4f1e9);
-    --wall-label-ink: var(--room-label-ink, var(--wall-light, #f4f1e9));
-    --wall-frame-outline: var(--room-outline, var(--wall-light, #f4f1e9));
+  --room-light-hot: var(--wall-light, #f4f1e9);
+  --wall-label-ink: var(--room-label-ink, var(--wall-light, #f4f1e9));
+  --wall-frame-outline: var(--room-outline, var(--wall-light, #f4f1e9));
 
-    position: absolute;
-    z-index: 3;
-    top: calc((100% - var(--floor-height)) / 2 + 1.125rem);
-    bottom: auto;
-    display: block;
-    box-sizing: border-box;
-    width: var(--window-width);
-    height: var(--window-height);
-    margin-top: var(--window-offset-y);
-    margin-left: var(--window-offset-x);
-    color: color-mix(in srgb, var(--wall-label-ink) 72%, transparent);
-    outline: none;
-    text-decoration: none;
-    user-select: none;
-    -webkit-user-drag: none;
-  }
+  position: absolute;
+  z-index: 3;
+  top: calc((100% - var(--floor-height)) / 2 + 1.125rem);
+  bottom: auto;
+  display: block;
+  box-sizing: border-box;
+  width: var(--window-width);
+  height: var(--window-height);
+  margin-top: var(--window-offset-y);
+  margin-left: var(--window-offset-x);
+  color: color-mix(in srgb, var(--wall-label-ink) 72%, transparent);
+  outline: none;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
 
-  .wall-window__recess {
-    position: absolute;
-    top: 0;
-    left: 0;
-    box-sizing: border-box;
-    width: 100%;
-    height: calc(100% - 2.25rem);
-    overflow: hidden;
-    contain: paint;
-    border: 0.7rem solid #050505;
-    background: #020202;
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--wall-frame-outline) 24%, transparent),
-      0 0 0 0.32rem #0b0b0b,
-      0.65rem 0.85rem 1.15rem rgb(0 0 0 / 66%),
-      0 0 2.6rem color-mix(in srgb, var(--room-light-hot) 8%, transparent),
-      inset 0 0 2.2rem rgb(0 0 0 / 88%);
-    transition:
-      box-shadow 320ms cubic-bezier(0.2, 0.75, 0.25, 1),
-      border-color 320ms ease;
-  }
+.wall-window__recess {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: calc(100% - 2.25rem);
+  overflow: hidden;
+  contain: paint;
+  border: 0.7rem solid #050505;
+  background: #020202;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--wall-frame-outline) 24%, transparent),
+    0 0 0 0.32rem #0b0b0b,
+    0.65rem 0.85rem 1.15rem rgb(0 0 0 / 66%),
+    0 0 2.6rem color-mix(in srgb, var(--room-light-hot) 8%, transparent),
+    inset 0 0 2.2rem rgb(0 0 0 / 88%);
+  transition:
+    box-shadow 320ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    border-color 320ms ease;
+}
 
-  .wall-window__glass {
-    position: absolute;
-    inset: 0.3rem;
-    box-sizing: border-box;
-    overflow: hidden;
-    contain: paint;
-    background: #0b0b0a;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wall-frame-outline) 26%, transparent);
-  }
+.wall-window__glass {
+  position: absolute;
+  inset: 0.3rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  contain: paint;
+  background: #0b0b0a;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--wall-frame-outline) 26%, transparent);
+}
 
-  .wall-window__painting {
-    position: relative;
-    z-index: 1;
-    display: block;
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: var(--painting-fit, cover);
-    object-position: var(--painting-position);
-    transform: none;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-drag: none;
-  }
+.wall-window__painting {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: var(--painting-fit, cover);
+  object-position: var(--painting-position);
+  transform: none;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
 
-  .wall-window__glass::after {
-    position: absolute;
-    z-index: 2;
-    inset: 0;
-    background: rgb(0 0 0 / 14%);
-    content: '';
-    opacity: 1;
-    pointer-events: none;
-    transition: opacity 320ms cubic-bezier(0.2, 0.75, 0.25, 1);
-  }
+.wall-window__glass::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background: rgb(0 0 0 / 14%);
+  content: '';
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 320ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
 
-  .wall-window__reflection {
-    position: absolute;
-    z-index: 3;
-    inset: 0.45rem;
-    background:
-      linear-gradient(112deg, transparent 12%, color-mix(in srgb, var(--wall-light, #f4f1e9) 6%, transparent) 27%, transparent 42%),
-      linear-gradient(180deg, color-mix(in srgb, var(--wall-light, #f4f1e9) 2%, transparent), transparent 38%);
-    pointer-events: none;
-  }
+.wall-window__reflection {
+  position: absolute;
+  z-index: 3;
+  inset: 0.45rem;
+  background:
+    linear-gradient(
+      112deg,
+      transparent 12%,
+      color-mix(in srgb, var(--wall-light, #f4f1e9) 6%, transparent) 27%,
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--wall-light, #f4f1e9) 2%, transparent),
+      transparent 38%
+    );
+  pointer-events: none;
+}
 
-  .wall-window__sill {
-    position: absolute;
-    right: -0.65rem;
-    bottom: 2rem;
-    left: -0.65rem;
-    height: 0.55rem;
-    background: #050505;
-    border-top: 1px solid color-mix(in srgb, var(--wall-frame-outline) 24%, transparent);
-    box-shadow: 0 0.5rem 0.65rem rgb(0 0 0 / 58%);
-  }
+.wall-window__sill {
+  position: absolute;
+  right: -0.65rem;
+  bottom: 2rem;
+  left: -0.65rem;
+  height: 0.55rem;
+  background: #050505;
+  border-top: 1px solid
+    color-mix(in srgb, var(--wall-frame-outline) 24%, transparent);
+  box-shadow: 0 0.5rem 0.65rem rgb(0 0 0 / 58%);
+}
 
-  .wall-window__label {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 0.7rem;
-    color: color-mix(in srgb, var(--wall-label-ink) 58%, transparent);
-    font-family: var(--font-sans, system-ui, sans-serif);
-    font-size: 0.7rem;
-    font-weight: 400;
-    letter-spacing: 0.16em;
-    line-height: 1;
-    text-transform: uppercase;
-    transition: color 260ms ease;
-  }
+.wall-window__label {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  color: color-mix(in srgb, var(--wall-label-ink) 58%, transparent);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  transition: color 260ms ease;
+}
 
-  .wall-window__index {
-    color: color-mix(in srgb, var(--wall-label-ink) 38%, transparent);
-    font-variant-numeric: tabular-nums;
-  }
+.wall-window__index {
+  color: color-mix(in srgb, var(--wall-label-ink) 38%, transparent);
+  font-variant-numeric: tabular-nums;
+}
 
-  /* The off-screen loop copies are visual/infinite-scroll replicas, not extra
+/* The off-screen loop copies are visual/infinite-scroll replicas, not extra
      document content. Their labels are painted from data attributes so search
      engines and assistive technology encounter one canonical navigation set. */
-  .wall-window__label--clone .wall-window__index::before,
-  .wall-window__label--clone .wall-window__name::before {
-    content: attr(data-display-text);
+.wall-window__label--clone .wall-window__index::before,
+.wall-window__label--clone .wall-window__name::before {
+  content: attr(data-display-text);
+}
+
+.wall-window__arrow {
+  display: grid;
+  width: 0.9rem;
+  height: 0.9rem;
+  place-items: center;
+  opacity: 0;
+  transform: translate(-0.2rem, 0.2rem);
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
+}
+
+.wall-window__arrow svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .wall-window:hover {
+    color: var(--wall-label-ink);
   }
 
-  .wall-window__arrow {
-    display: grid;
-    width: 0.9rem;
-    height: 0.9rem;
-    place-items: center;
+  .wall-window:hover .wall-window__recess {
+    border-color: #080808;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--wall-frame-outline) 36%, transparent),
+      0 0 0 0.32rem #0d0d0d,
+      0.65rem 0.85rem 1.15rem rgb(0 0 0 / 68%),
+      0 0 2.8rem color-mix(in srgb, var(--room-light-hot) 32%, transparent),
+      inset 0 0 1.5rem rgb(0 0 0 / 58%);
+  }
+
+  .wall-window:hover .wall-window__glass::after {
     opacity: 0;
-    transform: translate(-0.2rem, 0.2rem);
-    transition:
-      opacity 260ms ease,
-      transform 260ms ease;
   }
 
-  .wall-window__arrow svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.35;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+  .wall-window:hover .wall-window__label {
+    color: color-mix(in srgb, var(--wall-label-ink) 92%, transparent);
   }
 
-  @media (hover: hover) and (pointer: fine) {
-    .wall-window:hover {
-      color: var(--wall-label-ink);
-    }
-
-    .wall-window:hover .wall-window__recess {
-      border-color: #080808;
-      box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--wall-frame-outline) 36%, transparent),
-        0 0 0 0.32rem #0d0d0d,
-        0.65rem 0.85rem 1.15rem rgb(0 0 0 / 68%),
-        0 0 2.8rem color-mix(in srgb, var(--room-light-hot) 32%, transparent),
-        inset 0 0 1.5rem rgb(0 0 0 / 58%);
-    }
-
-    .wall-window:hover .wall-window__glass::after {
-      opacity: 0;
-    }
-
-    .wall-window:hover .wall-window__label {
-      color: color-mix(in srgb, var(--wall-label-ink) 92%, transparent);
-    }
-
-    .wall-window:hover .wall-window__arrow {
-      opacity: 1;
-      transform: translate(0, 0);
-    }
+  .wall-window:hover .wall-window__arrow {
+    opacity: 1;
+    transform: translate(0, 0);
   }
+}
 
-  .wall-window:focus-visible .wall-window__recess {
-    outline: 2px solid color-mix(in srgb, var(--wall-frame-outline) 82%, transparent);
-    outline-offset: 0.5rem;
+.wall-window:focus-visible .wall-window__recess {
+  outline: 2px solid
+    color-mix(in srgb, var(--wall-frame-outline) 82%, transparent);
+  outline-offset: 0.5rem;
+}
+
+@media (max-width: 40rem) {
+  .wall-window__label {
+    font-size: 0.76rem;
   }
+}
 
-  @media (max-width: 40rem) {
-    .wall-window__label {
-      font-size: 0.76rem;
-    }
+@media (prefers-reduced-motion: reduce) {
+  .wall-window__recess,
+  .wall-window__glass::after,
+  .wall-window__label,
+  .wall-window__arrow {
+    transition: none;
   }
+}
 
-  @media (prefers-reduced-motion: reduce) {
-    .wall-window__recess,
-    .wall-window__glass::after,
-    .wall-window__label,
-    .wall-window__arrow {
-      transition: none;
-    }
-  }
-
-/* Keep the Home wall mounted across primary-room swaps so its camera position,
-   pause state, and audio state are not destroyed by navigation. */
+/* Keep the Home wall mounted across primary-room swaps so its camera position
+   and pause state are not destroyed by navigation. */
 .wall-stage--inactive {
   visibility: hidden;
   pointer-events: none;

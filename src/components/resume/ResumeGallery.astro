@@ -4,72 +4,68 @@ import { pdfViewerHref, withBase } from '@/lib/paths';
 const resumes = [
   {
     id: 'software',
-    eyebrow: 'Software Engineering',
     fullTitle: 'Software Engineering Resume',
     pdf: '/resumes/cyrus-asasi-software-engineering-resume.pdf',
     preview: '/images/resume/cyrus-asasi-software-engineering-resume-480.webp',
-    preview720: '/images/resume/cyrus-asasi-software-engineering-resume-720.webp',
-    alt: 'Preview of Cyrus Asasi’s software engineering resume',
+    preview720:
+      '/images/resume/cyrus-asasi-software-engineering-resume-720.webp',
+    alt: 'Cyrus Asasi’s software engineering resume',
   },
   {
     id: 'clarinet',
-    eyebrow: 'Clarinet Performance',
     fullTitle: 'Clarinet Performance Resume',
     pdf: '/resumes/cyrus-asasi-clarinet-performance-resume.pdf',
     preview: '/images/resume/cyrus-asasi-clarinet-performance-resume-480.webp',
-    preview720: '/images/resume/cyrus-asasi-clarinet-performance-resume-720.webp',
-    alt: 'Preview of Cyrus Asasi’s clarinet performance resume',
+    preview720:
+      '/images/resume/cyrus-asasi-clarinet-performance-resume-720.webp',
+    alt: 'Cyrus Asasi’s clarinet performance resume',
   },
 ] as const;
 ---
 
-<section class="resume-gallery" aria-label="Resumes">
-  <div class="resume-gallery__wall-zone">
-    <div class="resume-gallery__grid" aria-label="Resume choices">
-      {resumes.map((resume, index) => (
-        <article class={`resume-card resume-card--${resume.id}`}>
-          <a
-            class="resume-card__frame"
-            href={pdfViewerHref(resume.pdf)}
-            aria-label={`View ${resume.fullTitle}`}
-            data-astro-prefetch
-          >
-            <span class="resume-card__glass">
-              <img
-                src={withBase(resume.preview)}
-                srcset={`${withBase(resume.preview)} 480w, ${withBase(resume.preview720)} 720w`}
-                sizes="(max-width: 21rem) calc(100vw - 2rem), 304px"
-                alt={resume.alt}
-                width="480"
-                height="676"
-                draggable="false"
-                decoding="async"
-              />
-              <span class="resume-card__shade" aria-hidden="true"></span>
-              <span class="resume-card__reflection" aria-hidden="true"></span>
-            </span>
-            <span class="resume-card__sill" aria-hidden="true"></span>
-          </a>
+<section class="resume-scrolls" aria-label="Resumes">
+  <div class="resume-scrolls__grid">
+    {
+      resumes.map((resume) => (
+        <article
+          class={`about-scroll-paper resume-scroll resume-scroll--${resume.id}`}
+          aria-label={resume.fullTitle}
+        >
+          <div
+            class="about-scroll-paper__roll about-scroll-paper__roll--top"
+            aria-hidden="true"
+          />
 
-          <div class="resume-card__caption">
+          <div class="about-scroll-paper__sheet resume-scroll__sheet">
             <a
-              class="resume-card__label"
+              class="resume-scroll__document"
               href={pdfViewerHref(resume.pdf)}
               aria-label={`View ${resume.fullTitle}`}
               data-astro-prefetch
             >
-              <span class="resume-card__index">{String(index + 1).padStart(2, '0')}</span>
-              <span class="resume-card__name">{resume.eyebrow}</span>
-              <span class="resume-card__arrow" aria-hidden="true">
-                <svg viewBox="0 0 16 16" width="16" height="16" focusable="false">
-                  <path d="M4 12 12 4M6.25 4H12v5.75" />
-                </svg>
-              </span>
+              <picture>
+                <source
+                  media="(max-width: 32rem)"
+                  srcset={withBase(resume.preview)}
+                />
+                <img
+                  src={withBase(resume.preview720)}
+                  alt={resume.alt}
+                  width="720"
+                  height="1018"
+                  draggable="false"
+                  decoding="async"
+                />
+              </picture>
             </a>
-
           </div>
+
+          <div
+            class="about-scroll-paper__roll about-scroll-paper__roll--bottom"
+            aria-hidden="true"
+          />
         </article>
-      ))}
-    </div>
+      ))
+    }
   </div>
 </section>

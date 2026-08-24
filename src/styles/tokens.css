@@ -21,18 +21,16 @@
 
   --duration-fast: 140ms;
 
-
   /* Summer-light fallbacks. themes.css replaces these from data attributes. */
   --bg: #fff8e8;
   --surface-strong: #fffdf5;
   --text: #173d3b;
   --line: rgba(24, 92, 87, 0.2);
-  --accent: #0f7773;
-  --accent-strong: #07524f;
-  --accent-soft: rgba(15, 119, 115, 0.13);
-  --header-accent: #e76e5d;
+  --accent: #051417;
+  --accent-strong: #051417;
+  --accent-soft: rgba(5, 20, 23, 0.13);
+  --header-accent: #051417;
 }
-
 
 /* On phones the navigation becomes two architectural rows. Each row remains
    exactly two brick courses tall, so the header stays locked to the wall's

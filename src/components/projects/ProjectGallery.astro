@@ -1,5 +1,5 @@
 ---
-import { indexProjects, miscProjects } from '@/data/projects';
+import { indexProjects } from '@/data/projects';
 import { withBase } from '@/lib/paths';
 
 const resolveHref = (href: string) =>
@@ -8,106 +8,36 @@ const isExternal = (href: string) => href.startsWith('http');
 ---
 
 <section class="project-index" aria-labelledby="project-index-title">
-  <div class="project-index__shell">
-    <header class="project-index__intro">
-      <p class="project-index__eyebrow">Selected work · 2019–2026</p>
-      <div class="project-index__heading-row">
-        <h1 id="project-index-title">Projects</h1>
-        <p>
-          Systems, tools, and small experiments built to solve real problems.
-        </p>
-      </div>
-    </header>
+  <h1 class="project-index__sr-title" id="project-index-title">Projects</h1>
 
-    <ol class="project-grid">
-      {
-        indexProjects.map((project, index) => (
-          <li
-            class:list={[
-              'project-grid__item',
-              index === 0 && 'project-grid__item--flagship',
-            ]}
+  <ol class="project-grid">
+    {
+      indexProjects.map((project) => (
+        <li class="project-grid__item">
+          <a
+            class="project-entry"
+            href={resolveHref(project.primaryHref)}
+            target={isExternal(project.primaryHref) ? '_blank' : undefined}
+            rel={
+              isExternal(project.primaryHref)
+                ? 'noopener noreferrer'
+                : undefined
+            }
+            data-astro-prefetch={!isExternal(project.primaryHref)}
+            aria-label={`Open ${project.title}`}
           >
-            <article class="project-entry">
-              <div class="project-entry__meta">
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <span>{project.category}</span>
-                <span>{project.period}</span>
-              </div>
-
-              <a
-                class="project-entry__title"
-                href={resolveHref(project.primaryHref)}
-                target={isExternal(project.primaryHref) ? '_blank' : undefined}
-                rel={
-                  isExternal(project.primaryHref)
-                    ? 'noopener noreferrer'
-                    : undefined
-                }
-                data-astro-prefetch={!isExternal(project.primaryHref)}
-              >
-                <h2>{project.title}</h2>
-                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                  <path d="M4 12 12 4M6.25 4H12v5.75" />
-                </svg>
-              </a>
-
-              <p class="project-entry__summary">{project.tagline}</p>
-
-              <div class="project-entry__footer">
-                <ul
-                  class="project-entry__stack"
-                  aria-label={`${project.title} technologies`}
-                >
-                  {project.technologies.map((technology) => (
-                    <li>{technology}</li>
-                  ))}
-                </ul>
-
-                <nav aria-label={`${project.title} links`}>
-                  <ul class="project-entry__links">
-                    {project.links.map((link) => (
-                      <li>
-                        <a
-                          href={resolveHref(link.href)}
-                          target={isExternal(link.href) ? '_blank' : undefined}
-                          rel={
-                            isExternal(link.href)
-                              ? 'noopener noreferrer'
-                              : undefined
-                          }
-                          data-astro-prefetch={!isExternal(link.href)}
-                        >
-                          {link.label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-              </div>
-            </article>
-          </li>
-        ))
-      }
-    </ol>
-
-    <section class="project-archive" aria-labelledby="project-archive-title">
-      <h2 id="project-archive-title">Earlier work</h2>
-      <ul>
-        {
-          miscProjects.map((project) => (
-            <li>
-              <a href={project.href} target="_blank" rel="noopener noreferrer">
-                <span>{project.title}</span>
-                <span>{project.note}</span>
-                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                  <path d="M4 12 12 4M6.25 4H12v5.75" />
-                </svg>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </section>
-  </div>
+            <h2>{project.title}</h2>
+            <svg
+              class="project-entry__arrow"
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M4 12 12 4M6.25 4H12v5.75" />
+            </svg>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
 </section>

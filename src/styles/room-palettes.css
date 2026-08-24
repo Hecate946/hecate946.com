@@ -1,94 +1,70 @@
 /*
  * Shared color system for every room except Home.
  *
- * COLOR TWEAKING: this is the one file to edit for page background colors.
- * Change only the --wall-dark values in the two palette sections below:
- *   LIGHT = macaron pastels
- *   DARK  = rich, saturated companions
- *
- * All themed rooms use white text and white linework in both modes.
- * Home intentionally continues to use src/styles/themes.css unchanged.
+ * Every primary room shares one wall color per mode. White remains the etched
+ * text/linework color, while accents use the opposite wall color for contrast.
  */
 .room-themed {
-  --wall-light: #fff8ec;
+  --wall-light: #fff8e8;
   --room-outline: #fff;
   --wall-outline: var(--room-outline);
   --room-nav-ink: var(--room-outline);
   --room-label-ink: var(--room-outline);
   --room-control-ink: var(--room-outline);
+  --room-structural-line: color-mix(
+    in srgb,
+    var(--room-outline) 22%,
+    transparent
+  );
   --room-surface-base: var(--wall-dark);
 
   --header-accent: var(--room-outline);
   --text: var(--room-outline);
   --line: color-mix(in srgb, var(--room-outline) 24%, transparent);
   --surface-strong: var(--room-surface-base);
-  --accent: var(--room-outline);
-  --accent-strong: var(--room-outline);
-  --accent-soft: color-mix(in srgb, var(--room-outline) 12%, transparent);
+  --accent: var(--room-accent);
+  --accent-strong: var(--room-accent);
+  --accent-soft: color-mix(in srgb, var(--room-accent) 12%, transparent);
 
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 86%, #090909);
   --wall-trim-line: color-mix(in srgb, var(--room-outline) 28%, transparent);
-  --wall-trim-line-soft: color-mix(in srgb, var(--room-outline) 16%, transparent);
-  --wall-trim-highlight: color-mix(in srgb, var(--room-outline) 10%, transparent);
+  --wall-trim-line-soft: color-mix(
+    in srgb,
+    var(--room-outline) 16%,
+    transparent
+  );
+  --wall-trim-highlight: color-mix(
+    in srgb,
+    var(--room-outline) 10%,
+    transparent
+  );
   --wall-trim-border-bottom: var(--wall-trim-line-soft);
   --wall-trim-shadow: rgb(0 0 0 / 38%);
 }
 
 /* -------------------------------------------------------------------------- */
-/* LIGHT MODE — macaron palette + white text/linework                         */
+/* LIGHT MODE — contact-room green + homepage-dark accents                   */
 /* -------------------------------------------------------------------------- */
 html[data-theme='light'] .room-themed {
-  --room-surface-base: color-mix(in srgb, var(--wall-light) 84%, var(--wall-dark));
+  --wall-dark: #6d9e92;
+  --room-accent: #051417;
+  --room-surface-base: color-mix(
+    in srgb,
+    var(--wall-light) 84%,
+    var(--wall-dark)
+  );
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 72%, #272321);
   --wall-trim-shadow: rgb(39 31 27 / 24%);
 }
 
-/* Peach macaron. */
-html[data-theme='light'] .room-theme-about {
-  --wall-dark: #d897b2;
-}
-
-/* Lavender macaron. */
-html[data-theme='light'] .room-theme-projects {
-  --wall-dark: #b6a6cc;
-}
-
-/* Airy apricot. */
-html[data-theme='light'] .room-theme-resume {
-  --wall-dark: #dfa06f;
-}
-
-/* Pistachio macaron. */
-html[data-theme='light'] .room-theme-contact {
-  --wall-dark: #6d9e92;
-}
-
 /* -------------------------------------------------------------------------- */
-/* DARK MODE — rich palette + white text/linework                             */
+/* DARK MODE — homepage-dark wall + contact-green accents                     */
 /* -------------------------------------------------------------------------- */
 html[data-theme='dark'] .room-themed {
+  --wall-dark: #051417;
   --wall-light: #fff8e8;
+  --room-accent: #6d9e92;
   --room-surface-base: color-mix(in srgb, var(--wall-dark) 86%, black);
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 91%, #090909);
   --wall-trim-shadow: rgb(0 0 0 / 44%);
-}
-
-/* Rich terracotta. */
-html[data-theme='dark'] .room-theme-about {
-  --wall-dark: #380a12;
-}
-
-/* Royal plum. */
-html[data-theme='dark'] .room-theme-projects {
-  --wall-dark: #130a1f;
-}
-
-/* Deep burnt orange. */
-html[data-theme='dark'] .room-theme-resume {
-  --wall-dark: #8f3510;
-}
-
-/* Saturated emerald. */
-html[data-theme='dark'] .room-theme-contact {
-  --wall-dark: #041b0b;
 }

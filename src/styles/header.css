@@ -5,7 +5,10 @@
   --control-radius: 0.5rem;
   --nav-ink: var(--room-nav-ink, var(--wall-light, #fff8e8));
   --nav-outline: var(--room-outline, var(--nav-ink));
-  --nav-border-color: color-mix(in srgb, var(--nav-outline) 62%, transparent);
+  --nav-border-color: var(
+    --room-structural-line,
+    color-mix(in srgb, var(--nav-outline) 22%, transparent)
+  );
   --nav-underline-color: color-mix(in srgb, var(--nav-ink) 72%, transparent);
 
   position: relative;
@@ -127,16 +130,22 @@ html:not([data-theme-ready='true']) .site-header * {
 
 .mode-slot > astro-island {
   display: flex;
-  width: 100%;
+  width: auto;
   height: 100%;
   min-width: 0;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
 }
 
-.mode-control {
+.mode-slot {
+  gap: 0.55rem;
+}
+
+.mode-control,
+.audio-control {
   display: flex;
-  width: 100%;
+  width: auto;
   height: 100%;
   align-items: center;
   justify-content: center;
@@ -187,6 +196,19 @@ html:not([data-theme-ready='true']) .site-header * {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.6;
+}
+
+.audio-icon svg {
+  display: block;
+  width: 1.2rem;
+  height: 1.2rem;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  transform: translateX(-1px);
 }
 
 /* The icon advertises the mode the button will switch to. */

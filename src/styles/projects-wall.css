@@ -19,379 +19,183 @@ body.projects-wall-page > main.projects-wall-main {
 
 .project-index {
   --project-ink: var(--room-label-ink, var(--wall-light, #f4f1e9));
-  --project-ink-muted: color-mix(in srgb, var(--project-ink) 58%, transparent);
-  --project-groove: color-mix(in srgb, var(--project-ink) 25%, transparent);
-  --project-pressed-shadow: rgb(0 0 0 / 34%);
+  --project-cut-face: color-mix(
+    in srgb,
+    var(--project-ink) 84%,
+    var(--wall-dark)
+  );
+  --project-cut-shadow: rgb(0 0 0 / 66%);
+  --project-cut-highlight: color-mix(
+    in srgb,
+    var(--project-ink) 10%,
+    transparent
+  );
+  --project-grid-line: var(
+    --room-structural-line,
+    color-mix(in srgb, var(--room-outline, var(--project-ink)) 22%, transparent)
+  );
+  --sheet-row-height: calc(var(--brick-course-height) * 3);
 
   position: relative;
   box-sizing: border-box;
   min-height: calc(100svh - var(--header-height));
-  padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 4vw, 4rem)
-    calc(var(--room-floor-reserve, 9rem) + 2.25rem);
+  padding: 0 0 var(--room-floor-reserve, 9rem);
   color: var(--project-ink);
 }
 
-.project-index__shell {
-  width: min(100%, 72rem);
-  margin-inline: auto;
-}
-
-.project-index__intro {
-  display: grid;
-  gap: 0.8rem;
-  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
-}
-
-.project-index__eyebrow,
-.project-entry__meta,
-.project-entry__stack,
-.project-entry__links,
-.project-archive {
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-}
-
-.project-index__eyebrow {
-  margin: 0;
-  color: var(--project-ink-muted);
-  font-size: 0.66rem;
-  letter-spacing: 0.13em;
-  line-height: 1;
-  text-shadow:
-    -1px -1px 0 var(--project-pressed-shadow),
-    1px 1px 0 color-mix(in srgb, var(--project-ink) 9%, transparent);
-}
-
-.project-index__heading-row {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--project-groove);
-  box-shadow: 0 1px 0 rgb(0 0 0 / 24%);
-}
-
-.project-index__heading-row h1 {
-  margin: 0;
-  color: color-mix(in srgb, var(--project-ink) 92%, transparent);
-  font-family: var(--font-display);
-  font-size: clamp(3.1rem, 8vw, 6.6rem);
-  font-weight: 400;
-  letter-spacing: -0.055em;
-  line-height: 0.72;
-  text-shadow:
-    -1px -1px 0 var(--project-pressed-shadow),
-    1px 1px 0 color-mix(in srgb, var(--project-ink) 10%, transparent);
-  text-transform: uppercase;
-}
-
-.project-index__heading-row > p {
-  width: min(100%, 24rem);
-  margin: 0;
-  color: color-mix(in srgb, var(--project-ink) 70%, transparent);
-  font-size: clamp(0.86rem, 1.2vw, 1rem);
-  line-height: 1.45;
-  text-align: right;
-  text-wrap: balance;
-  text-shadow: 0 -1px 0 var(--project-pressed-shadow);
+.project-index__sr-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .project-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  min-height: calc(
+    100svh - var(--header-height) - var(--room-floor-reserve, 9rem)
+  );
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: var(--sheet-row-height);
   margin: 0;
   padding: 0;
-  border-top: 1px solid var(--project-groove);
-  border-left: 1px solid var(--project-groove);
-  box-shadow:
-    inset 1px 1px 1px rgb(0 0 0 / 24%),
-    -1px -1px 0 color-mix(in srgb, var(--project-ink) 7%, transparent);
+  background-image:
+    linear-gradient(
+      to right,
+      transparent calc(25% - 1px),
+      var(--project-grid-line) calc(25% - 1px) 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      to right,
+      transparent calc(50% - 1px),
+      var(--project-grid-line) calc(50% - 1px) 50%,
+      transparent 50%
+    ),
+    linear-gradient(
+      to right,
+      transparent calc(75% - 1px),
+      var(--project-grid-line) calc(75% - 1px) 75%,
+      transparent 75%
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(var(--sheet-row-height) - 1px),
+      var(--project-grid-line) calc(var(--sheet-row-height) - 1px)
+        var(--sheet-row-height)
+    );
   list-style: none;
 }
 
 .project-grid__item {
   min-width: 0;
-  border-right: 1px solid var(--project-groove);
-  border-bottom: 1px solid var(--project-groove);
-  box-shadow:
-    inset 1px 1px 1px rgb(0 0 0 / 24%),
-    inset -1px -1px 0 color-mix(in srgb, var(--project-ink) 6%, transparent);
-}
-
-.project-grid__item--flagship {
-  grid-column: 1 / -1;
 }
 
 .project-entry {
-  display: flex;
-  min-height: 12rem;
-  flex-direction: column;
-  padding: clamp(1rem, 2.1vw, 1.5rem);
-  transition:
-    box-shadow 160ms ease,
-    background-color 160ms ease;
-}
-
-.project-grid__item--flagship .project-entry {
-  min-height: 10.5rem;
-}
-
-.project-entry__meta {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) auto;
-  gap: 0.75rem;
-  color: var(--project-ink-muted);
-  font-size: 0.6rem;
-  letter-spacing: 0.11em;
-  line-height: 1.2;
-  text-shadow: 0 -1px 0 var(--project-pressed-shadow);
-}
-
-.project-entry__meta span:last-child {
-  text-align: right;
-}
-
-.project-entry__title {
-  display: flex;
-  min-width: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0.7rem 0.9rem;
+  color: var(--project-cut-face);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 0.82rem;
-  color: color-mix(in srgb, var(--project-ink) 92%, transparent);
+  gap: 0.75rem;
   text-decoration: none;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
 }
 
-.project-entry__title h2 {
+.project-entry h2 {
   min-width: 0;
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.65rem, 3.1vw, 2.65rem);
-  font-weight: 400;
-  letter-spacing: -0.035em;
-  line-height: 0.95;
+  font-family: var(--font-mono);
+  font-size: clamp(0.7rem, 1vw, 0.82rem);
+  font-weight: 500;
+  letter-spacing: 0.055em;
+  line-height: 1;
+  overflow-wrap: anywhere;
   text-shadow:
-    -1px -1px 0 var(--project-pressed-shadow),
-    1px 1px 0 color-mix(in srgb, var(--project-ink) 9%, transparent);
+    -1px -1px 0 var(--project-cut-shadow),
+    1px 1px 0 var(--project-cut-highlight);
   text-transform: uppercase;
 }
 
-.project-grid__item--flagship .project-entry__title h2 {
-  font-size: clamp(2.25rem, 5vw, 4.2rem);
-}
-
-.project-entry__title svg,
-.project-archive svg {
+.project-entry__arrow {
   display: block;
-  width: 1rem;
-  height: 1rem;
-  flex: 0 0 auto;
+  width: 0.56rem;
+  height: 0.56rem;
   fill: none;
-  stroke: currentColor;
+  stroke: color-mix(in srgb, var(--project-ink) 52%, var(--wall-dark));
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.25;
-  transition: transform 160ms ease;
-}
-
-.project-entry__summary {
-  max-width: 39rem;
-  margin: 0.65rem 0 1.2rem;
-  color: color-mix(in srgb, var(--project-ink) 72%, transparent);
-  font-size: 0.92rem;
-  line-height: 1.38;
-  text-shadow: 0 -1px 0 var(--project-pressed-shadow);
-  text-wrap: pretty;
-}
-
-.project-entry__footer {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: auto;
-}
-
-.project-entry__stack,
-.project-entry__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.72rem;
-  margin: 0;
-  padding: 0;
-  color: var(--project-ink-muted);
-  font-size: 0.57rem;
-  letter-spacing: 0.08em;
-  line-height: 1.25;
-  list-style: none;
-}
-
-.project-entry__stack li:not(:last-child)::after {
-  margin-left: 0.72rem;
-  color: var(--project-groove);
-  content: '/';
-}
-
-.project-entry__links {
-  flex: 0 0 auto;
-  justify-content: flex-end;
-  font-size: 0.6rem;
-}
-
-.project-entry__links a {
-  color: color-mix(in srgb, var(--project-ink) 78%, transparent);
-  text-decoration-color: var(--project-groove);
-  text-decoration-line: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18rem;
-}
-
-.project-archive {
-  display: grid;
-  grid-template-columns: minmax(8rem, 0.7fr) minmax(0, 3fr);
-  margin-top: 1.4rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--project-groove);
-  box-shadow: 0 -1px 0 rgb(0 0 0 / 20%);
-}
-
-.project-archive h2 {
-  margin: 0;
-  color: var(--project-ink-muted);
-  font: inherit;
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-}
-
-.project-archive ul {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.project-archive a {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 0.8rem;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0 0 0.6rem;
-  color: color-mix(in srgb, var(--project-ink) 76%, transparent);
-  font-size: 0.59rem;
-  letter-spacing: 0.08em;
-  text-decoration: none;
-}
-
-.project-archive a span:nth-child(2) {
-  overflow: hidden;
-  color: var(--project-ink-muted);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  stroke-width: 1.2;
+  transition: transform 140ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .project-grid__item:hover .project-entry {
+  .project-entry:hover {
     background: color-mix(in srgb, var(--project-ink) 2.5%, transparent);
-    box-shadow:
-      inset 2px 2px 3px rgb(0 0 0 / 25%),
-      inset -1px -1px 1px color-mix(in srgb, var(--project-ink) 7%, transparent);
+    color: color-mix(in srgb, var(--project-ink) 76%, var(--wall-dark));
   }
 
-  .project-entry__title:hover,
-  .project-entry__links a:hover,
-  .project-archive a:hover {
-    color: var(--project-ink);
-  }
-
-  .project-entry__title:hover svg,
-  .project-archive a:hover svg {
-    transform: translate(0.12rem, -0.12rem);
+  .project-entry:hover .project-entry__arrow {
+    transform: translate(0.1rem, -0.1rem);
   }
 }
 
-.project-entry__title:focus-visible,
-.project-entry__links a:focus-visible,
-.project-archive a:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--project-ink) 82%, transparent);
-  outline-offset: 0.25rem;
+.project-entry:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 1px solid color-mix(in srgb, var(--project-ink) 58%, transparent);
+  outline-offset: -0.2rem;
 }
 
 @media (max-width: 48rem) {
-  .project-index {
-    padding-top: 2.4rem;
-  }
-
-  .project-index__heading-row {
-    display: grid;
-    gap: 0.9rem;
-  }
-
-  .project-index__heading-row h1 {
-    font-size: clamp(3.3rem, 18vw, 5.2rem);
-  }
-
-  .project-index__heading-row > p {
-    width: min(100%, 29rem);
-    text-align: left;
-  }
-
   .project-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    background-image:
+      linear-gradient(
+        to right,
+        transparent calc(50% - 1px),
+        var(--project-grid-line) calc(50% - 1px) 50%,
+        transparent 50%
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 calc(var(--sheet-row-height) - 1px),
+        var(--project-grid-line) calc(var(--sheet-row-height) - 1px)
+          var(--sheet-row-height)
+      );
   }
 
-  .project-grid__item--flagship {
-    grid-column: auto;
-  }
-
-  .project-entry,
-  .project-grid__item--flagship .project-entry {
-    min-height: 11.5rem;
-  }
-
-  .project-grid__item--flagship .project-entry__title h2 {
-    font-size: clamp(2rem, 12vw, 3.15rem);
-  }
-
-  .project-archive {
-    grid-template-columns: 1fr;
-    gap: 0.8rem;
-  }
-
-  .project-archive ul {
-    grid-template-columns: 1fr;
+  .project-entry h2 {
+    font-size: clamp(0.68rem, 2.8vw, 0.8rem);
   }
 }
 
-@media (max-width: 30rem) {
-  .project-index {
-    padding-inline: 0.75rem;
-  }
-
-  .project-entry__meta {
-    grid-template-columns: 1.7rem minmax(0, 1fr);
-  }
-
-  .project-entry__meta span:last-child {
-    display: none;
-  }
-
-  .project-entry__footer {
-    display: grid;
-    gap: 0.65rem;
-  }
-
-  .project-entry__links {
-    justify-content: flex-start;
+@media (max-width: 24rem) {
+  .project-grid {
+    grid-template-columns: minmax(0, 1fr);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(var(--sheet-row-height) - 1px),
+      var(--project-grid-line) calc(var(--sheet-row-height) - 1px)
+        var(--sheet-row-height)
+    );
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .project-entry,
-  .project-entry__title svg,
-  .project-archive svg {
+  .project-entry__arrow {
     transition: none;
   }
 }

@@ -16,20 +16,8 @@ export interface Project {
 }
 
 export interface ProjectIndexEntry {
-  id: string;
   title: string;
-  tagline: string;
-  period: string;
-  category: string;
-  technologies: readonly string[];
   primaryHref: string;
-  links: readonly ProjectLink[];
-}
-
-export interface MiscProject {
-  title: string;
-  note: string;
-  href: string;
 }
 
 export const projects = [
@@ -93,79 +81,23 @@ export const projects = [
 
 export const indexProjects = [
   {
-    id: '3tap',
     title: '3tap',
-    tagline:
-      'A deliberately minimal three-state habit tracker with instant local interaction and reliable cross-device sync.',
-    period: '2026–Present',
-    category: 'Flagship product',
-    technologies: ['SvelteKit', 'TypeScript', 'Supabase', 'Cloudflare'],
     primaryHref: 'https://3tap.cc',
-    links: [
-      { label: 'Live site', href: 'https://3tap.cc' },
-      { label: 'Source', href: 'https://github.com/Hecate946/3tap' },
-    ],
   },
   {
-    id: projects[2].slug,
     title: projects[2].title,
-    tagline: projects[2].tagline,
-    period: projects[2].period,
-    category: projects[2].category,
-    technologies: projects[2].technologies,
     primaryHref: '/projects/keycad/',
-    links: [
-      { label: 'Case study', href: '/projects/keycad/' },
-      { label: 'Source', href: 'https://github.com/Hecate946/keycad' },
-    ],
   },
   {
-    id: projects[1].slug,
     title: projects[1].title,
-    tagline: projects[1].tagline,
-    period: projects[1].period,
-    category: projects[1].category,
-    technologies: projects[1].technologies,
     primaryHref: '/projects/sunset/',
-    links: [{ label: 'Case study', href: '/projects/sunset/' }],
   },
   {
-    id: projects[0].slug,
     title: projects[0].title,
-    tagline: projects[0].tagline,
-    period: projects[0].period,
-    category: projects[0].category,
-    technologies: projects[0].technologies,
     primaryHref: '/projects/neutra/',
-    links: [
-      { label: 'Case study', href: '/projects/neutra/' },
-      { label: 'Source', href: 'https://github.com/Hecate946/Neutra' },
-    ],
   },
   {
-    id: projects[3].slug,
     title: projects[3].title,
-    tagline: projects[3].tagline,
-    period: projects[3].period,
-    category: projects[3].category,
-    technologies: projects[3].technologies,
     primaryHref: '/projects/portfolio/',
-    links: [
-      { label: 'Case study', href: '/projects/portfolio/' },
-      { label: 'Source', href: 'https://github.com/Hecate946/hecate946.com' },
-    ],
   },
 ] as const satisfies readonly ProjectIndexEntry[];
-
-export const miscProjects = [
-  {
-    title: 'Muses',
-    note: 'Music discovery platform',
-    href: 'https://github.com/Hecate946/Muses',
-  },
-  {
-    title: 'GitHub archive',
-    note: 'Older builds and experiments',
-    href: 'https://github.com/Hecate946?tab=repositories',
-  },
-] as const satisfies readonly MiscProject[];
