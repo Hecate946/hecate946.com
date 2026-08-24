@@ -12,7 +12,8 @@ const { project } = Astro.props;
 const projectsHref = withBase('/projects/');
 const chalkboardTexture = withBase('/images/contact/chalkboard-photo.webp');
 const projectLinks = project.links ?? [];
-const resolveLink = (href: string) => (href.startsWith('/') ? withBase(href) : href);
+const resolveLink = (href: string) =>
+  href.startsWith('/') ? withBase(href) : href;
 
 /*
  * Detail-page copy intentionally lives here instead of in projects.ts.
@@ -20,6 +21,8 @@ const resolveLink = (href: string) => (href.startsWith('/') ? withBase(href) : h
  * this redesign cannot change the index or any other project presentation.
  */
 const projectWriting: Record<Project['slug'], string> = {
+  '3tap':
+    'I built 3tap because most habit trackers make a very small action feel like administration. Its entire interaction is built around one tap cycling through three states, while anonymous boards, recovery codes, and device pairing keep setup out of the way. The interface is deliberately spare, but the underlying work is about making synchronization, recovery, and offline-feeling responsiveness reliable enough that the product never asks the user to think about them.',
   neutra:
     'Neutra was one of the first projects where software stopped feeling like a small program and started feeling like a system I had to operate. I built it as one Discord platform for moderation, analytics, security, and music rather than a collection of disconnected bots. Over time it grew to 320 commands and was used by 500,000 people, which forced me to think seriously about data modeling, reliability, and what it means to maintain software at scale. Looking back, it is the project that taught me how much I enjoy building tools that become infrastructure for other people.',
   sunset:
@@ -35,7 +38,10 @@ const writing = projectWriting[project.slug];
 const projectUrl = new URL(`/projects/${project.slug}/`, Astro.site).href;
 const projectsUrl = new URL('/projects/', Astro.site).href;
 const siteUrl = new URL('/', Astro.site).href;
-const projectSocialImagePath = `/images/social/projects/${project.slug}.jpg`;
+const projectSocialImagePath =
+  project.slug === '3tap'
+    ? '/images/social/projects.jpg'
+    : `/images/social/projects/${project.slug}.jpg`;
 const projectSocialImageUrl = new URL(projectSocialImagePath, Astro.site).href;
 const sourceLink = projectLinks.find((link) => /source/i.test(link.label));
 const projectStructuredData = [
@@ -94,7 +100,10 @@ const projectStructuredData = [
       <div class="project-chalkboard-wrap">
         <div class="project-chalkboard__recess">
           <div class="project-chalkboard__glass">
-            <section class="project-chalkboard" aria-label={`${project.title} project chalkboard`}>
+            <section
+              class="project-chalkboard"
+              aria-label={`${project.title} project chalkboard`}
+            >
               <img
                 class="project-chalkboard__texture"
                 src={chalkboardTexture}
@@ -113,8 +122,13 @@ const projectStructuredData = [
 
                 <div class="project-page__links">
                   <a class="project-back-link" href={projectsHref}>
-                    <svg class="project-link-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                      <path d="M6.5 3.75 2.25 8l4.25 4.25M2.75 8h11" />
+                    <svg
+                      class="project-link-arrow"
+                      viewBox="0 0 16 16"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M6.5 3.75 2.25 8l4.25 4.25M2.75 8h11"></path>
                     </svg>
                     <span>Projects</span>
                   </a>
@@ -127,10 +141,26 @@ const projectStructuredData = [
                             <li>
                               <a
                                 href={resolveLink(link.href)}
-                                target={link.href.startsWith('http') ? '_blank' : undefined}
-                                rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                                target={
+                                  link.href.startsWith('http')
+                                    ? '_blank'
+                                    : undefined
+                                }
+                                rel={
+                                  link.href.startsWith('http')
+                                    ? 'noopener noreferrer'
+                                    : undefined
+                                }
                               >
-                                {link.label}<svg class="project-link-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M6.25 4H12v5.75" /></svg>
+                                {link.label}
+                                <svg
+                                  class="project-link-arrow"
+                                  viewBox="0 0 16 16"
+                                  aria-hidden="true"
+                                  focusable="false"
+                                >
+                                  <path d="M4 12 12 4M6.25 4H12v5.75" />
+                                </svg>
                               </a>
                             </li>
                           ))}
@@ -160,8 +190,12 @@ const projectStructuredData = [
 
     const fitProjectChalkboard = () => {
       const stage = document.querySelector<HTMLElement>('.project-board-stage');
-      const board = document.querySelector<HTMLElement>('.project-chalkboard-wrap');
-      const copy = document.querySelector<HTMLElement>('.project-chalkboard__copy');
+      const board = document.querySelector<HTMLElement>(
+        '.project-chalkboard-wrap',
+      );
+      const copy = document.querySelector<HTMLElement>(
+        '.project-chalkboard__copy',
+      );
       if (!stage || !board || !copy) return;
 
       /*
@@ -173,9 +207,11 @@ const projectStructuredData = [
        */
       copy.style.removeProperty('font-size');
 
-      const baseFontSize = Number.parseFloat(getComputedStyle(copy).fontSize) || 16;
+      const baseFontSize =
+        Number.parseFloat(getComputedStyle(copy).fontSize) || 16;
       const availableHeight = Math.max(1, stage.clientHeight - 8);
-      const fits = () => board.getBoundingClientRect().height <= availableHeight + 0.5;
+      const fits = () =>
+        board.getBoundingClientRect().height <= availableHeight + 0.5;
 
       if (fits()) return;
 
@@ -215,14 +251,18 @@ const projectStructuredData = [
 
       if ('ResizeObserver' in window) {
         const observer = new ResizeObserver(scheduleProjectFit);
-        const stage = document.querySelector<HTMLElement>('.project-board-stage');
+        const stage = document.querySelector<HTMLElement>(
+          '.project-board-stage',
+        );
         if (stage) observer.observe(stage);
         projectShowcaseWindow.__hecateProjectShowcaseResizeObserver = observer;
       }
     };
 
     const resetProjectPage = () => {
-      const copy = document.querySelector<HTMLElement>('.project-chalkboard__copy');
+      const copy = document.querySelector<HTMLElement>(
+        '.project-chalkboard__copy',
+      );
       copy?.style.removeProperty('font-size');
       observeCurrentProjectBoard();
       scheduleProjectFit();
@@ -235,7 +275,9 @@ const projectStructuredData = [
       projectShowcaseWindow.__hecateProjectShowcaseHandlersInstalled = true;
       document.addEventListener('astro:after-swap', resetProjectPage);
       window.addEventListener('resize', scheduleProjectFit, { passive: true });
-      window.addEventListener('orientationchange', scheduleProjectFit, { passive: true });
+      window.addEventListener('orientationchange', scheduleProjectFit, {
+        passive: true,
+      });
       window.addEventListener('pageshow', (event) => {
         if (event.persisted) resetProjectPage();
         else scheduleProjectFit();

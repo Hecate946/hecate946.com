@@ -4,7 +4,7 @@ export interface ProjectLink {
 }
 
 export interface Project {
-  slug: 'neutra' | 'sunset' | 'keycad' | 'portfolio';
+  slug: '3tap' | 'neutra' | 'sunset' | 'keycad' | 'portfolio';
   title: string;
   tagline: string;
   description: string;
@@ -18,21 +18,51 @@ export interface Project {
 export interface ProjectIndexEntry {
   title: string;
   primaryHref: string;
+  description: string;
+  stack: readonly string[];
+  sourceHref?: string;
 }
 
 export const projects = [
   {
-    slug: 'neutra',
-    title: 'Neutra',
+    slug: '3tap',
+    title: '3tap',
     tagline:
-      'Moderation, analytics, and music tools for large online communities.',
+      'A fast, private three-state habit tracker with no account required.',
     description:
-      'A 320-command community platform that combined configurable moderation, server analytics, security insights, and music playback in one system.',
-    period: '2019–2021',
-    category: 'Community platform',
+      'A minimal habit tracker built around instant three-state input, anonymous boards, device recovery, and reliable cross-device synchronization.',
+    period: '2026–Present',
+    category: 'Habit tracking application',
+    imageAlt: 'The minimal three-state habit grid used by 3tap.',
+    technologies: ['SvelteKit', 'TypeScript', 'Supabase', 'Cloudflare Workers'],
+    links: [
+      {
+        label: 'Visit 3tap',
+        href: 'https://3tap.cc',
+      },
+      {
+        label: 'View source',
+        href: 'https://github.com/Hecate946/3tap',
+      },
+    ],
+  },
+  {
+    slug: 'keycad',
+    title: 'KeyCAD',
+    tagline: 'An image-to-CAD pipeline for parameterized key models.',
+    description:
+      'A computer-vision and CAD experiment that translated measurements from photographs into dimensionally accurate, 3D-printable key geometry.',
+    period: '2022–2023',
+    category: 'Computer vision and CAD',
     imageAlt:
-      'Pastel pencil artwork showing a Discord logo, line graph, bar chart, and pie chart for Neutra.',
-    technologies: ['Python', 'PostgreSQL', 'FFmpeg', 'Git'],
+      'Impressionist painting of a seated child in a coral-red smock, used as the KeyCAD project image.',
+    technologies: ['Python', 'OpenCV', 'OpenSCAD', 'Git'],
+    links: [
+      {
+        label: 'View source',
+        href: 'https://github.com/Hecate946/keycad',
+      },
+    ],
   },
   {
     slug: 'sunset',
@@ -48,16 +78,23 @@ export const projects = [
     technologies: ['Python', 'Playwright', 'HTTP', 'systemd', 'Vultr'],
   },
   {
-    slug: 'keycad',
-    title: 'KeyCAD',
-    tagline: 'An image-to-CAD pipeline for parameterized key models.',
+    slug: 'neutra',
+    title: 'Neutra',
+    tagline:
+      'Moderation, analytics, and music tools for large online communities.',
     description:
-      'A computer-vision and CAD experiment that translated measurements from photographs into dimensionally accurate, 3D-printable key geometry.',
-    period: '2022–2023',
-    category: 'Computer vision and CAD',
+      'A 320-command community platform that combined configurable moderation, server analytics, security insights, and music playback in one system.',
+    period: '2019–2021',
+    category: 'Community platform',
     imageAlt:
-      'Impressionist painting of a seated child in a coral-red smock, used as the KeyCAD project image.',
-    technologies: ['Python', 'OpenCV', 'OpenSCAD', 'Git'],
+      'Pastel pencil artwork showing a Discord logo, line graph, bar chart, and pie chart for Neutra.',
+    technologies: ['Python', 'PostgreSQL', 'FFmpeg', 'Git'],
+    links: [
+      {
+        label: 'View source',
+        href: 'https://github.com/Hecate946/Neutra',
+      },
+    ],
   },
   {
     slug: 'portfolio',
@@ -72,6 +109,10 @@ export const projects = [
     technologies: ['Astro', 'Svelte', 'TypeScript', 'CSS'],
     links: [
       {
+        label: 'Visit site',
+        href: 'https://hecate946.com',
+      },
+      {
         label: 'View source',
         href: 'https://github.com/Hecate946/hecate946.com',
       },
@@ -79,25 +120,15 @@ export const projects = [
   },
 ] as const satisfies readonly Project[];
 
-export const indexProjects = [
-  {
-    title: '3tap',
-    primaryHref: 'https://3tap.cc',
-  },
-  {
-    title: projects[2].title,
-    primaryHref: '/projects/keycad/',
-  },
-  {
-    title: projects[1].title,
-    primaryHref: '/projects/sunset/',
-  },
-  {
-    title: projects[0].title,
-    primaryHref: '/projects/neutra/',
-  },
-  {
-    title: projects[3].title,
-    primaryHref: '/projects/portfolio/',
-  },
-] as const satisfies readonly ProjectIndexEntry[];
+export const indexProjects = projects.map((project) => {
+  const projectRecord: Project = project;
+
+  return {
+    title: project.title,
+    primaryHref: `/projects/${project.slug}/`,
+    description: project.tagline,
+    stack: project.technologies,
+    sourceHref: projectRecord.links?.find((link) => /source/i.test(link.label))
+      ?.href,
+  };
+}) satisfies readonly ProjectIndexEntry[];

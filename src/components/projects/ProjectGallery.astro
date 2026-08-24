@@ -4,40 +4,67 @@ import { withBase } from '@/lib/paths';
 
 const resolveHref = (href: string) =>
   href.startsWith('/') ? withBase(href) : href;
-const isExternal = (href: string) => href.startsWith('http');
 ---
 
 <section class="project-index" aria-labelledby="project-index-title">
   <h1 class="project-index__sr-title" id="project-index-title">Projects</h1>
 
-  <ol class="project-grid">
-    {
-      indexProjects.map((project) => (
-        <li class="project-grid__item">
-          <a
-            class="project-entry"
-            href={resolveHref(project.primaryHref)}
-            target={isExternal(project.primaryHref) ? '_blank' : undefined}
-            rel={
-              isExternal(project.primaryHref)
-                ? 'noopener noreferrer'
-                : undefined
-            }
-            data-astro-prefetch={!isExternal(project.primaryHref)}
-            aria-label={`Open ${project.title}`}
-          >
-            <h2>{project.title}</h2>
-            <svg
-              class="project-entry__arrow"
-              viewBox="0 0 16 16"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path d="M4 12 12 4M6.25 4H12v5.75" />
-            </svg>
-          </a>
-        </li>
-      ))
-    }
-  </ol>
+  <div class="project-sheet-scroll" tabindex="0" aria-label="Projects table">
+    <div class="project-sheet">
+      <table>
+        <colgroup>
+          <col class="project-sheet__name-column" />
+          <col class="project-sheet__description-column" />
+          <col class="project-sheet__stack-column" />
+          <col class="project-sheet__source-column" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Stack</th>
+            <th scope="col">Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            indexProjects.map((project) => (
+              <tr>
+                <th scope="row">
+                  <a
+                    class="project-sheet__name"
+                    href={resolveHref(project.primaryHref)}
+                    data-astro-prefetch
+                  >
+                    {project.title}
+                  </a>
+                </th>
+                <td class="project-sheet__description">
+                  <span>{project.description}</span>
+                </td>
+                <td class="project-sheet__stack">
+                  {project.stack.join(' · ')}
+                </td>
+                <td class="project-sheet__source-cell">
+                  {project.sourceHref ? (
+                    <a
+                      class="project-sheet__source"
+                      href={project.sourceHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`View ${project.title} source on GitHub`}
+                    >
+                      GitHub
+                    </a>
+                  ) : (
+                    <span class="project-sheet__private">Private</span>
+                  )}
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
 </section>

@@ -4,6 +4,7 @@ import { pdfViewerHref, withBase } from '@/lib/paths';
 const resumes = [
   {
     id: 'software',
+    tabTitle: 'Software',
     fullTitle: 'Software Engineering Resume',
     pdf: '/resumes/cyrus-asasi-software-engineering-resume.pdf',
     svg: '/images/resume/software-resume.svg',
@@ -11,6 +12,7 @@ const resumes = [
   },
   {
     id: 'clarinet',
+    tabTitle: 'Clarinet',
     fullTitle: 'Clarinet Performance Resume',
     pdf: '/resumes/cyrus-asasi-clarinet-performance-resume.pdf',
     svg: '/images/resume/clarinet-resume.svg',
@@ -42,9 +44,7 @@ const resumes = [
               data-download-href={withBase(resume.pdf)}
               data-resume-title={resume.fullTitle}
             >
-              {resume.id === 'software'
-                ? 'Software Engineering'
-                : 'Clarinet Performance'}
+              {resume.tabTitle}
             </button>
           ))
         }
@@ -57,12 +57,16 @@ const resumes = [
         aria-label={`Download ${resumes[0].fullTitle}`}
         data-resume-download
       >
-        <span>Download PDF</span>
+        <span>Download</span>
         <span class="resume-switcher__download-icon" aria-hidden="true">↓</span>
       </a>
     </div>
 
-    <div class="resume-scrolls__stage">
+    <div
+      class="resume-scrolls__stage"
+      tabindex="0"
+      aria-label="Resume preview. Scroll horizontally on smaller screens."
+    >
       {
         resumes.map((resume, index) => (
           <article

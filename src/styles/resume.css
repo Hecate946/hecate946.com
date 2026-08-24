@@ -34,7 +34,7 @@ body.resume-wall-page > main.resume-wall-main {
   width: 100%;
   min-height: calc(100svh - var(--header-height));
   place-items: start center;
-  padding: clamp(1.35rem, 3.5vh, 2.5rem) clamp(0.75rem, 2vw, 1.5rem)
+  padding: clamp(1rem, 2.5vh, 1.75rem) clamp(0.5rem, 1.25vw, 1rem)
     var(--room-floor-reserve, 9rem);
 }
 
@@ -50,32 +50,31 @@ html[data-theme='dark'] .resume-scrolls {
 
 .resume-gallery {
   display: grid;
-  width: min(100%, 60rem);
+  width: min(100%, 76rem);
   grid-template-columns: minmax(0, 1fr);
-  gap: clamp(1.15rem, 2.8vw, 1.75rem);
+  gap: clamp(0.75rem, 1.6vw, 1.15rem);
 }
 
 .resume-switcher {
   display: flex;
   min-width: 0;
-  align-items: stretch;
+  align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--room-structural-line);
   color: var(--room-control-ink, var(--room-outline));
 }
 
 .resume-switcher__tabs {
   display: flex;
   min-width: 0;
-  align-items: stretch;
+  align-items: center;
+  gap: clamp(1rem, 2vw, 1.5rem);
 }
 
 .resume-switcher__tab,
 .resume-switcher__download {
   box-sizing: border-box;
   border: 0;
-  outline: 2px solid transparent;
-  outline-offset: -2px;
+  outline: none;
   background: transparent;
   color: inherit;
   font-family: var(--font-mono);
@@ -88,33 +87,30 @@ html[data-theme='dark'] .resume-scrolls {
 
 .resume-switcher__tab {
   position: relative;
-  padding: 0.82rem clamp(0.7rem, 2vw, 1.15rem);
+  padding: 0.35rem 0;
   cursor: pointer;
-  opacity: 0.58;
-  transition:
-    opacity 140ms ease,
-    background-color 140ms ease,
-    outline-color 140ms ease;
+  opacity: 0.64;
+  transition: opacity 140ms ease;
 }
 
 .resume-switcher__tab::after {
   position: absolute;
-  right: clamp(0.7rem, 2vw, 1.15rem);
-  bottom: -1px;
-  left: clamp(0.7rem, 2vw, 1.15rem);
+  right: 0;
+  bottom: 0.08rem;
+  left: 0;
   height: 1px;
   background: currentColor;
   content: '';
   opacity: 0;
-  transition: opacity 140ms ease;
 }
 
 .resume-switcher__tab[aria-selected='true'] {
-  background: color-mix(in srgb, currentColor 4%, transparent);
   opacity: 1;
 }
 
-.resume-switcher__tab[aria-selected='true']::after {
+.resume-switcher__tab[aria-selected='true']::after,
+.resume-switcher__tab:hover::after,
+.resume-switcher__tab:focus-visible::after {
   opacity: 1;
 }
 
@@ -123,33 +119,33 @@ html[data-theme='dark'] .resume-scrolls {
   opacity: 1;
 }
 
-.resume-switcher__tab:focus-visible,
-.resume-switcher__download:focus-visible {
-  outline-color: color-mix(in srgb, currentColor 62%, transparent);
-}
-
 .resume-switcher__download {
+  position: relative;
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  gap: 0.55rem;
-  min-height: 2.25rem;
-  padding: 0.66rem 0.9rem;
-  border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
-  border-bottom: 0;
+  gap: 0.42rem;
+  min-height: 1.75rem;
+  padding: 0.35rem 0;
   color: inherit;
   text-decoration: none;
-  transition:
-    border-color 140ms ease,
-    background-color 140ms ease,
-    outline-color 140ms ease;
 }
 
-.resume-switcher__download:hover,
-.resume-switcher__download:focus-visible {
-  border-color: color-mix(in srgb, currentColor 76%, transparent);
-  background: color-mix(in srgb, currentColor 6%, transparent);
+.resume-switcher__download::after {
+  position: absolute;
+  right: 0;
+  bottom: 0.08rem;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  content: '';
+  opacity: 0;
+}
+
+.resume-switcher__download:hover::after,
+.resume-switcher__download:focus-visible::after {
+  opacity: 1;
 }
 
 .resume-switcher__download-icon {
@@ -161,8 +157,14 @@ html[data-theme='dark'] .resume-scrolls {
 .resume-scrolls__stage {
   display: grid;
   width: 100%;
+  min-width: 0;
   grid-template-columns: minmax(0, 1fr);
   place-items: start center;
+  outline: none;
+}
+
+.resume-scrolls__stage:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--room-structural-line);
 }
 
 .resume-scroll {
@@ -220,57 +222,37 @@ html[data-theme='dark'] .resume-scrolls {
 
 @media (max-width: 48rem) {
   .resume-scrolls {
-    padding: clamp(1.15rem, 4vw, 1.75rem)
-      max(0.75rem, env(safe-area-inset-right))
-      var(--room-floor-reserve, 7.25rem) max(0.75rem, env(safe-area-inset-left));
+    place-items: start stretch;
+    padding: 0.75rem 0 var(--room-floor-reserve, 7.25rem);
   }
 
   .resume-gallery {
-    gap: 1rem;
+    width: 100%;
+    gap: 0.65rem;
+  }
+
+  .resume-switcher {
+    padding-inline-start: max(0.75rem, env(safe-area-inset-left));
+    padding-inline-end: max(0.75rem, env(safe-area-inset-right));
+  }
+
+  .resume-scrolls__stage {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
   }
 
   .resume-scroll {
-    padding: 0.58rem 0.24rem;
+    width: max(100%, 44rem);
+    padding: 0.42rem 0;
   }
 }
 
 @media (max-width: 34rem) {
-  .resume-switcher {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .resume-switcher__tabs {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .resume-switcher__tab {
-    padding-inline: 0.48rem;
-    font-size: 0.58rem;
-    letter-spacing: 0.035em;
-    white-space: normal;
-  }
-
-  .resume-switcher__tab::after {
-    right: 0.48rem;
-    left: 0.48rem;
-  }
-
-  .resume-switcher__download {
-    width: 2.65rem;
-    padding-inline: 0;
-  }
-
-  .resume-switcher__download span:first-child {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
+    font-size: 0.62rem;
+    letter-spacing: 0.055em;
   }
 }
 
