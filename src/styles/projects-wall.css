@@ -1,11 +1,3 @@
-/*
- * Projects use the same quiet museum-frame language as Home: artwork inside a
- * deep black recess, a narrow sill, and only the essential label beneath it.
- * The four projects form one rigid horizontal gallery on wide screens, echoing
- * a real wall-hung exhibition. Rather than introducing an intermediate grid,
- * the gallery becomes one centered column as soon as all four frames no longer
- * fit comfortably.
- */
 body.projects-wall-page {
   position: relative;
   width: 100%;
@@ -25,292 +17,381 @@ body.projects-wall-page > main.projects-wall-main {
   pointer-events: auto;
 }
 
-.project-gallery {
-  --project-card-width: 19rem;
-  --project-label-ink: var(--room-label-ink, var(--wall-light, #f4f1e9));
-  --project-frame-outline: var(--room-outline, var(--wall-light, #f4f1e9));
-  --project-light-hot: var(--wall-light, #f4f1e9);
+.project-index {
+  --project-ink: var(--room-label-ink, var(--wall-light, #f4f1e9));
+  --project-ink-muted: color-mix(in srgb, var(--project-ink) 58%, transparent);
+  --project-groove: color-mix(in srgb, var(--project-ink) 25%, transparent);
+  --project-pressed-shadow: rgb(0 0 0 / 34%);
 
   position: relative;
-  display: grid;
-  width: 100%;
-  /* Fill the viewport below the navbar, then center the artwork in the actual
-     back-wall area above the floor. If a narrow layout is taller than the
-     viewport, normal document flow still grows naturally. */
-  min-height: calc(100svh - var(--header-height));
-  place-items: center;
-  overflow: visible;
-  padding: 0 1rem var(--room-floor-reserve, 9rem);
-  background: transparent;
-  color: var(--project-label-ink);
-}
-
-.project-gallery__sr-title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.project-gallery__grid {
-  display: grid;
-  /* Give all four rigid frames equal wall spacing, including the two outer
-     margins, instead of packing the group around a fixed gap. */
-  width: min(100%, 94rem);
-  grid-template-columns: repeat(4, var(--project-card-width));
-  justify-content: space-evenly;
-  column-gap: 0;
-  row-gap: 0;
-}
-
-.project-card {
-  position: relative;
-  display: block;
-  width: var(--project-card-width);
-  min-width: 0;
-  color: color-mix(in srgb, var(--project-label-ink) 88%, transparent);
-  outline: none;
-  cursor: pointer;
-  text-decoration: none;
-  user-select: none;
-  -webkit-user-drag: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.project-card__frame {
-  position: relative;
-  display: block;
-  width: 100%;
-  /* Match the default Home painting recess proportions (306 × 342). */
-  aspect-ratio: 306 / 342;
   box-sizing: border-box;
-  border: 0.7rem solid #050505;
-  background: #020202;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--project-frame-outline) 24%, transparent),
-    0 0 0 0.32rem #0b0b0b,
-    0.65rem 0.85rem 1.15rem rgb(0 0 0 / 66%),
-    0 0 2.6rem color-mix(in srgb, var(--project-light-hot) 8%, transparent),
-    inset 0 0 2.2rem rgb(0 0 0 / 88%);
-  transition:
-    box-shadow 320ms cubic-bezier(0.2, 0.75, 0.25, 1),
-    border-color 320ms ease;
+  min-height: calc(100svh - var(--header-height));
+  padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 4vw, 4rem)
+    calc(var(--room-floor-reserve, 9rem) + 2.25rem);
+  color: var(--project-ink);
 }
 
-.project-card__glass {
-  position: absolute;
-  inset: 0.3rem;
-  display: block;
-  overflow: hidden;
-  background: #0b0b0a;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--project-frame-outline) 26%, transparent);
+.project-index__shell {
+  width: min(100%, 72rem);
+  margin-inline: auto;
 }
 
-.project-card__glass img {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: var(--project-image-position, 50% 50%);
-  transform: none;
-  filter: saturate(0.98) contrast(1.01);
-  pointer-events: none;
-  -webkit-user-drag: none;
-  transition: filter 320ms ease;
-}
-
-.project-card__shade {
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  display: block;
-  background: rgb(0 0 0 / 14%);
-  opacity: 1;
-  pointer-events: none;
-  transition: opacity 320ms cubic-bezier(0.2, 0.75, 0.25, 1);
-}
-
-.project-card__reflection {
-  position: absolute;
-  z-index: 3;
-  inset: 0.45rem;
-  display: block;
-  background:
-    linear-gradient(112deg, transparent 12%, color-mix(in srgb, var(--project-light-hot) 6%, transparent) 27%, transparent 42%),
-    linear-gradient(180deg, color-mix(in srgb, var(--project-light-hot) 2%, transparent), transparent 38%);
-  pointer-events: none;
-}
-
-.project-card__sill {
-  position: absolute;
-  z-index: 4;
-  right: -0.65rem;
-  bottom: -0.55rem;
-  left: -0.65rem;
-  display: block;
-  height: 0.55rem;
-  border-top: 1px solid color-mix(in srgb, var(--project-frame-outline) 24%, transparent);
-  background: #050505;
-  box-shadow: 0 0.5rem 0.65rem rgb(0 0 0 / 58%);
-}
-
-.project-card__label {
+.project-index__intro {
   display: grid;
-  grid-template-columns: 1.45rem minmax(0, 1fr) 1rem;
-  align-items: center;
-  gap: 0.62rem;
-  margin-top: 1.28rem;
-  color: color-mix(in srgb, var(--project-label-ink) 86%, transparent);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.73rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  line-height: 1.22;
-  padding-block: 0.08rem 0.03rem;
+  gap: 0.8rem;
+  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.project-index__eyebrow,
+.project-entry__meta,
+.project-entry__stack,
+.project-entry__links,
+.project-archive {
+  font-family: var(--font-mono);
   text-transform: uppercase;
-  text-shadow: 0 1px 1.5px rgb(0 0 0 / 32%);
-  transition: color 260ms ease;
 }
 
-.project-card__index {
-  color: color-mix(in srgb, var(--project-label-ink) 62%, transparent);
-  font-variant-numeric: tabular-nums;
+.project-index__eyebrow {
+  margin: 0;
+  color: var(--project-ink-muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.13em;
+  line-height: 1;
+  text-shadow:
+    -1px -1px 0 var(--project-pressed-shadow),
+    1px 1px 0 color-mix(in srgb, var(--project-ink) 9%, transparent);
 }
 
-.project-card__name {
-  min-width: 0;
-  white-space: nowrap;
+.project-index__heading-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--project-groove);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 24%);
 }
 
-.project-card__arrow {
+.project-index__heading-row h1 {
+  margin: 0;
+  color: color-mix(in srgb, var(--project-ink) 92%, transparent);
+  font-family: var(--font-display);
+  font-size: clamp(3.1rem, 8vw, 6.6rem);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 0.72;
+  text-shadow:
+    -1px -1px 0 var(--project-pressed-shadow),
+    1px 1px 0 color-mix(in srgb, var(--project-ink) 10%, transparent);
+  text-transform: uppercase;
+}
+
+.project-index__heading-row > p {
+  width: min(100%, 24rem);
+  margin: 0;
+  color: color-mix(in srgb, var(--project-ink) 70%, transparent);
+  font-size: clamp(0.86rem, 1.2vw, 1rem);
+  line-height: 1.45;
+  text-align: right;
+  text-wrap: balance;
+  text-shadow: 0 -1px 0 var(--project-pressed-shadow);
+}
+
+.project-grid {
   display: grid;
-  width: 0.9rem;
-  height: 0.9rem;
-  place-items: center;
-  opacity: 0.72;
-  transform: translate(0, 0);
-  transition:
-    opacity 260ms ease,
-    transform 260ms ease;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--project-groove);
+  border-left: 1px solid var(--project-groove);
+  box-shadow:
+    inset 1px 1px 1px rgb(0 0 0 / 24%),
+    -1px -1px 0 color-mix(in srgb, var(--project-ink) 7%, transparent);
+  list-style: none;
 }
 
-.project-card__arrow svg {
+.project-grid__item {
+  min-width: 0;
+  border-right: 1px solid var(--project-groove);
+  border-bottom: 1px solid var(--project-groove);
+  box-shadow:
+    inset 1px 1px 1px rgb(0 0 0 / 24%),
+    inset -1px -1px 0 color-mix(in srgb, var(--project-ink) 6%, transparent);
+}
+
+.project-grid__item--flagship {
+  grid-column: 1 / -1;
+}
+
+.project-entry {
+  display: flex;
+  min-height: 12rem;
+  flex-direction: column;
+  padding: clamp(1rem, 2.1vw, 1.5rem);
+  transition:
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.project-grid__item--flagship .project-entry {
+  min-height: 10.5rem;
+}
+
+.project-entry__meta {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  color: var(--project-ink-muted);
+  font-size: 0.6rem;
+  letter-spacing: 0.11em;
+  line-height: 1.2;
+  text-shadow: 0 -1px 0 var(--project-pressed-shadow);
+}
+
+.project-entry__meta span:last-child {
+  text-align: right;
+}
+
+.project-entry__title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.82rem;
+  color: color-mix(in srgb, var(--project-ink) 92%, transparent);
+  text-decoration: none;
+}
+
+.project-entry__title h2 {
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 3.1vw, 2.65rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  text-shadow:
+    -1px -1px 0 var(--project-pressed-shadow),
+    1px 1px 0 color-mix(in srgb, var(--project-ink) 9%, transparent);
+  text-transform: uppercase;
+}
+
+.project-grid__item--flagship .project-entry__title h2 {
+  font-size: clamp(2.25rem, 5vw, 4.2rem);
+}
+
+.project-entry__title svg,
+.project-archive svg {
   display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.35;
   stroke-linecap: round;
   stroke-linejoin: round;
+  stroke-width: 1.25;
+  transition: transform 160ms ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .project-card:hover {
-    color: var(--project-label-ink);
-  }
-
-  .project-card:hover .project-card__frame {
-    border-color: #080808;
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--project-frame-outline) 36%, transparent),
-      0 0 0 0.32rem #0d0d0d,
-      0.65rem 0.85rem 1.15rem rgb(0 0 0 / 68%),
-      0 0 2.8rem color-mix(in srgb, var(--project-light-hot) 26%, transparent),
-      inset 0 0 1.5rem rgb(0 0 0 / 58%);
-  }
-
-  .project-card:hover .project-card__glass img {
-    filter: saturate(1.03) contrast(1.025);
-  }
-
-  .project-card:hover .project-card__shade {
-    opacity: 0;
-  }
-
-  .project-card:hover .project-card__label {
-    color: var(--project-label-ink);
-  }
-
-  .project-card:hover .project-card__name {
-    text-decoration-line: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.18rem;
-  }
-
-  .project-card:hover .project-card__arrow {
-    opacity: 1;
-    transform: translate(0.08rem, -0.08rem);
-  }
-
+.project-entry__summary {
+  max-width: 39rem;
+  margin: 0.65rem 0 1.2rem;
+  color: color-mix(in srgb, var(--project-ink) 72%, transparent);
+  font-size: 0.92rem;
+  line-height: 1.38;
+  text-shadow: 0 -1px 0 var(--project-pressed-shadow);
+  text-wrap: pretty;
 }
 
-.project-card:focus-visible .project-card__frame {
-  outline: 2px solid color-mix(in srgb, var(--project-frame-outline) 82%, transparent);
-  outline-offset: 0.5rem;
+.project-entry__footer {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: auto;
 }
 
-.project-card:focus-visible .project-card__label {
-  color: var(--project-label-ink);
+.project-entry__stack,
+.project-entry__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.72rem;
+  margin: 0;
+  padding: 0;
+  color: var(--project-ink-muted);
+  font-size: 0.57rem;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  list-style: none;
 }
 
-.project-card:focus-visible .project-card__name {
+.project-entry__stack li:not(:last-child)::after {
+  margin-left: 0.72rem;
+  color: var(--project-groove);
+  content: '/';
+}
+
+.project-entry__links {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  font-size: 0.6rem;
+}
+
+.project-entry__links a {
+  color: color-mix(in srgb, var(--project-ink) 78%, transparent);
+  text-decoration-color: var(--project-groove);
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18rem;
 }
 
-.project-card:focus-visible .project-card__arrow {
-  opacity: 1;
-  transform: translate(0, 0);
+.project-archive {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.7fr) minmax(0, 3fr);
+  margin-top: 1.4rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--project-groove);
+  box-shadow: 0 -1px 0 rgb(0 0 0 / 20%);
 }
 
-/* Four rigid 19rem frames plus three 1.5rem gaps need 80.5rem of actual
-   gallery width. Once that single exhibition row no longer fits comfortably,
-   switch directly to one centered column instead of compressing the art or
-   creating a temporary 2 × 2 layout. */
-@media (max-width: 82.5rem) {
-  .project-gallery {
-    padding-top: 2rem;
+.project-archive h2 {
+  margin: 0;
+  color: var(--project-ink-muted);
+  font: inherit;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+}
+
+.project-archive ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-archive a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 0.8rem;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0 0 0.6rem;
+  color: color-mix(in srgb, var(--project-ink) 76%, transparent);
+  font-size: 0.59rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+
+.project-archive a span:nth-child(2) {
+  overflow: hidden;
+  color: var(--project-ink-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .project-grid__item:hover .project-entry {
+    background: color-mix(in srgb, var(--project-ink) 2.5%, transparent);
+    box-shadow:
+      inset 2px 2px 3px rgb(0 0 0 / 25%),
+      inset -1px -1px 1px color-mix(in srgb, var(--project-ink) 7%, transparent);
+  }
+
+  .project-entry__title:hover,
+  .project-entry__links a:hover,
+  .project-archive a:hover {
+    color: var(--project-ink);
+  }
+
+  .project-entry__title:hover svg,
+  .project-archive a:hover svg {
+    transform: translate(0.12rem, -0.12rem);
+  }
+}
+
+.project-entry__title:focus-visible,
+.project-entry__links a:focus-visible,
+.project-archive a:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--project-ink) 82%, transparent);
+  outline-offset: 0.25rem;
+}
+
+@media (max-width: 48rem) {
+  .project-index {
+    padding-top: 2.4rem;
+  }
+
+  .project-index__heading-row {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .project-index__heading-row h1 {
+    font-size: clamp(3.3rem, 18vw, 5.2rem);
+  }
+
+  .project-index__heading-row > p {
+    width: min(100%, 29rem);
+    text-align: left;
+  }
+
+  .project-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-grid__item--flagship {
+    grid-column: auto;
+  }
+
+  .project-entry,
+  .project-grid__item--flagship .project-entry {
+    min-height: 11.5rem;
+  }
+
+  .project-grid__item--flagship .project-entry__title h2 {
+    font-size: clamp(2rem, 12vw, 3.15rem);
+  }
+
+  .project-archive {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .project-archive ul {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 30rem) {
+  .project-index {
     padding-inline: 0.75rem;
   }
 
-  .project-gallery__grid {
-    width: min(100%, var(--project-card-width));
-    grid-template-columns: minmax(0, var(--project-card-width));
-    justify-content: center;
-    gap: 3.6rem;
-  }
-}
-
-@media (max-width: 21rem) {
-  .project-gallery {
-    --project-card-width: calc(100vw - 2rem);
-    padding-inline: 1rem;
-  }
-}
-
-@media (max-width: 40rem) {
-  .project-card__label {
-    font-size: 0.75rem;
+  .project-entry__meta {
+    grid-template-columns: 1.7rem minmax(0, 1fr);
   }
 
+  .project-entry__meta span:last-child {
+    display: none;
+  }
+
+  .project-entry__footer {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .project-entry__links {
+    justify-content: flex-start;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-card__frame,
-  .project-card__glass img,
-  .project-card__shade,
-  .project-card__label,
-  .project-card__arrow {
+  .project-entry,
+  .project-entry__title svg,
+  .project-archive svg {
     transition: none;
   }
 }

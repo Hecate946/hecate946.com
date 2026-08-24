@@ -1,94 +1,113 @@
 ---
-import { projects } from '@/data/projects';
+import { indexProjects, miscProjects } from '@/data/projects';
 import { withBase } from '@/lib/paths';
 
-const galleryArt = {
-  neutra: {
-    src: '/images/project-gallery/neutra-480.webp',
-    srcset: '/images/project-gallery/neutra-480.webp 480w, /images/project-gallery/neutra.webp 627w',
-    width: 480,
-    height: 582,
-    position: '50% 50%',
-  },
-  sunset: {
-    src: '/images/project-gallery/sunset-480.webp',
-    srcset: '/images/project-gallery/sunset-480.webp 480w, /images/project-gallery/sunset-720.webp 720w',
-    width: 480,
-    height: 589,
-    position: '50% 50%',
-  },
-  keycad: {
-    src: '/images/project-gallery/keycad-480.webp',
-    srcset: '/images/project-gallery/keycad-480.webp 480w, /images/project-gallery/keycad.webp 534w',
-    width: 480,
-    height: 575,
-    position: '56% 43%',
-  },
-  portfolio: {
-    src: '/images/project-gallery/portfolio-480.webp',
-    srcset: '/images/project-gallery/portfolio-480.webp 480w, /images/project-gallery/portfolio.webp 589w',
-    width: 480,
-    height: 652,
-    position: '50% 36%',
-  },
-} as const;
+const resolveHref = (href: string) =>
+  href.startsWith('/') ? withBase(href) : href;
+const isExternal = (href: string) => href.startsWith('http');
 ---
 
-<section class="project-gallery" aria-labelledby="project-gallery-title">
-  <h1 class="project-gallery__sr-title" id="project-gallery-title">Selected projects</h1>
+<section class="project-index" aria-labelledby="project-index-title">
+  <div class="project-index__shell">
+    <header class="project-index__intro">
+      <p class="project-index__eyebrow">Selected work · 2019–2026</p>
+      <div class="project-index__heading-row">
+        <h1 id="project-index-title">Projects</h1>
+        <p>
+          Systems, tools, and small experiments built to solve real problems.
+        </p>
+      </div>
+    </header>
 
-  <div class="project-gallery__grid">
-    {projects.map((project, index) => {
-      const art = galleryArt[project.slug];
-      const projectNumber = String(index + 1).padStart(2, '0');
+    <ol class="project-grid">
+      {
+        indexProjects.map((project, index) => (
+          <li
+            class:list={[
+              'project-grid__item',
+              index === 0 && 'project-grid__item--flagship',
+            ]}
+          >
+            <article class="project-entry">
+              <div class="project-entry__meta">
+                <span>{String(index + 1).padStart(2, '0')}</span>
+                <span>{project.category}</span>
+                <span>{project.period}</span>
+              </div>
 
-      return (
-        <a
-          class={`project-card project-card--${project.slug}`}
-          href={withBase(`/projects/${project.slug}/`)}
-          aria-label={`View ${project.title}: ${project.tagline}`}
-          data-astro-prefetch
-          draggable="false"
-        >
-          <span class="project-card__frame" aria-hidden="true">
-            <span class="project-card__glass">
-              <img
-                src={withBase(art.src)}
-                srcset={art.srcset
-                  .split(', ')
-                  .map((entry) => {
-                    const [src, width] = entry.split(' ');
-                    return `${withBase(src)} ${width}`;
-                  })
-                  .join(', ')}
-                sizes="(max-width: 21rem) calc(100vw - 2rem), 304px"
-                width={art.width}
-                height={art.height}
-                alt=""
-                draggable="false"
-                decoding="async"
-                loading={index < 2 ? 'eager' : 'lazy'}
-                fetchpriority={index === 0 ? 'high' : 'auto'}
-                style={`--project-image-position: ${art.position};`}
-              />
-              <span class="project-card__shade"></span>
-              <span class="project-card__reflection"></span>
-            </span>
-            <span class="project-card__sill"></span>
-          </span>
+              <a
+                class="project-entry__title"
+                href={resolveHref(project.primaryHref)}
+                target={isExternal(project.primaryHref) ? '_blank' : undefined}
+                rel={
+                  isExternal(project.primaryHref)
+                    ? 'noopener noreferrer'
+                    : undefined
+                }
+                data-astro-prefetch={!isExternal(project.primaryHref)}
+              >
+                <h2>{project.title}</h2>
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M4 12 12 4M6.25 4H12v5.75" />
+                </svg>
+              </a>
 
-          <span class="project-card__label">
-            <span class="project-card__index">{projectNumber}</span>
-            <span class="project-card__name">{project.title}</span>
-            <span class="project-card__arrow" aria-hidden="true">
-              <svg viewBox="0 0 16 16" width="16" height="16" focusable="false">
-                <path d="M4 12 12 4M6.25 4H12v5.75" />
-              </svg>
-            </span>
-          </span>
+              <p class="project-entry__summary">{project.tagline}</p>
 
-        </a>
-      );
-    })}
+              <div class="project-entry__footer">
+                <ul
+                  class="project-entry__stack"
+                  aria-label={`${project.title} technologies`}
+                >
+                  {project.technologies.map((technology) => (
+                    <li>{technology}</li>
+                  ))}
+                </ul>
+
+                <nav aria-label={`${project.title} links`}>
+                  <ul class="project-entry__links">
+                    {project.links.map((link) => (
+                      <li>
+                        <a
+                          href={resolveHref(link.href)}
+                          target={isExternal(link.href) ? '_blank' : undefined}
+                          rel={
+                            isExternal(link.href)
+                              ? 'noopener noreferrer'
+                              : undefined
+                          }
+                          data-astro-prefetch={!isExternal(link.href)}
+                        >
+                          {link.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              </div>
+            </article>
+          </li>
+        ))
+      }
+    </ol>
+
+    <section class="project-archive" aria-labelledby="project-archive-title">
+      <h2 id="project-archive-title">Earlier work</h2>
+      <ul>
+        {
+          miscProjects.map((project) => (
+            <li>
+              <a href={project.href} target="_blank" rel="noopener noreferrer">
+                <span>{project.title}</span>
+                <span>{project.note}</span>
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M4 12 12 4M6.25 4H12v5.75" />
+                </svg>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
   </div>
 </section>

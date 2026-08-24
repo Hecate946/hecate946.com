@@ -1,18 +1,18 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ProjectGallery from '@/components/projects/ProjectGallery.astro';
-import { projects } from '@/data/projects';
+import { indexProjects } from '@/data/projects';
 
 const projectsUrl = new URL('/projects/', Astro.site).href;
 const itemListStructuredData = {
   '@type': 'ItemList',
   '@id': `${projectsUrl}#selected-projects`,
   name: 'Selected software projects by Cyrus Asasi',
-  numberOfItems: projects.length,
-  itemListElement: projects.map((project, index) => ({
+  numberOfItems: indexProjects.length,
+  itemListElement: indexProjects.map((project, index) => ({
     '@type': 'ListItem',
     position: index + 1,
-    url: new URL(`/projects/${project.slug}/`, Astro.site).href,
+    url: new URL(project.primaryHref, Astro.site).href,
     name: project.title,
   })),
 };
@@ -20,11 +20,11 @@ const itemListStructuredData = {
 
 <BaseLayout
   title="Projects"
-  description="Selected software projects by Cyrus Asasi, including Neutra, Sunset, KeyCAD, and Hecate946.com."
+  description="Selected software projects by Cyrus Asasi, including 3tap, KeyCAD, Sunset, Neutra, and Hecate946.com."
   socialTitle="Projects"
-  socialDescription="Neutra, Sunset, KeyCAD, and Hecate946.com."
+  socialDescription="3tap, KeyCAD, Sunset, Neutra, Hecate946.com, and smaller experiments."
   socialImage="/images/social/projects.jpg"
-  socialImageAlt="Projects room preview with four framed project artworks"
+  socialImageAlt="Selected software projects by Cyrus Asasi"
   socialImageWidth={400}
   socialImageHeight={400}
   structuredData={itemListStructuredData}
