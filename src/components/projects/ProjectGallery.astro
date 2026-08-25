@@ -39,15 +39,11 @@ const resolveHref = (href: string) =>
                 <colgroup>
                   <col class="project-sheet__name-column" />
                   <col class="project-sheet__description-column" />
-                  <col class="project-sheet__stack-column" />
-                  <col class="project-sheet__source-column" />
                 </colgroup>
                 <thead>
                   <tr>
                     <th scope="col">Name</th>
                     <th scope="col">Description</th>
-                    <th scope="col">Stack</th>
-                    <th scope="col">Source</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -60,29 +56,22 @@ const resolveHref = (href: string) =>
                             href={resolveHref(project.primaryHref)}
                             data-astro-prefetch
                           >
-                            {project.title}
+                            <span class="project-sheet__name-title">
+                              {project.title}
+                            </span>
+                            <span class="project-sheet__name-action">
+                              <svg
+                                viewBox="0 0 28 12"
+                                aria-hidden="true"
+                                focusable="false"
+                              >
+                                <path d="M1 6h24M20 1l5 5-5 5"></path>
+                              </svg>
+                            </span>
                           </a>
                         </th>
                         <td class="project-sheet__description">
                           <span>{project.description}</span>
-                        </td>
-                        <td class="project-sheet__stack">
-                          <span>{project.stack.join(' · ')}</span>
-                        </td>
-                        <td class="project-sheet__source-cell">
-                          {project.sourceHref ? (
-                            <a
-                              class="project-sheet__source"
-                              href={project.sourceHref}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={`View ${project.title} source on GitHub`}
-                            >
-                              GitHub
-                            </a>
-                          ) : (
-                            <span class="project-sheet__private">Private</span>
-                          )}
                         </td>
                       </tr>
                     ))

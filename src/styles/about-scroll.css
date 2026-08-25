@@ -11,6 +11,8 @@
 /* Keep one proportional reading inset at every non-mobile width. It shrinks
    monotonically with the fluid parchment instead of jumping wider on iPad. */
 .about-scroll-paper__viewport {
+  --about-body-font-size: clamp(1rem, 1.45vw, 1.1rem);
+
   display: block;
   padding-inline: 12.5%;
 }
@@ -64,7 +66,7 @@
   max-width: none;
   margin: 0;
   color: var(--paper-ink);
-  font-size: clamp(1rem, 1.45vw, 1.1rem);
+  font-size: var(--about-body-font-size);
   line-height: 1.58;
 }
 
@@ -164,7 +166,7 @@
   min-height: 0;
   overflow: hidden;
   color: var(--paper-ink);
-  font-size: clamp(0.94rem, 1.4vw, 1.02rem);
+  font-size: var(--about-body-font-size);
   line-height: 1.55;
 }
 
@@ -221,6 +223,8 @@
 
 @media (max-width: 40rem) {
   .about-scroll-paper__viewport {
+    --about-body-font-size: clamp(0.98rem, 4vw, 1.08rem);
+
     padding-inline: clamp(1.2rem, 5.6vw, 1.65rem);
   }
 
@@ -231,7 +235,6 @@
   }
 
   .about-scroll-intro {
-    font-size: clamp(0.98rem, 4vw, 1.08rem);
     line-height: 1.57;
   }
 
@@ -245,18 +248,15 @@
 }
 
 @media (max-width: 25rem) {
+  .about-scroll-paper__viewport {
+    --about-body-font-size: 0.94rem;
+  }
+
   .about-scroll-portrait-wrap {
     width: clamp(6.5rem, 30vw, 7.3rem);
     margin-right: 0.78rem;
   }
 
-  .about-scroll-intro {
-    font-size: 0.94rem;
-  }
-
-  .about-scroll-section__content {
-    font-size: 0.9rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

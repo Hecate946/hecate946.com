@@ -1,25 +1,26 @@
 /*
- * Shared renderer for Pandoc/Overleaf resume exports.
+ * Vertical web presentation for the imported Pandoc resume HTML.
  *
- * The source HTML stays untouched. GeneratedResume.astro extracts only its
- * body, and this module maps the stable Pandoc structure onto the LaTeX page.
- * Content updates therefore require replacing only the imported HTML file.
+ * The source documents remain untouched. These rules reinterpret their stable
+ * headings, tables, and lists as a readable single-flow document inside the
+ * narrow parchment instead of scaling an 8.5 × 11 PDF facsimile down to fit.
  */
 .generated-resume {
   box-sizing: border-box;
   width: 100%;
-  min-height: 141.42cqw;
-  padding: 4.105cqw 9.675cqw 3.42cqw;
+  min-width: 0;
+  padding: clamp(1.45rem, 5cqw, 2.75rem) clamp(1.15rem, 5.5cqw, 3rem)
+    clamp(2rem, 6cqw, 3.25rem);
   background: #fff;
-  color: #000;
+  color: #111;
   font-family: var(--font-site);
-  font-size: 1.5126cqw;
+  font-size: clamp(0.9rem, 2.15cqw, 1.02rem);
   font-kerning: normal;
   font-variant-numeric: lining-nums tabular-nums;
   font-weight: 400;
   hyphens: none;
-  line-height: 1.1222;
-  overflow-wrap: normal;
+  line-height: 1.48;
+  overflow-wrap: break-word;
   text-rendering: optimizeLegibility;
   user-select: text;
 }
@@ -36,7 +37,6 @@
   margin-block: 0;
 }
 
-/* Override the site's softer 500 weight so LaTeX \bfseries stays truly bold. */
 .generated-resume strong,
 .generated-resume b {
   font-weight: 700;
@@ -45,21 +45,26 @@
 .generated-resume a,
 .generated-resume a:visited {
   color: inherit;
-  text-decoration: none;
+  text-decoration-color: color-mix(in srgb, currentColor 38%, transparent);
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.2em;
 }
 
 .generated-resume a:hover,
 .generated-resume a:focus-visible {
-  text-decoration: underline;
-  text-underline-offset: 0.12em;
+  color: #000;
+  text-decoration-color: currentColor;
 }
 
+/* Identity block */
 .generated-resume .center {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 0.15em;
+  gap: 0.2rem 0;
+  padding-bottom: clamp(1.15rem, 3.5cqw, 1.8rem);
+  border-bottom: 1px solid rgb(0 0 0 / 30%);
   text-align: center;
 }
 
@@ -70,225 +75,218 @@
 .generated-resume .center p:first-child {
   flex: 0 0 100%;
   color: #000;
-  font-size: 2em;
+  font-size: clamp(1.75rem, 6cqw, 2.8rem);
   font-weight: 700;
-  line-height: 1.1111;
+  letter-spacing: 0.075em;
+  line-height: 1;
 }
 
 .generated-resume .center p:nth-child(n + 2) {
-  font-size: 0.8889em;
-  line-height: 1.125;
+  color: rgb(0 0 0 / 66%);
+  font-size: clamp(0.74rem, 1.8cqw, 0.86rem);
+  line-height: 1.3;
 }
 
-/* Supports both one-paragraph and split-paragraph Pandoc contact output. */
 .generated-resume .center p:nth-child(2) a + a::before,
 .generated-resume .center > p:nth-child(n + 3) a::before {
-  margin-inline: 0.42em;
-  content: '|';
+  margin-inline: 0.65em;
+  color: rgb(0 0 0 / 32%);
+  content: '/';
   pointer-events: none;
   text-decoration: none;
 }
 
+/* Section labels use the same restrained all-caps language as the site grids. */
 .generated-resume h1 {
-  padding: 0;
-  border-bottom: max(1px, 0.065cqw) solid #000;
+  margin-top: clamp(1.85rem, 5cqw, 2.6rem);
+  padding: 0 0 0.48rem;
+  border-bottom: 1px solid rgb(0 0 0 / 34%);
   color: #000;
-  font-size: 1.4444em;
+  font-size: clamp(0.78rem, 1.9cqw, 0.9rem);
   font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.0923;
+  letter-spacing: 0.11em;
+  line-height: 1.25;
   text-transform: uppercase;
 }
 
-.generated-resume h1:not(#education) {
-  margin-top: 0.72em;
-}
-
 .generated-resume h1#education {
-  margin-top: 1.55em;
+  margin-top: clamp(1.5rem, 4cqw, 2.1rem);
 }
 
 .generated-resume h1 + p {
-  margin-top: 0.16em;
+  margin-top: 0.9rem;
 }
 
 .generated-resume h1 + p strong {
-  font-size: 1.0556em;
-  line-height: 1.1053;
+  color: #000;
+  font-size: 0.96em;
+  letter-spacing: 0.025em;
+}
+
+/* Pandoc expresses each resume line as a two-cell table. On the web these
+   become fluid metadata rows rather than rigid print-layout columns. */
+.generated-resume table,
+.generated-resume tbody {
+  display: block;
+  width: 100%;
+  border: 0;
 }
 
 .generated-resume table {
-  display: table;
-  width: 100%;
-  border: 0;
+  margin-top: 0.72rem;
   border-collapse: collapse;
-  table-layout: auto;
 }
 
-.generated-resume tbody,
+.generated-resume table + table {
+  margin-top: 0.16rem;
+}
+
 .generated-resume tr {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
   border: 0;
+}
+
+.generated-resume tr + tr {
+  margin-top: 0.62rem;
 }
 
 .generated-resume td {
+  min-width: 0;
   padding: 0;
   border: 0;
+  color: #111;
+  text-align: left !important;
   vertical-align: baseline;
 }
 
-.generated-resume td:first-child {
-  padding-right: 0.8em;
-}
-
 .generated-resume td:last-child {
-  white-space: nowrap;
+  color: rgb(0 0 0 / 61%);
+  font-size: 0.9em;
+  text-align: right !important;
 }
 
+/* Entry heading: organization/work title on the left, date on the right. */
 .generated-resume table:has(tr:only-child):has(strong) {
-  margin-top: 0.1667em;
+  margin-top: 1.12rem;
+}
+
+.generated-resume h1 + table:has(tr:only-child):has(strong),
+.generated-resume h1 + p + table {
+  margin-top: 0.9rem;
 }
 
 .generated-resume table:has(tr:only-child):has(strong) td:first-child {
-  font-size: 1.0556em;
-  line-height: 1.1053;
+  color: #000;
+  font-size: 1em;
+  letter-spacing: 0.025em;
 }
 
 .generated-resume table:has(tr:only-child):has(strong) td:last-child {
-  font-size: 1em;
   font-style: italic;
-  line-height: 1.1222;
+}
+
+/* Role/description and location/technology metadata stack beneath the title.
+   This is the key change that makes long entries feel native to a vertical UI. */
+.generated-resume table:has(tr:only-child):has(strong) + table tr {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.18rem;
 }
 
 .generated-resume table:has(tr:only-child):has(strong) + table td:first-child {
-  font-size: 1em;
-  font-style: italic;
-  line-height: 1.1222;
+  color: rgb(0 0 0 / 78%);
+  font-size: 0.96em;
 }
 
 .generated-resume table:has(tr:only-child):has(strong) + table td:last-child {
-  font-size: 0.8889em;
-  line-height: 1.125;
+  color: rgb(0 0 0 / 55%);
+  font-size: 0.82em;
+  line-height: 1.35;
+  text-align: left !important;
 }
 
-.generated-resume ul + table:has(tr:only-child):has(strong),
-.generated-resume
-  table:has(tr:only-child):has(strong)
-  + table
-  + table:has(tr:only-child):has(strong) {
-  margin-top: 0.4444em;
+/* Technical-skills rows retain a compact label/value relationship. */
+.generated-resume table:has(tr:nth-child(2)) tr {
+  grid-template-columns: minmax(6.8rem, auto) minmax(0, 1fr);
+  align-items: start;
+  gap: 0.25rem 1rem;
 }
 
+.generated-resume table:has(tr:nth-child(2)) td:last-child {
+  color: #111;
+  font-size: 1em;
+  text-align: left !important;
+}
+
+/* Accomplishments */
 .generated-resume ul {
-  margin-top: 0.1333em;
-  margin-left: 4.5em;
+  margin-top: 0.7rem;
+  margin-left: 1.05rem;
   padding: 0;
+  color: rgb(0 0 0 / 82%);
   list-style-position: outside;
 }
 
 .generated-resume li {
-  margin: 0.061em 0;
-  padding-left: 0.6em;
+  margin: 0.36rem 0;
+  padding-left: 0.32rem;
+}
+
+.generated-resume li::marker {
+  color: rgb(0 0 0 / 48%);
+  font-size: 0.8em;
 }
 
 .generated-resume li p {
   margin: 0;
 }
 
-@media (max-width: 48rem) {
+/* The resume panel itself establishes a size container in resume.css. */
+@container (max-width: 34rem) {
   .generated-resume {
-    min-height: 0;
-    padding: clamp(1.35rem, 5vw, 2rem) clamp(1rem, 5.5vw, 2.2rem)
-      clamp(1.5rem, 6vw, 2.25rem);
-    font-size: clamp(0.82rem, 3.4vw, 0.96rem);
-    line-height: 1.18;
-    overflow-wrap: break-word;
+    padding: 1.35rem clamp(0.95rem, 5cqw, 1.45rem) 1.9rem;
+    font-size: clamp(0.84rem, 3.4cqw, 0.94rem);
   }
 
   .generated-resume .center {
-    margin-bottom: 0.35em;
+    justify-content: flex-start;
+    text-align: left;
   }
 
   .generated-resume .center p:first-child {
-    font-size: 1.82em;
+    font-size: clamp(1.55rem, 8cqw, 2.1rem);
   }
 
-  .generated-resume h1 {
-    border-bottom-width: 1px;
-    font-size: 1.28em;
-    line-height: 1.12;
+  .generated-resume .center p:nth-child(n + 2) {
+    flex: 0 0 100%;
   }
 
-  .generated-resume h1#education {
-    margin-top: 1.25em;
+  .generated-resume .center p:nth-child(2) a + a::before,
+  .generated-resume .center > p:nth-child(n + 3) a::before {
+    display: none;
   }
 
-  .generated-resume h1:not(#education) {
-    margin-top: 0.9em;
-  }
-
-  .generated-resume table {
-    display: block;
-    table-layout: auto;
-  }
-
-  .generated-resume tbody {
-    display: block;
-  }
-
-  .generated-resume tr {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 0.65em;
-  }
-
-  .generated-resume td:first-child {
-    width: auto;
-    padding-right: 0;
-  }
-
-  .generated-resume td:last-child {
-    width: auto;
-    white-space: normal;
-  }
-
-  .generated-resume table:has(strong) td:first-child {
-    font-size: 1em;
-  }
-
-  .generated-resume table:has(tr:only-child):has(strong) + table tr {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 0.02em;
-  }
-
+  .generated-resume tr,
   .generated-resume table:has(tr:nth-child(2)) tr {
-    grid-template-columns: max-content minmax(0, 1fr);
-    align-items: start;
-    column-gap: 0.5em;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.12rem;
   }
 
+  .generated-resume td:last-child,
   .generated-resume table:has(tr:nth-child(2)) td:last-child {
-    min-width: 0;
     text-align: left !important;
   }
 
-  .generated-resume table:has(tr:only-child):has(strong) + table td:last-child {
-    width: 100%;
-    font-size: 0.82em;
-    text-align: right !important;
-  }
-
   .generated-resume ul {
-    margin-left: 2.4em;
+    margin-left: 0.9rem;
   }
 }
 
 @media (max-width: 25rem) {
   .generated-resume {
-    padding-inline: 0.9rem;
-    font-size: 0.8rem;
-  }
-
-  .generated-resume .center p:nth-child(n + 2) {
-    font-size: 0.82em;
+    font-size: 0.82rem;
   }
 }

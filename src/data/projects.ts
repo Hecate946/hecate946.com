@@ -26,8 +26,6 @@ export interface ProjectIndexEntry {
   title: string;
   primaryHref: string;
   description: string;
-  stack: readonly string[];
-  sourceHref?: string;
 }
 
 export const projects = [
@@ -166,14 +164,9 @@ export const projects = [
 ] as const satisfies readonly Project[];
 
 export const indexProjects = projects.map((project) => {
-  const projectRecord: Project = project;
-
   return {
     title: project.title,
     primaryHref: `/projects/${project.slug}/`,
     description: project.tagline,
-    stack: project.technologies,
-    sourceHref: projectRecord.links?.find((link) => /source/i.test(link.label))
-      ?.href,
   };
 }) satisfies readonly ProjectIndexEntry[];

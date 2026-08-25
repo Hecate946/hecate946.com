@@ -21,7 +21,6 @@ body.projects-wall-page,
 }
 
 .project-sheet-scroll {
-  container-type: inline-size;
   width: 100%;
   min-width: 0;
   overflow-x: hidden;
@@ -45,19 +44,11 @@ body.projects-wall-page,
 }
 
 .project-sheet__name-column {
-  width: 20%;
+  width: 36%;
 }
 
 .project-sheet__description-column {
-  width: 38%;
-}
-
-.project-sheet__stack-column {
-  width: 29%;
-}
-
-.project-sheet__source-column {
-  width: 13%;
+  width: 64%;
 }
 
 .project-sheet th,
@@ -89,14 +80,18 @@ body.projects-wall-page,
 }
 
 .project-sheet thead th,
-.project-sheet__name,
-.project-sheet__source,
-.project-sheet__private {
+.project-sheet__name {
   overflow-wrap: normal;
   word-break: normal;
 }
 
+.project-sheet tbody th {
+  vertical-align: middle;
+}
+
 .project-sheet tbody tr {
+  position: relative;
+  cursor: pointer;
   transition: background-color var(--duration-fast) ease;
 }
 
@@ -104,54 +99,87 @@ body.projects-wall-page,
   background: var(--project-hover);
 }
 
+.project-sheet tbody tr:has(.project-sheet__name:focus-visible) {
+  background: var(--project-hover);
+  outline: 2px solid var(--paper-accent);
+  outline-offset: -2px;
+}
+
 .project-sheet__name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   color: var(--paper-ink);
-  font-size: clamp(1rem, 1.2vw, 1.16rem);
+  font-size: clamp(0.82rem, 1vw, 0.94rem);
   font-weight: 700;
-  line-height: 1.16;
-  text-decoration-color: transparent;
-  text-underline-offset: 0.26em;
+  letter-spacing: 0.055em;
+  line-height: 1.2;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+/* Expand the one semantic anchor across its table row. This preserves native
+   link behavior while making every visible part of the row a hit target. */
+.project-sheet__name::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: '';
+  cursor: pointer;
 }
 
 .project-sheet__name:hover,
-.project-sheet__name:focus-visible,
-.project-sheet__source:hover,
-.project-sheet__source:focus-visible {
+.project-sheet__name:focus-visible {
   color: var(--paper-accent);
+}
+
+.project-sheet__name:focus-visible {
+  outline: none;
+}
+
+.project-sheet__name-title {
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-thickness: 0.07em;
+  text-underline-offset: 0.25em;
+}
+
+.project-sheet__name-action {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: var(--paper-muted);
+}
+
+.project-sheet__name-action svg {
+  width: 1.3rem;
+  height: 0.62rem;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 1.15;
+  transition: transform var(--duration-fast) ease;
+}
+
+.project-sheet__name:hover .project-sheet__name-title,
+.project-sheet__name:focus-visible .project-sheet__name-title,
+.project-sheet tbody tr:hover .project-sheet__name-title {
   text-decoration-color: currentColor;
 }
 
-.project-sheet__stack,
-.project-sheet__source-cell {
-  font-size: clamp(0.82rem, 0.93vw, 0.91rem);
+.project-sheet__name:hover .project-sheet__name-action,
+.project-sheet__name:focus-visible .project-sheet__name-action,
+.project-sheet tbody tr:hover .project-sheet__name-action {
+  color: var(--paper-accent);
 }
 
-.project-sheet__private {
-  color: var(--paper-muted);
-  font-style: italic;
-}
-
-.project-sheet__source {
-  color: var(--paper-ink);
-  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-}
-
-/* Collapse before the narrow parchment can force ordinary words apart. The
-   query follows the table's actual available width, not the browser width. */
-@container (max-width: 36rem) {
-  .project-sheet__name-column,
-  .project-sheet__description-column {
-    width: 50%;
-  }
-
-  .project-sheet__stack-column,
-  .project-sheet__source-column,
-  .project-sheet th:nth-child(3),
-  .project-sheet th:nth-child(4),
-  .project-sheet td:nth-child(3),
-  .project-sheet td:nth-child(4) {
-    display: none;
-  }
+.project-sheet__name:hover .project-sheet__name-action svg,
+.project-sheet__name:focus-visible .project-sheet__name-action svg,
+.project-sheet tbody tr:hover .project-sheet__name-action svg {
+  transform: translateX(0.16rem);
 }
 
 @media (max-width: 64rem) {
@@ -176,12 +204,25 @@ body.projects-wall-page,
   }
 
   .project-sheet__name {
-    font-size: 0.98rem;
+    font-size: clamp(0.76rem, 3vw, 0.86rem);
+    letter-spacing: 0.04em;
+  }
+
+  .project-sheet__name-column {
+    width: 42%;
+  }
+
+  .project-sheet__description-column {
+    width: 58%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .project-sheet tbody tr {
+    transition: none;
+  }
+
+  .project-sheet__name-action svg {
     transition: none;
   }
 }
