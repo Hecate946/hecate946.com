@@ -33,16 +33,28 @@
   };
 </script>
 
-<div class="about-scroll-installation">
-  <div class="about-scroll-hanging" aria-label="About Cyrus Asasi">
-    <article class="about-scroll-paper" aria-labelledby="about-scroll-title">
-      <div class="about-scroll-paper__roll about-scroll-paper__roll--top" aria-hidden="true"></div>
+<div class="page-scroll-installation about-scroll-installation">
+  <div
+    class="page-scroll-hanging about-scroll-hanging"
+    aria-label="About Cyrus Asasi"
+  >
+    <article
+      class="page-scroll-paper about-scroll-paper"
+      aria-labelledby="about-scroll-title"
+    >
+      <div
+        class="page-scroll-paper__roll page-scroll-paper__roll--top about-scroll-paper__roll about-scroll-paper__roll--top"
+        aria-hidden="true"
+      ></div>
 
-      <div class="about-scroll-paper__sheet">
-        <div class="about-scroll-paper__viewport">
-          <header class="about-scroll-header">
+      <div class="page-scroll-paper__sheet about-scroll-paper__sheet">
+        <div class="page-scroll-paper__viewport about-scroll-paper__viewport">
+          <header class="page-scroll-header about-scroll-header">
             <h1 id="about-scroll-title">About</h1>
-            <div class="about-scroll-header__rule" aria-hidden="true"></div>
+            <div
+              class="page-scroll-header__rule about-scroll-header__rule"
+              aria-hidden="true"
+            ></div>
 
             {#if intro?.portrait}
               <figure class="about-scroll-portrait-wrap">
@@ -69,7 +81,9 @@
           {#if intro}
             <div class="about-scroll-intro">
               {#each intro.paragraphs as paragraph, index}
-                <p class={index === 0 ? 'about-scroll-intro__lead' : undefined}>{paragraph}</p>
+                <p class={index === 0 ? 'about-scroll-intro__lead' : undefined}>
+                  {paragraph}
+                </p>
               {/each}
             </div>
           {/if}
@@ -103,16 +117,25 @@
                       {/each}
 
                       {#if channel.links?.length}
-                        <nav class="about-scroll-section__links" aria-label={`${channel.label} links`}>
+                        <nav
+                          class="about-scroll-section__links"
+                          aria-label={`${channel.label} links`}
+                        >
                           {#each channel.links as link}
                             <a
                               href={link.href}
                               target={link.external ? '_blank' : undefined}
-                              rel={link.external ? 'noopener noreferrer' : undefined}
+                              rel={link.external
+                                ? 'noopener noreferrer'
+                                : undefined}
                               tabindex={isOpen ? undefined : -1}
                             >
                               <span>{link.label}</span>
-                              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                              <svg
+                                viewBox="0 0 16 16"
+                                aria-hidden="true"
+                                focusable="false"
+                              >
                                 {#if link.external}
                                   <path d="M4 12 12 4M6.25 4H12v5.75" />
                                 {:else}
@@ -132,7 +155,10 @@
         </div>
       </div>
 
-      <div class="about-scroll-paper__roll about-scroll-paper__roll--bottom" aria-hidden="true"></div>
+      <div
+        class="page-scroll-paper__roll page-scroll-paper__roll--bottom about-scroll-paper__roll about-scroll-paper__roll--bottom"
+        aria-hidden="true"
+      ></div>
     </article>
   </div>
 </div>

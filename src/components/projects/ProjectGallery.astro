@@ -6,65 +6,95 @@ const resolveHref = (href: string) =>
   href.startsWith('/') ? withBase(href) : href;
 ---
 
-<section class="project-index" aria-labelledby="project-index-title">
-  <h1 class="project-index__sr-title" id="project-index-title">Projects</h1>
+<section
+  class="page-scroll-installation project-index"
+  aria-labelledby="project-index-title"
+>
+  <div class="page-scroll-hanging">
+    <article class="page-scroll-paper">
+      <div
+        class="page-scroll-paper__roll page-scroll-paper__roll--top"
+        aria-hidden="true"
+      >
+      </div>
 
-  <div class="project-sheet-scroll" tabindex="0" aria-label="Projects table">
-    <div class="project-sheet">
-      <table>
-        <colgroup>
-          <col class="project-sheet__name-column" />
-          <col class="project-sheet__description-column" />
-          <col class="project-sheet__stack-column" />
-          <col class="project-sheet__source-column" />
-        </colgroup>
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Description</th>
-            <th scope="col">Stack</th>
-            <th scope="col">Source</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            indexProjects.map((project) => (
-              <tr>
-                <th scope="row">
-                  <a
-                    class="project-sheet__name"
-                    href={resolveHref(project.primaryHref)}
-                    data-astro-prefetch
-                  >
-                    {project.title}
-                  </a>
-                </th>
-                <td class="project-sheet__description">
-                  <span>{project.description}</span>
-                </td>
-                <td class="project-sheet__stack">
-                  <span>{project.stack.join(' · ')}</span>
-                </td>
-                <td class="project-sheet__source-cell">
-                  {project.sourceHref ? (
-                    <a
-                      class="project-sheet__source"
-                      href={project.sourceHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`View ${project.title} source on GitHub`}
-                    >
-                      GitHub
-                    </a>
-                  ) : (
-                    <span class="project-sheet__private">Private</span>
-                  )}
-                </td>
-              </tr>
-            ))
-          }
-        </tbody>
-      </table>
-    </div>
+      <div class="page-scroll-paper__sheet">
+        <div class="page-scroll-paper__viewport project-scroll-viewport">
+          <header class="page-scroll-header">
+            <h1 id="project-index-title">Projects</h1>
+            <div class="page-scroll-header__rule" aria-hidden="true"></div>
+          </header>
+
+          <div
+            class="project-sheet-scroll"
+            tabindex="0"
+            aria-label="Projects table"
+          >
+            <div class="project-sheet">
+              <table>
+                <colgroup>
+                  <col class="project-sheet__name-column" />
+                  <col class="project-sheet__description-column" />
+                  <col class="project-sheet__stack-column" />
+                  <col class="project-sheet__source-column" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Stack</th>
+                    <th scope="col">Source</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {
+                    indexProjects.map((project) => (
+                      <tr>
+                        <th scope="row">
+                          <a
+                            class="project-sheet__name"
+                            href={resolveHref(project.primaryHref)}
+                            data-astro-prefetch
+                          >
+                            {project.title}
+                          </a>
+                        </th>
+                        <td class="project-sheet__description">
+                          <span>{project.description}</span>
+                        </td>
+                        <td class="project-sheet__stack">
+                          <span>{project.stack.join(' · ')}</span>
+                        </td>
+                        <td class="project-sheet__source-cell">
+                          {project.sourceHref ? (
+                            <a
+                              class="project-sheet__source"
+                              href={project.sourceHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`View ${project.title} source on GitHub`}
+                            >
+                              GitHub
+                            </a>
+                          ) : (
+                            <span class="project-sheet__private">Private</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="page-scroll-paper__roll page-scroll-paper__roll--bottom"
+        aria-hidden="true"
+      >
+      </div>
+    </article>
   </div>
 </section>

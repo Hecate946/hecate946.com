@@ -45,7 +45,7 @@ body {
   z-index: 2;
   margin: 0;
   color: rgb(255 247 250 / 96%);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-site);
   font-size: clamp(7rem, 18vw, 17rem);
   font-weight: 400;
   letter-spacing: -0.085em;
@@ -98,8 +98,7 @@ body {
   border: 1px solid rgb(88 0 30 / 40%);
   border-radius: 999px;
   color: #6b0b2d;
-  font: 600 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    monospace;
+  font: 600 0.72rem/1 var(--font-site);
   letter-spacing: 0.04em;
   text-transform: lowercase;
   cursor: pointer;

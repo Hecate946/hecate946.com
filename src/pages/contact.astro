@@ -15,10 +15,34 @@ import ContactChalkboard from '@/components/contact/ContactChalkboard.astro';
   mainClass="contact-room-main"
   bodyClass="contact-room-page"
 >
-  <div class="contact-page">
-    <h1 class="visually-hidden">Contact Cyrus Asasi</h1>
-    <section class="contact-wall" aria-label="Contact">
-      <ContactChalkboard />
-    </section>
+  <div class="page-scroll-installation contact-page">
+    <div class="page-scroll-hanging">
+      <article class="page-scroll-paper" aria-labelledby="contact-scroll-title">
+        <div
+          class="page-scroll-paper__roll page-scroll-paper__roll--top"
+          aria-hidden="true"
+        >
+        </div>
+
+        <div class="page-scroll-paper__sheet">
+          <div class="page-scroll-paper__viewport contact-scroll-viewport">
+            <header class="page-scroll-header">
+              <h1 id="contact-scroll-title">Contact</h1>
+              <div class="page-scroll-header__rule" aria-hidden="true"></div>
+            </header>
+
+            <section class="contact-wall" aria-label="Contact options">
+              <ContactChalkboard />
+            </section>
+          </div>
+        </div>
+
+        <div
+          class="page-scroll-paper__roll page-scroll-paper__roll--bottom"
+          aria-hidden="true"
+        >
+        </div>
+      </article>
+    </div>
   </div>
 </BaseLayout>

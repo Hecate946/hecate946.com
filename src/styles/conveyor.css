@@ -358,7 +358,7 @@
   align-items: center;
   gap: 0.7rem;
   color: color-mix(in srgb, var(--wall-label-ink) 58%, transparent);
-  font-family: var(--font-sans, system-ui, sans-serif);
+  font-family: var(--font-site);
   font-size: 0.7rem;
   font-weight: 400;
   letter-spacing: 0.16em;

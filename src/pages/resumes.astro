@@ -16,7 +16,10 @@ const resumeStructuredData = {
         '@type': 'DigitalDocument',
         name: 'Cyrus Asasi — Software Engineering Resume',
         encodingFormat: 'application/pdf',
-        url: new URL('/resumes/cyrus-asasi-software-engineering-resume.pdf', Astro.site).href,
+        url: new URL(
+          '/resumes/cyrus-asasi-software-engineering-resume.pdf',
+          Astro.site,
+        ).href,
       },
     },
     {
@@ -26,7 +29,10 @@ const resumeStructuredData = {
         '@type': 'DigitalDocument',
         name: 'Cyrus Asasi — Clarinet Performance Resume',
         encodingFormat: 'application/pdf',
-        url: new URL('/resumes/cyrus-asasi-clarinet-performance-resume.pdf', Astro.site).href,
+        url: new URL(
+          '/resumes/cyrus-asasi-clarinet-performance-resume.pdf',
+          Astro.site,
+        ).href,
       },
     },
   ],
@@ -46,6 +52,5 @@ const resumeStructuredData = {
   mainClass="resume-wall-main"
   bodyClass="resume-wall-page"
 >
-  <h1 class="visually-hidden">Cyrus Asasi Resumes</h1>
   <ResumeGallery />
 </BaseLayout>

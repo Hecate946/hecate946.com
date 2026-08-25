@@ -1,16 +1,12 @@
 :root {
   color-scheme: light;
 
-  /*
-   * Newsreader gives the site a literary, editorial character without relying
-   * on heavy weights. BaseHead.astro loads the font; the fallbacks keep the
-   * site readable if the request is blocked or still loading.
-   */
-  --font-sans: 'Newsreader', Georgia, 'Times New Roman', serif;
-  --font-display: var(--font-sans);
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-    monospace;
+  /* One typeface, everywhere. These aliases remain so existing components can
+     express hierarchy without ever switching font families. */
+  --font-site: 'Times New Roman', Times, serif;
+  --font-sans: var(--font-site);
+  --font-display: var(--font-site);
+  --font-mono: var(--font-site);
 
   /* Shared proportions for the freestanding About and Contact installations. */
   --room-focal-width: 42rem;

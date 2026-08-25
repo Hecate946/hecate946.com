@@ -1,494 +1,662 @@
-<!DOCTYPE html>
+<!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta charset="utf-8" />
-  <meta name="generator" content="pandoc" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>main</title>
-  <style>
-    /* Default styles provided by pandoc.
+  <head>
+    <meta charset="utf-8" />
+    <meta name="generator" content="pandoc" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>main</title>
+    <style>
+      /* Default styles provided by pandoc.
     ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
     */
-    html {
-      color: #1a1a1a;
-      background-color: #fdfdfd;
-    }
-    body {
-      margin: 0 auto;
-      max-width: 36em;
-      padding-left: 50px;
-      padding-right: 50px;
-      padding-top: 50px;
-      padding-bottom: 50px;
-      hyphens: auto;
-      overflow-wrap: break-word;
-      text-rendering: optimizeLegibility;
-      font-kerning: normal;
-    }
-    @media (max-width: 600px) {
-      body {
-        font-size: 0.9em;
-        padding: 12px;
-      }
-      h1 {
-        font-size: 1.8em;
-      }
-    }
-    @media print {
       html {
-        background-color: white;
+        color: #1a1a1a;
+        background-color: #fdfdfd;
       }
       body {
+        margin: 0 auto;
+        max-width: 36em;
+        padding-left: 50px;
+        padding-right: 50px;
+        padding-top: 50px;
+        padding-bottom: 50px;
+        hyphens: auto;
+        overflow-wrap: break-word;
+        text-rendering: optimizeLegibility;
+        font-kerning: normal;
+      }
+      @media (max-width: 600px) {
+        body {
+          font-size: 0.9em;
+          padding: 12px;
+        }
+        h1 {
+          font-size: 1.8em;
+        }
+      }
+      @media print {
+        html {
+          background-color: white;
+        }
+        body {
+          background-color: transparent;
+          color: black;
+          font-size: 12pt;
+        }
+        p,
+        h2,
+        h3 {
+          orphans: 3;
+          widows: 3;
+        }
+        h2,
+        h3,
+        h4 {
+          page-break-after: avoid;
+        }
+      }
+      p {
+        margin: 1em 0;
+      }
+      a {
+        color: #1a1a1a;
+      }
+      a:visited {
+        color: #1a1a1a;
+      }
+      img {
+        max-width: 100%;
+      }
+      svg {
+        height: auto;
+        max-width: 100%;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        margin-top: 1.4em;
+      }
+      h5,
+      h6 {
+        font-size: 1em;
+        font-style: italic;
+      }
+      h6 {
+        font-weight: normal;
+      }
+      ol,
+      ul {
+        padding-left: 1.7em;
+        margin-top: 1em;
+      }
+      li > ol,
+      li > ul {
+        margin-top: 0;
+      }
+      blockquote {
+        margin: 1em 0 1em 1.7em;
+        padding-left: 1em;
+        border-left: 2px solid #e6e6e6;
+        color: #606060;
+      }
+      code {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 85%;
+        margin: 0;
+        hyphens: manual;
+      }
+      pre {
+        margin: 1em 0;
+        overflow: auto;
+      }
+      pre code {
+        padding: 0;
+        overflow: visible;
+        overflow-wrap: normal;
+      }
+      .sourceCode {
         background-color: transparent;
-        color: black;
-        font-size: 12pt;
+        overflow: visible;
       }
-      p, h2, h3 {
-        orphans: 3;
-        widows: 3;
+      hr {
+        border: none;
+        border-top: 1px solid #1a1a1a;
+        height: 1px;
+        margin: 1em 0;
       }
-      h2, h3, h4 {
-        page-break-after: avoid;
+      table {
+        margin: 1em 0;
+        border-collapse: collapse;
+        width: 100%;
+        overflow-x: auto;
+        display: block;
+        font-variant-numeric: lining-nums tabular-nums;
       }
-    }
-    p {
-      margin: 1em 0;
-    }
-    a {
-      color: #1a1a1a;
-    }
-    a:visited {
-      color: #1a1a1a;
-    }
-    img {
-      max-width: 100%;
-    }
-    svg {
-      height: auto;
-      max-width: 100%;
-    }
-    h1, h2, h3, h4, h5, h6 {
-      margin-top: 1.4em;
-    }
-    h5, h6 {
-      font-size: 1em;
-      font-style: italic;
-    }
-    h6 {
-      font-weight: normal;
-    }
-    ol, ul {
-      padding-left: 1.7em;
-      margin-top: 1em;
-    }
-    li > ol, li > ul {
-      margin-top: 0;
-    }
-    blockquote {
-      margin: 1em 0 1em 1.7em;
-      padding-left: 1em;
-      border-left: 2px solid #e6e6e6;
-      color: #606060;
-    }
-    code {
-      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
-      font-size: 85%;
-      margin: 0;
-      hyphens: manual;
-    }
-    pre {
-      margin: 1em 0;
-      overflow: auto;
-    }
-    pre code {
-      padding: 0;
-      overflow: visible;
-      overflow-wrap: normal;
-    }
-    .sourceCode {
-     background-color: transparent;
-     overflow: visible;
-    }
-    hr {
-      border: none;
-      border-top: 1px solid #1a1a1a;
-      height: 1px;
-      margin: 1em 0;
-    }
-    table {
-      margin: 1em 0;
-      border-collapse: collapse;
-      width: 100%;
-      overflow-x: auto;
-      display: block;
-      font-variant-numeric: lining-nums tabular-nums;
-    }
-    table caption {
-      margin-bottom: 0.75em;
-    }
-    tbody {
-      margin-top: 0.5em;
-      border-top: 1px solid #1a1a1a;
-      border-bottom: 1px solid #1a1a1a;
-    }
-    th {
-      border-top: 1px solid #1a1a1a;
-      padding: 0.25em 0.5em 0.25em 0.5em;
-    }
-    td {
-      padding: 0.125em 0.5em 0.25em 0.5em;
-    }
-    header {
-      margin-bottom: 4em;
-      text-align: center;
-    }
-    #TOC li {
-      list-style: none;
-    }
-    #TOC ul {
-      padding-left: 1.3em;
-    }
-    #TOC > ul {
-      padding-left: 0;
-    }
-    #TOC a:not(:hover) {
-      text-decoration: none;
-    }
-    code{white-space: pre-wrap;}
-    span.smallcaps{font-variant: small-caps;}
-    div.columns{display: flex; gap: min(4vw, 1.5em);}
-    div.column{flex: auto; overflow-x: auto;}
-    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-    /* The extra [class] is a hack that increases specificity enough to
+      table caption {
+        margin-bottom: 0.75em;
+      }
+      tbody {
+        margin-top: 0.5em;
+        border-top: 1px solid #1a1a1a;
+        border-bottom: 1px solid #1a1a1a;
+      }
+      th {
+        border-top: 1px solid #1a1a1a;
+        padding: 0.25em 0.5em 0.25em 0.5em;
+      }
+      td {
+        padding: 0.125em 0.5em 0.25em 0.5em;
+      }
+      header {
+        margin-bottom: 4em;
+        text-align: center;
+      }
+      #TOC li {
+        list-style: none;
+      }
+      #TOC ul {
+        padding-left: 1.3em;
+      }
+      #TOC > ul {
+        padding-left: 0;
+      }
+      #TOC a:not(:hover) {
+        text-decoration: none;
+      }
+      code {
+        white-space: pre-wrap;
+      }
+      span.smallcaps {
+        font-variant: small-caps;
+      }
+      div.columns {
+        display: flex;
+        gap: min(4vw, 1.5em);
+      }
+      div.column {
+        flex: auto;
+        overflow-x: auto;
+      }
+      div.hanging-indent {
+        margin-left: 1.5em;
+        text-indent: -1.5em;
+      }
+      /* The extra [class] is a hack that increases specificity enough to
        override a similar rule in reveal.js */
-    ul.task-list[class]{list-style: none;}
-    ul.task-list li input[type="checkbox"] {
-      font-size: inherit;
-      width: 0.8em;
-      margin: 0 0.8em 0.2em -1.6em;
-      vertical-align: middle;
-    }
-  </style>
-</head>
-<body>
-<div class="center">
-<p><span> <strong>CYRUS ASASI</strong></span></p>
-<p><span> <a href="mailto:cyrusasasi@gmail.com">cyrusasasi@gmail.com</a>
-<a href="https://hecate946.com">hecate946.com</a> </span></p>
-</div>
-<h1 id="education">Education</h1>
-<p><span> <strong>UNIVERSITY of CALIFORNIA, LOS ANGELES
-(UCLA)</strong></span></p>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span><em>Master of Music in Clarinet
-Performance</em></span></td>
-<td style="text-align: right;"><span><em>Expected Jun.
-2028</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span><em>Bachelor of Music in Music
-Performance (Clarinet)</em></span></td>
-<td style="text-align: right;"><span><em>Jun. 2026</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span><em>Bachelor of Science in Computer
-Science</em></span></td>
-<td style="text-align: right;"><span><em>Jun. 2026</em></span></td>
-</tr>
-</tbody>
-</table>
-<h1 id="honors-awards">Honors &amp; Awards</h1>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>UCLA ALL-STARS
-COMPETITION</strong></span></td>
-<td style="text-align: right;"><span> <em>2026</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Winner —
-Clarinet</em></span></td>
-<td style="text-align: right;"><span> University of California, Los
-Angeles</span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>MAINLY MOZART YOUTH
-ORCHESTRA SOLO COMPETITION</strong></span></td>
-<td style="text-align: right;"><span> <em>May 2021</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Finalist —
-Clarinet</em></span></td>
-<td style="text-align: right;"><span> San Diego, California</span></td>
-</tr>
-</tbody>
-</table>
-<h1 id="concerto-appearances">Concerto Appearances</h1>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>MENDELSSOHN — KONZERTSTÜCK
-NO. 2, OP. 114</strong></span></td>
-<td style="text-align: right;"><span> <em>Jan. 31, 2026</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>UCLA Philharmonia — Clarinet
-Soloist</em></span></td>
-<td style="text-align: right;"><span> with Esther Kim; Oliver Chan,
-conductor</span></td>
-</tr>
-</tbody>
-</table>
-<h1 id="orchestral-wind-ensemble-experience">Orchestral &amp; Wind
-Ensemble Experience</h1>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>UCLA
-PHILHARMONIA</strong></span></td>
-<td style="text-align: right;"><span> <em>2022 –
-Present</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Clarinetist — Rotating Section
-Assignments</em></span></td>
-<td style="text-align: right;"><span> University of California, Los
-Angeles</span></td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><p>Perform orchestral repertoire in rotating clarinet-section
-assignments across UCLA Philharmonia concert programs.</p></li>
-</ul>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>UCLA WIND
-ENSEMBLE</strong></span></td>
-<td style="text-align: right;"><span> <em>2022 –
-Present</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Clarinetist — Rotating Section
-Assignments</em></span></td>
-<td style="text-align: right;"><span> University of California, Los
-Angeles</span></td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><p>Perform major wind-ensemble repertoire in rotating
-clarinet-section assignments throughout the academic year.</p></li>
-</ul>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>PALOMAR SYMPHONY
-ORCHESTRA</strong></span></td>
-<td style="text-align: right;"><span> <em>2020 – 2022</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Principal
-Clarinet</em></span></td>
-<td style="text-align: right;"><span> Palomar College</span></td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><p>Served as principal clarinet for two seasons, leading the
-clarinet section in rehearsals and orchestral performances.</p></li>
-</ul>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>MAINLY MOZART YOUTH
-ORCHESTRA</strong></span></td>
-<td style="text-align: right;"><span> <em>2019 – 2022</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Principal
-Clarinet</em></span></td>
-<td style="text-align: right;"><span> San Diego, California</span></td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><p>Served as principal clarinet for three seasons, leading the
-section in rehearsals and performances.</p></li>
-</ul>
-<h1 id="chamber-music-experience">Chamber Music Experience</h1>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>UCLA CHAMBER
-MUSIC</strong></span></td>
-<td style="text-align: right;"><span> <em>2022 –
-Present</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Clarinetist and
-Pianist</em></span></td>
-<td style="text-align: right;"><span> University of California, Los
-Angeles</span></td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><p>Perform in coached chamber ensembles on clarinet and piano,
-preparing substantial repertoire across varied instrumental
-combinations.</p></li>
-</ul>
-<h1 id="principal-teachers">Principal Teachers</h1>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>BORIS
-ALLAKHVERDYAN</strong></span></td>
-<td style="text-align: right;"><span> <em>2022 –
-Present</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Clarinet</em></span></td>
-<td style="text-align: right;"><span> University of California, Los
-Angeles</span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>ROBERT
-ZELICKMAN</strong></span></td>
-<td style="text-align: right;"><span> <em>2015 – 2022</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Clarinet</em></span></td>
-<td style="text-align: right;"><span> Private Study</span></td>
-</tr>
-</tbody>
-</table>
-<h1 id="secondary-instrument">Secondary Instrument</h1>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>PIANO</strong></span></td>
-<td style="text-align: right;"><span> <em></em> </span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Solo, Collaborative, Chamber,
-and Duo Performance</em></span></td>
-<td style="text-align: right;"><span> Secondary Instrument</span></td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><p>Maintain active solo, collaborative, chamber, and duo-piano
-experience alongside primary clarinet studies.</p></li>
-</ul>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>UNITED STATES INTERNATIONAL
-DUO PIANO COMPETITION (USIDPC)</strong></span></td>
-<td style="text-align: right;"><span> <em>2014 – 2015</em></span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Two-Time Overall Grand Prize
-Winner — Piano Quartet, Piano I — Primo</em></span></td>
-<td style="text-align: right;"><span> Colorado Springs,
-Colorado</span></td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><p>2014: Charles Gounod, <em>Waltz from Faust</em>, arranged for two
-pianos and eight hands by Renaud de Vilback.</p></li>
-<li><p>2015: Camille Saint-Saëns, <em>Danse macabre</em>, Op. 40,
-arranged for two pianos and eight hands by Ernest Guiraud.</p></li>
-<li><p>Received the overall Grand Prize across all divisions in
-consecutive years.</p></li>
-</ul>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <strong>MUSIC TEACHERS’ ASSOCIATION
-OF CALIFORNIA</strong></span></td>
-<td style="text-align: right;"><span> <em></em> </span></td>
-</tr>
-</tbody>
-</table>
-<table>
-<tbody>
-<tr>
-<td style="text-align: left;"><span> <em>Multiple Winner in
-MTAC-Affiliated Piano Competitions</em></span></td>
-<td style="text-align: right;"><span> <span class="nodecor">11
-Wins</span></span></td>
-</tr>
-</tbody>
-</table>
-</body>
+      ul.task-list[class] {
+        list-style: none;
+      }
+      ul.task-list li input[type='checkbox'] {
+        font-size: inherit;
+        width: 0.8em;
+        margin: 0 0.8em 0.2em -1.6em;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="center">
+      <p>
+        <span> <strong>CYRUS ASASI</strong></span>
+      </p>
+      <p>
+        <span>
+          <a href="mailto:cyrusasasi@gmail.com">cyrusasasi@gmail.com</a>
+          <a href="https://hecate946.com">hecate946.com</a>
+        </span>
+      </p>
+    </div>
+    <h1 id="education">Education</h1>
+    <p>
+      <span>
+        <strong>UNIVERSITY of CALIFORNIA, LOS ANGELES (UCLA)</strong></span
+      >
+    </p>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span><em>Master of Music in Clarinet Performance</em></span>
+          </td>
+          <td style="text-align: right">
+            <span><em>Expected Jun. 2028</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span
+              ><em>Bachelor of Music in Music Performance (Clarinet)</em></span
+            >
+          </td>
+          <td style="text-align: right">
+            <span><em>Jun. 2026</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span><em>Bachelor of Science in Computer Science</em></span>
+          </td>
+          <td style="text-align: right">
+            <span><em>Jun. 2026</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <h1 id="honors-awards">Honors &amp; Awards</h1>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <strong>UCLA ALL-STARS COMPETITION</strong></span>
+          </td>
+          <td style="text-align: right">
+            <span> <em>2026</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>Winner — Clarinet</em></span>
+          </td>
+          <td style="text-align: right">
+            <span> University of California, Los Angeles</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span>
+              <strong
+                >MAINLY MOZART YOUTH ORCHESTRA SOLO COMPETITION</strong
+              ></span
+            >
+          </td>
+          <td style="text-align: right">
+            <span> <em>May 2021</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>Finalist — Clarinet</em></span>
+          </td>
+          <td style="text-align: right"><span> San Diego, California</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <h1 id="concerto-appearances">Concerto Appearances</h1>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span>
+              <strong>MENDELSSOHN — KONZERTSTÜCK NO. 2, OP. 114</strong></span
+            >
+          </td>
+          <td style="text-align: right">
+            <span> <em>Jan. 31, 2026</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>UCLA Philharmonia — Clarinet Soloist</em></span>
+          </td>
+          <td style="text-align: right">
+            <span> with Esther Kim; Oliver Chan, conductor</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <h1 id="orchestral-wind-ensemble-experience">
+      Orchestral &amp; Wind Ensemble Experience
+    </h1>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <strong>UCLA PHILHARMONIA</strong></span>
+          </td>
+          <td style="text-align: right">
+            <span> <em>2022 – Present</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>Clarinetist — Rotating Section Assignments</em></span>
+          </td>
+          <td style="text-align: right">
+            <span> University of California, Los Angeles</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>
+        <p>
+          Perform orchestral repertoire in rotating clarinet-section assignments
+          across UCLA Philharmonia concert programs.
+        </p>
+      </li>
+    </ul>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <strong>UCLA WIND ENSEMBLE</strong></span>
+          </td>
+          <td style="text-align: right">
+            <span> <em>2022 – Present</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>Clarinetist — Rotating Section Assignments</em></span>
+          </td>
+          <td style="text-align: right">
+            <span> University of California, Los Angeles</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>
+        <p>
+          Perform major wind-ensemble repertoire in rotating clarinet-section
+          assignments throughout the academic year.
+        </p>
+      </li>
+    </ul>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <strong>PALOMAR SYMPHONY ORCHESTRA</strong></span>
+          </td>
+          <td style="text-align: right">
+            <span> <em>2020 – 2022</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>Principal Clarinet</em></span>
+          </td>
+          <td style="text-align: right"><span> Palomar College</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>
+        <p>
+          Served as principal clarinet for two seasons, leading the clarinet
+          section in rehearsals and orchestral performances.
+        </p>
+      </li>
+    </ul>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <strong>MAINLY MOZART YOUTH ORCHESTRA</strong></span>
+          </td>
+          <td style="text-align: right">
+            <span> <em>2019 – 2022</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>Principal Clarinet</em></span>
+          </td>
+          <td style="text-align: right"><span> San Diego, California</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>
+        <p>
+          Served as principal clarinet for three seasons, leading the section in
+          rehearsals and performances.
+        </p>
+      </li>
+    </ul>
+    <h1 id="chamber-music-experience">Chamber Music Experience</h1>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <strong>UCLA CHAMBER MUSIC</strong></span>
+          </td>
+          <td style="text-align: right">
+            <span> <em>2022 – Present</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>Clarinetist and Pianist</em></span>
+          </td>
+          <td style="text-align: right">
+            <span> University of California, Los Angeles</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>
+        <p>
+          Perform in coached chamber ensembles on clarinet and piano, preparing
+          substantial repertoire across varied instrumental combinations.
+        </p>
+      </li>
+    </ul>
+    <h1 id="principal-teachers">Principal Teachers</h1>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <strong>BORIS ALLAKHVERDYAN</strong></span>
+          </td>
+          <td style="text-align: right">
+            <span> <em>2022 – Present</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>Clarinet</em></span>
+          </td>
+          <td style="text-align: right">
+            <span> University of California, Los Angeles</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <strong>ROBERT ZELICKMAN</strong></span>
+          </td>
+          <td style="text-align: right">
+            <span> <em>2015 – 2022</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <em>Clarinet</em></span>
+          </td>
+          <td style="text-align: right"><span> Private Study</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <h1 id="secondary-instrument">Secondary Instrument</h1>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span> <strong>PIANO</strong></span>
+          </td>
+          <td style="text-align: right">
+            <span> <em></em> </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span>
+              <em>Solo, Collaborative, Chamber, and Duo Performance</em></span
+            >
+          </td>
+          <td style="text-align: right"><span> Secondary Instrument</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>
+        <p>
+          Maintain active solo, collaborative, chamber, and duo-piano experience
+          alongside primary clarinet studies.
+        </p>
+      </li>
+    </ul>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span>
+              <strong
+                >UNITED STATES INTERNATIONAL DUO PIANO COMPETITION
+                (USIDPC)</strong
+              ></span
+            >
+          </td>
+          <td style="text-align: right">
+            <span> <em>2014 – 2015</em></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span>
+              <em
+                >Two-Time Overall Grand Prize Winner — Piano Quartet, Piano I —
+                Primo</em
+              ></span
+            >
+          </td>
+          <td style="text-align: right">
+            <span> Colorado Springs, Colorado</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>
+        <p>
+          2014: Charles Gounod, <em>Waltz from Faust</em>, arranged for two
+          pianos and eight hands by Renaud de Vilback.
+        </p>
+      </li>
+      <li>
+        <p>
+          2015: Camille Saint-Saëns, <em>Danse macabre</em>, Op. 40, arranged
+          for two pianos and eight hands by Ernest Guiraud.
+        </p>
+      </li>
+      <li>
+        <p>
+          Received the overall Grand Prize across all divisions in consecutive
+          years.
+        </p>
+      </li>
+    </ul>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span>
+              <strong>MUSIC TEACHERS’ ASSOCIATION OF CALIFORNIA</strong></span
+            >
+          </td>
+          <td style="text-align: right">
+            <span> <em></em> </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
+          <td style="text-align: left">
+            <span>
+              <em
+                >Multiple Winner in MTAC-Affiliated Piano Competitions</em
+              ></span
+            >
+          </td>
+          <td style="text-align: right">
+            <span> <span class="nodecor">11 Wins</span></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
 </html>

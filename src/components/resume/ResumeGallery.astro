@@ -19,82 +19,106 @@ const resumes = [
 ] as const;
 ---
 
-<section class="resume-scrolls" aria-label="Resumes">
-  <div class="resume-gallery" data-resume-gallery>
-    <div class="resume-switcher">
+<section
+  class="page-scroll-installation resume-scrolls"
+  aria-labelledby="resume-scroll-title"
+>
+  <div class="page-scroll-hanging">
+    <article class="page-scroll-paper">
       <div
-        class="resume-switcher__tabs"
-        role="tablist"
-        aria-label="Choose a resume"
+        class="page-scroll-paper__roll page-scroll-paper__roll--top"
+        aria-hidden="true"
       >
-        {
-          resumes.map((resume, index) => (
-            <button
-              class="resume-switcher__tab"
-              id={`resume-tab-${resume.id}`}
-              type="button"
-              role="tab"
-              aria-controls={`resume-panel-${resume.id}`}
-              aria-selected={index === 0 ? 'true' : 'false'}
-              tabindex={index === 0 ? 0 : -1}
-              data-resume-tab
-              data-resume-id={resume.id}
-              data-download-href={withBase(resume.pdf)}
-              data-resume-title={resume.fullTitle}
-            >
-              {resume.tabTitle}
-            </button>
-          ))
-        }
       </div>
 
-      <a
-        class="resume-switcher__download"
-        href={withBase(resumes[0].pdf)}
-        download
-        aria-label={`Download ${resumes[0].fullTitle}`}
-        data-resume-download
-      >
-        <span>Download</span>
-        <span class="resume-switcher__download-icon" aria-hidden="true">↓</span>
-      </a>
-    </div>
+      <div class="page-scroll-paper__sheet">
+        <div class="page-scroll-paper__viewport resume-scroll-viewport">
+          <header class="page-scroll-header">
+            <h1 id="resume-scroll-title">Resumes</h1>
+            <div class="page-scroll-header__rule" aria-hidden="true"></div>
+          </header>
 
-    <div class="resume-scrolls__stage" tabindex="0" aria-label="Resume preview">
-      {
-        resumes.map((resume, index) => (
-          <article
-            class={`about-scroll-paper resume-scroll resume-scroll--${resume.id}`}
-            id={`resume-panel-${resume.id}`}
-            role="tabpanel"
-            aria-labelledby={`resume-tab-${resume.id}`}
-            aria-label={resume.fullTitle}
-            tabindex="0"
-            hidden={index !== 0}
-            data-resume-panel
-            data-resume-id={resume.id}
-          >
-            <div
-              class="about-scroll-paper__roll about-scroll-paper__roll--top"
-              aria-hidden="true"
-            />
+          <div class="resume-gallery" data-resume-gallery>
+            <div class="resume-switcher">
+              <div
+                class="resume-switcher__tabs"
+                role="tablist"
+                aria-label="Choose a resume"
+              >
+                {
+                  resumes.map((resume, index) => (
+                    <button
+                      class="resume-switcher__tab"
+                      id={`resume-tab-${resume.id}`}
+                      type="button"
+                      role="tab"
+                      aria-controls={`resume-panel-${resume.id}`}
+                      aria-selected={index === 0 ? 'true' : 'false'}
+                      tabindex={index === 0 ? 0 : -1}
+                      data-resume-tab
+                      data-resume-id={resume.id}
+                      data-download-href={withBase(resume.pdf)}
+                      data-resume-title={resume.fullTitle}
+                    >
+                      {resume.tabTitle}
+                    </button>
+                  ))
+                }
+              </div>
 
-            <div class="about-scroll-paper__sheet resume-scroll__sheet">
-              {resume.id === 'software' ? (
-                <SoftwareResume />
-              ) : (
-                <ClarinetResume />
-              )}
+              <a
+                class="resume-switcher__download"
+                href={withBase(resumes[0].pdf)}
+                download
+                aria-label={`Download ${resumes[0].fullTitle}`}
+                data-resume-download
+              >
+                <span>Download</span>
+                <span class="resume-switcher__download-icon" aria-hidden="true"
+                  >↓</span
+                >
+              </a>
             </div>
 
             <div
-              class="about-scroll-paper__roll about-scroll-paper__roll--bottom"
-              aria-hidden="true"
-            />
-          </article>
-        ))
-      }
-    </div>
+              class="resume-scrolls__stage"
+              tabindex="0"
+              aria-label="Resume preview"
+            >
+              {
+                resumes.map((resume, index) => (
+                  <article
+                    class={`resume-scroll resume-scroll--${resume.id}`}
+                    id={`resume-panel-${resume.id}`}
+                    role="tabpanel"
+                    aria-labelledby={`resume-tab-${resume.id}`}
+                    aria-label={resume.fullTitle}
+                    tabindex="0"
+                    hidden={index !== 0}
+                    data-resume-panel
+                    data-resume-id={resume.id}
+                  >
+                    <div class="resume-scroll__sheet">
+                      {resume.id === 'software' ? (
+                        <SoftwareResume />
+                      ) : (
+                        <ClarinetResume />
+                      )}
+                    </div>
+                  </article>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="page-scroll-paper__roll page-scroll-paper__roll--bottom"
+        aria-hidden="true"
+      >
+      </div>
+    </article>
   </div>
 </section>
 
