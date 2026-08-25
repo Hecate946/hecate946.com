@@ -1,20 +1,27 @@
 import {
+  AmbientLight,
   BufferAttribute,
   CanvasTexture,
   ClampToEdgeWrapping,
+  DirectionalLight,
   Fog,
   LinearMipmapLinearFilter,
   Mesh,
   MeshBasicMaterial,
+  PMREMGenerator,
   PerspectiveCamera,
   PlaneGeometry,
   RepeatWrapping,
   SRGBColorSpace,
   Scene,
   Texture,
+  Vector2,
   WebGLRenderer,
   type Wrapping,
 } from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { createHallwayDoor, type DoorRect } from './hallway-door';
+import { createHallwayPaintings, type PaintingSpec } from './hallway-paintings';
 
 /**
  * WebGL corridor for the homepage.
@@ -54,6 +61,8 @@ const BLACK = 'rgb(0 0 0)';
 interface Palette {
   /** --wall-dark */
   dark: string;
+  /** --room-label-ink */
+  labelInk: string;
   /** --wall-light */
   light: string;
   /** --wall-baseboard */
@@ -71,6 +80,16 @@ export interface HallwayScene {
   refreshTheme(): void;
   /** Draw one frame for the given corridor position. */
   render(cameraZ: number): void;
+  /** 0 = shut, 1 = fully open. Hidden once the camera is through. */
+  setDoor(open: number, visible: boolean): void;
+  /** How far the camera travels between the entrance and the corridor. */
+  getEntryDistance(): number;
+  /** The doorway's on-screen box, for the entrance hit target. */
+  getDoorRect(): DoorRect;
+  /** Index of the painting under a client-space point, or -1. */
+  pickPainting(clientX: number, clientY: number): number;
+  /** Highlight one painting, or -1 for none. */
+  setHoveredPainting(index: number): void;
   dispose(): void;
 }
 
@@ -111,6 +130,7 @@ function readPalette(probe: HTMLElement): Palette {
     baseboard: style.borderTopColor,
     trim: style.borderRightColor,
     grout: style.borderBottomColor,
+    labelInk: style.borderLeftColor,
   };
 }
 
@@ -240,8 +260,14 @@ export function createHallwayScene(options: {
   viewport: HTMLElement;
   /** The hidden element exposing the corridor's resolved CSS values. */
   probe: HTMLElement;
+  /** The hidden element sized to `--hallway-painting-width` / `-height`. */
+  frameProbe: HTMLElement;
+  /** The gallery, in corridor order. */
+  paintings: readonly PaintingSpec[];
+  /** Called when a painting's texture decodes and a redraw is needed. */
+  onReady: () => void;
 }): HallwayScene {
-  const { canvas, viewport, probe } = options;
+  const { canvas, viewport, probe, frameProbe, onReady } = options;
 
   const renderer = new WebGLRenderer({
     canvas,
@@ -267,6 +293,10 @@ export function createHallwayScene(options: {
   const rightWallMap = new CanvasTexture(wallCanvas);
   const floorMap = new CanvasTexture(floorCanvas);
   const ceilingMap = new CanvasTexture(ceilingCanvas);
+  // The door's wall faces the camera, so it samples the same painted course
+  // by world position -- gradient, baseboard, and mortar all meet the side
+  // walls exactly at the corners.
+  const frontWallMap = new CanvasTexture(wallCanvas);
 
   const anisotropy = renderer.capabilities.getMaxAnisotropy();
   const prepare = (map: Texture, wrapS: Wrapping, wrapT: Wrapping) => {
@@ -283,6 +313,7 @@ export function createHallwayScene(options: {
   prepare(rightWallMap, RepeatWrapping, ClampToEdgeWrapping);
   prepare(floorMap, RepeatWrapping, RepeatWrapping);
   prepare(ceilingMap, ClampToEdgeWrapping, ClampToEdgeWrapping);
+  prepare(frontWallMap, RepeatWrapping, ClampToEdgeWrapping);
 
   leftWallMap.repeat.set(TUNNEL_DEPTH / BRICK_TILE_WIDTH, 1);
   rightWallMap.repeat.copy(leftWallMap.repeat);
@@ -319,8 +350,41 @@ export function createHallwayScene(options: {
 
   paintFloor(floorCanvas, pixelRatio);
 
+  // Black lacquer and gold are almost entirely reflection, so they need an
+  // environment far more than they need lamps. One small PMREM probe gives
+  // both a believable falloff; the two lights only add the direct highlight
+  // that picks out the panel moldings and the f-holes' bevel.
+  const pmrem = new PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.34;
+  pmrem.dispose();
+
+  // Deliberately dim and well off-axis. A strong light square-on to a flat
+  // panel puts its specular lobe dead centre, which is what turned the doors
+  // into a spotlit blob; the environment does the shaping instead and this
+  // only picks out the mouldings and the f-holes' bevel.
+  const keyLight = new DirectionalLight(0xfff4e2, 0.42);
+  keyLight.position.set(-1.15, 1.4, 0.85);
+  scene.add(keyLight, new AmbientLight(0xdfeff0, 0.55));
+
+  // ExtrudeGeometry gives the caps world-space UVs, so mapping the painted
+  // wall onto the front panel is only a repeat and an offset.
+  const frontWallMaterial = new MeshBasicMaterial({ map: frontWallMap });
+  const revealMaterial = new MeshBasicMaterial({ color: 0x000000 });
+  const door = createHallwayDoor([frontWallMaterial, revealMaterial]);
+  scene.add(door.group);
+
+  const paintings = createHallwayPaintings(
+    options.paintings,
+    pixelRatio,
+    onReady,
+  );
+  scene.add(paintings.group);
+
   let wallHeight = 0;
   let paintedWallHeight = -1;
+  let viewWidth = 0;
+  let viewHeight = 0;
 
   function refreshTheme() {
     const palette = readPalette(probe);
@@ -331,12 +395,15 @@ export function createHallwayScene(options: {
     rightWallMap.needsUpdate = true;
     ceilingMap.needsUpdate = true;
     fog.color.set(palette.dark);
+    paintings.setInk(palette.labelInk);
   }
 
   function resize() {
     const { width, height } = viewport.getBoundingClientRect();
     const box = probe.getBoundingClientRect();
     if (width === 0 || height === 0 || box.width === 0) return;
+    viewWidth = width;
+    viewHeight = height;
 
     const halfWidth = box.width;
     const halfHeight = box.height;
@@ -377,6 +444,13 @@ export function createHallwayScene(options: {
     fog.near = perspective + FOG_START;
     fog.far = perspective + TUNNEL_DEPTH;
 
+    door.layout(halfWidth, halfHeight, perspective);
+
+    const frame = frameProbe.getBoundingClientRect();
+    paintings.layout(halfWidth, frame.width, frame.height);
+    frontWallMap.repeat.set(1 / BRICK_TILE_WIDTH, 1 / wallHeight);
+    frontWallMap.offset.set(0.5, 0.5);
+
     renderer.setSize(width, height, false);
     if (wallHeight !== paintedWallHeight) refreshTheme();
   }
@@ -387,6 +461,8 @@ export function createHallwayScene(options: {
     leftWallMap.offset.x = (cameraZ / BRICK_TILE_WIDTH) % 1;
     rightWallMap.offset.x = (-cameraZ / BRICK_TILE_WIDTH) % 1;
     floorMap.offset.y = (cameraZ / FLOOR_TILE) % 1;
+    door.setCameraZ(cameraZ);
+    paintings.update(cameraZ);
     renderer.render(scene, camera);
   }
 
@@ -396,7 +472,37 @@ export function createHallwayScene(options: {
     resize,
     refreshTheme,
     render,
+    setDoor(open: number, visible: boolean) {
+      door.setOpen(open);
+      door.group.visible = visible;
+    },
+    getEntryDistance() {
+      return door.entryDistance;
+    },
+    getDoorRect() {
+      return door.project(camera, viewWidth, viewHeight);
+    },
+    pickPainting(clientX: number, clientY: number) {
+      const rect = viewport.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return -1;
+      return paintings.pick(
+        new Vector2(
+          ((clientX - rect.left) / rect.width) * 2 - 1,
+          -(((clientY - rect.top) / rect.height) * 2 - 1),
+        ),
+        camera,
+      );
+    },
+    setHoveredPainting(index: number) {
+      paintings.setHovered(index);
+    },
     dispose() {
+      paintings.dispose();
+      door.dispose();
+      frontWallMaterial.dispose();
+      revealMaterial.dispose();
+      frontWallMap.dispose();
+      scene.environment?.dispose();
       unitPlane.dispose();
       floorGeometry.dispose();
       for (const surface of surfaces) {

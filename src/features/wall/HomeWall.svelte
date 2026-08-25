@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { withBase } from '@/lib/paths';
   import type { HallwayScene } from './hallway-scene';
+  import type { PaintingSpec } from './hallway-paintings';
   import { wallDestinations } from './wall-config';
 
   export let active = true;
@@ -18,7 +19,10 @@
   const DIRECTION_THRESHOLD = 42;
   const INERTIA_TIME_CONSTANT = 0.72;
   const MAX_MANUAL_SPEED = 2_500;
-  const OPENING_DURATION = 980;
+  /** Doors swing, then the camera walks through. One timeline, two beats. */
+  const OPENING_DURATION = 1_900;
+  const SWING_FRACTION = 0.46;
+  const DOLLY_DELAY = 0.3;
 
   type SceneMode = 'entrance' | 'opening' | 'hallway';
   type GestureAxis = 'pending' | 'horizontal' | 'vertical';
@@ -29,17 +33,30 @@
     side: index % 2 === 0 ? ('left' as const) : ('right' as const),
     z: PAINTING_START + PAINTING_SPACING * index,
     indexLabel: String(index + 1).padStart(2, '0'),
-    srcset: destination.painting.sources
-      .map((source) => `${withBase(source.src)} ${source.width}w`)
-      .join(', '),
+  }));
+
+  /** The renderer takes the widest source; these are all small webp files. */
+  const paintingSpecs: PaintingSpec[] = paintings.map((painting) => ({
+    id: painting.destination.id,
+    label: painting.destination.label,
+    indexLabel: painting.indexLabel,
+    side: painting.side,
+    z: painting.z,
+    src: withBase(
+      [...painting.destination.painting.sources].sort(
+        (a, b) => b.width - a.width,
+      )[0].src,
+    ),
   }));
 
   let stage: HTMLElement;
   let hallwayViewport: HTMLElement;
   let hallwayCanvas: HTMLCanvasElement;
   let hallwayProbe: HTMLElement;
+  let hallwayFrameProbe: HTMLElement;
   let hallway: HallwayScene | null = null;
-  let paintingNodes: HTMLElement[] = [];
+  let destinationLinks: HTMLAnchorElement[] = [];
+  let hoveredPainting = -1;
   let mode: SceneMode = 'entrance';
   let cameraZ = 0;
   let velocity = 0;
@@ -57,7 +74,10 @@
   let hasInteracted = false;
   let rafId = 0;
   let lastFrame = 0;
-  let openingTimeout = 0;
+  let openingStarted = 0;
+  let doorOpen = 0;
+  let entryDistance = 0;
+  let doorRect = { left: 0, top: 0, width: 0, height: 0 };
   let programmatic = false;
   let programmaticStart = 0;
   let programmaticDelta = 0;
@@ -78,6 +98,20 @@
       Math.min(1, (value - edge0) / (edge1 - edge0)),
     );
     return progress * progress * (3 - 2 * progress);
+  }
+
+  function easeOutCubic(progress: number) {
+    return 1 - Math.pow(1 - progress, 3);
+  }
+
+  function easeInOutCubic(progress: number) {
+    return progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+  }
+
+  function clamp01(value: number) {
+    return Math.min(1, Math.max(0, value));
   }
 
   function markInteracted() {
@@ -105,52 +139,28 @@
     roomWindow.__hecateSetRoomCameraX?.(0);
   }
 
-  function collectSceneNodes() {
-    if (!stage) return;
-    paintingNodes = Array.from(
-      stage.querySelectorAll<HTMLElement>('[data-hallway-painting]'),
-    );
-  }
-
   function renderCamera(force = false) {
     if (!force && cameraZ === lastRenderedCameraZ && !programmatic) return;
 
-    // The corridor is optional; painting placement is not.
+    hallway?.setDoor(doorOpen, mode !== 'hallway');
     hallway?.render(cameraZ);
-
-    for (const [index, node] of paintingNodes.entries()) {
-      const painting = paintings[index];
-      if (!painting) continue;
-
-      const distance =
-        modulo(
-          painting.z - cameraZ + PAINTING_BEHIND_ALLOWANCE,
-          HALLWAY_LOOP_DEPTH,
-        ) - PAINTING_BEHIND_ALLOWANCE;
-      const nearOpacity = smoothstep(80, 240, distance);
-      const farOpacity = Math.max(
-        0.02,
-        1 - smoothstep(2_650, HALLWAY_LOOP_DEPTH - 250, distance),
-      );
-      const depthOpacity = nearOpacity * farOpacity;
-      const renderedDistance = Math.round(distance * 4) / 4;
-
-      node.style.transform = `translate3d(var(--painting-side-x), -26px, ${-renderedDistance}px) rotateY(var(--painting-turn))`;
-      node.style.opacity = depthOpacity.toFixed(3);
-      node.style.pointerEvents =
-        mode === 'hallway' && distance > 180 && distance < 2_450
-          ? 'auto'
-          : 'none';
-    }
-
     lastRenderedCameraZ = cameraZ;
   }
 
   function refreshRenderState() {
-    collectSceneNodes();
     hallway?.resize();
+
+    if (hallway) {
+      entryDistance = hallway.getEntryDistance();
+      // At the entrance the camera stands back from the door by exactly the
+      // distance it will travel, so the corridor lands on its usual origin
+      // the moment we arrive and the paintings keep their spacing.
+      if (mode === 'entrance') cameraZ = -entryDistance;
+    }
+
     lastRenderedCameraZ = Number.NaN;
     renderCamera(true);
+    if (hallway && mode === 'entrance') doorRect = hallway.getDoorRect();
   }
 
   function ensureAnimationLoop() {
@@ -181,21 +191,21 @@
     markInteracted();
     isPaused = false;
     driftDirection = 1;
-    cameraZ = 0;
-    velocity = reducedMotion ? 0 : 180;
-    mode = reducedMotion ? 'hallway' : 'opening';
-    lastFrame = performance.now();
-    refreshRenderState();
 
-    if (reducedMotion) return;
-
-    ensureAnimationLoop();
-    openingTimeout = window.setTimeout(() => {
+    if (reducedMotion) {
       mode = 'hallway';
-      velocity = IDLE_DRIFT_SPEED;
-      lastFrame = performance.now();
-      ensureAnimationLoop();
-    }, OPENING_DURATION);
+      cameraZ = 0;
+      velocity = 0;
+      doorOpen = 1;
+      refreshRenderState();
+      return;
+    }
+
+    openingStarted = performance.now();
+    lastFrame = openingStarted;
+    mode = 'opening';
+    velocity = 0;
+    ensureAnimationLoop();
   }
 
   function toggleMotion() {
@@ -252,6 +262,7 @@
   }
 
   function focusDestination(event: FocusEvent, index: number) {
+    if (dragging || mode !== 'entrance') markInteracted();
     if (dragging || mode !== 'hallway') return;
     if (
       !(event.currentTarget instanceof HTMLElement) ||
@@ -264,14 +275,26 @@
     if (painting) void animateCameraTo(painting.z - 400, 640);
   }
 
-  function enterDestination(event: MouseEvent) {
-    if (dragDistance > DRAG_THRESHOLD) {
-      event.preventDefault();
-      return;
-    }
+  function updateHover(event: PointerEvent) {
+    if (!hallway || mode !== 'hallway' || dragging) return;
+    const next = hallway.pickPainting(event.clientX, event.clientY);
+    if (next === hoveredPainting) return;
+    hoveredPainting = next;
+    hallway.setHoveredPainting(next);
+    renderCamera(true);
+  }
+
+  function enterDestination(event: PointerEvent) {
+    if (!hallway || mode !== 'hallway') return;
+    if (dragDistance > DRAG_THRESHOLD) return;
+
+    const index = hallway.pickPainting(event.clientX, event.clientY);
+    if (index < 0) return;
 
     markInteracted();
-    clearPointerDrag();
+    // Click the real anchor rather than assigning location: that keeps
+    // Astro's client router, prefetching, and history exactly as they were.
+    destinationLinks[index]?.click();
   }
 
   function onWheel(event: WheelEvent) {
@@ -295,7 +318,7 @@
     if (mode !== 'hallway' || event.button !== 0) return;
     if (
       event.target instanceof Element &&
-      event.target.closest('.wall-corner-control, .hallway-painting')
+      event.target.closest('.wall-corner-control')
     )
       return;
 
@@ -325,7 +348,10 @@
   }
 
   function onPointerMove(event: PointerEvent) {
-    if (!dragging || activePointerId !== event.pointerId) return;
+    if (!dragging || activePointerId !== event.pointerId) {
+      updateHover(event);
+      return;
+    }
 
     const deltaX = event.clientX - pointerX;
     const deltaY = event.clientY - pointerY;
@@ -383,6 +409,7 @@
   }
 
   function finishPointer(event: PointerEvent) {
+    if (event.type === 'pointerup') enterDestination(event);
     clearPointerDrag(event.pointerId);
   }
 
@@ -470,7 +497,25 @@
     const dt = elapsedMs / 1000;
     lastFrame = now;
 
-    if (programmatic) {
+    if (mode === 'opening') {
+      const progress = clamp01((now - openingStarted) / OPENING_DURATION);
+
+      // The leaves finish swinging before the walk-through completes, and
+      // the camera starts moving while they are still opening -- the overlap
+      // is what makes it read as walking in rather than two cutscenes.
+      doorOpen = easeOutCubic(clamp01(progress / SWING_FRACTION));
+      const dolly = easeInOutCubic(
+        clamp01((progress - DOLLY_DELAY) / (1 - DOLLY_DELAY)),
+      );
+      cameraZ = entryDistance * (dolly - 1);
+
+      if (progress >= 1) {
+        mode = 'hallway';
+        cameraZ = 0;
+        doorOpen = 1;
+        velocity = IDLE_DRIFT_SPEED;
+      }
+    } else if (programmatic) {
       const progress = Math.min(
         1,
         (now - programmaticStarted) / programmaticDuration,
@@ -486,7 +531,7 @@
         resolve?.();
       }
     } else if (!dragging) {
-      const driftVelocity = mode === 'opening' ? 180 : getDriftVelocity();
+      const driftVelocity = getDriftVelocity();
       const easing = 1 - Math.exp(-dt / INERTIA_TIME_CONSTANT);
       velocity += (driftVelocity - velocity) * easing;
       if (Math.abs(velocity) < 0.01 && driftVelocity === 0) velocity = 0;
@@ -536,6 +581,9 @@
           canvas: hallwayCanvas,
           viewport: hallwayViewport,
           probe: hallwayProbe,
+          frameProbe: hallwayFrameProbe,
+          paintings: paintingSpecs,
+          onReady: () => renderCamera(true),
         });
         refreshRenderState();
       } catch (error) {
@@ -555,7 +603,6 @@
     });
 
     resetSharedBackdrop();
-    collectSceneNodes();
     refreshRenderState();
 
     stage.addEventListener('wheel', onWheel, { passive: false });
@@ -572,7 +619,6 @@
 
     return () => {
       mounted = false;
-      window.clearTimeout(openingTimeout);
       stage.removeEventListener('wheel', onWheel);
       stage.removeEventListener('pointerdown', onPointerDown);
       stage.removeEventListener('pointermove', onPointerMove);
@@ -612,8 +658,9 @@
 >
   <h1 class="visually-hidden">Cyrus Asasi</h1>
 
-  <span bind:this={hallwayProbe} class="hallway-metrics" aria-hidden="true"
-  ></span>
+  <span bind:this={hallwayProbe} class="hallway-metrics" aria-hidden="true">
+    <span bind:this={hallwayFrameProbe} class="hallway-metrics__frame"></span>
+  </span>
 
   <div
     bind:this={hallwayViewport}
@@ -623,90 +670,41 @@
     <canvas bind:this={hallwayCanvas} class="hallway-canvas" aria-hidden="true"
     ></canvas>
 
-    <div class="hallway-world">
-      {#each paintings as painting, index (painting.destination.id)}
-        <a
-          class:hallway-painting--left={painting.side === 'left'}
-          class:hallway-painting--right={painting.side === 'right'}
-          class="hallway-painting"
-          href={withBase(painting.destination.href)}
-          aria-label={`Enter ${painting.destination.label}`}
-          data-hallway-painting={painting.destination.id}
-          data-astro-prefetch
-          draggable="false"
-          onfocus={(event) => focusDestination(event, index)}
-          onclick={enterDestination}
-        >
-          <span class="hallway-painting__frame" aria-hidden="true">
-            <span class="hallway-painting__glass">
-              <img
-                class="hallway-painting__image"
-                src={withBase(painting.destination.painting.src)}
-                srcset={painting.srcset}
-                sizes="(max-width: 40rem) 210px, 300px"
-                alt=""
-                width={painting.destination.painting.width}
-                height={painting.destination.painting.height}
-                draggable="false"
-                decoding="async"
-                loading={index === 0 ? 'eager' : 'lazy'}
-                fetchpriority={index === 0 ? 'high' : 'low'}
-              />
-              <span class="hallway-painting__reflection"></span>
-            </span>
-          </span>
-          <span class="hallway-painting__sill" aria-hidden="true"></span>
-          <span class="hallway-painting__label">
-            <span class="hallway-painting__index">{painting.indexLabel}</span>
-            <span class="hallway-painting__name">
+    <nav class="hallway-destinations" aria-label="Portfolio destinations">
+      <ul>
+        {#each paintings as painting, index (painting.destination.id)}
+          <li>
+            <a
+              bind:this={destinationLinks[index]}
+              href={withBase(painting.destination.href)}
+              data-astro-prefetch
+              onfocus={(event) => focusDestination(event, index)}
+            >
               {painting.destination.label}
-            </span>
-            <span class="hallway-painting__arrow" aria-hidden="true">
-              <svg
-                viewBox="0 0 16 16"
-                width="16"
-                height="16"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <path d="M4 12 12 4M6.25 4H12v5.75" />
-              </svg>
-            </span>
-          </span>
-        </a>
-      {/each}
-    </div>
+            </a>
+          </li>
+        {/each}
+      </ul>
+    </nav>
 
     <div class="hallway-depth-fog" aria-hidden="true"></div>
     <div class="hallway-vignette" aria-hidden="true"></div>
   </div>
 
-  <div
-    class="home-entrance"
-    aria-hidden={mode === 'hallway' ? 'true' : undefined}
-  >
-    <div class="home-door-frame">
-      <div class="home-doorway" aria-hidden="true"></div>
-      <button
-        class="home-door"
-        type="button"
-        aria-label="Open the door and enter the portfolio hallway"
-        disabled={mode !== 'entrance'}
-        onclick={enterHallway}
-      >
-        <span class="home-door__panel home-door__panel--top"></span>
-        <span class="home-door__panel home-door__panel--middle"></span>
-        <span class="home-door__panel home-door__panel--bottom"></span>
-        <span class="home-door__number">946</span>
-        <span class="home-door__knob" aria-hidden="true"></span>
-      </button>
-      <span class="home-door-frame__threshold" aria-hidden="true"></span>
-    </div>
-  </div>
+  {#if mode !== 'hallway'}
+    <button
+      class="home-entrance-hit"
+      type="button"
+      style={`left:${doorRect.left}px;top:${doorRect.top}px;width:${doorRect.width}px;height:${doorRect.height}px;`}
+      aria-label="Open the doors and enter the portfolio hallway"
+      disabled={mode !== 'entrance'}
+      onclick={enterHallway}
+    ></button>
+  {/if}
 
   <p class="wall-navigation-hint" aria-live="polite">
     {mode === 'entrance'
-      ? 'Click the door to enter'
+      ? 'Click the doors to enter'
       : 'Scroll or drag to explore · click a painting'}
   </p>
 

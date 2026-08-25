@@ -1,19 +1,10 @@
 /* Homepage entrance and the WebGL hallway that sits behind it. */
 .wall-stage {
-  --home-door-half-width: clamp(5.5rem, 11vw, 7.75rem);
-  --home-door-width: calc(
-    var(--home-door-half-width) + var(--home-door-half-width)
-  );
-  --home-door-height: clamp(17rem, 46vh, 25rem);
-  --home-door-bottom: calc(var(--floor-height) + 0.55rem);
   --hallway-half-width: max(55vw, 29rem);
   --hallway-half-height: max(58vh, 23rem);
   --hallway-grout-color: rgb(255 255 255 / 12%);
   --hallway-painting-width: 420px;
   --hallway-painting-height: 546px;
-  --hallway-painting-half-width: 210px;
-  --hallway-painting-half-height: 273px;
-  --hallway-painting-wall-gap: 4px;
   --wall-control-bottom-gap: clamp(0.7rem, 1.7vh, 1.05rem);
   --wall-control-safe-bottom: max(
     var(--wall-control-bottom-gap),
@@ -52,10 +43,17 @@ html[data-theme='light'] .wall-stage {
   border-top-color: var(--wall-baseboard);
   border-right-color: var(--wall-trim-line);
   border-bottom-color: var(--hallway-grout-color);
+  border-left-color: var(--room-label-ink);
   background-color: var(--wall-light);
   color: var(--wall-dark);
   visibility: hidden;
   pointer-events: none;
+}
+
+.hallway-metrics__frame {
+  display: block;
+  width: var(--hallway-painting-width);
+  height: calc(var(--hallway-painting-height) - 2.4rem);
 }
 
 .wall-stage--hallway {
@@ -66,9 +64,12 @@ html[data-theme='light'] .wall-stage {
   cursor: grabbing;
 }
 
-/* The 3D scene initially exists only through the doorway. Expanding the clip
-   while the door grows past the camera creates the room-to-hallway transition
-   without loading a second renderer or duplicating the corridor. */
+.wall-stage--hallway.wall-stage--pointing {
+  cursor: pointer;
+}
+
+/* The doorway is real geometry standing in the corridor, so the depth buffer
+   does the reveal that a clip-path used to fake. */
 .hallway-scene {
   position: absolute;
   z-index: 6;
@@ -81,38 +82,21 @@ html[data-theme='light'] .wall-stage {
       transparent 28%
     ),
     color-mix(in srgb, var(--wall-dark) 95%, black);
-  clip-path: inset(
-    calc(100% - var(--home-door-bottom) - var(--home-door-height) + 0.42rem)
-      calc(50% - var(--home-door-half-width) + 0.42rem)
-      calc(var(--home-door-bottom) + 0.42rem)
-      calc(50% - var(--home-door-half-width) + 0.42rem)
-  );
   perspective: clamp(760px, 82vw, 1120px);
   perspective-origin: 50% 49%;
   opacity: 1;
   pointer-events: none;
-  transition:
-    clip-path 820ms cubic-bezier(0.7, 0, 0.18, 1) 130ms,
-    filter 820ms cubic-bezier(0.2, 0.75, 0.25, 1);
-}
-
-.wall-stage--opening .hallway-scene,
-.wall-stage--hallway .hallway-scene {
-  clip-path: inset(0);
-}
-
-.wall-stage--opening .hallway-scene {
-  filter: brightness(1.06);
 }
 
 .wall-stage--hallway .hallway-scene {
-  filter: none;
   pointer-events: auto;
 }
 
-/* One WebGL surface draws the walls, floor, and ceiling. It sits beneath the
-   painting layer, which is all the depth ordering the scene needs: paintings
-   hang on the walls, so nothing in the corridor can ever occlude them. */
+/* One WebGL surface for the whole room -- corridor, doorway, and gallery.
+   With the paintings now meshes rather than a CSS layer above the canvas,
+   the depth buffer sorts them against the door instead of letting them show
+   through it. `.hallway-scene` still owns the perspective the camera is
+   derived from, so it keeps its perspective properties. */
 .hallway-canvas {
   position: absolute;
   z-index: 1;
@@ -121,16 +105,6 @@ html[data-theme='light'] .wall-stage {
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-.hallway-world {
-  position: absolute;
-  z-index: 2;
-  top: 49%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
 }
 
 .hallway-depth-fog,
@@ -183,418 +157,67 @@ html[data-theme='light'] .wall-stage {
   opacity: 0.84;
 }
 
-/* Paintings are real anchors placed in the same 3D world as the corridor.
-   They remain DOM content, so links, prefetching, focus, and image loading all
-   keep the behavior of the previous homepage. */
-.hallway-painting {
-  --painting-side-x: 0px;
-  --painting-turn: 0deg;
-  --painting-frame-outline: var(--room-outline, var(--wall-light));
+/* The gallery is drawn in WebGL. These anchors stay in the DOM so links,
+   prefetching, focus order, and screen readers behave exactly as before --
+   they are off-screen but reachable, and become visible when focused. */
+.hallway-destinations ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
+.hallway-destinations a {
   position: absolute;
-  top: 0;
-  left: 0;
-  display: block;
-  width: var(--hallway-painting-width);
-  height: var(--hallway-painting-height);
-  margin-top: calc(0px - var(--hallway-painting-half-height));
-  margin-left: calc(0px - var(--hallway-painting-half-width));
-  color: color-mix(in srgb, var(--room-label-ink) 72%, transparent);
-  outline: none;
-  text-decoration: none;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
-  user-select: none;
-  will-change: transform, opacity;
-  -webkit-user-drag: none;
-}
-
-.hallway-painting--left {
-  --painting-side-x: calc(
-    var(--hallway-painting-wall-gap) - var(--hallway-half-width)
-  );
-  --painting-turn: 89.5deg;
-}
-
-.hallway-painting--right {
-  --painting-side-x: calc(
-    var(--hallway-half-width) - var(--hallway-painting-wall-gap)
-  );
-  --painting-turn: -89.5deg;
-}
-
-.hallway-painting__frame {
-  position: absolute;
-  top: 0;
-  left: 0;
-  box-sizing: border-box;
-  width: 100%;
-  height: calc(100% - 2.4rem);
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-  border: 0.7rem solid #050505;
-  background: #020202;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--painting-frame-outline) 26%, transparent),
-    0 0 0 0.3rem #0b0b0b,
-    0.5rem 0.8rem 1.3rem rgb(0 0 0 / 66%),
-    0 0 2.4rem color-mix(in srgb, var(--wall-light) 8%, transparent),
-    inset 0 0 2rem rgb(0 0 0 / 88%);
-  transition:
-    box-shadow 300ms cubic-bezier(0.2, 0.75, 0.25, 1),
-    filter 300ms ease;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.hallway-painting__glass {
-  position: absolute;
-  inset: 0.3rem;
-  overflow: hidden;
-  background: #0b0b0a;
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--painting-frame-outline) 24%, transparent);
-}
-
-.hallway-painting__image {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.hallway-painting__glass::after {
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  background: rgb(0 0 0 / 15%);
-  content: '';
-  opacity: 1;
-  pointer-events: none;
-  transition: opacity 300ms ease;
-}
-
-.hallway-painting__reflection {
-  position: absolute;
-  z-index: 3;
-  inset: 0;
-  background:
-    linear-gradient(
-      112deg,
-      transparent 12%,
-      color-mix(in srgb, var(--wall-light) 7%, transparent) 27%,
-      transparent 43%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--wall-light) 2%, transparent),
-      transparent 38%
-    );
-  pointer-events: none;
-}
-
-.hallway-painting__sill {
-  position: absolute;
-  right: -0.62rem;
-  bottom: 2.08rem;
-  left: -0.62rem;
-  height: 0.55rem;
-  background: #050505;
-  border-top: 1px solid
-    color-mix(in srgb, var(--painting-frame-outline) 24%, transparent);
-  box-shadow: 0 0.5rem 0.65rem rgb(0 0 0 / 58%);
-}
-
-.hallway-painting__label {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 0.7rem;
-  color: color-mix(in srgb, var(--room-label-ink) 64%, transparent);
-  font-family: var(--font-site);
-  font-size: 0.72rem;
-  font-weight: 400;
-  letter-spacing: 0.16em;
-  line-height: 1;
-  text-transform: uppercase;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 55%);
-  transition: color 240ms ease;
-}
-
-.hallway-painting__index {
-  color: color-mix(in srgb, var(--room-label-ink) 42%, transparent);
-  font-variant-numeric: tabular-nums;
-}
-
-.hallway-painting__arrow {
-  display: grid;
-  width: 0.9rem;
-  height: 0.9rem;
-  place-items: center;
-  opacity: 0;
-  transform: translate(-0.2rem, 0.2rem);
-  transition:
-    opacity 240ms ease,
-    transform 240ms ease;
-}
-
-.hallway-painting__arrow svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+.hallway-destinations a:focus-visible {
+  z-index: 20;
+  top: 50%;
+  left: 50%;
+  width: auto;
+  height: auto;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.4rem;
+  outline: 2px solid var(--room-outline);
+  outline-offset: 0.2rem;
   overflow: visible;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.35;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  clip-path: none;
+  background: var(--room-control-bg, rgb(0 0 0 / 72%));
+  color: var(--room-label-ink);
+  font-family: var(--font-site);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: translate(-50%, 6rem);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .hallway-painting:hover .hallway-painting__frame {
-    filter: brightness(1.08);
-    box-shadow:
-      0 0 0 1px
-        color-mix(in srgb, var(--painting-frame-outline) 42%, transparent),
-      0 0 0 0.3rem #0d0d0d,
-      0.55rem 0.85rem 1.3rem rgb(0 0 0 / 68%),
-      0 0 2.9rem color-mix(in srgb, var(--wall-light) 30%, transparent),
-      inset 0 0 1.5rem rgb(0 0 0 / 58%);
-  }
-
-  .hallway-painting:hover .hallway-painting__glass::after {
-    opacity: 0;
-  }
-
-  .hallway-painting:hover .hallway-painting__label {
-    color: color-mix(in srgb, var(--room-label-ink) 94%, transparent);
-  }
-
-  .hallway-painting:hover .hallway-painting__arrow {
-    opacity: 1;
-    transform: translate(0, 0);
-  }
-}
-
-.hallway-painting:focus-visible .hallway-painting__frame {
-  outline: 2px solid
-    color-mix(in srgb, var(--painting-frame-outline) 86%, transparent);
-  outline-offset: 0.48rem;
-}
-
-/* Entrance door remains part of the original brick room. */
-.home-entrance {
+/* The entrance is drawn in WebGL, so the only DOM left is a hit target sized
+   to the projected doorway. It keeps the entrance keyboard reachable and
+   gives screen readers something to announce. */
+.home-entrance-hit {
   position: absolute;
   z-index: 10;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  transition: opacity 220ms ease 720ms;
-}
-
-.home-door-frame {
-  position: absolute;
-  bottom: var(--home-door-bottom);
-  left: 50%;
-  width: var(--home-door-width);
-  height: var(--home-door-height);
-  box-sizing: content-box;
-  border: 0.62rem solid #050505;
-  outline: 1px solid color-mix(in srgb, var(--room-outline) 30%, transparent);
-  background: #010202;
-  box-shadow:
-    0 0 0 0.26rem #0b0b0b,
-    0.75rem 1rem 1.8rem rgb(0 0 0 / 56%),
-    0 0 2.6rem color-mix(in srgb, var(--wall-light) 8%, transparent),
-    inset 0 0 1.5rem rgb(0 0 0 / 88%);
-  perspective: 980px;
-  transform: translateX(-50%) translateZ(0) scale(1);
-  transform-origin: 50% 52%;
-  transform-style: preserve-3d;
-  pointer-events: auto;
-  transition:
-    transform 780ms cubic-bezier(0.64, 0, 0.26, 1) 160ms,
-    opacity 260ms ease 180ms,
-    filter 620ms ease 200ms;
-  will-change: transform, opacity;
-}
-
-.home-doorway {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      ellipse at 50% 50%,
-      color-mix(in srgb, var(--wall-light) 7%, transparent),
-      transparent 45%
-    ),
-    #010202;
-  box-shadow: inset 0 0 2.4rem rgb(0 0 0 / 88%);
-}
-
-.home-door {
-  position: absolute;
-  inset: 0;
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
   padding: 0;
   border: 0;
-  border-right: 1px solid
-    color-mix(in srgb, var(--room-outline) 15%, transparent);
   outline: 2px solid transparent;
   outline-offset: 0.4rem;
-  background:
-    linear-gradient(
-      100deg,
-      rgb(255 255 255 / 2.5%),
-      transparent 22% 72%,
-      rgb(0 0 0 / 28%)
-    ),
-    linear-gradient(180deg, #111414, #080a0a 54%, #050606);
-  color: color-mix(in srgb, var(--room-outline) 82%, transparent);
+  background: transparent;
   cursor: pointer;
-  transform: rotateY(0deg);
-  transform-origin: 0 50%;
-  transform-style: preserve-3d;
-  backface-visibility: visible;
-  transition:
-    transform 780ms cubic-bezier(0.64, 0, 0.22, 1),
-    filter 220ms ease,
-    box-shadow 780ms ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.home-door:hover,
-.home-door:focus-visible {
-  filter: brightness(1.16);
-}
-
-.home-door:focus-visible {
-  outline-color: var(--room-outline);
-}
-
-.home-door:disabled {
+.home-entrance-hit:disabled {
   cursor: default;
-  opacity: 1;
-}
-
-.home-door::before,
-.home-door::after {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  content: '';
   pointer-events: none;
 }
 
-.home-door::before {
-  left: 0;
-  width: 0.34rem;
-  background: linear-gradient(90deg, rgb(0 0 0 / 68%), rgb(255 255 255 / 4%));
-}
-
-.home-door::after {
-  right: 0;
-  width: 0.24rem;
-  background: rgb(0 0 0 / 52%);
-}
-
-.home-door__panel {
-  position: absolute;
-  right: 13%;
-  left: 13%;
-  border: 1px solid color-mix(in srgb, var(--room-outline) 18%, transparent);
-  box-shadow:
-    inset 0 0 0 0.28rem rgb(0 0 0 / 38%),
-    inset 0 0 1.3rem rgb(0 0 0 / 30%),
-    0 1px 0 rgb(255 255 255 / 3%);
-  pointer-events: none;
-}
-
-.home-door__panel--top {
-  top: 9%;
-  height: 21%;
-}
-
-.home-door__panel--middle {
-  top: 35%;
-  height: 22%;
-}
-
-.home-door__panel--bottom {
-  top: 62%;
-  bottom: 8%;
-}
-
-.home-door__number {
-  position: absolute;
-  top: 14.5%;
-  left: 50%;
-  color: color-mix(in srgb, var(--room-outline) 64%, transparent);
-  font-family: var(--font-site);
-  font-size: clamp(0.72rem, 1.2vw, 0.88rem);
-  letter-spacing: 0.18em;
-  line-height: 1;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 75%);
-  transform: translateX(-50%);
-}
-
-.home-door__knob {
-  position: absolute;
-  top: 52%;
-  right: 9.5%;
-  width: 0.86rem;
-  height: 0.86rem;
-  border: 1px solid rgb(255 255 255 / 30%);
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 36% 32%,
-    #f2f2ed,
-    #92958f 28%,
-    #3d403d 62%,
-    #121313
-  );
-  box-shadow:
-    0.17rem 0.24rem 0.35rem rgb(0 0 0 / 70%),
-    0 0 0 0.16rem rgb(0 0 0 / 46%);
-  pointer-events: none;
-}
-
-.home-door-frame__threshold {
-  position: absolute;
-  right: -0.85rem;
-  bottom: -0.74rem;
-  left: -0.85rem;
-  height: 0.64rem;
-  background: linear-gradient(180deg, #111414, #050606);
-  border-top: 1px solid color-mix(in srgb, var(--room-outline) 22%, transparent);
-  box-shadow: 0 0.42rem 0.7rem rgb(0 0 0 / 58%);
-  pointer-events: none;
-}
-
-.wall-stage--opening .home-door {
-  box-shadow: 1rem 0 1.4rem rgb(0 0 0 / 48%);
-  transform: rotateY(-112deg);
-}
-
-.wall-stage--opening .home-door-frame {
-  filter: blur(0.4px);
-  opacity: 0;
-  transform: translateX(-50%) translateZ(0) scale(4.4);
-}
-
-.wall-stage--hallway .home-entrance {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
+.home-entrance-hit:focus-visible {
+  outline-color: var(--room-outline);
 }
 
 /* Homepage guidance and the existing pause control keep their previous visual
@@ -624,7 +247,9 @@ html[data-theme='light'] .wall-stage {
 }
 
 .wall-stage--entrance .wall-navigation-hint {
-  top: calc(100% - var(--home-door-bottom) - var(--home-door-height) - 2.35rem);
+  top: auto;
+  bottom: max(0.92rem, calc(env(safe-area-inset-bottom, 0px) + 0.72rem));
+  transform: translateX(-50%);
 }
 
 .wall-stage--opening .wall-navigation-hint {
@@ -706,46 +331,25 @@ html[data-theme='light'] .wall-stage {
 
 @media (max-height: 42rem) and (min-width: 40.001rem) {
   .wall-stage {
-    --home-door-height: clamp(14.5rem, 48vh, 18rem);
-    --home-door-half-width: clamp(4.75rem, 10vw, 6rem);
     --hallway-half-width: max(55vw, 25rem);
     --hallway-half-height: max(58vh, 14rem);
     --hallway-painting-width: 330px;
     --hallway-painting-height: 429px;
-    --hallway-painting-half-width: 165px;
-    --hallway-painting-half-height: 214.5px;
   }
 }
 
 @media (max-width: 40rem) {
   .wall-stage {
-    --home-door-half-width: clamp(5.25rem, 23vw, 6.25rem);
-    --home-door-height: clamp(16rem, 44vh, 21.5rem);
-    --home-door-bottom: calc(var(--floor-height) + 0.42rem);
     --hallway-half-width: max(66vw, 15.5rem);
     --hallway-half-height: max(58vh, 15.5rem);
     --hallway-painting-width: 270px;
     --hallway-painting-height: 351px;
-    --hallway-painting-half-width: 135px;
-    --hallway-painting-half-height: 175.5px;
     --wall-control-bottom-gap: 0.48rem;
   }
 
   .hallway-scene {
     perspective: clamp(640px, 178vw, 820px);
     perspective-origin: 50% 50%;
-  }
-
-  .hallway-world {
-    top: 50%;
-  }
-
-  .hallway-painting__frame {
-    border-width: 0.58rem;
-  }
-
-  .hallway-painting__label {
-    font-size: 0.74rem;
   }
 
   .wall-navigation-hint {
@@ -761,25 +365,14 @@ html[data-theme='light'] .wall-stage {
 
 @media (max-width: 40rem) and (max-height: 36rem) {
   .wall-stage {
-    --home-door-height: 14rem;
-    --home-door-half-width: 4.75rem;
     --hallway-half-height: max(58vh, 12.5rem);
     --hallway-painting-width: 225px;
     --hallway-painting-height: 292.5px;
-    --hallway-painting-half-width: 112.5px;
-    --hallway-painting-half-height: 146.25px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hallway-scene,
-  .home-entrance,
-  .home-door-frame,
-  .home-door,
-  .hallway-painting__frame,
-  .hallway-painting__glass::after,
-  .hallway-painting__label,
-  .hallway-painting__arrow,
   .wall-navigation-hint,
   .wall-corner-control {
     transition: none;
