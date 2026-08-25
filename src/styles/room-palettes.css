@@ -5,7 +5,7 @@
  * text/linework color, while accents use the opposite wall color for contrast.
  */
 .room-themed {
-  --wall-light: #fff8e8;
+  --wall-light: var(--palette-porcelain);
   --room-outline: #fff;
   --wall-outline: var(--room-outline);
   --room-nav-ink: var(--room-outline);
@@ -42,28 +42,32 @@
   --wall-trim-shadow: rgb(0 0 0 / 38%);
 }
 
-/* -------------------------------------------------------------------------- */
-/* LIGHT MODE — contact-room green + homepage-dark accents                   */
-/* -------------------------------------------------------------------------- */
+/* Light mode: blue-turquoise wall with deep-teal accents. */
 html[data-theme='light'] .room-themed {
-  --wall-dark: #6d9e92;
-  --room-accent: #051417;
+  --wall-dark: var(--palette-light-turquoise);
+  --room-accent: var(--palette-deep-teal);
   --room-surface-base: color-mix(
     in srgb,
-    var(--wall-light) 84%,
+    var(--wall-light) 82%,
     var(--wall-dark)
   );
-  --wall-baseboard: color-mix(in srgb, var(--wall-dark) 72%, #272321);
-  --wall-trim-shadow: rgb(39 31 27 / 24%);
+  --wall-baseboard: color-mix(
+    in srgb,
+    var(--wall-dark) 72%,
+    var(--palette-deep-teal)
+  );
+  --wall-trim-shadow: color-mix(
+    in srgb,
+    var(--palette-deep-teal) 28%,
+    transparent
+  );
 }
 
-/* -------------------------------------------------------------------------- */
-/* DARK MODE — homepage-dark wall + contact-green accents                     */
-/* -------------------------------------------------------------------------- */
+/* Dark mode: preserve the deep-teal wall and reuse light turquoise as accent. */
 html[data-theme='dark'] .room-themed {
-  --wall-dark: #051417;
-  --wall-light: #fff8e8;
-  --room-accent: #6d9e92;
+  --wall-dark: var(--palette-deep-teal);
+  --wall-light: var(--palette-porcelain);
+  --room-accent: var(--palette-light-turquoise);
   --room-surface-base: color-mix(in srgb, var(--wall-dark) 86%, black);
   --wall-baseboard: color-mix(in srgb, var(--wall-dark) 91%, #090909);
   --wall-trim-shadow: rgb(0 0 0 / 44%);

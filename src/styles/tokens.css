@@ -21,15 +21,23 @@
 
   --duration-fast: 140ms;
 
-  /* Summer-light fallbacks. themes.css replaces these from data attributes. */
-  --bg: #fff8e8;
-  --surface-strong: #fffdf5;
-  --text: #173d3b;
-  --line: rgba(24, 92, 87, 0.2);
-  --accent: #051417;
-  --accent-strong: #051417;
-  --accent-soft: rgba(5, 20, 23, 0.13);
-  --header-accent: #051417;
+  /* Canonical palette. Theme and room files derive their colors from these
+     tokens so the two modes cannot drift apart. */
+  --palette-deep-teal: #051417;
+  --palette-light-turquoise: #447c86;
+  --palette-porcelain: #f4f9f7;
+  --palette-surface: #fbfefd;
+  --palette-light-ink: #12383f;
+
+  /* Light-mode fallbacks used before ThemeBootstrap applies data-theme. */
+  --bg: var(--palette-porcelain);
+  --surface-strong: var(--palette-surface);
+  --text: var(--palette-light-ink);
+  --line: color-mix(in srgb, var(--palette-light-ink) 20%, transparent);
+  --accent: var(--palette-deep-teal);
+  --accent-strong: var(--palette-deep-teal);
+  --accent-soft: color-mix(in srgb, var(--palette-deep-teal) 13%, transparent);
+  --header-accent: var(--palette-deep-teal);
 }
 
 /* On phones the navigation becomes two architectural rows. Each row remains

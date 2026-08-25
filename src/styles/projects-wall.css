@@ -20,7 +20,7 @@ body.projects-wall-page > main.projects-wall-main {
 .project-index {
   --project-ink: #fff;
   --project-font-size: 0.96rem;
-  --project-label-size: clamp(0.94rem, 1.08vw, 1.04rem);
+  --project-label-size: clamp(1.04rem, 1.18vw, 1.16rem);
   --project-hover-line: color-mix(in srgb, var(--project-ink) 72%, transparent);
   --project-grid-line: var(--room-structural-line, rgb(255 255 255 / 22%));
   --sheet-header-height: clamp(2.8rem, 7svh, 3.5rem);
@@ -62,25 +62,6 @@ body.projects-wall-page > main.projects-wall-main {
   max-width: 100%;
   height: calc(100svh - var(--header-height) - var(--room-floor-reserve, 9rem));
   min-height: 28rem;
-  background-image:
-    linear-gradient(
-      to right,
-      transparent calc(16.6667% - 1px),
-      var(--project-grid-line) calc(16.6667% - 1px) 16.6667%,
-      transparent 16.6667%
-    ),
-    linear-gradient(
-      to right,
-      transparent calc(50% - 1px),
-      var(--project-grid-line) calc(50% - 1px) 50%,
-      transparent 50%
-    ),
-    linear-gradient(
-      to right,
-      transparent calc(83.3333% - 1px),
-      var(--project-grid-line) calc(83.3333% - 1px) 83.3333%,
-      transparent 83.3333%
-    );
 }
 
 .project-sheet table {
@@ -136,9 +117,29 @@ body.projects-wall-page > main.projects-wall-main {
 
 .project-sheet tr {
   display: grid;
-  grid-template-columns: 2fr 4fr 4fr 2fr;
+  grid-template-columns: var(--site-column-grid);
   min-height: 0;
   border-bottom: 1px solid var(--project-grid-line);
+}
+
+.project-sheet th:nth-child(1),
+.project-sheet td:nth-child(1) {
+  grid-column: 1 / 3;
+}
+
+.project-sheet th:nth-child(2),
+.project-sheet td:nth-child(2) {
+  grid-column: 3 / 7;
+}
+
+.project-sheet th:nth-child(3),
+.project-sheet td:nth-child(3) {
+  grid-column: 7 / 11;
+}
+
+.project-sheet th:nth-child(4),
+.project-sheet td:nth-child(4) {
+  grid-column: 11 / 13;
 }
 
 .project-sheet tbody tr:last-child {
@@ -167,13 +168,20 @@ body.projects-wall-page > main.projects-wall-main {
   -webkit-font-smoothing: antialiased;
 }
 
-.project-sheet thead th {
-  font-family: var(--font-mono);
+.project-sheet th:nth-child(-n + 3),
+.project-sheet td:nth-child(-n + 3) {
+  border-right: 1px solid var(--project-grid-line);
+}
+
+.project-sheet thead th,
+.project-sheet__name {
+  font-family: var(--font-display);
   font-size: var(--project-label-size);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1.1;
-  text-transform: uppercase;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+  line-height: 1.15;
+  text-transform: none;
 }
 
 .project-sheet__name,
@@ -189,12 +197,6 @@ body.projects-wall-page > main.projects-wall-main {
 
 .project-sheet__name {
   color: inherit;
-  font-family: var(--font-mono);
-  font-size: var(--project-label-size);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1.1;
-  text-transform: uppercase;
 }
 
 .project-sheet__name:hover,
@@ -229,17 +231,11 @@ body.projects-wall-page > main.projects-wall-main {
 @media (max-width: 40rem) {
   .project-index {
     --project-font-size: 0.79rem;
-    --project-label-size: 0.84rem;
+    --project-label-size: 0.94rem;
   }
 
   .project-sheet {
     min-width: 0;
-    background-image: linear-gradient(
-      to right,
-      transparent calc(50% - 1px),
-      var(--project-grid-line) calc(50% - 1px) 50%,
-      transparent 50%
-    );
   }
 
   .project-sheet-scroll {
@@ -257,7 +253,17 @@ body.projects-wall-page > main.projects-wall-main {
   }
 
   .project-sheet tr {
-    grid-template-columns: 3fr 3fr;
+    grid-template-columns: var(--site-column-grid);
+  }
+
+  .project-sheet th:nth-child(1),
+  .project-sheet td:nth-child(1) {
+    grid-column: 1 / 3;
+  }
+
+  .project-sheet th:nth-child(2),
+  .project-sheet td:nth-child(2) {
+    grid-column: 3 / 5;
   }
 
   .project-sheet th:nth-child(3),
@@ -269,6 +275,12 @@ body.projects-wall-page > main.projects-wall-main {
 
   .project-sheet th,
   .project-sheet td {
+    border-right: 0;
     padding-inline: 0.75rem;
+  }
+
+  .project-sheet th:nth-child(1),
+  .project-sheet td:nth-child(1) {
+    border-right: 1px solid var(--project-grid-line);
   }
 }
