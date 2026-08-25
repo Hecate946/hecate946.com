@@ -3,6 +3,7 @@ import {
   BufferGeometry,
   CircleGeometry,
   CubicBezierCurve,
+  DoubleSide,
   AlwaysStencilFunc,
   ExtrudeGeometry,
   Group,
@@ -15,6 +16,7 @@ import {
   Object3D,
   Path,
   PerspectiveCamera,
+  PlaneGeometry,
   ReplaceStencilOp,
   Shape,
   ShapeGeometry,
@@ -60,6 +62,11 @@ const ASTRAGAL_DEPTH = 0.005;
 const MUNTIN = 0.009;
 const MUNTIN_DEPTH = 0.014;
 const TRANSOM = 0.024;
+
+/** Narrow shadow gaps make the casing read as set into masonry, not mounted on it. */
+const RECESS_GAP = 0.013;
+const RECESS_SHADOW_OPACITY = 0.58;
+const FLOOR_SHADOW_DEPTH = 0.13;
 
 const HANDLE_HEIGHT = 0.2;
 const HANDLE_INSET = 0.062;
@@ -321,7 +328,30 @@ export function createHallwayDoor(
     stencilZFail: KeepStencilOp,
     stencilZPass: ReplaceStencilOp,
   });
-  const materials: Material[] = [lacquer, gold, glass, portalMaskMaterial];
+  const recessShadowMaterial = new MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: RECESS_SHADOW_OPACITY,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    polygonOffsetUnits: -2,
+  });
+  const floorShadowMaterial = new MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.34,
+    depthWrite: false,
+    side: DoubleSide,
+  });
+  const materials: Material[] = [
+    lacquer,
+    gold,
+    glass,
+    portalMaskMaterial,
+    recessShadowMaterial,
+    floorShadowMaterial,
+  ];
 
   const group = new Group();
 
@@ -347,6 +377,50 @@ export function createHallwayDoor(
   portalMask.position.z = WALL_DEPTH * 0.25;
   portalMask.renderOrder = -1_000;
   assembly.add(portalMask);
+
+  // A slim dark return around the casing supplies the contact shadow that the
+  // transparent WebGL canvas cannot cast onto the DOM-rendered brick wall.
+  // Because it follows the same arch exactly, it reads as the depth of a real
+  // opening rather than as a generic drop shadow around a floating object.
+  const recessShape = new Shape();
+  traceOpening(recessShape, OUTER_HALF + RECESS_GAP, springHeight, 0);
+  const recessHole = new Path();
+  traceOpening(recessHole, OUTER_HALF, springHeight, 0);
+  recessShape.holes.push(recessHole);
+  const recessShadow = new Mesh(
+    track(new ShapeGeometry(recessShape, 48)),
+    recessShadowMaterial,
+  );
+  recessShadow.position.z = WALL_DEPTH * 1.01;
+  assembly.add(recessShadow);
+
+  // The small floor shadow and threshold visually carry the wall opening down
+  // into the checkerboard, anchoring both jambs at the shared room's floor.
+  const floorShadow = new Mesh(
+    track(
+      new PlaneGeometry(
+        (OUTER_HALF + RECESS_GAP * 2.5) * 2,
+        FLOOR_SHADOW_DEPTH,
+      ),
+    ),
+    floorShadowMaterial,
+  );
+  floorShadow.rotation.x = -Math.PI / 2;
+  floorShadow.position.set(0, 0.001, FLOOR_SHADOW_DEPTH * 0.12);
+  assembly.add(floorShadow);
+
+  const threshold = new Mesh(
+    track(
+      new BoxGeometry(
+        (OPENING_HALF + RECESS_GAP * 0.75) * 2,
+        0.012,
+        WALL_DEPTH * 1.1,
+      ),
+    ),
+    lacquer,
+  );
+  threshold.position.set(0, 0.006, WALL_DEPTH * 0.5);
+  assembly.add(threshold);
 
   const casingShape = new Shape();
   traceOpening(casingShape, OUTER_HALF, springHeight, 0);

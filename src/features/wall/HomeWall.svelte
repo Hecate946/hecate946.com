@@ -686,9 +686,6 @@
         {/each}
       </ul>
     </nav>
-
-    <div class="hallway-depth-fog" aria-hidden="true"></div>
-    <div class="hallway-vignette" aria-hidden="true"></div>
   </div>
 
   {#if mode !== 'hallway'}

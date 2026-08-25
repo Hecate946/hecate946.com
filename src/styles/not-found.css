@@ -98,7 +98,7 @@ body {
   border: 1px solid rgb(88 0 30 / 40%);
   border-radius: 999px;
   color: #6b0b2d;
-  font: 600 0.72rem/1 var(--font-site);
+  font: 600 0.8rem/1 var(--font-site);
   letter-spacing: 0.04em;
   text-transform: lowercase;
   cursor: pointer;

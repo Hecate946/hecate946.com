@@ -19,7 +19,7 @@ body.scrolling-primary-room > main {
   --paper-deep: #d8dadd;
   --paper-edge: #bfc2c4;
   --paper-ink: #000;
-  --paper-muted: rgb(0 0 0 / 62%);
+  --paper-muted: rgb(0 0 0 / 68%);
   --paper-rule: rgb(0 0 0 / 28%);
   --paper-accent: #000;
 
@@ -45,7 +45,7 @@ html[data-theme='dark'] .page-scroll-installation {
   --paper-deep: #d2d2d2;
   --paper-edge: #a6a6a6;
   --paper-ink: #000;
-  --paper-muted: rgb(0 0 0 / 62%);
+  --paper-muted: rgb(0 0 0 / 68%);
   --paper-rule: rgb(0 0 0 / 28%);
   --paper-accent: #000;
 }

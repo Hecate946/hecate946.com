@@ -47,11 +47,11 @@ body.resume-wall-page,
   outline: none;
   background: transparent;
   color: var(--paper-ink);
-  font-size: clamp(0.82rem, 1vw, 0.92rem);
+  font-size: clamp(0.86rem, 1vw, 0.94rem);
   font-weight: 400;
   letter-spacing: 0.045em;
   line-height: 1;
-  opacity: 0.62;
+  opacity: 0.74;
   text-transform: uppercase;
   transition: opacity 140ms ease;
 }
@@ -165,7 +165,7 @@ body.resume-wall-page,
 
   .resume-switcher__tab,
   .resume-switcher__download {
-    font-size: clamp(0.72rem, 3vw, 0.8rem);
+    font-size: clamp(0.8rem, 3vw, 0.86rem);
     letter-spacing: 0.025em;
   }
 }

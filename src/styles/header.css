@@ -219,7 +219,7 @@ html[data-theme='dark'] .mode-sun {
 
 @media (max-width: 40rem) {
   .site-header {
-    --nav-font-size: 0.83rem;
+    --nav-font-size: 0.88rem;
     --control-size: 1.9rem;
   }
 
@@ -238,7 +238,7 @@ html[data-theme='dark'] .mode-sun {
   .brand {
     grid-column: 1 / 3;
     grid-row: 1;
-    font-size: 0.86rem;
+    font-size: 0.9rem;
   }
 
   .mode-slot {

@@ -75,16 +75,6 @@ html[data-theme='light'] .wall-stage {
   z-index: 6;
   inset: 0;
   overflow: hidden;
-  background: transparent;
-  perspective: clamp(760px, 82vw, 1120px);
-  perspective-origin: 50% 49%;
-  opacity: 1;
-  pointer-events: none;
-}
-
-/* The entrance is the canonical shared DOM room. Once the camera is through
-   the doorway, this fallback fills any sub-pixel gaps around the WebGL room. */
-.wall-stage--hallway .hallway-scene {
   background:
     radial-gradient(
       ellipse at 50% 48%,
@@ -92,6 +82,10 @@ html[data-theme='light'] .wall-stage {
       transparent 28%
     ),
     color-mix(in srgb, var(--wall-dark) 95%, black);
+  perspective: clamp(760px, 82vw, 1120px);
+  perspective-origin: 50% 49%;
+  opacity: 1;
+  pointer-events: none;
 }
 
 .wall-stage--hallway .hallway-scene {
@@ -116,14 +110,7 @@ html[data-theme='light'] .wall-stage {
 .hallway-depth-fog,
 .hallway-vignette {
   position: absolute;
-  opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms ease;
-}
-
-.wall-stage--hallway .hallway-depth-fog,
-.wall-stage--hallway .hallway-vignette {
-  opacity: 1;
 }
 
 .hallway-depth-fog {
@@ -243,16 +230,20 @@ html[data-theme='light'] .wall-stage {
   max-width: calc(100vw - 7rem);
   margin: 0;
   transform: translate(-50%, calc(-50% + 0.075em));
-  color: #d0d0d0;
+  padding: 0.42rem 0.72rem;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 0.3rem;
+  background: rgb(0 0 0 / 58%);
+  color: #f3f1ea;
   font-family: var(--font-site);
-  font-size: clamp(0.68rem, 1vw, 0.78rem);
-  font-weight: 400;
+  font-size: clamp(0.78rem, 1vw, 0.86rem);
+  font-weight: 500;
   letter-spacing: 0.045em;
   line-height: 1;
   text-align: center;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 68%);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 90%);
   white-space: nowrap;
-  opacity: 0.88;
+  opacity: 0.96;
   pointer-events: none;
   transition:
     top 420ms ease,
@@ -367,7 +358,8 @@ html[data-theme='light'] .wall-stage {
 
   .wall-navigation-hint {
     max-width: calc(100vw - 5.5rem);
-    font-size: 0.66rem;
+    padding: 0.38rem 0.62rem;
+    font-size: 0.75rem;
     letter-spacing: 0.035em;
   }
 
@@ -386,8 +378,6 @@ html[data-theme='light'] .wall-stage {
 
 @media (prefers-reduced-motion: reduce) {
   .hallway-scene,
-  .hallway-depth-fog,
-  .hallway-vignette,
   .wall-navigation-hint,
   .wall-corner-control {
     transition: none;
