@@ -250,11 +250,12 @@ function traceOpening(
   halfWidth: number,
   springHeight: number,
   baseY: number,
+  centerX = 0,
 ) {
-  path.moveTo(-halfWidth, baseY);
-  path.lineTo(-halfWidth, springHeight);
-  path.absarc(0, springHeight, halfWidth, Math.PI, 0, true);
-  path.lineTo(halfWidth, baseY);
+  path.moveTo(centerX - halfWidth, baseY);
+  path.lineTo(centerX - halfWidth, springHeight);
+  path.absarc(centerX, springHeight, halfWidth, Math.PI, 0, true);
+  path.lineTo(centerX + halfWidth, baseY);
   path.closePath();
 }
 
@@ -273,8 +274,17 @@ export interface HallwayDoor {
   readonly group: Group;
   /** How far the camera must travel along +z to end up past the door. */
   readonly entryDistance: number;
-  /** Rebuild for a new corridor size. Cheap when nothing changed. */
-  layout(halfWidth: number, halfHeight: number, perspective: number): void;
+  /** World-space floor shared by the doorway and corridor. */
+  readonly floorY: number;
+  /** Project the fixed DOM doorway anchor onto the doorway's world plane. */
+  layout(
+    halfWidth: number,
+    halfHeight: number,
+    perspective: number,
+    camera: PerspectiveCamera,
+    viewportRect: DOMRect,
+    anchorRect: DOMRect,
+  ): void;
   /** 0 = shut, 1 = fully swung open toward the camera. */
   setOpen(amount: number): void;
   /** Slide the whole assembly with the corridor as the camera advances. */
@@ -600,20 +610,56 @@ export function createHallwayDoor(
   let entryDistance = 0;
   let scale = 0;
   let floorY = 0;
+  let centerX = 0;
   let laidOut = '';
 
-  function layout(halfWidth: number, halfHeight: number, perspective: number) {
+  function layout(
+    halfWidth: number,
+    halfHeight: number,
+    perspective: number,
+    camera: PerspectiveCamera,
+    viewportRect: DOMRect,
+    anchorRect: DOMRect,
+  ) {
     doorZ = -perspective * DOOR_DISTANCE_RATIO;
     entryDistance = perspective - doorZ + ENTRY_CLEARANCE;
 
-    const corridorHeight = halfHeight * 2;
-    scale = corridorHeight * 0.85;
-    floorY = -halfHeight;
+    // `Vector3.unproject()` reads camera.matrixWorld directly. On the first
+    // page load the renderer has not drawn a frame yet, so it has not had a
+    // chance to update that matrix for the camera's new z position. Without
+    // this explicit update the fixed 680px anchor collapses to roughly one
+    // world unit and the doorway appears completely blank.
+    camera.updateMatrixWorld(true);
+
+    const pointOnDoorPlane = (clientX: number, clientY: number) => {
+      const point = new Vector3(
+        ((clientX - viewportRect.left) / viewportRect.width) * 2 - 1,
+        -(((clientY - viewportRect.top) / viewportRect.height) * 2 - 1),
+        0,
+      ).unproject(camera);
+      const direction = point.sub(camera.position);
+      const distance = (doorZ - camera.position.z) / direction.z;
+      return camera.position.clone().addScaledVector(direction, distance);
+    };
+
+    const anchorX = anchorRect.left + anchorRect.width / 2;
+    const bottom = pointOnDoorPlane(anchorX, anchorRect.bottom);
+    const top = pointOnDoorPlane(anchorX, anchorRect.top);
+    const projectedScale = top.y - bottom.y;
+    const fallbackScale =
+      anchorRect.height * ((perspective - doorZ) / perspective);
+    scale =
+      Number.isFinite(projectedScale) && projectedScale > 0
+        ? projectedScale
+        : fallbackScale;
+    floorY = Number.isFinite(bottom.y) ? bottom.y : -halfHeight;
+    centerX = Number.isFinite(bottom.x) ? bottom.x : 0;
 
     assembly.scale.setScalar(scale);
+    assembly.position.x = centerX;
     assembly.position.y = floorY;
 
-    const signature = `${halfWidth}|${halfHeight}`;
+    const signature = `${halfWidth}|${halfHeight}|${scale}|${floorY}|${centerX}`;
     if (signature === laidOut) return;
     laidOut = signature;
 
@@ -633,6 +679,7 @@ export function createHallwayDoor(
       OUTER_HALF * scale,
       floorY + springHeight * scale,
       floorY,
+      centerX,
     );
     shape.holes.push(hole);
 
@@ -659,6 +706,9 @@ export function createHallwayDoor(
     get entryDistance() {
       return entryDistance;
     },
+    get floorY() {
+      return floorY;
+    },
     layout,
     setOpen,
     setCameraZ(cameraZ: number) {
@@ -675,8 +725,8 @@ export function createHallwayDoor(
       const halfWidth = OPENING_HALF * scale;
       const top = floorY + scale;
       const corners = [
-        new Vector3(-halfWidth, floorY, z),
-        new Vector3(halfWidth, top, z),
+        new Vector3(centerX - halfWidth, floorY, z),
+        new Vector3(centerX + halfWidth, top, z),
       ].map((corner) => corner.project(camera));
 
       const xs = corners.map((c) => (c.x * 0.5 + 0.5) * viewWidth);

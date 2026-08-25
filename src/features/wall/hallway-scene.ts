@@ -265,12 +265,14 @@ export function createHallwayScene(options: {
   probe: HTMLElement;
   /** The hidden element sized to `--hallway-painting-width` / `-height`. */
   frameProbe: HTMLElement;
+  /** Fixed screen-space doorway size and position. */
+  doorAnchor: HTMLElement;
   /** The gallery, in corridor order. */
   paintings: readonly PaintingSpec[];
   /** Called when a painting's texture decodes and a redraw is needed. */
   onReady: () => void;
 }): HallwayScene {
-  const { canvas, viewport, probe, frameProbe, onReady } = options;
+  const { canvas, viewport, probe, frameProbe, doorAnchor, onReady } = options;
 
   const renderer = new WebGLRenderer({
     canvas,
@@ -440,26 +442,22 @@ export function createHallwayScene(options: {
   }
 
   function resize() {
-    const { width, height } = viewport.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
+    const { width, height } = viewportRect;
     const box = probe.getBoundingClientRect();
-    if (width === 0 || height === 0 || box.width === 0) return;
+    const doorAnchorRect = doorAnchor.getBoundingClientRect();
+    if (
+      width === 0 ||
+      height === 0 ||
+      box.width === 0 ||
+      doorAnchorRect.height === 0
+    )
+      return;
     viewWidth = width;
     viewHeight = height;
 
     const halfWidth = box.width;
     const halfHeight = box.height;
-    wallHeight = halfHeight * 2;
-
-    leftWall.scale.set(TUNNEL_DEPTH, wallHeight, 1);
-    rightWall.scale.copy(leftWall.scale);
-    leftWall.position.x = -halfWidth;
-    rightWall.position.x = halfWidth;
-
-    floor.scale.set(halfWidth * 2, TUNNEL_DEPTH, 1);
-    ceiling.scale.copy(floor.scale);
-    floor.position.y = -halfHeight;
-    ceiling.position.y = halfHeight;
-    floorMap.repeat.x = (halfWidth * 2) / FLOOR_TILE;
 
     // Match the CSS projection exactly: the eye sits `perspective` units in
     // front of the world origin, and `perspective-origin` decides where that
@@ -485,7 +483,29 @@ export function createHallwayScene(options: {
     fog.near = perspective + FOG_START;
     fog.far = perspective + TUNNEL_DEPTH;
 
-    door.layout(halfWidth, halfHeight, perspective);
+    door.layout(
+      halfWidth,
+      halfHeight,
+      perspective,
+      camera,
+      viewportRect,
+      doorAnchorRect,
+    );
+
+    const ceilingY = halfHeight;
+    const floorY = door.floorY;
+    wallHeight = ceilingY - floorY;
+
+    leftWall.scale.set(TUNNEL_DEPTH, wallHeight, 1);
+    rightWall.scale.copy(leftWall.scale);
+    leftWall.position.set(-halfWidth, (ceilingY + floorY) / 2, TUNNEL_CENTER_Z);
+    rightWall.position.set(halfWidth, (ceilingY + floorY) / 2, TUNNEL_CENTER_Z);
+
+    floor.scale.set(halfWidth * 2, TUNNEL_DEPTH, 1);
+    ceiling.scale.copy(floor.scale);
+    floor.position.y = floorY;
+    ceiling.position.y = ceilingY;
+    floorMap.repeat.x = (halfWidth * 2) / FLOOR_TILE;
 
     const frame = frameProbe.getBoundingClientRect();
     paintings.layout(halfWidth, frame.width, frame.height);

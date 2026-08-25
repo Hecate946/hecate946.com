@@ -23,6 +23,11 @@
   const OPENING_DURATION = 1_900;
   const SWING_FRACTION = 0.46;
   const DOLLY_DELAY = 0.3;
+  /** Fixed architectural size until the viewport is genuinely too small. */
+  const DOOR_DESIGN_HEIGHT = 680;
+  const DOOR_ASPECT = 0.5385;
+  const DOOR_VIEWPORT_GUTTER = 24;
+  const DOOR_TOP_GAP = 16;
 
   type SceneMode = 'entrance' | 'opening' | 'hallway';
   type GestureAxis = 'pending' | 'horizontal' | 'vertical';
@@ -54,6 +59,8 @@
   let hallwayCanvas: HTMLCanvasElement;
   let hallwayProbe: HTMLElement;
   let hallwayFrameProbe: HTMLElement;
+  let doorAnchor: HTMLElement;
+  let floorSeamProbe: HTMLElement;
   let hallway: HallwayScene | null = null;
   let destinationLinks: HTMLAnchorElement[] = [];
   let hoveredPainting = -1;
@@ -147,7 +154,36 @@
     lastRenderedCameraZ = cameraZ;
   }
 
+  function layoutDoorAnchor() {
+    if (!stage || !doorAnchor || !floorSeamProbe) return;
+
+    const stageRect = stage.getBoundingClientRect();
+    const floorTop = floorSeamProbe.getBoundingClientRect().top - stageRect.top;
+    const headerBottom = Math.max(
+      0,
+      (document.querySelector('.site-header')?.getBoundingClientRect().bottom ??
+        stageRect.top) - stageRect.top,
+    );
+    const availableHeight = Math.max(1, floorTop - headerBottom - DOOR_TOP_GAP);
+    const availableWidth = Math.max(1, stageRect.width - DOOR_VIEWPORT_GUTTER);
+    const height = Math.min(
+      DOOR_DESIGN_HEIGHT,
+      availableHeight,
+      availableWidth / DOOR_ASPECT,
+    );
+    const width = height * DOOR_ASPECT;
+
+    doorAnchor.style.width = `${width}px`;
+    doorAnchor.style.height = `${height}px`;
+    doorAnchor.style.top = `${floorTop - height}px`;
+    document.body.style.setProperty(
+      '--home-door-cutout-half',
+      `${width / 2}px`,
+    );
+  }
+
   function refreshRenderState() {
+    layoutDoorAnchor();
     hallway?.resize();
 
     if (hallway) {
@@ -582,6 +618,7 @@
           viewport: hallwayViewport,
           probe: hallwayProbe,
           frameProbe: hallwayFrameProbe,
+          doorAnchor,
           paintings: paintingSpecs,
           onReady: () => renderCamera(true),
         });
@@ -636,6 +673,7 @@
       cancelAnimationFrame(rafId);
       themeObserver.disconnect();
       released = true;
+      document.body.style.removeProperty('--home-door-cutout-half');
       hallway?.dispose();
       hallway = null;
     };
@@ -661,6 +699,8 @@
   <span bind:this={hallwayProbe} class="hallway-metrics" aria-hidden="true">
     <span bind:this={hallwayFrameProbe} class="hallway-metrics__frame"></span>
   </span>
+  <span bind:this={floorSeamProbe} class="home-floor-seam-probe"></span>
+  <span bind:this={doorAnchor} class="home-door-anchor"></span>
 
   <div
     bind:this={hallwayViewport}

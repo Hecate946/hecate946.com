@@ -58,6 +58,26 @@ body.wall-home-page .wall-home-main {
   padding: 0;
 }
 
+/* The baseboard is interrupted by the architectural opening instead of
+   continuing behind a door laid over the wall. The 3D jambs and threshold
+   cover this exact opening and supply its visible end returns. */
+body.wall-home-page .wall-baseboard {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0 calc(50% - var(--home-door-cutout-half, 0px)),
+    transparent calc(50% - var(--home-door-cutout-half, 0px))
+      calc(50% + var(--home-door-cutout-half, 0px)),
+    #000 calc(50% + var(--home-door-cutout-half, 0px)) 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0 calc(50% - var(--home-door-cutout-half, 0px)),
+    transparent calc(50% - var(--home-door-cutout-half, 0px))
+      calc(50% + var(--home-door-cutout-half, 0px)),
+    #000 calc(50% + var(--home-door-cutout-half, 0px)) 100%
+  );
+}
+
 .wall-home-main > astro-island {
   display: block;
   width: 100%;

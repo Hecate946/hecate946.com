@@ -56,6 +56,28 @@ html[data-theme='light'] .wall-stage {
   height: calc(var(--hallway-painting-height) - 2.4rem);
 }
 
+/* The DOM owns the architectural placement. Three.js inverse-projects this
+   rectangle onto the door plane, so ordinary viewport resizing never changes
+   the door's apparent size or its centered position. */
+.home-door-anchor,
+.home-floor-seam-probe {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.home-door-anchor {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.home-floor-seam-probe {
+  top: var(--floor-seam-top);
+  left: 0;
+  width: 1px;
+  height: 1px;
+}
+
 .wall-stage--hallway {
   cursor: grab;
 }
@@ -75,13 +97,7 @@ html[data-theme='light'] .wall-stage {
   z-index: 6;
   inset: 0;
   overflow: hidden;
-  background:
-    radial-gradient(
-      ellipse at 50% 48%,
-      color-mix(in srgb, var(--wall-light) 3%, transparent),
-      transparent 28%
-    ),
-    color-mix(in srgb, var(--wall-dark) 95%, black);
+  background: transparent;
   perspective: clamp(760px, 82vw, 1120px);
   perspective-origin: 50% 49%;
   opacity: 1;
@@ -105,56 +121,6 @@ html[data-theme='light'] .wall-stage {
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-.hallway-depth-fog,
-.hallway-vignette {
-  position: absolute;
-  pointer-events: none;
-}
-
-.hallway-depth-fog {
-  z-index: 7;
-  inset: 0;
-  background:
-    radial-gradient(
-      ellipse at 50% 49%,
-      color-mix(in srgb, var(--wall-dark) 88%, transparent) 0 6%,
-      color-mix(in srgb, var(--wall-dark) 50%, transparent) 13%,
-      transparent 27%
-    ),
-    radial-gradient(
-      ellipse at 50% 49%,
-      transparent 0 13%,
-      color-mix(in srgb, var(--wall-dark) 5%, transparent) 28%,
-      rgb(0 0 0 / 16%) 68%,
-      rgb(0 0 0 / 46%) 100%
-    ),
-    linear-gradient(
-      180deg,
-      rgb(0 0 0 / 12%),
-      transparent 30% 64%,
-      rgb(0 0 0 / 24%)
-    );
-}
-
-.hallway-vignette {
-  z-index: 8;
-  inset: -1px;
-  background:
-    linear-gradient(
-      90deg,
-      rgb(0 0 0 / 50%),
-      transparent 13% 87%,
-      rgb(0 0 0 / 50%)
-    ),
-    linear-gradient(
-      180deg,
-      rgb(0 0 0 / 28%),
-      transparent 16% 77%,
-      rgb(0 0 0 / 30%)
-    );
-  opacity: 0.84;
 }
 
 /* The gallery is drawn in WebGL. These anchors stay in the DOM so links,
@@ -230,20 +196,16 @@ html[data-theme='light'] .wall-stage {
   max-width: calc(100vw - 7rem);
   margin: 0;
   transform: translate(-50%, calc(-50% + 0.075em));
-  padding: 0.42rem 0.72rem;
-  border: 1px solid rgb(255 255 255 / 16%);
-  border-radius: 0.3rem;
-  background: rgb(0 0 0 / 58%);
-  color: #f3f1ea;
+  color: #d0d0d0;
   font-family: var(--font-site);
-  font-size: clamp(0.78rem, 1vw, 0.86rem);
-  font-weight: 500;
+  font-size: clamp(0.68rem, 1vw, 0.78rem);
+  font-weight: 400;
   letter-spacing: 0.045em;
   line-height: 1;
   text-align: center;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 90%);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 68%);
   white-space: nowrap;
-  opacity: 0.96;
+  opacity: 0.88;
   pointer-events: none;
   transition:
     top 420ms ease,
@@ -358,8 +320,7 @@ html[data-theme='light'] .wall-stage {
 
   .wall-navigation-hint {
     max-width: calc(100vw - 5.5rem);
-    padding: 0.38rem 0.62rem;
-    font-size: 0.75rem;
+    font-size: 0.66rem;
     letter-spacing: 0.035em;
   }
 

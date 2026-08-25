@@ -12,6 +12,7 @@
 
   let wallBackdrop: { setCameraX: (cameraX: number) => void };
   let floorScene: { setCameraX: (cameraX: number) => void };
+  let roomBackdrop: HTMLElement;
 
   function applyCamera(cameraX: number) {
     wallBackdrop?.setCameraX(cameraX);
@@ -25,16 +26,42 @@
 
   onMount(() => {
     const roomWindow = window as RoomCameraWindow;
-    const inheritedCameraX = Number.isFinite(roomWindow.__hecateRoomCameraX)
+    let baseCameraX = Number.isFinite(roomWindow.__hecateRoomCameraX)
       ? (roomWindow.__hecateRoomCameraX as number)
       : initialCameraX;
+    let widestRoomWidth = roomBackdrop.getBoundingClientRect().width;
+    let currentRoomWidth = widestRoomWidth;
+    let resizeFrame = 0;
 
-    roomWindow.__hecateRoomCameraX = inheritedCameraX;
-    applyCamera(inheritedCameraX);
+    function renderRoomCamera() {
+      // Keep the scene's right edge fixed. Every pixel removed from the
+      // viewport pans the shared world left by one pixel, so the brick wall
+      // and checkerboard floor behave like two surfaces in the same room.
+      applyCamera(baseCameraX + widestRoomWidth - currentRoomWidth);
+    }
+
+    function measureRoom() {
+      resizeFrame = 0;
+      const nextWidth = roomBackdrop.getBoundingClientRect().width;
+      if (!Number.isFinite(nextWidth) || nextWidth <= 0) return;
+
+      currentRoomWidth = nextWidth;
+      widestRoomWidth = Math.max(widestRoomWidth, nextWidth);
+      renderRoomCamera();
+    }
+
+    function scheduleRoomMeasurement() {
+      if (resizeFrame) return;
+      resizeFrame = requestAnimationFrame(measureRoom);
+    }
+
+    roomWindow.__hecateRoomCameraX = baseCameraX;
+    renderRoomCamera();
 
     const setCameraX = (cameraX: number) => {
-      roomWindow.__hecateRoomCameraX = cameraX;
-      applyCamera(cameraX);
+      baseCameraX = cameraX;
+      roomWindow.__hecateRoomCameraX = baseCameraX;
+      renderRoomCamera();
     };
 
     roomWindow.__hecateSetRoomCameraX = setCameraX;
@@ -45,10 +72,18 @@
     };
 
     document.addEventListener('astro:page-load', resetStaticRoomBackdrop);
+    const resizeObserver = new ResizeObserver(scheduleRoomMeasurement);
+    resizeObserver.observe(roomBackdrop);
+    window.addEventListener('resize', scheduleRoomMeasurement, {
+      passive: true,
+    });
     resetStaticRoomBackdrop();
 
     return () => {
       document.removeEventListener('astro:page-load', resetStaticRoomBackdrop);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', scheduleRoomMeasurement);
+      cancelAnimationFrame(resizeFrame);
       if (roomWindow.__hecateSetRoomCameraX === setCameraX) {
         delete roomWindow.__hecateSetRoomCameraX;
       }
@@ -56,7 +91,11 @@
   });
 </script>
 
-<div class="site-room-backdrop primary-room-backdrop wall-room-host" aria-hidden="true">
-  <WallBackdrop bind:this={wallBackdrop} initialCameraX={initialCameraX} />
-  <FloorScene bind:this={floorScene} initialCameraX={initialCameraX} />
+<div
+  bind:this={roomBackdrop}
+  class="site-room-backdrop primary-room-backdrop wall-room-host"
+  aria-hidden="true"
+>
+  <WallBackdrop bind:this={wallBackdrop} {initialCameraX} />
+  <FloorScene bind:this={floorScene} {initialCameraX} />
 </div>
