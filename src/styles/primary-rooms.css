@@ -2,10 +2,9 @@
  * Primary room layout.
  *
  * Home remains a viewport-sized interactive room. About, Projects, Resumes,
- * and Contact are ordinary document-height pages with the same shared room
- * backdrop growing behind them. The navbar participates in ordinary document
- * flow on those scrolling pages; browser chrome and safe areas are left to the
- * browser rather than being simulated by root-canvas or overscroll rules.
+ * and Contact use a viewport-height room with their parchment as the sole
+ * vertical scroller. This keeps the wall and checkerboard fixed in place while
+ * the content moves naturally inside the floating scroll.
  */
 
 /*
@@ -107,44 +106,29 @@ body.primary-room-page.contact-room-page > main {
 }
 
 /*
- * Scrolling rooms intentionally follow the simple architecture used by
- * commit 4e1f4f8563ef18ddc0942247d644aa6c23f8aeb5:
- *
- * - the browser/window owns vertical scrolling;
- * - the header is a normal document-flow element and scrolls away with content;
- * - page content remains in ordinary document flow beneath it;
- * - the room backdrop is absolute inside the document, so the bricks/floor
- *   travel with the page rather than living in a separate scroll container.
- *
- * Keep the current museum navbar appearance; copy only the proven scrolling
- * and background-layer behavior from that commit.
+ * The document itself never scrolls on these four routes. The header occupies
+ * its normal row, main fills the exact remainder of the visible viewport, and
+ * .page-scroll-paper__viewport owns any overflow.
  */
 body.primary-room-page.scrolling-primary-room {
-  /*
-   * --room-floor-reserve is *only* the clearance content needs so it does not
-   * sit on top of the checkerboard floor at the bottom of the document. It is
-   * deliberately tied to --floor-height below and nothing stacks extra padding
-   * on top of it. It is not a layout spacer.
-   */
-  --room-floor-reserve: clamp(6.6rem, 18svh, 10.4rem);
   position: relative;
   width: 100%;
-  height: auto;
-
-  /*
-   * The room backdrop is absolute inset:0 inside <body>, so it can only be as
-   * tall as <body> is. On a page whose content is shorter than the window that
-   * left the wall ending mid-screen with the canvas colour showing beneath it.
-   *
-   * svh, not vh or dvh: svh is the *small* viewport height, measured with the
-   * mobile URL bar visible, so this floor never exceeds what is on screen and
-   * never manufactures scrollable space. On a page taller than the window it
-   * does nothing at all -- content still decides the height.
-   */
+  height: 100vh;
   min-height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
 
-  /* Critical: do not turn <body> into a nested scroll container. */
-  overflow: visible;
+@supports (height: 100svh) {
+  body.primary-room-page.scrolling-primary-room {
+    height: 100svh;
+  }
+}
+
+@supports (height: 100dvh) {
+  body.primary-room-page.scrolling-primary-room {
+    height: 100dvh;
+  }
 }
 
 body.primary-room-page.scrolling-primary-room > .site-header {
@@ -158,32 +142,18 @@ body.primary-room-page.scrolling-primary-room > main {
   z-index: 3;
   inset: auto;
   width: 100%;
-  height: auto;
-  overflow: visible;
+  height: calc(100% - var(--header-height));
+  min-height: 0;
+  overflow: hidden;
   pointer-events: auto;
 }
 
-/*
- * The shared room backdrop stays attached to the document. Its base
- * .site-room-backdrop rule is position:absolute; inset:0; min-height:100%,
- * so it naturally spans the full scrolling page while the navbar scrolls
- * with the rest of the document.
- */
 body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
-  /*
-   * svh, not vh/dvh: dvh re-measures while the mobile URL bar collapses, which
-   * resized the floor band mid-scroll and shifted the whole page under the
-   * reader's finger. svh is a fixed number for the life of the page.
-   */
   --floor-height: clamp(5.2rem, 18svh, 9.8rem);
-  height: auto;
+  height: 100%;
 }
 
 @media (max-width: 40rem) {
-  body.primary-room-page.scrolling-primary-room {
-    --room-floor-reserve: 7.25rem;
-  }
-
   body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
     --floor-height: 6.4rem;
   }

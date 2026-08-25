@@ -48,7 +48,11 @@
       ></div>
 
       <div class="page-scroll-paper__sheet about-scroll-paper__sheet">
-        <div class="page-scroll-paper__viewport about-scroll-paper__viewport">
+        <div
+          class="page-scroll-paper__viewport about-scroll-paper__viewport"
+          tabindex="0"
+          aria-label="About content"
+        >
           <header class="page-scroll-header about-scroll-header">
             <h1 id="about-scroll-title">About</h1>
             <div

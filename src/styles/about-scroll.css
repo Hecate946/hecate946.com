@@ -8,10 +8,8 @@
   display: contents;
 }
 
-/* The parchment spans eight site columns, while About's reading measure uses
-   the middle six. A block flow lets the portrait behave like the mobile
-   composition: the opening copy wraps beside it, then returns to the full
-   reading measure below it. */
+/* Keep one proportional reading inset at every non-mobile width. It shrinks
+   monotonically with the fluid parchment instead of jumping wider on iPad. */
 .about-scroll-paper__viewport {
   display: block;
   padding-inline: 12.5%;
@@ -219,14 +217,6 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.25;
-}
-
-/* The shared scroll widens to ten site columns on iPad, so two columns of
-   inset on each side keep About on the middle six. */
-@media (min-width: 40.001rem) and (max-width: 64rem) {
-  .about-scroll-paper__viewport {
-    padding-inline: 20%;
-  }
 }
 
 @media (max-width: 40rem) {

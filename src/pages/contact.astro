@@ -25,7 +25,11 @@ import ContactChalkboard from '@/components/contact/ContactChalkboard.astro';
         </div>
 
         <div class="page-scroll-paper__sheet">
-          <div class="page-scroll-paper__viewport contact-scroll-viewport">
+          <div
+            class="page-scroll-paper__viewport contact-scroll-viewport"
+            tabindex="0"
+            aria-label="Contact content"
+          >
             <header class="page-scroll-header">
               <h1 id="contact-scroll-title">Contact</h1>
               <div class="page-scroll-header__rule" aria-hidden="true"></div>
