@@ -15,6 +15,7 @@ import '@/styles/wall-home.css';
 import '@/styles/about-scroll.css';
 import '@/styles/projects-wall.css';
 import '@/styles/resume.css';
+import '@/styles/generated-resume.css';
 import '@/styles/contact.css';
 import '@/styles/room-shell.css';
 import '@/styles/wall-backdrop.css';
@@ -51,7 +52,8 @@ const {
 } = Astro.props;
 
 const pathname = Astro.url.pathname;
-const normalizedPathname = pathname === '/' ? '/' : pathname.replace(/\/+$/, '');
+const normalizedPathname =
+  pathname === '/' ? '/' : pathname.replace(/\/+$/, '');
 const isPrimaryRoom =
   normalizedPathname === '/' ||
   normalizedPathname === '/about' ||
@@ -112,13 +114,15 @@ const hasSiteRoomBackdrop = !isPrimaryRoom;
       transition:persist="global-room-backdrop"
       initialCameraX={primaryRoomInitialCameraX}
     />
-    {isPrimaryRoom && (
-      <PrimaryRoomEngine
-        client:load
-        transition:persist="primary-room-engine"
-        initialPath={pathname}
-      />
-    )}
+    {
+      isPrimaryRoom && (
+        <PrimaryRoomEngine
+          client:load
+          transition:persist="primary-room-engine"
+          initialPath={pathname}
+        />
+      )
+    }
     <SkipLink />
     <Header />
 

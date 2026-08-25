@@ -43,7 +43,7 @@ const resolveHref = (href: string) =>
                   <span>{project.description}</span>
                 </td>
                 <td class="project-sheet__stack">
-                  {project.stack.join(' · ')}
+                  <span>{project.stack.join(' · ')}</span>
                 </td>
                 <td class="project-sheet__source-cell">
                   {project.sourceHref ? (

@@ -1,0 +1,17 @@
+---
+interface Props {
+  html: string;
+  label: string;
+  variant?: 'clarinet' | 'software';
+}
+
+const { html, label, variant = 'clarinet' } = Astro.props;
+const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+const bodyHtml = bodyMatch?.[1] ?? html;
+---
+
+<div
+  class={`generated-resume generated-resume--${variant}`}
+  aria-label={label}
+  set:html={bodyHtml}
+/>

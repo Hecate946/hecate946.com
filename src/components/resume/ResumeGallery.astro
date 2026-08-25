@@ -1,5 +1,7 @@
 ---
-import { pdfViewerHref, withBase } from '@/lib/paths';
+import { withBase } from '@/lib/paths';
+import ClarinetResume from '@/components/resume/ClarinetResume.astro';
+import SoftwareResume from '@/components/resume/SoftwareResume.astro';
 
 const resumes = [
   {
@@ -7,16 +9,12 @@ const resumes = [
     tabTitle: 'Software',
     fullTitle: 'Software Engineering Resume',
     pdf: '/resumes/cyrus-asasi-software-engineering-resume.pdf',
-    svg: '/images/resume/software-resume.svg',
-    alt: 'Cyrus Asasi’s software engineering resume',
   },
   {
     id: 'clarinet',
     tabTitle: 'Clarinet',
     fullTitle: 'Clarinet Performance Resume',
     pdf: '/resumes/cyrus-asasi-clarinet-performance-resume.pdf',
-    svg: '/images/resume/clarinet-resume.svg',
-    alt: 'Cyrus Asasi’s clarinet performance resume',
   },
 ] as const;
 ---
@@ -62,11 +60,7 @@ const resumes = [
       </a>
     </div>
 
-    <div
-      class="resume-scrolls__stage"
-      tabindex="0"
-      aria-label="Resume preview. Scroll horizontally on smaller screens."
-    >
+    <div class="resume-scrolls__stage" tabindex="0" aria-label="Resume preview">
       {
         resumes.map((resume, index) => (
           <article
@@ -86,23 +80,11 @@ const resumes = [
             />
 
             <div class="about-scroll-paper__sheet resume-scroll__sheet">
-              <a
-                class="resume-scroll__document"
-                href={pdfViewerHref(resume.pdf)}
-                aria-label={`View ${resume.fullTitle}`}
-                data-astro-prefetch
-              >
-                <img
-                  src={withBase(resume.svg)}
-                  alt={resume.alt}
-                  width="595"
-                  height="842"
-                  loading={index === 0 ? 'eager' : 'lazy'}
-                  fetchpriority={index === 0 ? 'high' : 'auto'}
-                  draggable="false"
-                  decoding="async"
-                />
-              </a>
+              {resume.id === 'software' ? (
+                <SoftwareResume />
+              ) : (
+                <ClarinetResume />
+              )}
             </div>
 
             <div
