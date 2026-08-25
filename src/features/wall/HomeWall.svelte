@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { withBase } from '@/lib/paths';
+  import type { HallwayScene } from './hallway-scene';
   import { wallDestinations } from './wall-config';
 
   export let active = true;
@@ -34,10 +35,10 @@
   }));
 
   let stage: HTMLElement;
-  let hallwayWorld: HTMLElement;
-  let leftWallTexture: HTMLElement;
-  let rightWallTexture: HTMLElement;
-  let floorSurface: HTMLElement;
+  let hallwayViewport: HTMLElement;
+  let hallwayCanvas: HTMLCanvasElement;
+  let hallwayProbe: HTMLElement;
+  let hallway: HallwayScene | null = null;
   let paintingNodes: HTMLElement[] = [];
   let mode: SceneMode = 'entrance';
   let cameraZ = 0;
@@ -112,22 +113,10 @@
   }
 
   function renderCamera(force = false) {
-    if (
-      !hallwayWorld ||
-      !leftWallTexture ||
-      !rightWallTexture ||
-      !floorSurface
-    )
-      return;
     if (!force && cameraZ === lastRenderedCameraZ && !programmatic) return;
 
-    // Recycle only one 240px tile of travel. The geometry stays fixed while
-    // these three compositor layers provide continuous forward motion without
-    // ever exposing an edge or rasterizing another full-length corridor.
-    const texturePhase = Math.round(modulo(cameraZ, 240) * 4) / 4;
-    leftWallTexture.style.transform = `translate3d(${-texturePhase}px, 0, 0)`;
-    rightWallTexture.style.transform = `translate3d(${texturePhase}px, 0, 0)`;
-    floorSurface.style.backgroundPosition = `0 ${texturePhase}px, 0 0`;
+    // The corridor is optional; painting placement is not.
+    hallway?.render(cameraZ);
 
     for (const [index, node] of paintingNodes.entries()) {
       const painting = paintings[index];
@@ -159,6 +148,7 @@
 
   function refreshRenderState() {
     collectSceneNodes();
+    hallway?.resize();
     lastRenderedCameraZ = Number.NaN;
     renderCamera(true);
   }
@@ -534,6 +524,36 @@
     reducedMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches;
+
+    // Three.js is loaded off the critical path: the entrance renders first and
+    // the corridor attaches a moment later, behind the still-closed door.
+    let released = false;
+    void (async () => {
+      try {
+        const { createHallwayScene } = await import('./hallway-scene');
+        if (released) return;
+        hallway = createHallwayScene({
+          canvas: hallwayCanvas,
+          viewport: hallwayViewport,
+          probe: hallwayProbe,
+        });
+        refreshRenderState();
+      } catch (error) {
+        // No WebGL: the scene's own background stands in for the corridor and
+        // every painting, link, and control keeps working.
+        console.warn('Hallway renderer unavailable', error);
+      }
+    })();
+
+    // The corridor's palette comes from the theme, so repaint on a mode swap.
+    const themeObserver = new MutationObserver(() => {
+      hallway?.refreshTheme();
+      renderCamera(true);
+    });
+    themeObserver.observe(document.documentElement, {
+      attributeFilter: ['data-theme'],
+    });
+
     resetSharedBackdrop();
     collectSceneNodes();
     refreshRenderState();
@@ -568,6 +588,10 @@
         restoreHallwayAfterHistoryNavigation,
       );
       cancelAnimationFrame(rafId);
+      themeObserver.disconnect();
+      released = true;
+      hallway?.dispose();
+      hallway = null;
     };
   });
 </script>
@@ -588,33 +612,18 @@
 >
   <h1 class="visually-hidden">Cyrus Asasi</h1>
 
+  <span bind:this={hallwayProbe} class="hallway-metrics" aria-hidden="true"
+  ></span>
+
   <div
+    bind:this={hallwayViewport}
     class="hallway-scene"
     aria-hidden={mode === 'entrance' ? 'true' : undefined}
   >
-    <div bind:this={hallwayWorld} class="hallway-world">
-      <div class="hallway-tunnel" aria-hidden="true">
-        <div class="hallway-surface hallway-surface--left">
-          <span
-            bind:this={leftWallTexture}
-            class="hallway-texture hallway-texture--wall"
-          ></span>
-          <span class="hallway-baseboard"></span>
-        </div>
-        <div class="hallway-surface hallway-surface--right">
-          <span
-            bind:this={rightWallTexture}
-            class="hallway-texture hallway-texture--wall"
-          ></span>
-          <span class="hallway-baseboard"></span>
-        </div>
-        <div
-          bind:this={floorSurface}
-          class="hallway-surface hallway-surface--floor"
-        ></div>
-        <div class="hallway-surface hallway-surface--ceiling"></div>
-      </div>
+    <canvas bind:this={hallwayCanvas} class="hallway-canvas" aria-hidden="true"
+    ></canvas>
 
+    <div class="hallway-world">
       {#each paintings as painting, index (painting.destination.id)}
         <a
           class:hallway-painting--left={painting.side === 'left'}

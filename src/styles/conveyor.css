@@ -1,4 +1,4 @@
-/* Homepage entrance and infinitely recycled CSS 3D hallway. */
+/* Homepage entrance and the WebGL hallway that sits behind it. */
 .wall-stage {
   --home-door-half-width: clamp(5.5rem, 11vw, 7.75rem);
   --home-door-width: calc(
@@ -8,15 +8,7 @@
   --home-door-bottom: calc(var(--floor-height) + 0.55rem);
   --hallway-half-width: max(55vw, 29rem);
   --hallway-half-height: max(58vh, 23rem);
-  --hallway-width: calc(var(--hallway-half-width) + var(--hallway-half-width));
-  --hallway-height: calc(
-    var(--hallway-half-height) + var(--hallway-half-height)
-  );
-  --hallway-tunnel-depth: 6720px;
-  --hallway-tunnel-half-depth: 3360px;
-  --hallway-tunnel-near-depth: -20px;
-  --hallway-brick-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'%3E%3Cg fill='%23fff' fill-opacity='.12'%3E%3Crect x='0' y='0' width='120' height='2'/%3E%3Crect x='0' y='30' width='120' height='2'/%3E%3Crect x='0' y='0' width='2' height='30'/%3E%3Crect x='60' y='0' width='2' height='30'/%3E%3Crect x='30' y='30' width='2' height='30'/%3E%3Crect x='90' y='30' width='2' height='30'/%3E%3C/g%3E%3C/svg%3E");
-  --hallway-floor-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cpath fill='%23080a0a' d='M0 0h240v240H0z'/%3E%3Cpath fill='%23f4f3ed' d='M120 0h120v120H120zM0 120h120v120H0z'/%3E%3C/svg%3E");
+  --hallway-grout-color: rgb(255 255 255 / 12%);
   --hallway-painting-width: 420px;
   --hallway-painting-height: 546px;
   --hallway-painting-half-width: 210px;
@@ -41,7 +33,29 @@
 }
 
 html[data-theme='light'] .wall-stage {
-  --hallway-brick-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'%3E%3Cg fill='%23071f23' fill-opacity='.14'%3E%3Crect x='0' y='0' width='120' height='2'/%3E%3Crect x='0' y='30' width='120' height='2'/%3E%3Crect x='0' y='0' width='2' height='30'/%3E%3Crect x='60' y='0' width='2' height='30'/%3E%3Crect x='30' y='30' width='2' height='30'/%3E%3Crect x='90' y='30' width='2' height='30'/%3E%3C/g%3E%3C/svg%3E");
+  --hallway-grout-color: rgb(7 31 35 / 14%);
+}
+
+/*
+ * The renderer reads the corridor from CSS rather than duplicating it in
+ * TypeScript, so this probe maps the custom properties above onto real
+ * properties -- the only form getComputedStyle resolves max() and
+ * color-mix() into. It never paints.
+ */
+.hallway-metrics {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--hallway-half-width);
+  height: var(--hallway-half-height);
+  border: 0 solid;
+  border-top-color: var(--wall-baseboard);
+  border-right-color: var(--wall-trim-line);
+  border-bottom-color: var(--hallway-grout-color);
+  background-color: var(--wall-light);
+  color: var(--wall-dark);
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .wall-stage--hallway {
@@ -96,6 +110,19 @@ html[data-theme='light'] .wall-stage {
   pointer-events: auto;
 }
 
+/* One WebGL surface draws the walls, floor, and ceiling. It sits beneath the
+   painting layer, which is all the depth ordering the scene needs: paintings
+   hang on the walls, so nothing in the corridor can ever occlude them. */
+.hallway-canvas {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .hallway-world {
   position: absolute;
   z-index: 2;
@@ -104,167 +131,6 @@ html[data-theme='light'] .wall-stage {
   width: 0;
   height: 0;
   transform-style: preserve-3d;
-}
-
-.hallway-tunnel {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-  transform-style: preserve-3d;
-}
-
-.hallway-surface {
-  position: absolute;
-  top: 0;
-  left: 0;
-  box-sizing: border-box;
-  overflow: hidden;
-  pointer-events: none;
-  transform-style: preserve-3d;
-  backface-visibility: visible;
-}
-
-.hallway-surface--left,
-.hallway-surface--right {
-  width: var(--hallway-tunnel-depth);
-  height: var(--hallway-height);
-  margin-top: calc(0px - var(--hallway-half-height));
-  margin-left: calc(0px - var(--hallway-tunnel-half-depth));
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--wall-dark) 97%, var(--wall-light)),
-    var(--wall-dark) 58%,
-    color-mix(in srgb, var(--wall-dark) 88%, black)
-  );
-  box-shadow: inset 0 -6rem 8rem rgb(0 0 0 / 22%);
-}
-
-.hallway-texture {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  backface-visibility: hidden;
-  will-change: transform;
-}
-
-.hallway-texture--wall {
-  inset: 0 -240px;
-  background: var(--hallway-brick-texture) 0 0 / 120px 60px repeat;
-}
-
-/* Thin grout aliases once perspective compresses it below one screen pixel.
-   A static wall-colored veil removes only that distant detail; nearby bricks
-   remain crisp and the overlay never participates in the animation. */
-.hallway-surface--left::after,
-.hallway-surface--right::after {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  bottom: 1.05rem;
-  width: 58%;
-  content: '';
-  pointer-events: none;
-}
-
-.hallway-surface--left::after {
-  right: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--wall-dark) 96%, transparent)
-  );
-}
-
-.hallway-surface--right::after {
-  left: 0;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--wall-dark) 96%, transparent),
-    transparent
-  );
-}
-
-.hallway-surface--left {
-  transform: translate3d(
-      calc(0px - var(--hallway-half-width)),
-      0,
-      calc(var(--hallway-tunnel-near-depth) - var(--hallway-tunnel-half-depth))
-    )
-    rotateY(90deg);
-}
-
-.hallway-surface--right {
-  transform: translate3d(
-      var(--hallway-half-width),
-      0,
-      calc(var(--hallway-tunnel-near-depth) - var(--hallway-tunnel-half-depth))
-    )
-    rotateY(-90deg);
-}
-
-.hallway-baseboard {
-  position: absolute;
-  z-index: 2;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 1.05rem;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--wall-baseboard) 90%, var(--wall-light)),
-    var(--wall-baseboard) 35%,
-    color-mix(in srgb, var(--wall-baseboard) 82%, black)
-  );
-  border-top: 1px solid var(--wall-trim-line);
-  box-shadow:
-    inset 0 1px 0 var(--wall-trim-highlight),
-    0 -0.2rem 0.75rem rgb(0 0 0 / 18%);
-}
-
-.hallway-surface--floor,
-.hallway-surface--ceiling {
-  width: var(--hallway-width);
-  height: var(--hallway-tunnel-depth);
-  margin-top: calc(0px - var(--hallway-tunnel-half-depth));
-  margin-left: calc(0px - var(--hallway-half-width));
-}
-
-.hallway-surface--floor {
-  background-color: var(--wall-dark);
-  background-image:
-    var(--hallway-floor-texture),
-    linear-gradient(180deg, transparent, rgb(0 0 0 / 14%));
-  background-position: 0 0, 0 0;
-  background-repeat: repeat, no-repeat;
-  background-size: 240px 240px, 100% 100%;
-  transform: translate3d(
-      0,
-      var(--hallway-half-height),
-      calc(var(--hallway-tunnel-near-depth) - var(--hallway-tunnel-half-depth))
-    )
-    rotateX(90deg);
-  box-shadow: inset 0 0 5rem rgb(0 0 0 / 18%);
-}
-
-.hallway-surface--ceiling {
-  background:
-    linear-gradient(
-      90deg,
-      rgb(0 0 0 / 16%),
-      transparent 20% 80%,
-      rgb(0 0 0 / 16%)
-    ),
-    color-mix(in srgb, var(--wall-dark) 92%, black);
-  border: 1px solid color-mix(in srgb, var(--room-outline) 8%, transparent);
-  transform: translate3d(
-      0,
-      calc(0px - var(--hallway-half-height)),
-      calc(var(--hallway-tunnel-near-depth) - var(--hallway-tunnel-half-depth))
-    )
-    rotateX(-90deg);
 }
 
 .hallway-depth-fog,
