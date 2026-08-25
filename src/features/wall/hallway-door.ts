@@ -3,16 +3,21 @@ import {
   BufferGeometry,
   CircleGeometry,
   CubicBezierCurve,
+  AlwaysStencilFunc,
   ExtrudeGeometry,
   Group,
+  KeepStencilOp,
   Material,
   Mesh,
+  MeshBasicMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   Object3D,
   Path,
   PerspectiveCamera,
+  ReplaceStencilOp,
   Shape,
+  ShapeGeometry,
   Vector2,
   Vector3,
 } from 'three';
@@ -267,6 +272,10 @@ export interface HallwayDoor {
   setOpen(amount: number): void;
   /** Slide the whole assembly with the corridor as the camera advances. */
   setCameraZ(cameraZ: number): void;
+  /** Enable the invisible arched stencil that reveals the corridor. */
+  setPortalMask(enabled: boolean): void;
+  /** Whether the doorway plane is still in front of the camera. */
+  isBeforeCamera(cameraZ: number): boolean;
   /** The doorway's on-screen box, for the entrance hit target. */
   project(
     camera: PerspectiveCamera,
@@ -299,7 +308,20 @@ export function createHallwayDoor(
     metalness: 0,
     depthWrite: false,
   });
-  const materials: Material[] = [lacquer, gold, glass];
+  const portalMaskMaterial = new MeshBasicMaterial({
+    colorWrite: false,
+    depthTest: false,
+    depthWrite: false,
+    stencilWrite: true,
+    stencilWriteMask: 0xff,
+    stencilFunc: AlwaysStencilFunc,
+    stencilRef: 1,
+    stencilFuncMask: 0xff,
+    stencilFail: KeepStencilOp,
+    stencilZFail: KeepStencilOp,
+    stencilZPass: ReplaceStencilOp,
+  });
+  const materials: Material[] = [lacquer, gold, glass, portalMaskMaterial];
 
   const group = new Group();
 
@@ -312,6 +334,19 @@ export function createHallwayDoor(
   group.add(assembly);
 
   const springHeight = DOOR_HEIGHT;
+
+  // This mesh never paints. It writes the doorway silhouette into the stencil
+  // before the corridor is rendered, allowing the shared DOM room to remain
+  // the exact visible entrance wall while WebGL appears only through the arch.
+  const portalShape = new Shape();
+  traceOpening(portalShape, OPENING_HALF, springHeight, 0);
+  const portalMask = new Mesh(
+    track(new ShapeGeometry(portalShape, 48)),
+    portalMaskMaterial,
+  );
+  portalMask.position.z = WALL_DEPTH * 0.25;
+  portalMask.renderOrder = -1_000;
+  assembly.add(portalMask);
 
   const casingShape = new Shape();
   traceOpening(casingShape, OUTER_HALF, springHeight, 0);
@@ -554,6 +589,12 @@ export function createHallwayDoor(
     setOpen,
     setCameraZ(cameraZ: number) {
       group.position.z = doorZ + cameraZ + entryDistance;
+    },
+    setPortalMask(enabled: boolean) {
+      portalMask.visible = enabled;
+    },
+    isBeforeCamera(cameraZ: number) {
+      return group.position.z < cameraZ - 1;
     },
     project(camera, viewWidth, viewHeight) {
       const z = group.position.z;

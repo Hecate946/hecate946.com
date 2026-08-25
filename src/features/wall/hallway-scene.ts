@@ -4,8 +4,11 @@ import {
   CanvasTexture,
   ClampToEdgeWrapping,
   DirectionalLight,
+  EqualStencilFunc,
   Fog,
+  KeepStencilOp,
   LinearMipmapLinearFilter,
+  Material,
   Mesh,
   MeshBasicMaterial,
   PMREMGenerator,
@@ -274,6 +277,7 @@ export function createHallwayScene(options: {
     alpha: true,
     antialias: true,
     powerPreference: 'high-performance',
+    stencil: true,
   });
   const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
   renderer.setPixelRatio(pixelRatio);
@@ -293,10 +297,6 @@ export function createHallwayScene(options: {
   const rightWallMap = new CanvasTexture(wallCanvas);
   const floorMap = new CanvasTexture(floorCanvas);
   const ceilingMap = new CanvasTexture(ceilingCanvas);
-  // The door's wall faces the camera, so it samples the same painted course
-  // by world position -- gradient, baseboard, and mortar all meet the side
-  // walls exactly at the corners.
-  const frontWallMap = new CanvasTexture(wallCanvas);
 
   const anisotropy = renderer.capabilities.getMaxAnisotropy();
   const prepare = (map: Texture, wrapS: Wrapping, wrapT: Wrapping) => {
@@ -313,7 +313,6 @@ export function createHallwayScene(options: {
   prepare(rightWallMap, RepeatWrapping, ClampToEdgeWrapping);
   prepare(floorMap, RepeatWrapping, RepeatWrapping);
   prepare(ceilingMap, ClampToEdgeWrapping, ClampToEdgeWrapping);
-  prepare(frontWallMap, RepeatWrapping, ClampToEdgeWrapping);
 
   leftWallMap.repeat.set(TUNNEL_DEPTH / BRICK_TILE_WIDTH, 1);
   rightWallMap.repeat.copy(leftWallMap.repeat);
@@ -367,9 +366,14 @@ export function createHallwayScene(options: {
   keyLight.position.set(-1.15, 1.4, 0.85);
   scene.add(keyLight, new AmbientLight(0xdfeff0, 0.55));
 
-  // ExtrudeGeometry gives the caps world-space UVs, so mapping the painted
-  // wall onto the front panel is only a repeat and an offset.
-  const frontWallMaterial = new MeshBasicMaterial({ map: frontWallMap });
+  // The shared DOM backdrop is the entrance wall. This material writes depth
+  // without painting, so the doorway retains real occlusion while the exact
+  // same bricks, baseboard, lighting, and floor used by the other pages remain
+  // visible beneath the transparent canvas.
+  const frontWallMaterial = new MeshBasicMaterial({
+    colorWrite: false,
+    depthWrite: true,
+  });
   const revealMaterial = new MeshBasicMaterial({ color: 0x000000 });
   const door = createHallwayDoor([frontWallMaterial, revealMaterial]);
   scene.add(door.group);
@@ -380,6 +384,43 @@ export function createHallwayScene(options: {
     onReady,
   );
   scene.add(paintings.group);
+
+  const corridorRoots = [...surfaces, paintings.group];
+  let portalStencilEnabled = false;
+
+  function visitMaterials(
+    roots: readonly (Mesh | typeof paintings.group)[],
+    visit: (material: Material) => void,
+  ) {
+    for (const root of roots) {
+      root.traverse((object) => {
+        if (!(object instanceof Mesh)) return;
+        const meshMaterials = Array.isArray(object.material)
+          ? object.material
+          : [object.material];
+        for (const material of meshMaterials) visit(material);
+      });
+    }
+  }
+
+  function setPortalStencil(enabled: boolean) {
+    if (portalStencilEnabled === enabled) return;
+    portalStencilEnabled = enabled;
+
+    visitMaterials(corridorRoots, (material) => {
+      // Three.js enables the stencil test through stencilWrite. A zero write
+      // mask makes these materials read the portal stencil without changing it.
+      material.stencilWrite = enabled;
+      material.stencilWriteMask = 0x00;
+      material.stencilFunc = EqualStencilFunc;
+      material.stencilRef = 1;
+      material.stencilFuncMask = 0xff;
+      material.stencilFail = KeepStencilOp;
+      material.stencilZFail = KeepStencilOp;
+      material.stencilZPass = KeepStencilOp;
+      material.needsUpdate = true;
+    });
+  }
 
   let wallHeight = 0;
   let paintedWallHeight = -1;
@@ -448,9 +489,6 @@ export function createHallwayScene(options: {
 
     const frame = frameProbe.getBoundingClientRect();
     paintings.layout(halfWidth, frame.width, frame.height);
-    frontWallMap.repeat.set(1 / BRICK_TILE_WIDTH, 1 / wallHeight);
-    frontWallMap.offset.set(0.5, 0.5);
-
     renderer.setSize(width, height, false);
     if (wallHeight !== paintedWallHeight) refreshTheme();
   }
@@ -462,6 +500,10 @@ export function createHallwayScene(options: {
     rightWallMap.offset.x = (-cameraZ / BRICK_TILE_WIDTH) % 1;
     floorMap.offset.y = (cameraZ / FLOOR_TILE) % 1;
     door.setCameraZ(cameraZ);
+    const portalActive =
+      door.group.visible && door.isBeforeCamera(camera.position.z);
+    door.setPortalMask(portalActive);
+    setPortalStencil(portalActive);
     paintings.update(cameraZ);
     renderer.render(scene, camera);
   }
@@ -501,7 +543,6 @@ export function createHallwayScene(options: {
       door.dispose();
       frontWallMaterial.dispose();
       revealMaterial.dispose();
-      frontWallMap.dispose();
       scene.environment?.dispose();
       unitPlane.dispose();
       floorGeometry.dispose();
