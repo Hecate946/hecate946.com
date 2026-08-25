@@ -1,61 +1,82 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import WallWindow from './WallWindow.svelte';
-  import {
-    WALL_LOOP_WIDTH,
-    WALL_START_X,
-    wallDestinations,
-  } from './wall-config';
+  import { withBase } from '@/lib/paths';
+  import { wallDestinations } from './wall-config';
 
   export let active = true;
 
   const destinations = wallDestinations;
-  const loopWidth = WALL_LOOP_WIDTH;
-  const startX = WALL_START_X;
+  const HALLWAY_LOOP_DEPTH = 5_760;
+  const PAINTING_SPACING = HALLWAY_LOOP_DEPTH / destinations.length;
+  const PAINTING_START = 700;
+  const PAINTING_BEHIND_ALLOWANCE = 360;
+  const DRAG_THRESHOLD = 8;
+  const WHEEL_SCALE = 1.05;
+  const POINTER_SCALE = 1.3;
+  const IDLE_DRIFT_SPEED = 74;
+  const DIRECTION_THRESHOLD = 42;
+  const INERTIA_TIME_CONSTANT = 0.72;
+  const MAX_MANUAL_SPEED = 2_500;
+  const OPENING_DURATION = 980;
 
-  const loopCopies = [-1, 0, 1] as const;
-  const DRAG_THRESHOLD = 7;
-  const WHEEL_SCALE = 0.82;
-  const IDLE_DRIFT_SPEED = 30; // pixels per second
-  const DIRECTION_THRESHOLD = 36;
-  const INERTIA_TIME_CONSTANT = 0.78;
-  const MAX_MANUAL_SPEED = 2_400;
+  type SceneMode = 'entrance' | 'opening' | 'hallway';
+  type GestureAxis = 'pending' | 'horizontal' | 'vertical';
+
+  const paintings = destinations.map((destination, index) => ({
+    destination,
+    index,
+    side: index % 2 === 0 ? ('left' as const) : ('right' as const),
+    z: PAINTING_START + PAINTING_SPACING * index,
+    indexLabel: String(index + 1).padStart(2, '0'),
+    srcset: destination.painting.sources
+      .map((source) => `${withBase(source.src)} ${source.width}w`)
+      .join(', '),
+  }));
 
   let stage: HTMLElement;
-  let wallWorld: HTMLElement;
-  let cameraX = startX;
+  let hallwayWorld: HTMLElement;
+  let leftWallTexture: HTMLElement;
+  let rightWallTexture: HTMLElement;
+  let floorSurface: HTMLElement;
+  let paintingNodes: HTMLElement[] = [];
+  let mode: SceneMode = 'entrance';
+  let cameraZ = 0;
   let velocity = 0;
   let driftDirection = 1;
   let isPaused = false;
   let dragging = false;
   let activePointerId: number | null = null;
   let pointerX = 0;
+  let pointerY = 0;
   let pointerOriginX = 0;
   let pointerOriginY = 0;
   let lastPointerTime = 0;
-  let gestureAxis: 'pending' | 'horizontal' | 'vertical' = 'pending';
+  let gestureAxis: GestureAxis = 'pending';
   let dragDistance = 0;
   let hasInteracted = false;
   let rafId = 0;
   let lastFrame = 0;
+  let openingTimeout = 0;
   let programmatic = false;
   let programmaticStart = 0;
   let programmaticDelta = 0;
   let programmaticStarted = 0;
   let programmaticDuration = 0;
   let programmaticResolve: (() => void) | null = null;
-  let lastRenderedCameraX = Number.NaN;
-  let lastLoopBase = Number.NaN;
+  let lastRenderedCameraZ = Number.NaN;
   let mounted = false;
-
-  $: stageStyle = `--loop-width: ${loopWidth}px;`;
+  let reducedMotion = false;
 
   function modulo(value: number, period: number) {
     return ((value % period) + period) % period;
   }
 
-  function loopBase(position: number) {
-    return Math.floor(position / loopWidth) * loopWidth;
+  function smoothstep(edge0: number, edge1: number, value: number) {
+    const progress = Math.max(
+      0,
+      Math.min(1, (value - edge0) / (edge1 - edge0)),
+    );
+    return progress * progress * (3 - 2 * progress);
   }
 
   function markInteracted() {
@@ -68,11 +89,8 @@
   }
 
   function getDriftVelocity() {
-    // The homepage wall is an explicit interactive feature, so its own Play /
-    // Pause control is the single source of truth for idle motion. Relying on
-    // the OS reduced-motion media query here could leave the wall permanently
-    // stationary while the control still appeared to be in its playing state.
-    return isPaused ? 0 : driftDirection * IDLE_DRIFT_SPEED;
+    if (mode !== 'hallway' || isPaused || reducedMotion) return 0;
+    return driftDirection * IDLE_DRIFT_SPEED;
   }
 
   type RoomCameraWindow = Window & {
@@ -80,38 +98,75 @@
     __hecateSetRoomCameraX?: (cameraX: number) => void;
   };
 
-  function syncSharedBackdrop(cameraX: number) {
+  function resetSharedBackdrop() {
     const roomWindow = window as RoomCameraWindow;
-    roomWindow.__hecateRoomCameraX = cameraX;
-    roomWindow.__hecateSetRoomCameraX?.(cameraX);
+    roomWindow.__hecateRoomCameraX = 0;
+    roomWindow.__hecateSetRoomCameraX?.(0);
+  }
+
+  function collectSceneNodes() {
+    if (!stage) return;
+    paintingNodes = Array.from(
+      stage.querySelectorAll<HTMLElement>('[data-hallway-painting]'),
+    );
   }
 
   function renderCamera(force = false) {
-    // Keep the camera fully subpixel-precise. Device-pixel quantization made
-    // slow motion visibly step on 60/90/120Hz displays. The browser compositor
-    // is better at sampling the transformed painting track continuously.
-    const renderedCameraX = cameraX;
-    if (!force && renderedCameraX === lastRenderedCameraX) return;
+    if (
+      !hallwayWorld ||
+      !leftWallTexture ||
+      !rightWallTexture ||
+      !floorSurface
+    )
+      return;
+    if (!force && cameraZ === lastRenderedCameraZ && !programmatic) return;
 
-    // The camera itself never wraps. Instead, the three identical destination
-    // strips are recycled around the current lap. This avoids a compositor
-    // transform jump once per full rotation.
-    const nextLoopBase = loopBase(renderedCameraX);
-    if (force || nextLoopBase !== lastLoopBase) {
-      wallWorld?.style.setProperty('--loop-base', `${nextLoopBase}px`);
-      lastLoopBase = nextLoopBase;
+    // Recycle only one 240px tile of travel. The geometry stays fixed while
+    // these three compositor layers provide continuous forward motion without
+    // ever exposing an edge or rasterizing another full-length corridor.
+    const texturePhase = Math.round(modulo(cameraZ, 240) * 4) / 4;
+    leftWallTexture.style.transform = `translate3d(${-texturePhase}px, 0, 0)`;
+    rightWallTexture.style.transform = `translate3d(${texturePhase}px, 0, 0)`;
+    floorSurface.style.backgroundPosition = `0 ${texturePhase}px, 0 0`;
+
+    for (const [index, node] of paintingNodes.entries()) {
+      const painting = paintings[index];
+      if (!painting) continue;
+
+      const distance =
+        modulo(
+          painting.z - cameraZ + PAINTING_BEHIND_ALLOWANCE,
+          HALLWAY_LOOP_DEPTH,
+        ) - PAINTING_BEHIND_ALLOWANCE;
+      const nearOpacity = smoothstep(80, 240, distance);
+      const farOpacity = Math.max(
+        0.02,
+        1 - smoothstep(2_650, HALLWAY_LOOP_DEPTH - 250, distance),
+      );
+      const depthOpacity = nearOpacity * farOpacity;
+      const renderedDistance = Math.round(distance * 4) / 4;
+
+      node.style.transform = `translate3d(var(--painting-side-x), -26px, ${-renderedDistance}px) rotateY(var(--painting-turn))`;
+      node.style.opacity = depthOpacity.toFixed(3);
+      node.style.pointerEvents =
+        mode === 'hallway' && distance > 180 && distance < 2_450
+          ? 'auto'
+          : 'none';
     }
 
-    wallWorld?.style.setProperty(
-      'transform',
-      `translate3d(${-renderedCameraX}px, 0, 0)`,
-    );
+    lastRenderedCameraZ = cameraZ;
+  }
 
-    // The Home wall is the only place that drives the shared backdrop camera.
-    // Every other room resets that backdrop to its static default phase.
-    syncSharedBackdrop(renderedCameraX);
+  function refreshRenderState() {
+    collectSceneNodes();
+    lastRenderedCameraZ = Number.NaN;
+    renderCamera(true);
+  }
 
-    lastRenderedCameraX = renderedCameraX;
+  function ensureAnimationLoop() {
+    if (rafId || document.hidden || !active || mode === 'entrance') return;
+    lastFrame = performance.now();
+    rafId = requestAnimationFrame(animationFrame);
   }
 
   function syncActiveState() {
@@ -123,36 +178,46 @@
       return;
     }
 
+    resetSharedBackdrop();
     lastFrame = performance.now();
     refreshRenderState();
-    ensureAnimationLoop();
+    if (mode !== 'entrance') ensureAnimationLoop();
   }
 
   $: (active, syncActiveState());
 
-  function refreshRenderState() {
-    lastRenderedCameraX = Number.NaN;
-    lastLoopBase = Number.NaN;
-    renderCamera(true);
-  }
-
-  function ensureAnimationLoop() {
-    if (rafId || document.hidden || !active) return;
+  function enterHallway() {
+    if (mode !== 'entrance') return;
+    markInteracted();
+    isPaused = false;
+    driftDirection = 1;
+    cameraZ = 0;
+    velocity = reducedMotion ? 0 : 180;
+    mode = reducedMotion ? 'hallway' : 'opening';
     lastFrame = performance.now();
-    rafId = requestAnimationFrame(animationFrame);
+    refreshRenderState();
+
+    if (reducedMotion) return;
+
+    ensureAnimationLoop();
+    openingTimeout = window.setTimeout(() => {
+      mode = 'hallway';
+      velocity = IDLE_DRIFT_SPEED;
+      lastFrame = performance.now();
+      ensureAnimationLoop();
+    }, OPENING_DURATION);
   }
 
   function toggleMotion() {
+    if (mode !== 'hallway') return;
     isPaused = !isPaused;
 
     if (isPaused) {
       velocity = 0;
+      renderCamera(true);
       return;
     }
 
-    // Resume immediately instead of waiting for the inertia easing to crawl
-    // back toward the idle speed. Resetting the frame clock also prevents a
-    // stale elapsed interval after a backgrounded tab or an Astro page swap.
     velocity = driftDirection * IDLE_DRIFT_SPEED;
     ensureAnimationLoop();
   }
@@ -166,25 +231,27 @@
   }
 
   function moveBy(amount: number) {
+    if (mode !== 'hallway') return;
     cancelCameraAnimation();
     markInteracted();
-    cameraX += amount;
+    cameraZ += amount;
     ensureAnimationLoop();
   }
 
-  function nearestDelta(targetX: number) {
-    let delta = targetX - modulo(cameraX, loopWidth);
-    if (delta > loopWidth / 2) delta -= loopWidth;
-    if (delta < -loopWidth / 2) delta += loopWidth;
+  function nearestDelta(targetZ: number) {
+    let delta = targetZ - modulo(cameraZ, HALLWAY_LOOP_DEPTH);
+    if (delta > HALLWAY_LOOP_DEPTH / 2) delta -= HALLWAY_LOOP_DEPTH;
+    if (delta < -HALLWAY_LOOP_DEPTH / 2) delta += HALLWAY_LOOP_DEPTH;
     return delta;
   }
 
-  function animateCameraTo(targetX: number, duration = 460) {
+  function animateCameraTo(targetZ: number, duration = 560) {
+    if (mode !== 'hallway') return Promise.resolve();
     cancelCameraAnimation();
-    programmaticStart = cameraX;
-    programmaticDelta = nearestDelta(targetX);
+    programmaticStart = cameraZ;
+    programmaticDelta = nearestDelta(targetZ);
     programmaticStarted = performance.now();
-    programmaticDuration = Math.max(1, duration);
+    programmaticDuration = reducedMotion ? 1 : Math.max(1, duration);
     programmatic = true;
     velocity = 0;
     ensureAnimationLoop();
@@ -194,15 +261,20 @@
     });
   }
 
-  function focusDestination() {
-    if (dragging) return;
+  function focusDestination(event: FocusEvent, index: number) {
+    if (dragging || mode !== 'hallway') return;
+    if (
+      !(event.currentTarget instanceof HTMLElement) ||
+      !event.currentTarget.matches(':focus-visible')
+    )
+      return;
+
     markInteracted();
+    const painting = paintings[index];
+    if (painting) void animateCameraTo(painting.z - 400, 640);
   }
 
   function enterDestination(event: MouseEvent) {
-    // A drag must never accidentally activate the underlying link. For a real
-    // click, leave the anchor alone so Astro's ClientRouter handles navigation
-    // exactly like the links in the navbar.
     if (dragDistance > DRAG_THRESHOLD) {
       event.preventDefault();
       return;
@@ -213,36 +285,27 @@
   }
 
   function onWheel(event: WheelEvent) {
-    // Vertical wheel/trackpad movement belongs to the page so the footer can
-    // be reached naturally. Only a clearly horizontal gesture moves the wall.
-    if (
-      Math.abs(event.deltaX) <= Math.abs(event.deltaY) ||
-      Math.abs(event.deltaX) < 0.5
-    ) {
-      return;
-    }
-
+    if (mode !== 'hallway') return;
     event.preventDefault();
-    const normalized = Math.max(-190, Math.min(190, event.deltaX));
 
+    const dominantDelta =
+      Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+        ? event.deltaY
+        : event.deltaX;
+    const normalized = Math.max(-210, Math.min(210, dominantDelta));
     moveBy(normalized * WHEEL_SCALE);
     velocity = Math.max(
       -MAX_MANUAL_SPEED,
-      Math.min(MAX_MANUAL_SPEED, normalized * 8.5),
+      Math.min(MAX_MANUAL_SPEED, normalized * 9),
     );
     updateDriftDirection(velocity);
   }
 
   function onPointerDown(event: PointerEvent) {
-    if (event.button !== 0) return;
-
-    // Svelte 5 delegates event handlers while this scene also uses native
-    // pointer listeners for low-latency dragging. Ignore the motion button at
-    // the scene level so a tap/click can never be mistaken for the beginning
-    // of a wall drag before the delegated button handler runs.
+    if (mode !== 'hallway' || event.button !== 0) return;
     if (
       event.target instanceof Element &&
-      event.target.closest('.wall-corner-control')
+      event.target.closest('.wall-corner-control, .hallway-painting')
     )
       return;
 
@@ -250,23 +313,24 @@
     dragging = true;
     activePointerId = event.pointerId;
     pointerX = event.clientX;
+    pointerY = event.clientY;
     pointerOriginX = event.clientX;
     pointerOriginY = event.clientY;
     lastPointerTime = event.timeStamp;
-    gestureAxis = event.pointerType === 'mouse' ? 'horizontal' : 'pending';
+    gestureAxis = 'pending';
     dragDistance = 0;
     velocity = 0;
     markInteracted();
     ensureAnimationLoop();
   }
 
-  function captureTouchPointer(event: PointerEvent) {
-    if (event.pointerType === 'mouse' || !stage) return;
+  function capturePointer(event: PointerEvent) {
+    if (!stage) return;
     try {
       if (!stage.hasPointerCapture(event.pointerId))
         stage.setPointerCapture(event.pointerId);
     } catch {
-      // Some older mobile browsers can throw if capture races pointercancel.
+      // Pointer capture can race pointercancel on older mobile browsers.
     }
   }
 
@@ -274,41 +338,33 @@
     if (!dragging || activePointerId !== event.pointerId) return;
 
     const deltaX = event.clientX - pointerX;
+    const deltaY = event.clientY - pointerY;
+
     if (gestureAxis === 'pending') {
       const totalX = Math.abs(event.clientX - pointerOriginX);
       const totalY = Math.abs(event.clientY - pointerOriginY);
-      if (Math.max(totalX, totalY) < 8) return;
-
-      // Use hysteresis on touch. A mostly-horizontal swipe should not get
-      // cancelled just because the finger wanders a few pixels vertically.
-      if (totalY > totalX * 1.3) {
-        gestureAxis = 'vertical';
-        dragging = false;
-        activePointerId = null;
-        velocity = getDriftVelocity();
-        return;
-      }
-
-      if (totalX <= totalY * 1.12) return;
-      gestureAxis = 'horizontal';
-      captureTouchPointer(event);
+      if (Math.max(totalX, totalY) < 7) return;
+      gestureAxis = totalY >= totalX ? 'vertical' : 'horizontal';
+      capturePointer(event);
     }
 
-    if (gestureAxis !== 'horizontal') return;
     event.preventDefault();
-
+    const movement = gestureAxis === 'vertical' ? -deltaY : -deltaX;
     const elapsedMs = Math.max(
       4,
       Math.min(50, event.timeStamp - lastPointerTime || 16.667),
     );
+    const worldMovement = movement * POINTER_SCALE;
+
     lastPointerTime = event.timeStamp;
     pointerX = event.clientX;
-    dragDistance += Math.abs(deltaX);
-    cameraX -= deltaX;
+    pointerY = event.clientY;
+    dragDistance += Math.hypot(deltaX, deltaY);
+    cameraZ += worldMovement;
 
     const sampledVelocity = Math.max(
       -MAX_MANUAL_SPEED,
-      Math.min(MAX_MANUAL_SPEED, (-deltaX / elapsedMs) * 1000),
+      Math.min(MAX_MANUAL_SPEED, (worldMovement / elapsedMs) * 1000),
     );
     velocity = velocity * 0.58 + sampledVelocity * 0.42;
     updateDriftDirection(velocity);
@@ -323,7 +379,7 @@
         if (stage.hasPointerCapture(pointerToRelease))
           stage.releasePointerCapture(pointerToRelease);
       } catch {
-        // Pointer capture may already have been released by the browser.
+        // Capture may already have been released by the browser.
       }
     }
 
@@ -341,11 +397,8 @@
   }
 
   function onPointerLeave(event: PointerEvent) {
-    // A mouse drag ends as soon as the pointer leaves the scene/viewport. This
-    // prevents the wall from still feeling "attached" when the cursor returns.
-    if (event.pointerType === 'mouse' && activePointerId === event.pointerId) {
+    if (event.pointerType === 'mouse' && activePointerId === event.pointerId)
       clearPointerDrag(event.pointerId);
-    }
   }
 
   function onWindowBlur() {
@@ -355,27 +408,27 @@
   function onVisibilityChange() {
     if (document.hidden) {
       clearPointerDrag();
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = 0;
       return;
     }
 
-    // rAF is suspended in background tabs. Reset the clock on return so a
-    // stale frame interval can never feed a visible velocity jump.
     lastFrame = performance.now();
     refreshRenderState();
-    if (!isPaused) ensureAnimationLoop();
+    if (mode !== 'entrance') ensureAnimationLoop();
   }
 
-  function restoreWallAfterHistoryNavigation() {
+  function restoreHallwayAfterHistoryNavigation() {
     cancelCameraAnimation();
-    programmatic = false;
     dragging = false;
     activePointerId = null;
     gestureAxis = 'pending';
     dragDistance = 0;
     lastFrame = performance.now();
     velocity = getDriftVelocity();
+    resetSharedBackdrop();
     refreshRenderState();
-    if (!isPaused) ensureAnimationLoop();
+    if (mode !== 'entrance') ensureAnimationLoop();
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -386,34 +439,41 @@
       target instanceof HTMLSelectElement ||
       target instanceof HTMLButtonElement ||
       target instanceof HTMLAnchorElement
-    ) {
+    )
       return;
-    }
 
-    if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
+    const key = event.key.toLowerCase();
+    if (
+      event.key === 'ArrowDown' ||
+      event.key === 'ArrowRight' ||
+      key === 's' ||
+      key === 'd'
+    ) {
       event.preventDefault();
-      moveBy(event.shiftKey ? 380 : 150);
-      velocity = event.shiftKey ? 660 : 360;
+      moveBy(event.shiftKey ? 420 : 170);
+      velocity = event.shiftKey ? 720 : 380;
       updateDriftDirection(velocity);
-    } else if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
+    } else if (
+      event.key === 'ArrowUp' ||
+      event.key === 'ArrowLeft' ||
+      key === 'w' ||
+      key === 'a'
+    ) {
       event.preventDefault();
-      moveBy(event.shiftKey ? -380 : -150);
-      velocity = event.shiftKey ? -660 : -360;
+      moveBy(event.shiftKey ? -420 : -170);
+      velocity = event.shiftKey ? -720 : -380;
       updateDriftDirection(velocity);
     } else if (event.key === 'Home') {
       event.preventDefault();
       markInteracted();
-      void animateCameraTo(startX, 420);
+      void animateCameraTo(0, 520);
     }
   }
 
   function animationFrame(now: number) {
     rafId = 0;
-    if (!active) return;
+    if (!active || mode === 'entrance') return;
 
-    // requestAnimationFrame already follows the display's refresh cadence.
-    // Do not add a second software frame limiter; doing so causes uneven frame
-    // pacing on 90/120/144Hz screens and makes the checkerboard appear to jump.
     const elapsedMs = lastFrame
       ? Math.min(50, Math.max(0, now - lastFrame))
       : 16.667;
@@ -426,7 +486,7 @@
         (now - programmaticStarted) / programmaticDuration,
       );
       const eased = 1 - Math.pow(1 - progress, 4);
-      cameraX = programmaticStart + programmaticDelta * eased;
+      cameraZ = programmaticStart + programmaticDelta * eased;
 
       if (progress >= 1) {
         programmatic = false;
@@ -436,18 +496,23 @@
         resolve?.();
       }
     } else if (!dragging) {
-      const driftVelocity = getDriftVelocity();
+      const driftVelocity = mode === 'opening' ? 180 : getDriftVelocity();
       const easing = 1 - Math.exp(-dt / INERTIA_TIME_CONSTANT);
       velocity += (driftVelocity - velocity) * easing;
       if (Math.abs(velocity) < 0.01 && driftVelocity === 0) velocity = 0;
-      cameraX += velocity * dt;
+      cameraZ += velocity * dt;
     }
 
+    lastRenderedCameraZ = Number.NaN;
     renderCamera();
 
-    // When the user explicitly pauses the conveyor, stop scheduling frames
-    // entirely once residual inertia has settled. Input restarts it on demand.
-    if (isPaused && !dragging && !programmatic && Math.abs(velocity) < 0.01) {
+    if (
+      mode === 'hallway' &&
+      (isPaused || reducedMotion) &&
+      !dragging &&
+      !programmatic &&
+      Math.abs(velocity) < 0.01
+    ) {
       velocity = 0;
       return;
     }
@@ -456,7 +521,6 @@
   }
 
   function handleMotionTogglePointerDown(event: PointerEvent) {
-    // Keep a button press from ever entering the wall-drag gesture.
     event.stopPropagation();
   }
 
@@ -467,12 +531,11 @@
 
   onMount(() => {
     mounted = true;
-    // Always begin in the moving state. The visible control is the only thing
-    // that pauses this scene, which avoids browser/OS preference mismatches
-    // producing a frozen wall with a nonfunctional-looking Pause button.
-    isPaused = false;
-    velocity = driftDirection * IDLE_DRIFT_SPEED;
-    lastFrame = performance.now();
+    reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+    resetSharedBackdrop();
+    collectSceneNodes();
     refreshRenderState();
 
     stage.addEventListener('wheel', onWheel, { passive: false });
@@ -485,11 +548,11 @@
     window.addEventListener('blur', onWindowBlur);
     window.addEventListener('resize', refreshRenderState, { passive: true });
     document.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener('pageshow', restoreWallAfterHistoryNavigation);
-    ensureAnimationLoop();
+    window.addEventListener('pageshow', restoreHallwayAfterHistoryNavigation);
 
     return () => {
       mounted = false;
+      window.clearTimeout(openingTimeout);
       stage.removeEventListener('wheel', onWheel);
       stage.removeEventListener('pointerdown', onPointerDown);
       stage.removeEventListener('pointermove', onPointerMove);
@@ -500,7 +563,10 @@
       window.removeEventListener('blur', onWindowBlur);
       window.removeEventListener('resize', refreshRenderState);
       document.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener('pageshow', restoreWallAfterHistoryNavigation);
+      window.removeEventListener(
+        'pageshow',
+        restoreHallwayAfterHistoryNavigation,
+      );
       cancelAnimationFrame(rafId);
     };
   });
@@ -508,85 +574,183 @@
 
 <section
   bind:this={stage}
+  class:wall-stage--entrance={mode === 'entrance'}
+  class:wall-stage--opening={mode === 'opening'}
+  class:wall-stage--hallway={mode === 'hallway'}
   class:wall-stage--dragging={dragging}
   class:wall-stage--interacted={hasInteracted}
   class:wall-stage--inactive={!active}
   class="wall-stage wall-stage--home wall-room-host"
   aria-hidden={!active ? 'true' : undefined}
-  style={stageStyle}
-  aria-label="Interactive navigation wall"
+  aria-label={mode === 'entrance'
+    ? 'Entrance to Cyrus Asasi portfolio'
+    : 'Interactive portfolio hallway'}
 >
   <h1 class="visually-hidden">Cyrus Asasi</h1>
 
   <div
-    bind:this={wallWorld}
-    class="wall-world"
-    aria-label="Website destinations"
-    style={`--loop-base: 0px; transform: translate3d(${-startX}px, 0, 0);`}
+    class="hallway-scene"
+    aria-hidden={mode === 'entrance' ? 'true' : undefined}
   >
-    {#each loopCopies as loopIndex}
-      <div
-        class="wall-loop"
-        aria-hidden={loopIndex !== 0 ? 'true' : undefined}
-        style={`--loop-offset: ${loopIndex * loopWidth}px;`}
-      >
+    <div bind:this={hallwayWorld} class="hallway-world">
+      <div class="hallway-tunnel" aria-hidden="true">
+        <div class="hallway-surface hallway-surface--left">
+          <span
+            bind:this={leftWallTexture}
+            class="hallway-texture hallway-texture--wall"
+          ></span>
+          <span class="hallway-baseboard"></span>
+        </div>
+        <div class="hallway-surface hallway-surface--right">
+          <span
+            bind:this={rightWallTexture}
+            class="hallway-texture hallway-texture--wall"
+          ></span>
+          <span class="hallway-baseboard"></span>
+        </div>
         <div
-          class="wall-loop__seam wall-loop__seam--a"
-          aria-hidden="true"
+          bind:this={floorSurface}
+          class="hallway-surface hallway-surface--floor"
         ></div>
-        <div
-          class="wall-loop__seam wall-loop__seam--b"
-          aria-hidden="true"
-        ></div>
-
-        {#each destinations as destination, destinationIndex (destination.id)}
-          <WallWindow
-            {destination}
-            primary={loopIndex === 0}
-            eager={loopIndex === 0 && destinationIndex === 0}
-            onFocus={focusDestination}
-            onEnter={enterDestination}
-            indexLabel={String(destinationIndex + 1).padStart(2, '0')}
-          />
-        {/each}
+        <div class="hallway-surface hallway-surface--ceiling"></div>
       </div>
-    {/each}
+
+      {#each paintings as painting, index (painting.destination.id)}
+        <a
+          class:hallway-painting--left={painting.side === 'left'}
+          class:hallway-painting--right={painting.side === 'right'}
+          class="hallway-painting"
+          href={withBase(painting.destination.href)}
+          aria-label={`Enter ${painting.destination.label}`}
+          data-hallway-painting={painting.destination.id}
+          data-astro-prefetch
+          draggable="false"
+          onfocus={(event) => focusDestination(event, index)}
+          onclick={enterDestination}
+        >
+          <span class="hallway-painting__frame" aria-hidden="true">
+            <span class="hallway-painting__glass">
+              <img
+                class="hallway-painting__image"
+                src={withBase(painting.destination.painting.src)}
+                srcset={painting.srcset}
+                sizes="(max-width: 40rem) 210px, 300px"
+                alt=""
+                width={painting.destination.painting.width}
+                height={painting.destination.painting.height}
+                draggable="false"
+                decoding="async"
+                loading={index === 0 ? 'eager' : 'lazy'}
+                fetchpriority={index === 0 ? 'high' : 'low'}
+              />
+              <span class="hallway-painting__reflection"></span>
+            </span>
+          </span>
+          <span class="hallway-painting__sill" aria-hidden="true"></span>
+          <span class="hallway-painting__label">
+            <span class="hallway-painting__index">{painting.indexLabel}</span>
+            <span class="hallway-painting__name">
+              {painting.destination.label}
+            </span>
+            <span class="hallway-painting__arrow" aria-hidden="true">
+              <svg
+                viewBox="0 0 16 16"
+                width="16"
+                height="16"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M4 12 12 4M6.25 4H12v5.75" />
+              </svg>
+            </span>
+          </span>
+        </a>
+      {/each}
+    </div>
+
+    <div class="hallway-depth-fog" aria-hidden="true"></div>
+    <div class="hallway-vignette" aria-hidden="true"></div>
   </div>
 
-  <p class="wall-navigation-hint">Click a painting to navigate</p>
-
-  <button
-    class="wall-motion-toggle wall-corner-control"
-    type="button"
-    aria-label={isPaused ? 'Play wall animation' : 'Pause wall animation'}
-    aria-pressed={isPaused}
-    title={isPaused ? 'Play wall animation' : 'Pause wall animation'}
-    onpointerdown={handleMotionTogglePointerDown}
-    onclick={handleMotionToggleClick}
+  <div
+    class="home-entrance"
+    aria-hidden={mode === 'hallway' ? 'true' : undefined}
   >
-    {#if isPaused}
-      <svg
-        class="wall-corner-control__icon"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        width="24"
-        height="24"
-        focusable="false"
+    <div class="home-door-frame">
+      <div class="home-doorway" aria-hidden="true"></div>
+      <button
+        class="home-door"
+        type="button"
+        aria-label="Open the door and enter the portfolio hallway"
+        disabled={mode !== 'entrance'}
+        onclick={enterHallway}
       >
-        <path d="M8 5.5v13l10-6.5z" fill="currentColor" />
-      </svg>
-    {:else}
-      <svg
-        class="wall-corner-control__icon"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        width="24"
-        height="24"
-        focusable="false"
-      >
-        <rect x="6.5" y="5" width="4" height="14" rx="1" fill="currentColor" />
-        <rect x="13.5" y="5" width="4" height="14" rx="1" fill="currentColor" />
-      </svg>
-    {/if}
-  </button>
+        <span class="home-door__panel home-door__panel--top"></span>
+        <span class="home-door__panel home-door__panel--middle"></span>
+        <span class="home-door__panel home-door__panel--bottom"></span>
+        <span class="home-door__number">946</span>
+        <span class="home-door__knob" aria-hidden="true"></span>
+      </button>
+      <span class="home-door-frame__threshold" aria-hidden="true"></span>
+    </div>
+  </div>
+
+  <p class="wall-navigation-hint" aria-live="polite">
+    {mode === 'entrance'
+      ? 'Click the door to enter'
+      : 'Scroll or drag to explore · click a painting'}
+  </p>
+
+  {#if mode === 'hallway'}
+    <button
+      class="wall-motion-toggle wall-corner-control"
+      type="button"
+      aria-label={isPaused
+        ? 'Play hallway animation'
+        : 'Pause hallway animation'}
+      aria-pressed={isPaused}
+      title={isPaused ? 'Play hallway animation' : 'Pause hallway animation'}
+      onpointerdown={handleMotionTogglePointerDown}
+      onclick={handleMotionToggleClick}
+    >
+      {#if isPaused}
+        <svg
+          class="wall-corner-control__icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          width="24"
+          height="24"
+          focusable="false"
+        >
+          <path d="M8 5.5v13l10-6.5z" fill="currentColor" />
+        </svg>
+      {:else}
+        <svg
+          class="wall-corner-control__icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          width="24"
+          height="24"
+          focusable="false"
+        >
+          <rect
+            x="6.5"
+            y="5"
+            width="4"
+            height="14"
+            rx="1"
+            fill="currentColor"
+          />
+          <rect
+            x="13.5"
+            y="5"
+            width="4"
+            height="14"
+            rx="1"
+            fill="currentColor"
+          />
+        </svg>
+      {/if}
+    </button>
+  {/if}
 </section>

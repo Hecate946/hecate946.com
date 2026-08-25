@@ -91,12 +91,11 @@ const destinationDefinitions = [
 /** One lap is exactly one spacing slot per destination. */
 export const WALL_LOOP_WIDTH = FRAME_SPACING * destinationDefinitions.length;
 
-/** Put the first painting in the exact middle of the first spacing slot. */
-export const WALL_START_X = FRAME_SPACING / 2;
+/** The door room starts on the backdrop's native brick/checker phase. */
+export const WALL_START_X = 0;
 
-export const wallDestinations: readonly WallDestination[] = destinationDefinitions.map(
-  (destination, index) => ({
+export const wallDestinations: readonly WallDestination[] =
+  destinationDefinitions.map((destination, index) => ({
     ...destination,
     x: WALL_START_X + FRAME_SPACING * index,
-  }),
-);
+  }));
