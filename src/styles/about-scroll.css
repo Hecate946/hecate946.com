@@ -43,7 +43,7 @@ html[data-theme='dark'] .about-scroll-installation {
 
 .about-scroll-hanging {
   position: relative;
-  width: min(39rem, calc(100vw - 2rem));
+  width: min(var(--room-focal-width), calc(100vw - 2rem));
   min-width: 0;
 }
 
@@ -493,7 +493,7 @@ html[data-theme='dark'] .about-scroll-installation {
 
   .about-scroll-hanging {
     width: 100%;
-    max-width: 32rem;
+    max-width: var(--room-focal-mobile-width);
     margin-inline: auto;
   }
 

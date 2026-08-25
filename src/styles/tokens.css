@@ -12,6 +12,10 @@
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     monospace;
 
+  /* Shared proportions for the freestanding About and Contact installations. */
+  --room-focal-width: 42rem;
+  --room-focal-mobile-width: 31rem;
+
   --radius-sm: 0.5rem;
 
   /* The navigation is deliberately exactly two courses of the shared 24px
