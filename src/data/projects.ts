@@ -4,7 +4,14 @@ export interface ProjectLink {
 }
 
 export interface Project {
-  slug: '3tap' | 'neutra' | 'sunset' | 'keycad' | 'portfolio';
+  slug:
+    | '3tap'
+    | 'neutra'
+    | 'sunset'
+    | 'keycad'
+    | 'portfolio'
+    | 'sketyl'
+    | 'webserver';
   title: string;
   tagline: string;
   description: string;
@@ -24,6 +31,80 @@ export interface ProjectIndexEntry {
 }
 
 export const projects = [
+  // The first four entries intentionally mirror the software resume.
+  {
+    slug: 'neutra',
+    title: 'Neutra',
+    tagline:
+      'Moderation, analytics, and music tools for large online communities.',
+    description:
+      'A 320-command community platform that combined configurable moderation, server analytics, security insights, and music playback in one system.',
+    period: '2019–2021',
+    category: 'Community platform',
+    imageAlt:
+      'Pastel pencil artwork showing a Discord logo, line graph, bar chart, and pie chart for Neutra.',
+    technologies: ['Python', 'PostgreSQL', 'FFmpeg', 'Git'],
+    links: [
+      {
+        label: 'View source',
+        href: 'https://github.com/Hecate946/Neutra',
+      },
+    ],
+  },
+  {
+    slug: 'sunset',
+    title: 'Sunset',
+    tagline:
+      'Automated UCLA Recreation reservations at the exact release window.',
+    description:
+      'A multi-user scheduling system that reverse engineered authenticated UCLA Recreation workflows and reliably booked tennis and pickleball courts when inventory opened.',
+    period: '2025–Present',
+    category: 'Automation system',
+    imageAlt:
+      'Pastel pencil artwork showing reverse-engineered code, a reservation countdown, and a pickleball court at sunset.',
+    technologies: ['Python', 'Playwright', 'HTTP', 'systemd', 'Vultr'],
+  },
+  {
+    slug: 'keycad',
+    title: 'KeyCAD',
+    tagline: 'An image-to-CAD pipeline for parameterized key models.',
+    description:
+      'A computer-vision and CAD experiment that translated measurements from photographs into dimensionally accurate, 3D-printable key geometry.',
+    period: '2022–2023',
+    category: 'Computer vision and CAD',
+    imageAlt:
+      'Impressionist painting of a seated child in a coral-red smock, used as the KeyCAD project image.',
+    technologies: ['Python', 'OpenCV', 'OpenSCAD', 'Git'],
+    links: [
+      {
+        label: 'View source',
+        href: 'https://github.com/Hecate946/keycad',
+      },
+    ],
+  },
+  {
+    slug: 'portfolio',
+    title: 'Hecate946.com',
+    tagline:
+      'A hand-built portfolio where every page is part of one interactive room.',
+    description:
+      'A statically generated Astro and Svelte site built as one continuous room, with custom brick walls, parchment documents, chalkboard interfaces, global audio, responsive layouts, and theme-aware visuals.',
+    period: '2026–Present',
+    category: 'Interactive web experience',
+    imageAlt:
+      'Portrait of a woman dressed in black beneath a broad black hat, set against an olive-green background, used as the Hecate946.com project image.',
+    technologies: ['Astro', 'Svelte', 'TypeScript', 'Canvas', 'CSS'],
+    links: [
+      {
+        label: 'Visit site',
+        href: 'https://hecate946.com',
+      },
+      {
+        label: 'View source',
+        href: 'https://github.com/Hecate946/hecate946.com',
+      },
+    ],
+  },
   {
     slug: '3tap',
     title: '3tap',
@@ -47,74 +128,38 @@ export const projects = [
     ],
   },
   {
-    slug: 'keycad',
-    title: 'KeyCAD',
-    tagline: 'An image-to-CAD pipeline for parameterized key models.',
+    slug: 'sketyl',
+    title: 'Sketyl',
+    tagline:
+      'A Spotify analytics site for exploring listening history and music data.',
     description:
-      'A computer-vision and CAD experiment that translated measurements from photographs into dimensionally accurate, 3D-printable key geometry.',
-    period: '2022–2023',
-    category: 'Computer vision and CAD',
-    imageAlt:
-      'Impressionist painting of a seated child in a coral-red smock, used as the KeyCAD project image.',
-    technologies: ['Python', 'OpenCV', 'OpenSCAD', 'Git'],
+      'An asynchronous Spotify dashboard with OAuth, personal listening statistics, library views, and visual breakdowns of tracks, artists, albums, genres, and decades.',
+    period: '2022',
+    category: 'Music analytics application',
+    imageAlt: 'The Sketyl Spotify analytics interface.',
+    technologies: ['Python', 'Quart', 'PostgreSQL', 'Spotify API', 'Jinja'],
     links: [
       {
         label: 'View source',
-        href: 'https://github.com/Hecate946/keycad',
+        href: 'https://github.com/Hecate946/Sketyl',
       },
     ],
   },
   {
-    slug: 'sunset',
-    title: 'Sunset',
+    slug: 'webserver',
+    title: 'C Web Server',
     tagline:
-      'Automated UCLA Recreation reservations at the exact release window.',
+      'A threaded HTTP server in C with static-file routing and caching.',
     description:
-      'A multi-user scheduling system that reverse engineered authenticated UCLA Recreation workflows and reliably booked tennis and pickleball courts when inventory opened.',
-    period: '2025–Present',
-    category: 'Automation system',
-    imageAlt:
-      'Pastel pencil artwork showing reverse-engineered code, a reservation countdown, and a pickleball court at sunset.',
-    technologies: ['Python', 'Playwright', 'HTTP', 'systemd', 'Vultr'],
-  },
-  {
-    slug: 'neutra',
-    title: 'Neutra',
-    tagline:
-      'Moderation, analytics, and music tools for large online communities.',
-    description:
-      'A 320-command community platform that combined configurable moderation, server analytics, security insights, and music playback in one system.',
-    period: '2019–2021',
-    category: 'Community platform',
-    imageAlt:
-      'Pastel pencil artwork showing a Discord logo, line graph, bar chart, and pie chart for Neutra.',
-    technologies: ['Python', 'PostgreSQL', 'FFmpeg', 'Git'],
+      'A from-scratch C web server that accepts socket connections, builds HTTP responses, serves static and binary files, resolves MIME types, and caches frequently requested content.',
+    period: '2023',
+    category: 'Systems and networking',
+    imageAlt: 'Source code from the C web server project.',
+    technologies: ['C', 'POSIX sockets', 'pthreads', 'HTTP', 'HTML/CSS'],
     links: [
       {
         label: 'View source',
-        href: 'https://github.com/Hecate946/Neutra',
-      },
-    ],
-  },
-  {
-    slug: 'portfolio',
-    title: 'Hecate946.com',
-    tagline: 'An interactive portfolio built as a small, seasonal world.',
-    description:
-      'A statically generated Astro site with selectively hydrated Svelte components, typed content, interactive room scenes, and careful custom-domain deployment.',
-    period: '2026–Present',
-    category: 'Interactive web experience',
-    imageAlt:
-      'Portrait of a woman dressed in black beneath a broad black hat, set against an olive-green background, used as the Hecate946.com project image.',
-    technologies: ['Astro', 'Svelte', 'TypeScript', 'CSS'],
-    links: [
-      {
-        label: 'Visit site',
-        href: 'https://hecate946.com',
-      },
-      {
-        label: 'View source',
-        href: 'https://github.com/Hecate946/hecate946.com',
+        href: 'https://github.com/Hecate946/webserver',
       },
     ],
   },

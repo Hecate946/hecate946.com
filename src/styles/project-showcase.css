@@ -89,7 +89,8 @@ body.project-detail-page {
   contain: paint;
   margin: 0.32rem;
   background: #0b0b0a;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--project-room-outline) 26%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--project-room-outline) 26%, transparent);
 }
 
 .project-chalkboard {
@@ -142,7 +143,9 @@ body.project-detail-page {
   font-size: 0.68em;
   letter-spacing: 0.12em;
   line-height: 1;
-  text-shadow: 0.015rem 0.015rem 0 rgb(255 255 255 / 12%), 0 0 0.12rem rgb(255 255 255 / 12%);
+  text-shadow:
+    0.015rem 0.015rem 0 rgb(255 255 255 / 12%),
+    0 0 0.12rem rgb(255 255 255 / 12%);
   text-transform: uppercase;
 }
 
@@ -169,7 +172,8 @@ body.project-detail-page {
   text-wrap: balance;
 }
 
-.project-detail-page--portfolio .project-page h1 {
+.project-detail-page--portfolio .project-page h1,
+.project-detail-page--webserver .project-page h1 {
   font-size: 4.35em;
 }
 
@@ -196,7 +200,8 @@ body.project-detail-page {
   gap: 1em;
   margin-top: 1.45em;
   padding-top: 0.82em;
-  border-top: 1px solid color-mix(in srgb, var(--project-board-chalk) 18%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--project-board-chalk) 18%, transparent);
 }
 
 .project-back-link,
@@ -207,7 +212,9 @@ body.project-detail-page {
   letter-spacing: 0.08em;
   line-height: 1;
   text-decoration: none;
-  text-shadow: 0.015rem 0.015rem 0 rgb(255 255 255 / 12%), 0 0 0.12rem rgb(255 255 255 / 12%);
+  text-shadow:
+    0.015rem 0.015rem 0 rgb(255 255 255 / 12%),
+    0 0 0.12rem rgb(255 255 255 / 12%);
   text-transform: uppercase;
 }
 
@@ -264,7 +271,8 @@ body.project-detail-page {
   left: -0.72rem;
   height: 0.58rem;
   background: var(--project-board-frame);
-  border-top: 1px solid color-mix(in srgb, var(--project-room-outline) 24%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--project-room-outline) 24%, transparent);
   box-shadow: 0 0.52rem 0.68rem rgb(0 0 0 / 58%);
 }
 

@@ -30,7 +30,11 @@ const projectWriting: Record<Project['slug'], string> = {
   keycad:
     'KeyCAD started with a question I found interesting: could a photograph contain enough information to recreate useful physical geometry? I built a library of 19 parameterized key blanks in OpenSCAD, then wrote an OpenCV pipeline that corrected scale, found measurement points in an image, and transferred those measurements onto the matching model to produce printable geometry. What I like most about the project is the bridge between two very different kinds of computation—interpreting pixels on one side and generating a precise physical object on the other.',
   portfolio:
-    'I built Hecate946.com because I wanted a personal website to feel less like a document and more like a place. The site is statically generated with Astro, with Svelte and CSS used only where interaction earns the extra complexity, and I keep rebuilding parts of it whenever I find a visual idea worth exploring. It has become an ongoing experiment in animation, interface design, accessibility, performance, and how much personality a website can have without becoming difficult to use. More than a portfolio, it is the project where I let myself treat the browser as a creative medium.',
+    'I built Hecate946.com because I wanted a personal website to feel less like a document and more like a place. Every section extends the same room: projects are embedded in the wall, the resumes live on parchment, contact information sits on a chalkboard, and audio and theme state carry across the site. Astro handles the static structure, while Svelte is reserved for the interactions that need persistent state. The project is an ongoing experiment in interface design, accessibility, performance, and how much personality a website can carry without becoming difficult to use.',
+  sketyl:
+    'I built Sketyl to make Spotify data easier to explore than a once-a-year recap. The asynchronous Quart app connects through Spotify OAuth, retrieves listening and library data, and organizes top tracks and artists, recent history, albums, playlists, genres, decades, and audio features into focused views. PostgreSQL stores user data while background tasks keep API work out of the main interaction path. It was an early full-stack project that taught me how to design around authentication, a third-party API, and data that changes continuously.',
+  webserver:
+    'I built this web server in C to understand what a framework normally hides. It accepts socket connections, interprets incoming requests, resolves static files, and builds HTTP responses with the correct status, content length, and MIME type while safely serving both text and binary content. A custom in-memory cache avoids repeated file reads, and threads allow requests to be handled independently. Pairing the server with a complete HTML, CSS, and JavaScript frontend made it a practical exercise in networking, memory management, concurrency, and protocol design.',
 };
 
 const writing = projectWriting[project.slug];
@@ -38,10 +42,16 @@ const writing = projectWriting[project.slug];
 const projectUrl = new URL(`/projects/${project.slug}/`, Astro.site).href;
 const projectsUrl = new URL('/projects/', Astro.site).href;
 const siteUrl = new URL('/', Astro.site).href;
-const projectSocialImagePath =
-  project.slug === '3tap'
-    ? '/images/social/projects.jpg'
-    : `/images/social/projects/${project.slug}.jpg`;
+const projectSocialImages: Record<Project['slug'], string> = {
+  '3tap': '/images/social/projects.jpg',
+  neutra: '/images/social/projects/neutra.jpg',
+  sunset: '/images/social/projects/sunset.jpg',
+  keycad: '/images/social/projects/keycad.jpg',
+  portfolio: '/images/social/projects/portfolio.jpg',
+  sketyl: '/images/social/projects.jpg',
+  webserver: '/images/social/projects.jpg',
+};
+const projectSocialImagePath = projectSocialImages[project.slug];
 const projectSocialImageUrl = new URL(projectSocialImagePath, Astro.site).href;
 const sourceLink = projectLinks.find((link) => /source/i.test(link.label));
 const projectStructuredData = [
