@@ -124,6 +124,11 @@ html[data-theme='dark'] .resume-scrolls {
   opacity: 1;
 }
 
+.resume-switcher__download:hover,
+.resume-switcher__download:focus-visible {
+  color: #fff;
+}
+
 .resume-switcher__download {
   position: relative;
   display: inline-flex;
