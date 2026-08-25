@@ -1,39 +1,27 @@
 /* One definitive visual system, expressed in two modes. Canonical hues live in
    tokens.css; this file only assigns their semantic roles. */
 html[data-theme='light'] {
-  --bg: var(--palette-porcelain);
+  --bg: var(--palette-light-wall);
   --surface-strong: var(--palette-surface);
   --text: var(--palette-light-ink);
   --line: color-mix(in srgb, var(--text) 20%, transparent);
-  --accent: var(--palette-deep-teal);
-  --accent-strong: var(--palette-deep-teal);
+  --accent: var(--palette-light-ink);
+  --accent-strong: var(--palette-light-ink);
   --accent-soft: color-mix(in srgb, var(--accent) 13%, transparent);
 
-  --header-accent: var(--palette-deep-teal);
+  --header-accent: var(--palette-light-ink);
 
-  --wall-dark: var(--palette-light-turquoise);
-  --wall-light: var(--bg);
-  --wall-baseboard: color-mix(
-    in srgb,
-    var(--wall-dark) 74%,
-    var(--palette-deep-teal)
-  );
-  --wall-trim-line: color-mix(
-    in srgb,
-    var(--palette-deep-teal) 22%,
-    transparent
-  );
-  --wall-trim-line-soft: color-mix(
-    in srgb,
-    var(--palette-deep-teal) 12%,
-    transparent
-  );
-  --wall-trim-highlight: rgb(255 255 255 / 10%);
-  --wall-trim-shadow: color-mix(
-    in srgb,
-    var(--palette-deep-teal) 26%,
-    transparent
-  );
+  --wall-dark: var(--palette-light-wall);
+  --wall-light: #fff;
+  --wall-outline: var(--palette-light-ink);
+  --wall-brick-line: rgb(0 0 0 / 11%);
+  --wall-baseboard: #fff;
+  --wall-trim-line: rgb(0 0 0 / 18%);
+  --wall-trim-line-soft: rgb(0 0 0 / 10%);
+  --wall-trim-highlight: rgb(255 255 255 / 85%);
+  --wall-trim-shadow: rgb(0 0 0 / 18%);
+  --floor-tile-dark: #0a0a0a;
+  --floor-tile-light: #f7f7f7;
 }
 
 html[data-theme='dark'] {

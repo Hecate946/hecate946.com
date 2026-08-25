@@ -11,7 +11,7 @@ html:has(body.pdf-viewer-page) {
 }
 
 body.pdf-viewer-page {
-  --pdf-wall: var(--palette-porcelain);
+  --pdf-wall: var(--palette-light-wall);
   --pdf-mortar: #141414;
   --wall-dark: var(--pdf-wall);
   --wall-light: var(--pdf-mortar);

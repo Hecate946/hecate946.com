@@ -26,11 +26,12 @@
   --palette-deep-teal: #051417;
   --palette-light-turquoise: #447c86;
   --palette-porcelain: #f4f9f7;
-  --palette-surface: #fbfefd;
-  --palette-light-ink: #12383f;
+  --palette-light-wall: #fbfbfa;
+  --palette-surface: #fff;
+  --palette-light-ink: #111;
 
   /* Light-mode fallbacks used before ThemeBootstrap applies data-theme. */
-  --bg: var(--palette-porcelain);
+  --bg: var(--palette-light-wall);
   --surface-strong: var(--palette-surface);
   --text: var(--palette-light-ink);
   --line: color-mix(in srgb, var(--palette-light-ink) 20%, transparent);

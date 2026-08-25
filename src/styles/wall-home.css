@@ -9,9 +9,8 @@ body.wall-home-page {
   min-height: 100vh;
   overflow: hidden;
 
-  /* Home shares the site's white linework/text language without changing
-     its independent wall/floor palette from themes.css. */
-  --room-outline: #fff;
+  /* Home inherits the mode-specific ink below while retaining one shared set
+     of semantic mappings for navigation, labels, controls, and grid lines. */
   --wall-outline: var(--room-outline);
   --room-nav-ink: var(--room-outline);
   --room-label-ink: var(--room-outline);
@@ -22,6 +21,15 @@ body.wall-home-page {
     transparent
   );
   --header-accent: var(--room-outline);
+}
+
+html[data-theme='light'] body.wall-home-page {
+  --room-outline: var(--palette-light-ink);
+  --room-control-bg: rgb(255 255 255 / 54%);
+}
+
+html[data-theme='dark'] body.wall-home-page {
+  --room-outline: #fff;
 }
 
 @supports (height: 100svh) {

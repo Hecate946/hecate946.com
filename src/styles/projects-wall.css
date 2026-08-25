@@ -23,10 +23,8 @@ body.projects-wall-page,
 .project-sheet-scroll {
   width: 100%;
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
   outline: none;
-  scrollbar-width: thin;
-  scrollbar-color: var(--paper-rule) transparent;
 }
 
 .project-sheet-scroll:focus-visible {
@@ -36,7 +34,7 @@ body.projects-wall-page,
 
 .project-sheet {
   width: 100%;
-  min-width: 40rem;
+  min-width: 0;
 }
 
 .project-sheet table {
@@ -73,6 +71,7 @@ body.projects-wall-page,
   text-align: left;
   vertical-align: top;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .project-sheet tr > :first-child {
@@ -134,16 +133,6 @@ body.projects-wall-page,
   }
 
   .project-sheet {
-    min-width: 36rem;
-  }
-}
-
-@media (max-width: 40rem) {
-  .project-scroll-viewport {
-    padding-inline: clamp(0.9rem, 3.8vw, 1.2rem);
-  }
-
-  .project-sheet {
     min-width: 0;
   }
 
@@ -159,6 +148,16 @@ body.projects-wall-page,
   .project-sheet td:nth-child(3),
   .project-sheet td:nth-child(4) {
     display: none;
+  }
+}
+
+@media (max-width: 40rem) {
+  .project-scroll-viewport {
+    padding-inline: clamp(0.9rem, 3.8vw, 1.2rem);
+  }
+
+  .project-sheet {
+    min-width: 0;
   }
 
   .project-sheet th,

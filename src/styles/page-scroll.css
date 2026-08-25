@@ -11,11 +11,11 @@ body.scrolling-primary-room > main {
 }
 
 .page-scroll-installation {
-  --paper: #fafafa;
-  --paper-light: #fff;
-  --paper-mid: #f0f0f0;
-  --paper-deep: #d9d9d9;
-  --paper-edge: #b8b8b8;
+  --paper: #f3f4f4;
+  --paper-light: #f7f8f8;
+  --paper-mid: #e9ebeb;
+  --paper-deep: #d8dadd;
+  --paper-edge: #bfc2c4;
   --paper-ink: #000;
   --paper-muted: rgb(0 0 0 / 62%);
   --paper-rule: rgb(0 0 0 / 28%);

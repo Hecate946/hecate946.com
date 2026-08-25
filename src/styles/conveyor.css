@@ -114,6 +114,11 @@
   opacity: 0.5;
 }
 
+html[data-theme='light'] .wall-navigation-hint {
+  color: var(--room-label-ink);
+  text-shadow: none;
+}
+
 .wall-corner-control {
   --wall-control-ink: var(--room-control-ink, var(--wall-light, #f4f1e9));
   --wall-control-outline: var(--room-outline, var(--wall-control-ink));

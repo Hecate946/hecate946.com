@@ -21,7 +21,7 @@
 
 .floor-scene__underlay {
   z-index: 1;
-  background: var(--wall-dark, #050505);
+  background: var(--floor-tile-dark, var(--wall-dark, #050505));
 }
 
 .floor-scene__viewport {
@@ -43,14 +43,14 @@
   transform-origin: 50% 0;
   backface-visibility: hidden;
   will-change: transform;
-  background:
-    conic-gradient(
+  background: conic-gradient(
       from 90deg,
-      var(--wall-dark, #050505) 0 25%,
-      var(--wall-light, #f4f1e9) 0 50%,
-      var(--wall-dark, #050505) 0 75%,
-      var(--wall-light, #f4f1e9) 0
-    ) 0 0 / 168px 168px;
+      var(--floor-tile-dark, var(--wall-dark, #050505)) 0 25%,
+      var(--floor-tile-light, var(--wall-light, #f4f1e9)) 0 50%,
+      var(--floor-tile-dark, var(--wall-dark, #050505)) 0 75%,
+      var(--floor-tile-light, var(--wall-light, #f4f1e9)) 0
+    )
+    0 0 / 168px 168px;
 }
 
 .floor-scene__lighting {
@@ -77,7 +77,6 @@
     );
   opacity: 0.14;
 }
-
 
 @supports (height: 100dvh) {
   .floor-scene__viewport {

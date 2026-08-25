@@ -1,8 +1,8 @@
 /*
  * Shared color system for every room except Home.
  *
- * Every primary room shares one wall color per mode. White remains the etched
- * text/linework color, while accents use the opposite wall color for contrast.
+ * Every primary room shares one semantic palette per mode. Mode-specific
+ * blocks below choose the wall, text, linework, and floor colors.
  */
 .room-themed {
   --wall-light: var(--palette-porcelain);
@@ -42,25 +42,25 @@
   --wall-trim-shadow: rgb(0 0 0 / 38%);
 }
 
-/* Light mode: blue-turquoise wall with deep-teal accents. */
+/* Light mode: near-white bricks, quiet mortar, and black room UI. */
 html[data-theme='light'] .room-themed {
-  --wall-dark: var(--palette-light-turquoise);
-  --room-accent: var(--palette-deep-teal);
+  --wall-dark: var(--palette-light-wall);
+  --wall-light: #fff;
+  --room-outline: var(--palette-light-ink);
+  --room-accent: var(--palette-light-ink);
+  --wall-brick-line: rgb(0 0 0 / 11%);
+  --floor-tile-dark: #0a0a0a;
+  --floor-tile-light: #f7f7f7;
   --room-surface-base: color-mix(
     in srgb,
-    var(--wall-light) 82%,
-    var(--wall-dark)
+    var(--wall-light) 88%,
+    var(--room-outline)
   );
-  --wall-baseboard: color-mix(
-    in srgb,
-    var(--wall-dark) 72%,
-    var(--palette-deep-teal)
-  );
-  --wall-trim-shadow: color-mix(
-    in srgb,
-    var(--palette-deep-teal) 28%,
-    transparent
-  );
+  --wall-baseboard: #fff;
+  --wall-trim-line: rgb(0 0 0 / 18%);
+  --wall-trim-line-soft: rgb(0 0 0 / 10%);
+  --wall-trim-highlight: rgb(255 255 255 / 85%);
+  --wall-trim-shadow: rgb(0 0 0 / 18%);
 }
 
 /* Dark mode: preserve the deep-teal wall and reuse light turquoise as accent. */
