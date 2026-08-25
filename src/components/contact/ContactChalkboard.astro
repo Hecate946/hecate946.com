@@ -37,32 +37,35 @@ const topics = [
 ---
 
 <div class="contact-station">
-  <svg class="contact-chalk-filters" aria-hidden="true" focusable="false">
-    <filter id="contact-chalk-rough" x="-24%" y="-24%" width="148%" height="148%" color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.86 0.52" numOctaves="3" seed="19" result="noise" />
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0.72" xChannelSelector="R" yChannelSelector="G" result="rough" />
-      <feGaussianBlur in="rough" stdDeviation="0.18" result="dust" />
-      <feBlend in="rough" in2="dust" mode="screen" />
-    </filter>
-  </svg>
-
   <form
-    class="contact-compose contact-board"
+    class="contact-compose contact-panel"
     action={`mailto:${siteConfig.email}`}
     method="get"
     data-contact-compose
     data-email={siteConfig.email}
   >
-    <section class="contact-compose__email" aria-labelledby="contact-email-label">
+    <section
+      class="contact-compose__email"
+      aria-labelledby="contact-email-label"
+    >
       <p class="contact-kicker" id="contact-email-label">Email</p>
       <div class="contact-email-row">
         <!--email_off-->
-        <a class="contact-email-address" href="#" data-contact-email-link>{siteConfig.email}</a>
+        <a class="contact-email-address" href="#" data-contact-email-link
+          >{siteConfig.email}</a
+        >
         <!--/email_off-->
-        <button class="contact-copy" type="button" data-contact-copy aria-label="Copy email address">
+        <button
+          class="contact-copy"
+          type="button"
+          data-contact-copy
+          aria-label="Copy email address"
+        >
           <svg viewBox="0 0 20 20" aria-hidden="true">
-            <rect x="6.1" y="5.7" width="8.2" height="8.2" rx="1.25" />
-            <path d="M5.4 11.8H4.8a1.6 1.6 0 0 1-1.6-1.6V4.8a1.6 1.6 0 0 1 1.6-1.6h5.4a1.6 1.6 0 0 1 1.6 1.6v.6" />
+            <rect x="6.1" y="5.7" width="8.2" height="8.2" rx="1.25"></rect>
+            <path
+              d="M5.4 11.8H4.8a1.6 1.6 0 0 1-1.6-1.6V4.8a1.6 1.6 0 0 1 1.6-1.6h5.4a1.6 1.6 0 0 1 1.6 1.6v.6"
+            ></path>
           </svg>
           <span data-contact-copy-label>Copy</span>
         </button>
@@ -74,13 +77,20 @@ const topics = [
     <fieldset class="contact-topics">
       <legend>What are we talking about?</legend>
       <div class="contact-topic-grid">
-        {topics.map(([label, value], index) => (
-          <label class="contact-topic">
-            <input type="radio" name="subject" value={value} checked={index === 0} />
-            <span class="contact-topic__dot" aria-hidden="true"></span>
-            <span>{label}</span>
-          </label>
-        ))}
+        {
+          topics.map(([label, value], index) => (
+            <label class="contact-topic">
+              <input
+                type="radio"
+                name="subject"
+                value={value}
+                checked={index === 0}
+              />
+              <span class="contact-topic__dot" aria-hidden="true" />
+              <span>{label}</span>
+            </label>
+          ))
+        }
       </div>
     </fieldset>
 
@@ -90,8 +100,7 @@ const topics = [
         name="body"
         rows="4"
         placeholder="Tell me a little about what you have in mind..."
-        aria-label="A quick note"
-      ></textarea>
+        aria-label="A quick note"></textarea>
     </label>
 
     <button class="contact-compose-button" type="submit">
@@ -101,86 +110,106 @@ const topics = [
   </form>
 
   <nav class="contact-social-grid" aria-label="Other ways to connect">
-    {socialLinks.map((link) => (
-      <a
-        class={`contact-social-card contact-board contact-social-card--${link.id}`}
-        href={link.href}
-        target="_blank"
-        rel={link.rel}
-        draggable="false"
-      >
-        {link.id === 'coffee' ? (
-          <span class="contact-social-card__cup" aria-hidden="true">
-            <img
-              src={withBase('/images/contact/buy-me-a-coffee-cup.png')}
-              alt=""
-              width="252"
-              height="360"
-              decoding="async"
-              draggable="false"
+    {
+      socialLinks.map((link) => (
+        <a
+          class={`contact-social-card contact-panel contact-social-card--${link.id}`}
+          href={link.href}
+          target="_blank"
+          rel={link.rel}
+          draggable="false"
+        >
+          {link.id === 'coffee' ? (
+            <span class="contact-social-card__cup" aria-hidden="true">
+              <img
+                src={withBase('/images/contact/buy-me-a-coffee-cup.png')}
+                alt=""
+                width="252"
+                height="360"
+                decoding="async"
+                draggable="false"
+              />
+            </span>
+          ) : (
+            <span
+              class="contact-social-card__icon"
+              aria-hidden="true"
+              set:html={link.icon}
             />
+          )}
+          <span class="contact-social-card__title">{link.label}</span>
+          <span class="contact-social-card__detail">{link.detail}</span>
+          <span class="contact-social-card__arrow" aria-hidden="true">
+            ↗
           </span>
-        ) : (
-          <span class="contact-social-card__icon" aria-hidden="true" set:html={link.icon}></span>
-        )}
-        <span class="contact-social-card__title">{link.label}</span>
-        <span class="contact-social-card__detail">{link.detail}</span>
-      </a>
-    ))}
+        </a>
+      ))
+    }
   </nav>
 </div>
 
 <script>
   const setupContactStation = () => {
-    document.querySelectorAll<HTMLFormElement>('[data-contact-compose]').forEach((form) => {
-      if (form.dataset.contactBound === 'true') return;
-      form.dataset.contactBound = 'true';
+    document
+      .querySelectorAll<HTMLFormElement>('[data-contact-compose]')
+      .forEach((form) => {
+        if (form.dataset.contactBound === 'true') return;
+        form.dataset.contactBound = 'true';
 
-      const email = form.dataset.email ?? '';
-      const emailLink = form.querySelector<HTMLAnchorElement>('[data-contact-email-link]');
-      const copyButton = form.querySelector<HTMLButtonElement>('[data-contact-copy]');
-      const copyLabel = form.querySelector<HTMLElement>('[data-contact-copy-label]');
-      let copyResetTimer = 0;
+        const email = form.dataset.email ?? '';
+        const emailLink = form.querySelector<HTMLAnchorElement>(
+          '[data-contact-email-link]',
+        );
+        const copyButton = form.querySelector<HTMLButtonElement>(
+          '[data-contact-copy]',
+        );
+        const copyLabel = form.querySelector<HTMLElement>(
+          '[data-contact-copy-label]',
+        );
+        let copyResetTimer = 0;
 
-      if (emailLink && email) {
-        emailLink.href = `mailto:${email}`;
-      }
-
-      copyButton?.addEventListener('click', async () => {
-        if (!copyLabel || !email) return;
-
-        let copied = false;
-        if (navigator.clipboard?.writeText) {
-          try {
-            await navigator.clipboard.writeText(email);
-            copied = true;
-          } catch {
-            // Clipboard access can be denied by the browser or page permissions.
-          }
+        if (emailLink && email) {
+          emailLink.href = `mailto:${email}`;
         }
 
-        window.clearTimeout(copyResetTimer);
-        copyLabel.textContent = copied ? 'Copied' : 'Unavailable';
-        copyButton.dataset.copied = copied ? 'true' : 'false';
-        copyResetTimer = window.setTimeout(() => {
-          copyLabel.textContent = 'Copy';
-          delete copyButton.dataset.copied;
-        }, copied ? 1400 : 2200);
+        copyButton?.addEventListener('click', async () => {
+          if (!copyLabel || !email) return;
+
+          let copied = false;
+          if (navigator.clipboard?.writeText) {
+            try {
+              await navigator.clipboard.writeText(email);
+              copied = true;
+            } catch {
+              // Clipboard access can be denied by the browser or page permissions.
+            }
+          }
+
+          window.clearTimeout(copyResetTimer);
+          copyLabel.textContent = copied ? 'Copied' : 'Unavailable';
+          copyButton.dataset.copied = copied ? 'true' : 'false';
+          copyResetTimer = window.setTimeout(
+            () => {
+              copyLabel.textContent = 'Copy';
+              delete copyButton.dataset.copied;
+            },
+            copied ? 1400 : 2200,
+          );
+        });
+
+        form.addEventListener('submit', (event) => {
+          if (!email) return;
+          event.preventDefault();
+
+          const data = new FormData(form);
+          const subject = String(data.get('subject') ?? 'Hello');
+          const body = String(data.get('body') ?? '').trim();
+          const params = new URLSearchParams({ subject });
+          if (body) params.set('body', body);
+
+          window.location.href = `mailto:${email}?${params.toString()}`;
+        });
       });
-
-      form.addEventListener('submit', (event) => {
-        if (!email) return;
-        event.preventDefault();
-
-        const data = new FormData(form);
-        const subject = String(data.get('subject') ?? 'Hello');
-        const body = String(data.get('body') ?? '').trim();
-        const params = new URLSearchParams({ subject });
-        if (body) params.set('body', body);
-
-        window.location.href = `mailto:${email}?${params.toString()}`;
-      });
-    });
   };
 
   setupContactStation();
