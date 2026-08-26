@@ -141,7 +141,7 @@ function choosePixelRatio() {
   ).matches;
 
   if (memory <= 2 || cores <= 2) return Math.min(dpr, 1);
-  if (mobile || memory <= 4 || cores <= 4) return Math.min(dpr, 1.75);
+  if (mobile || memory <= 4 || cores <= 4) return Math.min(dpr, 1.6);
   return Math.min(dpr, 1.75);
 }
 
