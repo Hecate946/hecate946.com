@@ -3,12 +3,13 @@
   import { withBase } from '@/lib/paths';
   import type { HallwayScene } from './hallway-scene';
   import type { PaintingSpec } from './hallway-paintings';
-  import { wallDestinations } from './wall-config';
+  import { HALLWAY_LOOP_DEPTH, wallDestinations } from './wall-config';
 
   export let active = true;
 
   const destinations = wallDestinations;
-  const HALLWAY_LOOP_DEPTH = 5_760;
+  // The lap length is shared with the WebGL gallery via wall-config so the
+  // anchors and the geometry can never wrap at different points.
   const PAINTING_SPACING = HALLWAY_LOOP_DEPTH / destinations.length;
   const PAINTING_START = 700;
   const DRAG_THRESHOLD = 8;

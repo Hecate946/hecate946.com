@@ -1,5 +1,4 @@
 import {
-  BoxGeometry,
   BufferGeometry,
   CanvasTexture,
   ClampToEdgeWrapping,
@@ -18,6 +17,7 @@ import {
   Vector2,
 } from 'three';
 import { createFrameGeometry } from './hallway-geometry';
+import { HALLWAY_LOOP_DEPTH } from './wall-config';
 
 /**
  * The paintings, hung in the corridor as real geometry.
@@ -39,21 +39,34 @@ export interface PaintingSpec {
 }
 
 /** One lap of the gallery, and how far behind the camera a frame may sit. */
-export const LOOP_DEPTH = 5_760;
+export const LOOP_DEPTH = HALLWAY_LOOP_DEPTH;
 const BEHIND_ALLOWANCE = 360;
 
 /** The window in which a frame is close enough to be worth clicking. */
 const PICKABLE_NEAR = 180;
-const PICKABLE_FAR = 2_450;
+const PICKABLE_FAR = 2_900;
 
 const WALL_GAP = 4;
 const FRAME_BORDER = 11.2;
 const FRAME_DEPTH = 9;
 
-/** Begin turning while the work is still comfortably ahead of the camera. */
-const TURN_START = 1_100;
-const TURN_FULL = 700;
+/**
+ * The swing window. Both edges sit far down the corridor so a frame has
+ * already presented itself at the full angle long before the camera arrives,
+ * rather than opening in the viewer's face. `TURN_FULL` is what "much farther
+ * away" means in world units: past that point the frame is at exactly 45deg
+ * and simply grows.
+ */
+const TURN_START = 2_600;
+const TURN_FULL = 1_700;
 const TURN_ANGLE = Math.PI / 4;
+
+/**
+ * The far visibility ramp. It has to clear `TURN_START`, or a frame would
+ * begin its swing while still fading up and appear to open out of the fog.
+ */
+const FADE_FAR_START = 3_400;
+const FADE_FAR_END = 6_500;
 
 const FRAME_COLOR = 0x050505;
 const FRAME_HOVER = 0x1d1d1d;
@@ -218,13 +231,12 @@ export function createHallwayPaintings(
     labelMap.anisotropy = 8;
     const label = new Mesh(
       new BufferGeometry(),
+      // No polygon offset: the label is recessed inside the header's opening
+      // now, so pulling it towards the camera would push it through the bevel.
       new MeshBasicMaterial({
         map: labelMap,
         transparent: true,
         depthWrite: false,
-        polygonOffset: true,
-        polygonOffsetFactor: -2,
-        polygonOffsetUnits: -2,
       }),
     );
     label.renderOrder = 2;
@@ -274,10 +286,19 @@ export function createHallwayPaintings(
       2.2,
     );
     const glassGeometry = new PlaneGeometry(glassWidth, glassHeight);
-    const headerGeometry = new BoxGeometry(
+    // The header is the same millwork as the frame below it, not a slab laid
+    // on top of it. A BoxGeometry of FRAME_DEPTH is centred on z, so its face
+    // sat at z = FRAME_DEPTH / 2 while the extruded frame -- which carries a
+    // bevel on each end -- reached z = FRAME_DEPTH + bevel. The header
+    // therefore read as a thinner plate set back from the frame. Extruding it
+    // through the identical call makes the two profiles literally the same
+    // moulding: same depth, same bevel, same border, one flush outer edge.
+    const headerGeometry = createFrameGeometry(
       frameWidth,
       headerHeight,
+      FRAME_BORDER,
       FRAME_DEPTH,
+      2.2,
     );
     const labelGeometry = new PlaneGeometry(labelWidth, labelHeight);
     geometries.push(
@@ -314,10 +335,12 @@ export function createHallwayPaintings(
       part.header.position.set(centreFromHinge, frameHeight / 2, 0);
 
       part.label.geometry = labelGeometry;
+      // The header now has a real opening, so the label sits inside it at the
+      // artwork's depth instead of floating in front of a solid face.
       part.label.position.set(
         centreFromHinge,
         frameHeight / 2,
-        FRAME_DEPTH / 2 + 0.8,
+        FRAME_DEPTH * 0.35,
       );
       paintHeaderLabel(
         part.labelCanvas,
@@ -353,7 +376,7 @@ export function createHallwayPaintings(
       // The same near and far ramps the CSS layer used.
       const opacity =
         smoothstep(80, 240, distance) *
-        Math.max(0.02, 1 - smoothstep(2_650, LOOP_DEPTH - 250, distance));
+        Math.max(0.02, 1 - smoothstep(FADE_FAR_START, FADE_FAR_END, distance));
       part.root.visible = opacity > 0.02;
       for (const mesh of [part.frame, part.image, part.header, part.label]) {
         mesh.material.opacity = opacity;

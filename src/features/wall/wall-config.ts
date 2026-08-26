@@ -60,7 +60,7 @@ const destinationDefinitions = [
   },
   {
     id: 'resume',
-    label: 'Resume',
+    label: 'Resumes',
     href: '/resumes/',
     painting: {
       src: '/paintings/resume-portrait-480.webp',
@@ -90,6 +90,21 @@ const destinationDefinitions = [
 
 /** One lap is exactly one spacing slot per destination. */
 export const WALL_LOOP_WIDTH = FRAME_SPACING * destinationDefinitions.length;
+
+/**
+ * One lap of the hallway gallery, in world units, and therefore the spacing
+ * between consecutive paintings once it is divided by the destination count.
+ *
+ * It lives here, next to the destinations it spaces, because both the Svelte
+ * shell (which places the anchors and wraps the camera) and the WebGL gallery
+ * (which wraps each frame's corridor position) must agree on it exactly. Two
+ * copies of the number silently desynchronised the anchor order from the
+ * geometry the moment either was tuned.
+ *
+ * 11,520 divides cleanly by the 120px brick module and the 240px checker, so
+ * a lap still lands on the corridor's native texture phase.
+ */
+export const HALLWAY_LOOP_DEPTH = 11_520;
 
 /** The door room starts on the backdrop's native brick/checker phase. */
 export const WALL_START_X = 0;

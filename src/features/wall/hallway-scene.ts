@@ -163,6 +163,10 @@ function readPalette(probe: HTMLElement): Palette {
   };
 }
 
+/**
+ * Returns true when the backing store changed size, which means the GPU
+ * texture built from it has to be thrown away rather than re-uploaded.
+ */
 function paintWall(
   canvas: HTMLCanvasElement,
   height: number,
@@ -172,11 +176,14 @@ function paintWall(
   const width = BRICK_TILE_WIDTH;
   const pixelWidth = Math.round(width * scale);
   const pixelHeight = Math.max(1, Math.round(height * scale));
-  if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
-  if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
+  const resized = canvas.width !== pixelWidth || canvas.height !== pixelHeight;
+  if (resized) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
 
   const context = canvas.getContext('2d');
-  if (!context) return;
+  if (!context) return resized;
   context.setTransform(scale, 0, 0, scale, 0, 0);
   context.clearRect(0, 0, width, height);
 
@@ -224,6 +231,8 @@ function paintWall(
   context.fillRect(0, baseboardTop, width, baseboardHeight);
   context.fillStyle = palette.trim;
   context.fillRect(0, baseboardTop, width, 1);
+
+  return resized;
 }
 
 function paintFloor(canvas: HTMLCanvasElement, scale: number) {
@@ -422,10 +431,34 @@ export function createHallwayScene(options: {
 
   function refreshTheme() {
     const palette = readPalette(probe);
-    paintWall(leftWallCanvas, wallHeight, palette, pixelRatio);
-    paintWall(rightWallCanvas, wallHeight, palette, pixelRatio);
+    const leftResized = paintWall(
+      leftWallCanvas,
+      wallHeight,
+      palette,
+      pixelRatio,
+    );
+    const rightResized = paintWall(
+      rightWallCanvas,
+      wallHeight,
+      palette,
+      pixelRatio,
+    );
     paintCeiling(ceilingCanvas, palette, pixelRatio);
     paintedWallHeight = wallHeight;
+
+    // The walls are the only theme-painted textures whose canvas changes size,
+    // because their height tracks the corridor and therefore the viewport --
+    // a window resize, an orientation change, or a mobile URL bar collapsing
+    // is enough. WebGL allocates a canvas texture's storage immutably on its
+    // first upload, so once the canvas has been resized every later upload is
+    // a sub-image write against the old dimensions and is silently dropped:
+    // the wall then keeps whatever palette it was first uploaded with while
+    // the fixed-size ceiling and the CSS backdrop both change on cue. That is
+    // the intermittent wall-only theme mismatch. Disposing forces the next
+    // render to allocate fresh storage at the current size.
+    if (leftResized) leftWallMap.dispose();
+    if (rightResized) rightWallMap.dispose();
+
     leftWallMap.needsUpdate = true;
     rightWallMap.needsUpdate = true;
     ceilingMap.needsUpdate = true;
