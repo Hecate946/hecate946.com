@@ -15,7 +15,9 @@
   const DRAG_THRESHOLD = 8;
   const WHEEL_SCALE = 1.15;
   const POINTER_SCALE = 1.4;
-  const IDLE_DRIFT_SPEED = 140;
+  // Paintings sit 2,880 units apart, so the drift has a long way to travel
+  // between them; this is the cruising speed of the corridor when idle.
+  const IDLE_DRIFT_SPEED = 265;
   const DIRECTION_THRESHOLD = 42;
   const INERTIA_TIME_CONSTANT = 0.72;
   const MAX_MANUAL_SPEED = 2_500;

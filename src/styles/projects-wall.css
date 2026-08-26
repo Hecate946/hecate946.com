@@ -13,8 +13,14 @@ body.projects-wall-page,
 
 .project-index {
   --project-hover: color-mix(in srgb, var(--paper-accent) 7%, transparent);
-  /* Each entry is exactly two courses of the shared brick module tall. */
-  --project-entry-height: calc(var(--brick-course-height) * 2);
+  /* Rows are no longer a fixed two brick courses tall. Each entry is sized by
+     its own description, so a long one wraps to a second or third line instead
+     of being clipped to an ellipsis. This padding is the only height input. */
+  --project-entry-padding: 0.66rem;
+
+  /* The title rule doubles as the top border of the first entry, so Neutra
+     hangs directly from it rather than floating below a gap. */
+  --page-header-gap: 0;
 }
 
 .project-scroll-viewport {
@@ -56,35 +62,37 @@ body.projects-wall-page,
   display: none;
 }
 
+/* With the outer verticals gone there is nothing for a left inset to sit
+   against, so the name column starts flush with the page column -- the same
+   edge the About labels and the title use. The inline padding now only opens
+   the gutter between the two columns. */
 .project-sheet th,
 .project-sheet td {
-  height: var(--project-entry-height);
-  padding: 0 clamp(0.9rem, 2vw, 1.15rem);
+  padding: var(--project-entry-padding) 0;
   color: var(--paper-ink);
   font-size: clamp(0.94rem, 1vw, 1rem);
   font-weight: 400;
   line-height: 1.35;
   text-align: left;
-  vertical-align: middle;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  vertical-align: top;
+  overflow-wrap: break-word;
 }
 
-/* A solid navline, matching the navbar's own border exactly, surrounds every
-   entry. Collapsed borders mean neighboring entries share one line rather
-   than doubling up. */
+/* Horizontal navlines only. The outer verticals that used to box the table in
+   are gone, so the entries read as ruled bands on the wall -- the same
+   language as the About dropdowns -- rather than as a bordered grid. */
 .project-sheet tbody tr > * {
   border-top: var(--page-line-width) solid var(--page-line-color);
   border-bottom: var(--page-line-width) solid var(--page-line-color);
 }
 
-.project-sheet tbody tr > :first-child {
-  border-left: var(--page-line-width) solid var(--page-line-color);
+.project-sheet tbody tr > * + * {
+  padding-left: clamp(0.9rem, 2vw, 1.15rem);
 }
 
-.project-sheet tbody tr > :last-child {
-  border-right: var(--page-line-width) solid var(--page-line-color);
+/* The page header's own rule already draws this line. */
+.project-sheet tbody tr:first-child > * {
+  border-top: 0;
 }
 
 .project-sheet thead th,
@@ -94,7 +102,7 @@ body.projects-wall-page,
 }
 
 .project-sheet tbody th {
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .project-sheet tbody tr {
@@ -116,7 +124,7 @@ body.projects-wall-page,
 .project-sheet__name {
   display: flex;
   min-width: 0;
-  align-items: center;
+  align-items: flex-start;
   color: var(--paper-ink);
   font-size: clamp(0.88rem, 1vw, 0.96rem);
   font-weight: 600;
@@ -146,13 +154,11 @@ body.projects-wall-page,
 }
 
 .project-sheet__name-title {
-  overflow: hidden;
   min-width: 0;
   text-decoration-line: none;
   text-decoration-thickness: 0.07em;
   text-underline-offset: 0.25em;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
 }
 
 .project-sheet__name:hover .project-sheet__name-title,
@@ -183,8 +189,11 @@ body.projects-wall-page,
 
   .project-sheet th,
   .project-sheet td {
-    padding-inline: clamp(0.7rem, 3vw, 0.9rem);
     font-size: 0.88rem;
+  }
+
+  .project-sheet tbody tr > * + * {
+    padding-left: clamp(0.7rem, 3vw, 0.9rem);
   }
 
   .project-sheet__name {

@@ -103,6 +103,10 @@ function applyCover(texture: Texture, frameAspect: number) {
   }
 }
 
+/**
+ * Returns true when the backing store changed size, which means the GPU
+ * texture built from it has to be thrown away rather than re-uploaded.
+ */
 function paintHeaderLabel(
   canvas: HTMLCanvasElement,
   text: string,
@@ -110,11 +114,14 @@ function paintHeaderLabel(
   height: number,
   pixelRatio: number,
 ) {
-  canvas.width = Math.max(1, Math.round(width * pixelRatio));
-  canvas.height = Math.max(1, Math.round(height * pixelRatio));
+  const pixelWidth = Math.max(1, Math.round(width * pixelRatio));
+  const pixelHeight = Math.max(1, Math.round(height * pixelRatio));
+  const resized = canvas.width !== pixelWidth || canvas.height !== pixelHeight;
+  canvas.width = pixelWidth;
+  canvas.height = pixelHeight;
 
   const context = canvas.getContext('2d');
-  if (!context) return;
+  if (!context) return resized;
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   // A subtly inset black field makes the surrounding header read as a frame.
   // Its margins are established by the geometry at exactly FRAME_BORDER.
@@ -142,6 +149,8 @@ function paintHeaderLabel(
     x += widths[index] + tracking;
   }
   context.globalAlpha = 1;
+
+  return resized;
 }
 
 interface PaintingParts {
@@ -342,13 +351,22 @@ export function createHallwayPaintings(
         frameHeight / 2,
         FRAME_DEPTH * 0.35,
       );
-      paintHeaderLabel(
+      const labelResized = paintHeaderLabel(
         part.labelCanvas,
         specs[index].label,
         labelWidth,
         labelHeight,
         Math.max(2.5, pixelRatio),
       );
+
+      // The label canvas is sized from the frame, so it changes whenever the
+      // responsive frame width does. WebGL allocates a canvas texture's
+      // storage immutably on its first upload, so once the canvas shrinks the
+      // new, smaller bitmap is written into the top-left corner of the older,
+      // larger storage and the previous label survives around it -- two
+      // titles stacked above one painting. Disposing forces the next render to
+      // allocate storage at the current size.
+      if (labelResized) part.labelMap.dispose();
       part.labelMap.needsUpdate = true;
     }
   }

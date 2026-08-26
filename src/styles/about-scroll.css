@@ -111,26 +111,35 @@
   letter-spacing: -0.035em;
 }
 
+/* The dropdown list hangs straight off the closing rule of the intro, with no
+   gap of its own. That rule is then the top border of the Software row, which
+   is what makes the space above the label and the space below it identical:
+   every row is one band of the same height with its label centred in it. */
 .about-scroll-sections {
   max-width: none;
-  margin: clamp(1.25rem, 3vh, 1.75rem) auto 0;
+  margin: 0 auto;
+  /* The closing line beneath the last dropdown, so the stack is bounded at
+     both ends rather than trailing off after Chess. */
+  border-bottom: var(--page-line-width) solid var(--page-line-color);
 }
 
 .about-scroll-section {
   position: relative;
 }
 
-/* A minimal dotted rule marks each dropdown off from the next, so the list
-   can sit much closer together than a solid rule or wide margin would allow. */
+/* Every rule on these pages is the navbar's own line: 1px solid, drawn from
+   the shared room-outline token rather than a dotted rule of its own. */
 .about-scroll-section + .about-scroll-section {
   margin-top: 0;
-  border-top: 1px dotted color-mix(in srgb, var(--paper-ink) 38%, transparent);
+  border-top: var(--page-line-width) solid var(--page-line-color);
 }
 
 .about-scroll-section__toggle {
   display: flex;
   width: 100%;
-  min-height: 2.35rem;
+  /* Symmetric padding with the label centred: the band height is what sets
+     the equal gap above and below each label. */
+  min-height: var(--about-row-height, 3rem);
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -269,11 +278,11 @@
   }
 
   .about-scroll-sections {
-    margin-top: 1.5rem;
+    margin-top: 0;
   }
 
   .about-scroll-section__toggle {
-    min-height: 2.7rem;
+    --about-row-height: 3.15rem;
   }
 }
 
@@ -286,7 +295,6 @@
     width: clamp(6.35rem, 29vw, 7rem);
     margin-right: 0.78rem;
   }
-
 }
 
 @media (prefers-reduced-motion: reduce) {

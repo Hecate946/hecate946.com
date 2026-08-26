@@ -8,11 +8,11 @@ body.scrolling-primary-room > main {
 }
 
 .page-scroll-installation {
-  /* The About page previously reached this same rendered width itself, via a
-     12.5% inline padding on its own viewport. That per-page padding is gone
-     now, so the shared column is sized to match what About used to render:
-     75% of the former 38rem / 36rem hanging widths. */
-  --scroll-max-width: 28.5rem;
+  /* The shared reading column for About, Projects, Resumes, and Contact.
+     31.25rem is 500px at the default root size -- wide enough for the
+     Projects descriptions and the resume's two-column metadata rows to
+     breathe without the line length running past comfortable reading. */
+  --scroll-max-width: 31.25rem;
   --scroll-side-gap: clamp(1.25rem, 5vw, 3rem);
   --paper: transparent;
   --paper-light: transparent;
@@ -27,7 +27,10 @@ body.scrolling-primary-room > main {
   /* Every structural line on these four pages (the title rule, the About
      closing rule, the Projects entry borders) matches the navbar's line
      exactly: 1px solid, drawn from the same shared room-outline token. */
-  --page-line-color: var(--room-structural-line, color-mix(in srgb, var(--paper-ink) 72%, transparent));
+  --page-line-color: var(
+    --room-structural-line,
+    color-mix(in srgb, var(--paper-ink) 72%, transparent)
+  );
   --page-line-width: 1px;
 
   position: relative;
@@ -35,8 +38,7 @@ body.scrolling-primary-room > main {
   box-sizing: border-box;
   width: 100%;
   min-height: var(--room-wall-min-height, 0);
-  padding: 0
-    max(var(--scroll-side-gap), env(safe-area-inset-right))
+  padding: 0 max(var(--scroll-side-gap), env(safe-area-inset-right))
     clamp(3.5rem, 8vh, 6rem)
     max(var(--scroll-side-gap), env(safe-area-inset-left));
   color: var(--paper-ink);
@@ -112,7 +114,9 @@ html[data-theme='dark'] .page-scroll-installation {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: clamp(2rem, 4.5vh, 3rem);
+  /* Pages whose first content row is meant to hang directly from the title
+     rule -- Projects -- set this to 0 and use the rule as their top border. */
+  margin-bottom: var(--page-header-gap, clamp(2rem, 4.5vh, 3rem));
   text-align: center;
 }
 
@@ -139,7 +143,7 @@ html[data-theme='dark'] .page-scroll-installation {
 @media (max-width: 40rem) {
   .page-scroll-installation {
     --scroll-side-gap: clamp(1rem, 5.5vw, 1.45rem);
-    --scroll-max-width: 27rem;
+    --scroll-max-width: 31.25rem;
 
     padding-bottom: 3.5rem;
   }
@@ -149,6 +153,6 @@ html[data-theme='dark'] .page-scroll-installation {
   }
 
   .page-scroll-header {
-    margin-bottom: clamp(1.65rem, 5vh, 2.25rem);
+    margin-bottom: var(--page-header-gap, clamp(1.65rem, 5vh, 2.25rem));
   }
 }
