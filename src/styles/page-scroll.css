@@ -8,9 +8,12 @@ body.scrolling-primary-room > main {
 }
 
 .page-scroll-installation {
-  --scroll-max-width: 38rem;
+  /* The About page previously reached this same rendered width itself, via a
+     12.5% inline padding on its own viewport. That per-page padding is gone
+     now, so the shared column is sized to match what About used to render:
+     75% of the former 38rem / 36rem hanging widths. */
+  --scroll-max-width: 28.5rem;
   --scroll-side-gap: clamp(1.25rem, 5vw, 3rem);
-  --scroll-title-band-height: clamp(7.25rem, 16vh, 9.5rem);
   --paper: transparent;
   --paper-light: transparent;
   --paper-mid: transparent;
@@ -20,6 +23,12 @@ body.scrolling-primary-room > main {
   --paper-muted: rgb(5 5 5 / 68%);
   --paper-rule: rgb(5 5 5 / 42%);
   --paper-accent: #050505;
+
+  /* Every structural line on these four pages (the title rule, the About
+     closing rule, the Projects entry borders) matches the navbar's line
+     exactly: 1px solid, drawn from the same shared room-outline token. */
+  --page-line-color: var(--room-structural-line, color-mix(in srgb, var(--paper-ink) 72%, transparent));
+  --page-line-width: 1px;
 
   position: relative;
   z-index: 20;
@@ -95,9 +104,11 @@ html[data-theme='dark'] .page-scroll-installation {
 }
 
 .page-scroll-header {
+  /* Exactly six courses of the shared brick module below the navbar. The
+     title sits centered in this band; the rule below sits on its floor. */
   position: relative;
   display: flex;
-  min-height: var(--scroll-title-band-height);
+  height: calc(var(--brick-course-height) * 6);
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -120,16 +131,15 @@ html[data-theme='dark'] .page-scroll-installation {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 2px;
+  height: var(--page-line-width);
   margin: 0;
-  background: color-mix(in srgb, var(--paper-ink) 72%, transparent);
+  background: var(--page-line-color);
 }
 
 @media (max-width: 40rem) {
   .page-scroll-installation {
     --scroll-side-gap: clamp(1rem, 5.5vw, 1.45rem);
-    --scroll-title-band-height: clamp(6.5rem, 14vh, 8rem);
-    --scroll-max-width: 36rem;
+    --scroll-max-width: 27rem;
 
     padding-bottom: 3.5rem;
   }

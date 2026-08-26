@@ -2,13 +2,28 @@
   background: transparent;
 }
 
-/* Keep one proportional reading inset at every non-mobile width. It shrinks
-   monotonically with the fluid parchment instead of jumping wider on iPad. */
+.about-scroll-installation {
+  /* The gap between the top rule and the intro text, and between the intro
+     text and the closing rule below it, are the same length. */
+  --about-rule-gap: clamp(2rem, 4.5vh, 3rem);
+}
+
+.about-scroll-installation .page-scroll-header {
+  margin-bottom: var(--about-rule-gap);
+}
+
 .about-scroll-paper__viewport {
   --about-body-font-size: clamp(1.05rem, 1.55vw, 1.12rem);
 
   display: block;
-  padding-inline: 12.5%;
+}
+
+.about-scroll-rule {
+  width: 100%;
+  height: var(--page-line-width);
+  margin: 0;
+  margin-top: var(--about-rule-gap);
+  background: var(--page-line-color);
 }
 
 .about-scroll-portrait-wrap {
@@ -98,34 +113,39 @@
 
 .about-scroll-sections {
   max-width: none;
-  margin: clamp(2rem, 5vh, 3rem) auto 0;
+  margin: clamp(1.25rem, 3vh, 1.75rem) auto 0;
 }
 
 .about-scroll-section {
   position: relative;
 }
 
+/* A minimal dotted rule marks each dropdown off from the next, so the list
+   can sit much closer together than a solid rule or wide margin would allow. */
 .about-scroll-section + .about-scroll-section {
-  margin-top: clamp(0.2rem, 0.8vh, 0.5rem);
+  margin-top: 0;
+  border-top: 1px dotted color-mix(in srgb, var(--paper-ink) 38%, transparent);
 }
 
 .about-scroll-section__toggle {
   display: flex;
   width: 100%;
-  min-height: 2.85rem;
+  min-height: 2.35rem;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin: 0;
-  padding: 0.18rem 0.15rem 0.18rem 0;
+  padding: 0.1rem 0.15rem 0.1rem 0;
   border: 0;
   background: transparent;
   color: var(--paper-ink);
   cursor: pointer;
   font-size: clamp(1.04rem, 1.85vw, 1.18rem);
   font-weight: 600;
+  letter-spacing: 0.03em;
   line-height: 1.15;
   text-align: left;
+  text-transform: uppercase;
   appearance: none;
   -webkit-appearance: none;
 }
@@ -230,10 +250,12 @@
 }
 
 @media (max-width: 40rem) {
+  .about-scroll-installation {
+    --about-rule-gap: clamp(1.65rem, 5vh, 2.25rem);
+  }
+
   .about-scroll-paper__viewport {
     --about-body-font-size: clamp(1rem, 4.2vw, 1.08rem);
-
-    padding-inline: clamp(1.2rem, 5.6vw, 1.65rem);
   }
 
   .about-scroll-portrait-wrap {
@@ -247,11 +269,11 @@
   }
 
   .about-scroll-sections {
-    margin-top: 1.85rem;
+    margin-top: 1.5rem;
   }
 
   .about-scroll-section__toggle {
-    min-height: 2.8rem;
+    min-height: 2.7rem;
   }
 }
 

@@ -91,6 +91,8 @@
             </div>
           {/if}
 
+          <div class="about-scroll-rule" aria-hidden="true"></div>
+
           <div class="about-scroll-sections" aria-label="Interests">
             {#each interests as channel}
               {@const isOpen = openSectionIds.has(channel.id)}
