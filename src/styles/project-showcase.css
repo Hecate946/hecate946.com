@@ -192,6 +192,21 @@ body.project-detail-page {
   text-wrap: pretty;
 }
 
+/* The global selection rule uses the room text colour, which is dark in the
+   light theme. On a chalkboard that made selected/highlighted project copy
+   look almost black and effectively disappear. Keep selected text chalk-white
+   and use a restrained chalk wash as the selection background instead. */
+.project-chalkboard__copy::selection,
+.project-chalkboard__copy *::selection {
+  background: color-mix(
+    in srgb,
+    var(--project-board-chalk) 24%,
+    transparent
+  );
+  color: var(--project-board-chalk);
+  text-shadow: none;
+}
+
 .project-page__links {
   display: flex;
   width: 100%;
