@@ -134,15 +134,9 @@ body.projects-wall-page,
   text-transform: uppercase;
 }
 
-/* Expand the one semantic anchor across its table row. This preserves native
-   link behavior while making every visible part of the row a hit target. */
-.project-sheet__name::after {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  content: '';
-  cursor: pointer;
-}
+/* Full-row navigation is handled in ProjectGallery.astro. Keeping the link
+   itself in normal flow avoids iOS Safari table-positioning bugs while the
+   row remains a large pointer target on touch screens. */
 
 .project-sheet__name:hover,
 .project-sheet__name:focus-visible {

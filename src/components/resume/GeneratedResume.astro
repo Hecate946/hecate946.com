@@ -7,7 +7,11 @@ interface Props {
 
 const { html, label, variant = 'clarinet' } = Astro.props;
 const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-const bodyHtml = bodyMatch?.[1] ?? html;
+const rawBodyHtml = bodyMatch?.[1] ?? html;
+const bodyHtml = rawBodyHtml.replace(
+  /(<a\b[^>]*href=[\"']mailto:[^>]+>[\s\S]*?<\/a>)/gi,
+  '<!--email_off-->$1<!--/email_off-->',
+);
 ---
 
 <div

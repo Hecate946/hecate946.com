@@ -47,7 +47,10 @@ const resolveHref = (href: string) =>
                 <tbody>
                   {
                     indexProjects.map((project) => (
-                      <tr>
+                      <tr
+                        data-project-row
+                        data-project-href={resolveHref(project.primaryHref)}
+                      >
                         <th scope="row">
                           <a
                             class="project-sheet__name"
@@ -80,3 +83,26 @@ const resolveHref = (href: string) =>
     </article>
   </div>
 </section>
+
+<script>
+  const installProjectRowLinks = () => {
+    document
+      .querySelectorAll<HTMLTableRowElement>('[data-project-row]')
+      .forEach((row) => {
+        if (row.dataset.projectRowReady === 'true') return;
+        row.dataset.projectRowReady = 'true';
+
+        row.addEventListener('click', (event) => {
+          const target = event.target;
+          if (target instanceof Element && target.closest('a')) return;
+
+          const href = row.dataset.projectHref;
+          if (href) window.location.assign(href);
+        });
+      });
+  };
+
+  installProjectRowLinks();
+  document.addEventListener('astro:after-swap', installProjectRowLinks);
+</script>
+

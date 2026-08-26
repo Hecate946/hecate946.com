@@ -29,14 +29,13 @@ export interface ProjectIndexEntry {
 }
 
 export const projects = [
-  // The first four entries intentionally mirror the software resume.
   {
     slug: 'neutra',
     title: 'Neutra',
     tagline:
       'Moderation, analytics, and music tools for large online communities.',
     description:
-      'A 320-command community platform that combined configurable moderation, server analytics, security insights, and music playback in one system.',
+      'A large Discord platform combining moderation, activity tracking, server analytics, logging, utilities, and music playback across hundreds of commands.',
     period: '2019–2021',
     category: 'Community platform',
     imageAlt:
@@ -65,14 +64,21 @@ export const projects = [
   {
     slug: 'keycad',
     title: 'KeyCAD',
-    tagline: 'An image-to-CAD pipeline for parameterized key models.',
+    tagline: 'A modular computer-vision-to-CAD prototype for turning image contours into parametric geometry.',
     description:
-      'A computer-vision and CAD experiment that translated measurements from photographs into dimensionally accurate, 3D-printable key geometry.',
-    period: '2022–2023',
+      'A modular prototype that extracts a foreground contour from an image, converts it to normalized geometry, and generates a deliberately non-lock-compatible OpenSCAD demonstration model with a Three.js preview.',
+    period: '2022–2023; 2026',
     category: 'Computer vision and CAD',
     imageAlt:
       'Impressionist painting of a seated child in a coral-red smock, used as the KeyCAD project image.',
-    technologies: ['Python', 'OpenCV', 'OpenSCAD', 'Git'],
+    technologies: [
+      'Next.js',
+      'TypeScript',
+      'FastAPI',
+      'OpenCV',
+      'OpenSCAD',
+      'Three.js',
+    ],
     links: [
       {
         label: 'View source',
@@ -86,12 +92,19 @@ export const projects = [
     tagline:
       'A hand-built portfolio where every page is part of one interactive room.',
     description:
-      'A statically generated Astro and Svelte site built as one continuous room, with custom brick walls, parchment documents, chalkboard interfaces, global audio, responsive layouts, and theme-aware visuals.',
+      'A statically generated Astro and Svelte portfolio built as one continuous room, combining custom CSS environments with a Three.js/WebGL hallway, persistent audio and theme state, and responsive page-specific interfaces.',
     period: '2026–Present',
     category: 'Interactive web experience',
     imageAlt:
       'Portrait of a woman dressed in black beneath a broad black hat, set against an olive-green background, used as the Hecate946.com project image.',
-    technologies: ['Astro', 'Svelte', 'TypeScript', 'Canvas', 'CSS'],
+    technologies: [
+      'Astro',
+      'Svelte',
+      'TypeScript',
+      'Three.js',
+      'WebGL',
+      'CSS',
+    ],
     links: [
       {
         label: 'Visit site',
@@ -109,7 +122,7 @@ export const projects = [
     tagline:
       'A fast, private three-state habit tracker with no account required.',
     description:
-      'A minimal habit tracker built around instant three-state input, anonymous boards, device recovery, and reliable cross-device synchronization.',
+      'A minimal three-state habit grid with anonymous boards, quick thoughts, recovery tools, archiving, and cross-device synchronization.',
     period: '2026–Present',
     category: 'Habit tracking application',
     imageAlt: 'The minimal three-state habit grid used by 3tap.',
@@ -131,7 +144,7 @@ export const projects = [
     tagline:
       'A Spotify analytics site for exploring listening history and music data.',
     description:
-      'An asynchronous Spotify dashboard with OAuth, personal listening statistics, library views, and visual breakdowns of tracks, artists, albums, genres, and decades.',
+      'An asynchronous Spotify statistics site with OAuth, top and recent listening views, liked music, profiles, genres, decades, and other personal listening breakdowns.',
     period: '2022',
     category: 'Music analytics application',
     imageAlt: 'The Sketyl Spotify analytics interface.',
@@ -147,13 +160,13 @@ export const projects = [
     slug: 'webserver',
     title: 'C Web Server',
     tagline:
-      'A threaded HTTP server in C with static-file routing and caching.',
+      'A small synchronous HTTP server in C with static-file routing and in-memory caching.',
     description:
-      'A from-scratch C web server that accepts socket connections, builds HTTP responses, serves static and binary files, resolves MIME types, and caches frequently requested content.',
+      'A from-scratch C web server that accepts socket connections, handles simple GET requests, serves static and binary files with MIME-aware HTTP responses, and caches recently requested content in memory.',
     period: '2023',
     category: 'Systems and networking',
     imageAlt: 'Source code from the C web server project.',
-    technologies: ['C', 'POSIX sockets', 'pthreads', 'HTTP', 'HTML/CSS'],
+    technologies: ['C', 'POSIX sockets', 'HTTP', 'HTML/CSS'],
     links: [
       {
         label: 'View source',
