@@ -48,6 +48,7 @@ html[data-theme='light'] .room-themed {
   --wall-light: #fff;
   --room-outline: var(--palette-light-ink);
   --room-accent: var(--palette-light-ink);
+  --room-structural-line: rgb(0 0 0 / 42%);
   --wall-brick-line: rgb(0 0 0 / 11%);
   --floor-tile-dark: #0a0a0a;
   --floor-tile-light: #f7f7f7;

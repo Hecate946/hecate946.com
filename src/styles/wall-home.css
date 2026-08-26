@@ -25,6 +25,7 @@ body.wall-home-page {
 
 html[data-theme='light'] body.wall-home-page {
   --room-outline: var(--palette-light-ink);
+  --room-structural-line: rgb(0 0 0 / 42%);
   --room-control-bg: rgb(255 255 255 / 54%);
 }
 

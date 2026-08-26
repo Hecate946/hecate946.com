@@ -6,8 +6,8 @@
   /* The corridor's far cap. Also the fog colour, so the walls dissolve
      into it instead of meeting it at a visible edge. */
   --hallway-end-color: var(--wall-dark);
-  --hallway-painting-width: 420px;
-  --hallway-painting-height: 546px;
+  --hallway-painting-width: 520px;
+  --hallway-painting-height: 628px;
   --wall-control-bottom-gap: clamp(0.7rem, 1.7vh, 1.05rem);
   --wall-control-safe-bottom: max(
     var(--wall-control-bottom-gap),
@@ -48,7 +48,6 @@ html[data-theme='light'] .wall-stage {
   border-top-color: var(--wall-baseboard);
   border-right-color: var(--wall-trim-line);
   border-bottom-color: var(--hallway-grout-color);
-  border-left-color: var(--room-label-ink);
   background-color: var(--wall-light);
   color: var(--wall-dark);
   visibility: hidden;
@@ -58,7 +57,7 @@ html[data-theme='light'] .wall-stage {
 .hallway-metrics__frame {
   display: block;
   width: var(--hallway-painting-width);
-  height: calc(var(--hallway-painting-height) - 2.4rem);
+  height: var(--hallway-painting-height);
 }
 
 .home-floor-seam-probe {
@@ -260,8 +259,8 @@ html[data-theme='light'] .wall-stage {
   .wall-stage {
     --hallway-half-width: max(55vw, 25rem);
     --hallway-half-height: max(58vh, 14rem);
-    --hallway-painting-width: 330px;
-    --hallway-painting-height: 429px;
+    --hallway-painting-width: 420px;
+    --hallway-painting-height: 508px;
   }
 }
 
@@ -269,8 +268,8 @@ html[data-theme='light'] .wall-stage {
   .wall-stage {
     --hallway-half-width: max(66vw, 15.5rem);
     --hallway-half-height: max(58vh, 15.5rem);
-    --hallway-painting-width: 270px;
-    --hallway-painting-height: 351px;
+    --hallway-painting-width: 360px;
+    --hallway-painting-height: 435px;
     --wall-control-bottom-gap: 0.48rem;
   }
 
@@ -293,8 +292,8 @@ html[data-theme='light'] .wall-stage {
 @media (max-width: 40rem) and (max-height: 36rem) {
   .wall-stage {
     --hallway-half-height: max(58vh, 12.5rem);
-    --hallway-painting-width: 225px;
-    --hallway-painting-height: 292.5px;
+    --hallway-painting-width: 300px;
+    --hallway-painting-height: 362px;
   }
 }
 

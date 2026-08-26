@@ -77,8 +77,6 @@ const BLACK = 'rgb(0 0 0)';
 interface Palette {
   /** --wall-dark */
   dark: string;
-  /** --room-label-ink */
-  labelInk: string;
   /** --wall-light */
   light: string;
   /** --wall-baseboard */
@@ -161,7 +159,6 @@ function readPalette(probe: HTMLElement): Palette {
     baseboard: style.borderTopColor,
     trim: style.borderRightColor,
     grout: style.borderBottomColor,
-    labelInk: style.borderLeftColor,
     endWall: style.outlineColor,
   };
 }
@@ -173,12 +170,15 @@ function paintWall(
   scale: number,
 ) {
   const width = BRICK_TILE_WIDTH;
-  canvas.width = Math.round(width * scale);
-  canvas.height = Math.max(1, Math.round(height * scale));
+  const pixelWidth = Math.round(width * scale);
+  const pixelHeight = Math.max(1, Math.round(height * scale));
+  if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
+  if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
 
   const context = canvas.getContext('2d');
   if (!context) return;
   context.setTransform(scale, 0, 0, scale, 0, 0);
+  context.clearRect(0, 0, width, height);
 
   const wall = context.createLinearGradient(0, 0, 0, height);
   wall.addColorStop(0, mix(palette.dark, palette.light, 0.03));
@@ -333,14 +333,16 @@ export function createHallwayScene(options: {
   const fog = new Fog(0x000000, 1, 2);
   scene.fog = fog;
 
-  const wallCanvas = document.createElement('canvas');
+  const leftWallCanvas = document.createElement('canvas');
+  const rightWallCanvas = document.createElement('canvas');
   const floorCanvas = document.createElement('canvas');
   const ceilingCanvas = document.createElement('canvas');
 
-  // Both walls share one painted canvas but scroll in opposite directions,
-  // so each gets its own texture over the same image.
-  const leftWallMap = new CanvasTexture(wallCanvas);
-  const rightWallMap = new CanvasTexture(wallCanvas);
+  // Each wall owns its canvas. Sharing a resized canvas between two GPU
+  // textures can leave one upload pointing at the pre-resize pixels on some
+  // mobile/browser combinations, which caused the wall-only theme mismatch.
+  const leftWallMap = new CanvasTexture(leftWallCanvas);
+  const rightWallMap = new CanvasTexture(rightWallCanvas);
   const floorMap = new CanvasTexture(floorCanvas);
   const ceilingMap = new CanvasTexture(ceilingCanvas);
 
@@ -420,7 +422,8 @@ export function createHallwayScene(options: {
 
   function refreshTheme() {
     const palette = readPalette(probe);
-    paintWall(wallCanvas, wallHeight, palette, pixelRatio);
+    paintWall(leftWallCanvas, wallHeight, palette, pixelRatio);
+    paintWall(rightWallCanvas, wallHeight, palette, pixelRatio);
     paintCeiling(ceilingCanvas, palette, pixelRatio);
     paintedWallHeight = wallHeight;
     leftWallMap.needsUpdate = true;
@@ -432,7 +435,6 @@ export function createHallwayScene(options: {
     // an edge, it reveals the same solid colour as the end cap, never the
     // brick-patterned CSS loading room underneath.
     renderer.setClearColor(palette.endWall, 1);
-    paintings.setInk(palette.labelInk);
   }
 
   function resize() {
@@ -507,7 +509,12 @@ export function createHallwayScene(options: {
     endWall.position.y = (ceilingY + floorY) / 2;
 
     const frame = frameProbe.getBoundingClientRect();
-    paintings.layout(halfWidth, frame.width, frame.height);
+    paintings.layout(
+      halfWidth,
+      (ceilingY + floorY) / 2,
+      frame.width,
+      frame.height,
+    );
     renderer.setSize(width, height, false);
     if (wallHeight !== paintedWallHeight) refreshTheme();
   }

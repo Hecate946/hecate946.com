@@ -58,28 +58,28 @@
               class="page-scroll-header__rule about-scroll-header__rule"
               aria-hidden="true"
             ></div>
-
-            {#if intro?.portrait}
-              <figure class="about-scroll-portrait-wrap">
-                <span class="about-scroll-portrait-frame" aria-hidden="true">
-                  <span class="about-scroll-portrait-glass">
-                    <img
-                      class="about-scroll-portrait"
-                      src={intro.portrait.src}
-                      alt=""
-                      width="480"
-                      height="480"
-                      decoding="async"
-                    />
-                    <span class="about-scroll-portrait-shade"></span>
-                    <span class="about-scroll-portrait-reflection"></span>
-                  </span>
-                  <span class="about-scroll-portrait-sill"></span>
-                </span>
-                <span class="visually-hidden">{intro.portrait.alt}</span>
-              </figure>
-            {/if}
           </header>
+
+          {#if intro?.portrait}
+            <figure class="about-scroll-portrait-wrap">
+              <span class="about-scroll-portrait-frame" aria-hidden="true">
+                <span class="about-scroll-portrait-glass">
+                  <img
+                    class="about-scroll-portrait"
+                    src={intro.portrait.src}
+                    alt=""
+                    width="480"
+                    height="480"
+                    decoding="async"
+                  />
+                  <span class="about-scroll-portrait-shade"></span>
+                  <span class="about-scroll-portrait-reflection"></span>
+                </span>
+                <span class="about-scroll-portrait-sill"></span>
+              </span>
+              <span class="visually-hidden">{intro.portrait.alt}</span>
+            </figure>
+          {/if}
 
           {#if intro}
             <div class="about-scroll-intro">

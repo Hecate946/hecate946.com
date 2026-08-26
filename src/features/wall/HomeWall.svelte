@@ -12,9 +12,9 @@
   const PAINTING_SPACING = HALLWAY_LOOP_DEPTH / destinations.length;
   const PAINTING_START = 700;
   const DRAG_THRESHOLD = 8;
-  const WHEEL_SCALE = 1.05;
-  const POINTER_SCALE = 1.3;
-  const IDLE_DRIFT_SPEED = 74;
+  const WHEEL_SCALE = 1.15;
+  const POINTER_SCALE = 1.4;
+  const IDLE_DRIFT_SPEED = 140;
   const DIRECTION_THRESHOLD = 42;
   const INERTIA_TIME_CONSTANT = 0.72;
   const MAX_MANUAL_SPEED = 2_500;
@@ -26,13 +26,10 @@
     index,
     side: index % 2 === 0 ? ('left' as const) : ('right' as const),
     z: PAINTING_START + PAINTING_SPACING * index,
-    indexLabel: String(index + 1).padStart(2, '0'),
   }));
 
   const paintingSpecs: PaintingSpec[] = paintings.map((painting) => ({
-    id: painting.destination.id,
     label: painting.destination.label,
-    indexLabel: painting.indexLabel,
     side: painting.side,
     z: painting.z,
     src: withBase(
@@ -55,8 +52,8 @@
   let cameraZ = 0;
   let velocity = 0;
   let driftDirection = 1;
-  let motionStarted = false;
-  let isPaused = true;
+  let motionStarted = true;
+  let isPaused = false;
   let dragging = false;
   let activePointerId: number | null = null;
   let pointerX = 0;
@@ -80,6 +77,7 @@
   let released = false;
   let reducedMotion = false;
   let revealFrame = 0;
+  let themeRefreshFrame = 0;
 
   function modulo(value: number, period: number) {
     return ((value % period) + period) % period;
@@ -115,6 +113,20 @@
     hallway?.resize();
     lastRenderedCameraZ = Number.NaN;
     renderCamera(true);
+  }
+
+  function scheduleThemeRefresh() {
+    cancelAnimationFrame(themeRefreshFrame);
+    themeRefreshFrame = requestAnimationFrame(() => {
+      themeRefreshFrame = 0;
+      // Responsive custom properties and the theme variables can change in
+      // the same browser frame. Measure first, then repaint from the settled
+      // palette so a resize cannot restore the previous wall colours.
+      hallway?.resize();
+      hallway?.refreshTheme();
+      lastRenderedCameraZ = Number.NaN;
+      renderCamera(true);
+    });
   }
 
   function ensureAnimationLoop() {
@@ -495,7 +507,10 @@
             renderCamera(true);
             cancelAnimationFrame(revealFrame);
             revealFrame = requestAnimationFrame(() => {
-              if (!released) sceneReady = true;
+              if (released) return;
+              sceneReady = true;
+              velocity = getDriftVelocity();
+              if (Math.abs(velocity) > 0.01) ensureAnimationLoop();
             });
           },
           onTextureUpdate: () => renderCamera(true),
@@ -506,13 +521,11 @@
       }
     })();
 
-    const themeObserver = new MutationObserver(() => {
-      hallway?.refreshTheme();
-      renderCamera(true);
-    });
+    const themeObserver = new MutationObserver(scheduleThemeRefresh);
     themeObserver.observe(document.documentElement, {
       attributeFilter: ['data-theme'],
     });
+    document.addEventListener('hecate:theme-change', scheduleThemeRefresh);
 
     stage.addEventListener('wheel', onWheel, { passive: false });
     stage.addEventListener('pointerdown', onPointerDown);
@@ -546,7 +559,9 @@
       );
       cancelAnimationFrame(rafId);
       cancelAnimationFrame(revealFrame);
+      cancelAnimationFrame(themeRefreshFrame);
       themeObserver.disconnect();
+      document.removeEventListener('hecate:theme-change', scheduleThemeRefresh);
       hallway?.dispose();
       hallway = null;
     };

@@ -20,7 +20,7 @@ body.resume-wall-page,
   display: grid;
   width: 100%;
   min-width: 0;
-  gap: clamp(0.65rem, 1.2vw, 0.9rem);
+  gap: clamp(1rem, 2vw, 1.35rem);
 }
 
 .resume-switcher {
@@ -30,8 +30,8 @@ body.resume-wall-page,
   justify-content: space-between;
   gap: 1rem;
   color: var(--paper-ink);
-  padding-bottom: 0.7rem;
-  border-bottom: 1px dotted var(--paper-rule);
+  padding-bottom: 0.1rem;
+  border: 0;
 }
 
 .resume-switcher__tabs {

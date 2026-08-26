@@ -16,12 +16,6 @@ body.projects-wall-page,
   --project-hover: color-mix(in srgb, var(--paper-accent) 7%, transparent);
 }
 
-/* The title rule is also the table's top edge, so the first row keeps the
-   exact same height as every row that follows it. */
-.project-index .page-scroll-header__rule {
-  margin-bottom: 0;
-}
-
 .project-scroll-viewport {
   padding-inline: 0;
 }
@@ -63,8 +57,8 @@ body.projects-wall-page,
 
 .project-sheet th,
 .project-sheet td {
-  padding: clamp(0.66rem, 1.2vw, 0.82rem) 0;
-  border-bottom: 1px dotted var(--project-grid-line);
+  padding: clamp(0.78rem, 1.5vw, 1rem) 0;
+  border: 0;
   color: var(--paper-ink);
   font-size: clamp(0.94rem, 1vw, 1rem);
   font-weight: 400;
@@ -73,6 +67,11 @@ body.projects-wall-page,
   vertical-align: top;
   overflow-wrap: break-word;
   word-break: normal;
+}
+
+.project-sheet tbody tr + tr > * {
+  border-top: 1px solid
+    color-mix(in srgb, var(--project-grid-line) 56%, transparent);
 }
 
 .project-sheet tr > :first-child {

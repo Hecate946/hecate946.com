@@ -2,17 +2,6 @@
   background: transparent;
 }
 
-/* The shared page-scroll module owns all parchment geometry. This file only
-   describes the About content inside that common frame. */
-.about-scroll-header {
-  display: contents;
-}
-
-/* Keep the title rule optically centered between the heading and intro. */
-.about-scroll-header__rule {
-  margin-bottom: clamp(1.55rem, 3.5vh, 2.35rem);
-}
-
 /* Keep one proportional reading inset at every non-mobile width. It shrinks
    monotonically with the fluid parchment instead of jumping wider on iPad. */
 .about-scroll-paper__viewport {
@@ -109,29 +98,32 @@
 
 .about-scroll-sections {
   max-width: none;
-  margin: clamp(1.7rem, 4vh, 2.6rem) auto 0;
-  border-top: 1px dotted var(--paper-rule);
+  margin: clamp(2rem, 5vh, 3rem) auto 0;
 }
 
 .about-scroll-section {
-  border-bottom: 1px dotted var(--paper-rule);
+  position: relative;
+}
+
+.about-scroll-section + .about-scroll-section {
+  margin-top: clamp(0.2rem, 0.8vh, 0.5rem);
 }
 
 .about-scroll-section__toggle {
   display: flex;
   width: 100%;
-  min-height: 3.15rem;
+  min-height: 2.85rem;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin: 0;
-  padding: 0.1rem 0.15rem 0.04rem 0;
+  padding: 0.18rem 0.15rem 0.18rem 0;
   border: 0;
   background: transparent;
   color: var(--paper-ink);
   cursor: pointer;
-  font-size: clamp(1.08rem, 2vw, 1.28rem);
-  font-weight: 400;
+  font-size: clamp(1.04rem, 1.85vw, 1.18rem);
+  font-weight: 600;
   line-height: 1.15;
   text-align: left;
   appearance: none;
@@ -187,7 +179,7 @@
 }
 
 .about-scroll-section__body {
-  padding: 0.15rem 0 1rem;
+  padding: 0.18rem clamp(1.25rem, 4vw, 2rem) 1.25rem 0;
   opacity: 0;
   transition: opacity 420ms ease;
 }
@@ -255,11 +247,11 @@
   }
 
   .about-scroll-sections {
-    margin-top: 1.6rem;
+    margin-top: 1.85rem;
   }
 
   .about-scroll-section__toggle {
-    min-height: 3.05rem;
+    min-height: 2.8rem;
   }
 }
 
