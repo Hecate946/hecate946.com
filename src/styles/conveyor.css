@@ -5,7 +5,7 @@
   --hallway-grout-color: rgb(255 255 255 / 12%);
   /* The corridor's far cap. Also the fog colour, so the walls dissolve
      into it instead of meeting it at a visible edge. */
-  --hallway-end-color: #fff;
+  --hallway-end-color: var(--wall-dark);
   --hallway-painting-width: 420px;
   --hallway-painting-height: 546px;
   --wall-control-bottom-gap: clamp(0.7rem, 1.7vh, 1.05rem);
@@ -28,11 +28,6 @@
 
 html[data-theme='light'] .wall-stage {
   --hallway-grout-color: rgb(7 31 35 / 14%);
-  --hallway-end-color: #fff;
-}
-
-html[data-theme='dark'] .wall-stage {
-  --hallway-end-color: #0b1c33;
 }
 
 /*

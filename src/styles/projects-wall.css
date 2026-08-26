@@ -16,6 +16,12 @@ body.projects-wall-page,
   --project-hover: color-mix(in srgb, var(--paper-accent) 7%, transparent);
 }
 
+/* The title rule is also the table's top edge, so the first row keeps the
+   exact same height as every row that follows it. */
+.project-index .page-scroll-header__rule {
+  margin-bottom: 0;
+}
+
 .project-scroll-viewport {
   padding-inline: 0;
 }
@@ -71,10 +77,6 @@ body.projects-wall-page,
 
 .project-sheet tr > :first-child {
   padding-right: clamp(1rem, 3vw, 2rem);
-}
-
-.project-sheet tbody tr:first-child > * {
-  border-top: 1px dotted var(--project-grid-line);
 }
 
 .project-sheet thead th,

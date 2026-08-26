@@ -352,7 +352,11 @@
       Math.abs(event.deltaY) >= Math.abs(event.deltaX)
         ? event.deltaY
         : event.deltaX;
-    const normalized = Math.max(-210, Math.min(210, dominantDelta));
+    // Match direct manipulation: scrolling down moves the hallway toward the
+    // viewer, and scrolling up moves into it. Pointer dragging uses the same
+    // signed convention below, so desktop and touch never feel reversed from
+    // one another.
+    const normalized = Math.max(-210, Math.min(210, -dominantDelta));
     moveBy(normalized * WHEEL_SCALE);
     velocity = Math.max(
       -MAX_MANUAL_SPEED,
@@ -412,7 +416,7 @@
     }
 
     event.preventDefault();
-    const movement = gestureAxis === 'vertical' ? -deltaY : -deltaX;
+    const movement = gestureAxis === 'vertical' ? deltaY : deltaX;
     const elapsedMs = Math.max(
       4,
       Math.min(50, event.timeStamp - lastPointerTime || 16.667),

@@ -65,7 +65,9 @@ const FOG_START = -TUNNEL_NEAR_Z + TUNNEL_DEPTH * 0.42;
  * still leave the hole; together the corridor simply dissolves into one
  * flat colour.
  */
-const END_WALL_Z = TUNNEL_NEAR_Z - TUNNEL_DEPTH;
+// Sit just in front of the tiled planes' final edge. At exactly the same z,
+// sub-pixel depth ties could expose the last brick row across the cap.
+const END_WALL_Z = TUNNEL_NEAR_Z - TUNNEL_DEPTH + 4;
 
 /** The checker is theme independent, exactly as the previous SVG was. */
 const FLOOR_DARK = '#080a0a';
@@ -362,7 +364,12 @@ export function createHallwayScene(options: {
     unitPlane,
     new MeshBasicMaterial({ map: ceilingMap }),
   );
-  const endWallMaterial = new MeshBasicMaterial({ fog: false });
+  // An unlit, untextured cap: it must remain a completely blank continuation
+  // of the wall colour, independent of the brick maps and scene lighting.
+  const endWallMaterial = new MeshBasicMaterial({
+    fog: false,
+    toneMapped: false,
+  });
   const endWall = new Mesh(unitPlane, endWallMaterial);
   const surfaces = [leftWall, rightWall, floor, ceiling];
 

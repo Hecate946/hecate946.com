@@ -20,7 +20,7 @@ body.resume-wall-page,
   display: grid;
   width: 100%;
   min-width: 0;
-  gap: clamp(0.9rem, 1.6vw, 1.25rem);
+  gap: clamp(0.65rem, 1.2vw, 0.9rem);
 }
 
 .resume-switcher {
