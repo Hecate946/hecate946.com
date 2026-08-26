@@ -7,7 +7,8 @@
 
   type RoomCameraWindow = Window & {
     __hecateRoomCameraX?: number;
-    __hecateSetRoomCameraX?: (cameraX: number) => void;
+    __hecateRoomCameraAbsolute?: boolean;
+    __hecateSetRoomCameraX?: (cameraX: number, absolute?: boolean) => void;
   };
 
   let wallBackdrop: { setCameraX: (cameraX: number) => void };
@@ -29,15 +30,29 @@
     let baseCameraX = Number.isFinite(roomWindow.__hecateRoomCameraX)
       ? (roomWindow.__hecateRoomCameraX as number)
       : initialCameraX;
+    // Home publishes an absolute camera before this component mounts, so
+    // the flag is read from the window rather than assumed false -- which
+    // is what keeps the two mount orders from producing different walls.
+    let absoluteCamera = roomWindow.__hecateRoomCameraAbsolute === true;
     let widestRoomWidth = roomBackdrop.getBoundingClientRect().width;
     let currentRoomWidth = widestRoomWidth;
     let resizeFrame = 0;
 
     function renderRoomCamera() {
-      // Keep the scene's right edge fixed. Every pixel removed from the
-      // viewport pans the shared world left by one pixel, so the brick wall
-      // and checkerboard floor behave like two surfaces in the same room.
-      applyCamera(baseCameraX + widestRoomWidth - currentRoomWidth);
+      // Ordinary pages keep the scene's right edge fixed: every pixel
+      // removed from the viewport pans the shared world left by one pixel,
+      // so the brick wall and checkerboard floor behave like two surfaces
+      // in the same room.
+      //
+      // Home opts out. It pins the camera to the doorway's centre instead,
+      // because there the wall has to hold station against the casing -- a
+      // width-driven pan slides the mortar joints past a door that is
+      // anchored to the middle of the viewport.
+      applyCamera(
+        absoluteCamera
+          ? baseCameraX
+          : baseCameraX + widestRoomWidth - currentRoomWidth,
+      );
     }
 
     function measureRoom() {
@@ -58,9 +73,11 @@
     roomWindow.__hecateRoomCameraX = baseCameraX;
     renderRoomCamera();
 
-    const setCameraX = (cameraX: number) => {
+    const setCameraX = (cameraX: number, absolute = false) => {
       baseCameraX = cameraX;
+      absoluteCamera = absolute;
       roomWindow.__hecateRoomCameraX = baseCameraX;
+      roomWindow.__hecateRoomCameraAbsolute = absolute;
       renderRoomCamera();
     };
 

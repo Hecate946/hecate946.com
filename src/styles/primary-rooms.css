@@ -2,17 +2,13 @@
  * Primary room layout.
  *
  * Home remains a viewport-sized interactive room. About, Projects, Resumes,
- * and Contact use a viewport-height room with their parchment as the sole
- * vertical scroller. This keeps the wall and checkerboard fixed in place while
- * the content moves naturally inside the floating scroll.
+ * and Contact use normal document flow: the wall grows with their content and
+ * the checkerboard floor closes the page like a footer.
  */
 
 /*
- * Only the non-scrolling room (Home) is locked to the viewport. The selectors
- * below are scoped with :not(.scrolling-primary-room) so that About/Projects/
- * Resumes/Contact never inherit a viewport-height floor that they then have to
- * fight -- previously the base `min-height` here leaked through and left a
- * strip of empty scroll beneath the room floor on mobile.
+ * Only the non-scrolling room (Home) is locked to the viewport. Content rooms
+ * opt into their own document-height geometry farther below.
  */
 body.primary-room-page:not(.scrolling-primary-room) {
   position: relative;
@@ -105,30 +101,17 @@ body.primary-room-page.contact-room-page > main {
   pointer-events: auto;
 }
 
-/*
- * The document itself never scrolls on these four routes. The header occupies
- * its normal row, main fills the exact remainder of the visible viewport, and
- * .page-scroll-paper__viewport owns any overflow.
- */
+/* The four content rooms use the browser's far-right scrollbar. Their shared
+   backdrop grows with the document, placing the floor after the content. */
 body.primary-room-page.scrolling-primary-room {
+  --content-room-floor-height: clamp(5.2rem, 18svh, 9.8rem);
+
   position: relative;
   width: 100%;
-  height: 100vh;
   min-height: 100svh;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-@supports (height: 100svh) {
-  body.primary-room-page.scrolling-primary-room {
-    height: 100svh;
-  }
-}
-
-@supports (height: 100dvh) {
-  body.primary-room-page.scrolling-primary-room {
-    height: 100dvh;
-  }
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
 }
 
 body.primary-room-page.scrolling-primary-room > .site-header {
@@ -138,23 +121,33 @@ body.primary-room-page.scrolling-primary-room > .site-header {
 }
 
 body.primary-room-page.scrolling-primary-room > main {
+  --room-wall-min-height: calc(
+    100svh - var(--header-height) - var(--content-room-floor-height)
+  );
+
   position: relative;
   z-index: 3;
   inset: auto;
+  box-sizing: border-box;
   width: 100%;
-  height: calc(100% - var(--header-height));
-  min-height: 0;
-  overflow: hidden;
+  min-height: calc(100svh - var(--header-height));
+  overflow: visible;
+  padding-bottom: var(--content-room-floor-height);
   pointer-events: auto;
 }
 
 body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
-  --floor-height: clamp(5.2rem, 18svh, 9.8rem);
+  --floor-height: var(--content-room-floor-height);
   height: 100%;
+  min-height: 100%;
 }
 
 @media (max-width: 40rem) {
+  body.primary-room-page.scrolling-primary-room {
+    --content-room-floor-height: 6.4rem;
+  }
+
   body.primary-room-page.scrolling-primary-room > .primary-room-backdrop {
-    --floor-height: 6.4rem;
+    --floor-height: var(--content-room-floor-height);
   }
 }

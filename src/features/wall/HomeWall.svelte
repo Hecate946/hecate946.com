@@ -4,6 +4,7 @@
   import type { HallwayScene } from './hallway-scene';
   import type { PaintingSpec } from './hallway-paintings';
   import { wallDestinations } from './wall-config';
+  import { DOOR_ASPECT } from './door-metrics';
 
   export let active = true;
 
@@ -23,9 +24,14 @@
   const OPENING_DURATION = 1_900;
   const SWING_FRACTION = 0.46;
   const DOLLY_DELAY = 0.3;
-  /** Fixed architectural size until the viewport is genuinely too small. */
-  const DOOR_DESIGN_HEIGHT = 680;
-  const DOOR_ASPECT = 0.5385;
+  /**
+   * The doorway is a piece of the wall, so it is sized as a fraction of the
+   * wall's own height rather than to a fixed pixel figure. DOOR_ASPECT is
+   * imported rather than restated: it is derived from the model's real
+   * proportions, and the two copies had already drifted apart.
+   */
+  const DOOR_WALL_FRACTION = 0.94;
+  const DOOR_MIN_HEIGHT = 260;
   const DOOR_VIEWPORT_GUTTER = 24;
   const DOOR_TOP_GAP = 16;
 
@@ -60,6 +66,7 @@
   let hallwayProbe: HTMLElement;
   let hallwayFrameProbe: HTMLElement;
   let doorAnchor: HTMLElement;
+  let firstFrameDoor: HTMLElement;
   let floorSeamProbe: HTMLElement;
   let hallway: HallwayScene | null = null;
   let destinationLinks: HTMLAnchorElement[] = [];
@@ -83,6 +90,7 @@
   let lastFrame = 0;
   let openingStarted = 0;
   let doorOpen = 0;
+  let doorReady = false;
   let entryDistance = 0;
   let doorRect = { left: 0, top: 0, width: 0, height: 0 };
   let programmatic = false;
@@ -135,17 +143,6 @@
     return driftDirection * IDLE_DRIFT_SPEED;
   }
 
-  type RoomCameraWindow = Window & {
-    __hecateRoomCameraX?: number;
-    __hecateSetRoomCameraX?: (cameraX: number) => void;
-  };
-
-  function resetSharedBackdrop() {
-    const roomWindow = window as RoomCameraWindow;
-    roomWindow.__hecateRoomCameraX = 0;
-    roomWindow.__hecateSetRoomCameraX?.(0);
-  }
-
   function renderCamera(force = false) {
     if (!force && cameraZ === lastRenderedCameraZ && !programmatic) return;
 
@@ -164,18 +161,33 @@
       (document.querySelector('.site-header')?.getBoundingClientRect().bottom ??
         stageRect.top) - stageRect.top,
     );
-    const availableHeight = Math.max(1, floorTop - headerBottom - DOOR_TOP_GAP);
+    const wallHeight = Math.max(1, floorTop - headerBottom);
     const availableWidth = Math.max(1, stageRect.width - DOOR_VIEWPORT_GUTTER);
-    const height = Math.min(
-      DOOR_DESIGN_HEIGHT,
-      availableHeight,
-      availableWidth / DOOR_ASPECT,
+    // Preferred size follows the wall; the hard limits only ever shrink it.
+    const preferred = Math.max(
+      DOOR_MIN_HEIGHT,
+      wallHeight * DOOR_WALL_FRACTION,
+    );
+    const height = Math.max(
+      1,
+      Math.min(
+        preferred,
+        wallHeight - DOOR_TOP_GAP,
+        availableWidth / DOOR_ASPECT,
+      ),
     );
     const width = height * DOOR_ASPECT;
 
     doorAnchor.style.width = `${width}px`;
     doorAnchor.style.height = `${height}px`;
     doorAnchor.style.top = `${floorTop - height}px`;
+    if (firstFrameDoor) {
+      firstFrameDoor.style.width = `${width}px`;
+      firstFrameDoor.style.height = `${height}px`;
+      firstFrameDoor.style.top = `${floorTop - height}px`;
+    }
+    // Reserve the architectural opening from the first hydrated frame. This
+    // must not wait for the GLB or the baseboard visibly jumps on reload.
     document.body.style.setProperty(
       '--home-door-cutout-half',
       `${width / 2}px`,
@@ -214,7 +226,6 @@
       return;
     }
 
-    resetSharedBackdrop();
     lastFrame = performance.now();
     refreshRenderState();
     if (mode !== 'entrance') ensureAnimationLoop();
@@ -223,7 +234,7 @@
   $: (active, syncActiveState());
 
   function enterHallway() {
-    if (mode !== 'entrance') return;
+    if (mode !== 'entrance' || !doorReady) return;
     markInteracted();
     isPaused = false;
     driftDirection = 1;
@@ -479,7 +490,6 @@
     dragDistance = 0;
     lastFrame = performance.now();
     velocity = getDriftVelocity();
-    resetSharedBackdrop();
     refreshRenderState();
     if (mode !== 'entrance') ensureAnimationLoop();
   }
@@ -620,6 +630,11 @@
           frameProbe: hallwayFrameProbe,
           doorAnchor,
           paintings: paintingSpecs,
+          onDoorReady: () => {
+            if (released) return;
+            doorReady = true;
+            layoutDoorAnchor();
+          },
           onReady: () => renderCamera(true),
         });
         refreshRenderState();
@@ -639,7 +654,6 @@
       attributeFilter: ['data-theme'],
     });
 
-    resetSharedBackdrop();
     refreshRenderState();
 
     stage.addEventListener('wheel', onWheel, { passive: false });
@@ -673,6 +687,7 @@
       cancelAnimationFrame(rafId);
       themeObserver.disconnect();
       released = true;
+      doorReady = false;
       document.body.style.removeProperty('--home-door-cutout-half');
       hallway?.dispose();
       hallway = null;
@@ -687,6 +702,7 @@
   class:wall-stage--hallway={mode === 'hallway'}
   class:wall-stage--dragging={dragging}
   class:wall-stage--interacted={hasInteracted}
+  class:wall-stage--door-ready={doorReady}
   class:wall-stage--inactive={!active}
   class="wall-stage wall-stage--home wall-room-host"
   aria-hidden={!active ? 'true' : undefined}
@@ -701,6 +717,37 @@
   </span>
   <span bind:this={floorSeamProbe} class="home-floor-seam-probe"></span>
   <span bind:this={doorAnchor} class="home-door-anchor"></span>
+
+  <!--
+    Server-rendered first frame. It occupies the exact doorway anchor while
+    Three.js and the GLB initialize, then crossfades away only after the real
+    model is present. This prevents a reload from ever showing a blank wall.
+  -->
+  <div
+    bind:this={firstFrameDoor}
+    class="home-door-first-frame"
+    aria-hidden="true"
+  >
+    <div class="home-door-first-frame__fanlight"></div>
+    <div class="home-door-first-frame__leaves">
+      <span>
+        <i></i><i></i>
+        <svg viewBox="0 0 42 112" aria-hidden="true">
+          <path
+            d="M30 7c8 0 10 10 5 15-4 4-10 1-9-4 3 1 4-1 3-3-2-4-8-1-9 5-2 11 3 18 4 26 4 13 1 29-5 42-5 8-12 11-18 8-5-3-6-10-2-14 3-3 8-2 9 2 1 3-1 6-4 6-2-2-1-5 1-6 5-2 9 4 7 9-4 9-13 13-22 10-12-4-16-15-16-26 0-13 5-24 5-36 0-8-3-16-1-23C17 13 22 7 30 7Z"
+          />
+        </svg>
+      </span>
+      <span>
+        <i></i><i></i>
+        <svg viewBox="0 0 42 112" aria-hidden="true">
+          <path
+            d="M30 7c8 0 10 10 5 15-4 4-10 1-9-4 3 1 4-1 3-3-2-4-8-1-9 5-2 11 3 18 4 26 4 13 1 29-5 42-5 8-12 11-18 8-5-3-6-10-2-14 3-3 8-2 9 2 1 3-1 6-4 6-2-2-1-5 1-6 5-2 9 4 7 9-4 9-13 13-22 10-12-4-16-15-16-26 0-13 5-24 5-36 0-8-3-16-1-23C17 13 22 7 30 7Z"
+          />
+        </svg>
+      </span>
+    </div>
+  </div>
 
   <div
     bind:this={hallwayViewport}
@@ -734,7 +781,7 @@
       type="button"
       style={`left:${doorRect.left}px;top:${doorRect.top}px;width:${doorRect.width}px;height:${doorRect.height}px;`}
       aria-label="Open the doors and enter the portfolio hallway"
-      disabled={mode !== 'entrance'}
+      disabled={mode !== 'entrance' || !doorReady}
       onclick={enterHallway}
     ></button>
   {/if}

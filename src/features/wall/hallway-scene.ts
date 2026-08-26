@@ -56,6 +56,17 @@ const FLOOR_TILE = 240;
 /** The far-wall veil that used to hide aliasing becomes honest linear fog. */
 const FOG_START = -TUNNEL_NEAR_Z + TUNNEL_DEPTH * 0.42;
 
+/**
+ * The corridor is four planes, so its vanishing point used to be a hole
+ * straight through the transparent canvas onto the DOM brick backdrop --
+ * which is why the far end appeared to be tiled. Capping it costs one
+ * quad. The cap and the fog share `--hallway-end-color`, because a cap on
+ * its own would still be tinted by fog and a fog change on its own would
+ * still leave the hole; together the corridor simply dissolves into one
+ * flat colour.
+ */
+const END_WALL_Z = TUNNEL_NEAR_Z - TUNNEL_DEPTH;
+
 /** The checker is theme independent, exactly as the previous SVG was. */
 const FLOOR_DARK = '#080a0a';
 const FLOOR_LIGHT = '#f4f3ed';
@@ -74,6 +85,8 @@ interface Palette {
   trim: string;
   /** --hallway-grout-color */
   grout: string;
+  /** --hallway-end-color */
+  endWall: string;
 }
 
 export interface HallwayScene {
@@ -134,6 +147,7 @@ function readPalette(probe: HTMLElement): Palette {
     trim: style.borderRightColor,
     grout: style.borderBottomColor,
     labelInk: style.borderLeftColor,
+    endWall: style.outlineColor,
   };
 }
 
@@ -271,8 +285,18 @@ export function createHallwayScene(options: {
   paintings: readonly PaintingSpec[];
   /** Called when a painting's texture decodes and a redraw is needed. */
   onReady: () => void;
+  /** Called only after the complete GLB doorway has joined the scene. */
+  onDoorReady?: () => void;
 }): HallwayScene {
-  const { canvas, viewport, probe, frameProbe, doorAnchor, onReady } = options;
+  const {
+    canvas,
+    viewport,
+    probe,
+    frameProbe,
+    doorAnchor,
+    onReady,
+    onDoorReady,
+  } = options;
 
   const renderer = new WebGLRenderer({
     canvas,
@@ -338,6 +362,8 @@ export function createHallwayScene(options: {
     unitPlane,
     new MeshBasicMaterial({ map: ceilingMap }),
   );
+  const endWallMaterial = new MeshBasicMaterial({ fog: false });
+  const endWall = new Mesh(unitPlane, endWallMaterial);
   const surfaces = [leftWall, rightWall, floor, ceiling];
 
   leftWall.rotation.y = Math.PI / 2;
@@ -348,6 +374,8 @@ export function createHallwayScene(options: {
     surface.position.z = TUNNEL_CENTER_Z;
     scene.add(surface);
   }
+  endWall.position.z = END_WALL_Z;
+  scene.add(endWall);
 
   paintFloor(floorCanvas, pixelRatio);
 
@@ -357,27 +385,32 @@ export function createHallwayScene(options: {
   // that picks out the panel moldings and the f-holes' bevel.
   const pmrem = new PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.34;
+  scene.environmentIntensity = 0.055;
   pmrem.dispose();
 
   // Deliberately dim and well off-axis. A strong light square-on to a flat
   // panel puts its specular lobe dead centre, which is what turned the doors
   // into a spotlit blob; the environment does the shaping instead and this
   // only picks out the mouldings and the f-holes' bevel.
-  const keyLight = new DirectionalLight(0xfff4e2, 0.42);
+  const keyLight = new DirectionalLight(0xfff4e2, 0.11);
   keyLight.position.set(-1.15, 1.4, 0.85);
-  scene.add(keyLight, new AmbientLight(0xdfeff0, 0.55));
+  scene.add(keyLight, new AmbientLight(0xdfeff0, 0.09));
 
-  // The shared DOM backdrop is the entrance wall. This material writes depth
-  // without painting, so the doorway retains real occlusion while the exact
-  // same bricks, baseboard, lighting, and floor used by the other pages remain
-  // visible beneath the transparent canvas.
+  // The DOM backdrop remains the entrance wall and floor. This invisible mesh
+  // writes depth around the real arched opening, so the WebGL door is recessed
+  // into the exact same flat CSS room used by every other page.
   const frontWallMaterial = new MeshBasicMaterial({
     colorWrite: false,
     depthWrite: true,
   });
   const revealMaterial = new MeshBasicMaterial({ color: 0x000000 });
-  const door = createHallwayDoor([frontWallMaterial, revealMaterial]);
+  // The door mesh arrives asynchronously; a redraw once it lands is all
+  // that is needed, because it inherits the transform already applied to
+  // the assembly by the most recent layout() call.
+  const door = createHallwayDoor([frontWallMaterial, revealMaterial], () => {
+    onDoorReady?.();
+    onReady();
+  });
   scene.add(door.group);
 
   const paintings = createHallwayPaintings(
@@ -387,7 +420,7 @@ export function createHallwayScene(options: {
   );
   scene.add(paintings.group);
 
-  const corridorRoots = [...surfaces, paintings.group];
+  const corridorRoots = [...surfaces, endWall, paintings.group];
   let portalStencilEnabled = false;
 
   function visitMaterials(
@@ -437,7 +470,8 @@ export function createHallwayScene(options: {
     leftWallMap.needsUpdate = true;
     rightWallMap.needsUpdate = true;
     ceilingMap.needsUpdate = true;
-    fog.color.set(palette.dark);
+    fog.color.set(palette.endWall);
+    endWallMaterial.color.set(palette.endWall);
     paintings.setInk(palette.labelInk);
   }
 
@@ -507,6 +541,10 @@ export function createHallwayScene(options: {
     ceiling.position.y = ceilingY;
     floorMap.repeat.x = (halfWidth * 2) / FLOOR_TILE;
 
+    // Slightly oversized so no seam can open along the corridor's corners.
+    endWall.scale.set(halfWidth * 2 + 8, wallHeight + 8, 1);
+    endWall.position.y = (ceilingY + floorY) / 2;
+
     const frame = frameProbe.getBoundingClientRect();
     paintings.layout(halfWidth, frame.width, frame.height);
     renderer.setSize(width, height, false);
@@ -569,6 +607,7 @@ export function createHallwayScene(options: {
       for (const surface of surfaces) {
         (surface.material as MeshBasicMaterial).dispose();
       }
+      endWallMaterial.dispose();
       for (const map of [leftWallMap, rightWallMap, floorMap, ceilingMap]) {
         map.dispose();
       }

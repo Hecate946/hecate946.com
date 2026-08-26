@@ -1,10 +1,7 @@
 import {
+  AlwaysStencilFunc,
   BoxGeometry,
   BufferGeometry,
-  CircleGeometry,
-  CubicBezierCurve,
-  DoubleSide,
-  AlwaysStencilFunc,
   ExtrudeGeometry,
   Group,
   KeepStencilOp,
@@ -16,61 +13,38 @@ import {
   Object3D,
   Path,
   PerspectiveCamera,
-  PlaneGeometry,
   ReplaceStencilOp,
   Shape,
   ShapeGeometry,
-  Vector2,
   Vector3,
 } from 'three';
-import { createFrameGeometry } from './hallway-geometry';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { withBase } from '@/lib/paths';
+import {
+  DOOR_MODEL_PATH,
+  DOOR_OPENING_HALF,
+  DOOR_OUTER_HALF,
+  DOOR_SPRING_Z,
+  DOOR_WALL_DEPTH,
+} from './door-metrics';
 
 /**
- * The entrance: a black arched double door standing across the corridor,
- * with a fanlight above it and gold violin f-holes for handles.
+ * The entrance: a black arched double door standing across the corridor.
  *
- * The whole assembly is authored once at unit height with its origin on the
- * floor line, then scaled to whatever the corridor's CSS proportions work out
- * to. Only the surrounding wall is rebuilt on resize, because its opening has
- * to be cut to match the scaled assembly and a semicircle cannot survive a
- * non-uniform scale.
+ * The assembly itself is no longer built here. It is modelled by
+ * `blender/hecate946_door.py`, exported as a GLB, and loaded at runtime;
+ * this module owns only the things the model cannot know about -- the wall
+ * it is set into, where that wall's opening falls on screen, the swing, and
+ * the stencil portal that lets the corridor show through the arch.
  *
- * Depth ordering is the whole point of building this in WebGL rather than in
+ * The model is authored at unit height with its origin on the floor line
+ * and its front face on z = 0, so scaling it to the corridor is a single
+ * uniform scale and the wall can be built to meet it exactly.
+ *
+ * Depth ordering is the whole point of doing this in WebGL rather than in
  * CSS: the wall genuinely occludes the corridor, so walking through the
  * doorway is a real dolly rather than an expanding clip-path.
  */
-
-/** Casing thickness as a fraction of the assembly's total height. */
-const CASING = 0.028;
-/** Doors are 1.515 times as tall as the opening is wide. */
-const DOOR_ASPECT = 0.66;
-/** doorHeight + archRadius + casing == 1, and archRadius == doorWidth / 2. */
-const DOOR_HEIGHT = (1 - CASING) / (1 + DOOR_ASPECT / 2);
-const OPENING_HALF = (DOOR_HEIGHT * DOOR_ASPECT) / 2;
-const OUTER_HALF = OPENING_HALF + CASING;
-
-/** A real doorway has depth: the wall is thick and the leaves sit inside it. */
-const WALL_DEPTH = 0.058;
-const LEAF_DEPTH = 0.03;
-/** How far the leaves' faces sit behind the wall's outer face. */
-const LEAF_SETBACK = 0.01;
-const LEAF_GAP = 0.0015;
-const LEAF_WIDTH = OPENING_HALF - LEAF_GAP;
-/** The strip on the leading leaf that laps the meeting stile shut. */
-const ASTRAGAL_WIDTH = 0.016;
-const ASTRAGAL_DEPTH = 0.005;
-const MUNTIN = 0.009;
-const MUNTIN_DEPTH = 0.014;
-const TRANSOM = 0.024;
-
-/** Narrow shadow gaps make the casing read as set into masonry, not mounted on it. */
-const RECESS_GAP = 0.013;
-const RECESS_SHADOW_OPACITY = 0.58;
-const FLOOR_SHADOW_DEPTH = 0.13;
-
-const HANDLE_HEIGHT = 0.2;
-const HANDLE_INSET = 0.062;
-const HANDLE_CENTRE = 0.44;
 
 /** How far past the door plane the camera ends up. */
 const ENTRY_CLEARANCE = 240;
@@ -79,172 +53,19 @@ const DOOR_DISTANCE_RATIO = 0.42;
 
 /**
  * Satin, not mirror. A near-zero clearcoatRoughness turns any directional
- * light into a single blinding blob on a flat panel; spreading the roughness
- * lets the environment wash across the leaf instead, which is what reads as
- * lacquer rather than a spotlight.
+ * light into a single blinding blob on a flat panel; spreading the
+ * roughness lets the environment wash across the leaf instead, which is
+ * what reads as lacquer rather than a spotlight.
  */
 const BLACK_LACQUER = {
-  color: 0x0c0c0c,
-  roughness: 0.48,
+  color: 0x020303,
+  roughness: 0.7,
   metalness: 0,
-  clearcoat: 0.6,
-  clearcoatRoughness: 0.34,
+  clearcoat: 0.1,
+  clearcoatRoughness: 0.62,
 };
 
-// ---------------------------------------------------------------------------
-// Violin f-hole
-// ---------------------------------------------------------------------------
-
-/**
- * An f-hole is a thick S-stroke with a round eye at each end and a pointed
- * nick at the waist, so that is exactly how it is built: one spine curve,
- * offset either side by a varying half-width, capped with semicircles. The
- * spine leaves both eyes vertically, which is what keeps the shape upright
- * rather than splayed.
- */
-const SPINE = new CubicBezierCurve(
-  new Vector2(12, 44),
-  new Vector2(9, 12),
-  new Vector2(-9, -12),
-  new Vector2(-12, -44),
-);
-
-/** Half-width of the stroke alone: thin at the top, fullest below the waist. */
-const SPINE_WIDTHS: readonly (readonly [number, number])[] = [
-  [0, 3.9],
-  [0.22, 4.3],
-  [0.55, 5.6],
-  [0.8, 4.8],
-  [1, 4.2],
-];
-
-/** The eyes are drilled circles, the lower one larger, as on the instrument. */
-const EYE_UPPER = 8;
-const EYE_LOWER = 9.6;
-/** |dP/dt| at either end, which turns t into arclength near the eyes. */
-const SPINE_END_SPEED = 96.4;
-
-const NICK_SIZE = 2.8;
-const NICK_SPAN = 0.034;
-
-function smoothstep(edge0: number, edge1: number, value: number) {
-  const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-}
-
-function strokeWidth(t: number) {
-  let width = SPINE_WIDTHS[SPINE_WIDTHS.length - 1][1];
-  for (let i = 0; i < SPINE_WIDTHS.length - 1; i += 1) {
-    const [t0, w0] = SPINE_WIDTHS[i];
-    const [t1, w1] = SPINE_WIDTHS[i + 1];
-    if (t <= t1) {
-      width = w0 + (w1 - w0) * smoothstep(t0, t1, t);
-      break;
-    }
-  }
-  // The two nicks at the waist, as sharp triangular points.
-  return width + NICK_SIZE * Math.max(0, 1 - Math.abs(t - 0.5) / NICK_SPAN);
-}
-
-/**
- * Near an end the spine is almost straight, so a half-width of
- * sqrt(r^2 - s^2) traces an exact circle of radius r about the eye's centre.
- * Taking the larger of that and the stroke gives a true drilled eye meeting
- * the stroke at a crisp shoulder, still as one continuous outline.
- */
-function eyeWidth(t: number) {
-  const upper = EYE_UPPER ** 2 - (SPINE_END_SPEED * t) ** 2;
-  const lower = EYE_LOWER ** 2 - (SPINE_END_SPEED * (1 - t)) ** 2;
-  return Math.max(
-    upper > 0 ? Math.sqrt(upper) : 0,
-    lower > 0 ? Math.sqrt(lower) : 0,
-  );
-}
-
-function spineWidth(t: number) {
-  return Math.max(strokeWidth(t), eyeWidth(t));
-}
-
-function spineFrame(t: number) {
-  const point = SPINE.getPoint(t);
-  const tangent = SPINE.getTangent(t);
-  return {
-    point,
-    normal: new Vector2(tangent.y, -tangent.x),
-    width: spineWidth(t),
-  };
-}
-
-/** Half-turn cap around a spine end, from `+normal` round to `-normal`. */
-function capPoints(t: number, segments: number) {
-  const { point, normal, width } = spineFrame(t);
-  const from = Math.atan2(normal.y, normal.x) + (t === 0 ? Math.PI : 0);
-  const points: Vector2[] = [];
-  for (let i = 1; i < segments; i += 1) {
-    const angle = from + (Math.PI * i) / segments;
-    points.push(
-      new Vector2(
-        point.x + Math.cos(angle) * width,
-        point.y + Math.sin(angle) * width,
-      ),
-    );
-  }
-  return points;
-}
-
-function createFHoleShape() {
-  const SEGMENTS = 130;
-  const right: Vector2[] = [];
-  const left: Vector2[] = [];
-
-  for (let i = 0; i <= SEGMENTS; i += 1) {
-    const { point, normal, width } = spineFrame(i / SEGMENTS);
-    right.push(
-      new Vector2(point.x + normal.x * width, point.y + normal.y * width),
-    );
-    left.push(
-      new Vector2(point.x - normal.x * width, point.y - normal.y * width),
-    );
-  }
-
-  const outline = [
-    ...right,
-    ...capPoints(1, 16),
-    ...left.reverse(),
-    ...capPoints(0, 16),
-  ];
-
-  // Normalise to unit height, centred, so the mesh can simply be scaled.
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-  for (const point of outline) {
-    minX = Math.min(minX, point.x);
-    maxX = Math.max(maxX, point.x);
-    minY = Math.min(minY, point.y);
-    maxY = Math.max(maxY, point.y);
-  }
-  const scale = 1 / (maxY - minY);
-  const offsetX = (minX + maxX) / 2;
-  const offsetY = (minY + maxY) / 2;
-
-  const shape = new Shape();
-  outline.forEach((point, index) => {
-    const x = (point.x - offsetX) * scale;
-    const y = (point.y - offsetY) * scale;
-    if (index === 0) shape.moveTo(x, y);
-    else shape.lineTo(x, y);
-  });
-  shape.closePath();
-  return shape;
-}
-
-// ---------------------------------------------------------------------------
-// Millwork helpers
-// ---------------------------------------------------------------------------
-
-/** The arch-topped profile used for both the wall opening and the casing. */
+/** The arch-topped profile used for both the wall opening and the portal. */
 function traceOpening(
   path: Shape | Path,
   halfWidth: number,
@@ -258,10 +79,6 @@ function traceOpening(
   path.lineTo(centerX + halfWidth, baseY);
   path.closePath();
 }
-
-// ---------------------------------------------------------------------------
-// Door
-// ---------------------------------------------------------------------------
 
 export interface DoorRect {
   left: number;
@@ -304,6 +121,8 @@ export interface HallwayDoor {
 
 export function createHallwayDoor(
   wallMaterials: [Material, Material],
+  /** Called once the GLB is in the scene and a redraw is needed. */
+  onLoaded: () => void = () => {},
 ): HallwayDoor {
   const geometries: BufferGeometry[] = [];
   const track = <T extends BufferGeometry>(geometry: T) => {
@@ -311,19 +130,28 @@ export function createHallwayDoor(
     return geometry;
   };
 
-  const lacquer = new MeshPhysicalMaterial(BLACK_LACQUER);
-  const gold = new MeshStandardMaterial({
-    color: 0xc9a54e,
-    metalness: 1,
-    roughness: 0.32,
+  const lacquer = new MeshPhysicalMaterial({
+    ...BLACK_LACQUER,
+    envMapIntensity: 0.07,
   });
+  const gold = new MeshStandardMaterial({
+    color: 0x9a6a27,
+    metalness: 1,
+    roughness: 0.4,
+    envMapIntensity: 0.5,
+    emissive: 0x120900,
+    emissiveIntensity: 0.12,
+  });
+  // The reference glazes the fanlight almost black. Leaving it clear let
+  // the corridor's far end shine through the arch as a bright halo.
   const glass = new MeshPhysicalMaterial({
-    color: 0x9ecfc9,
+    color: 0x020708,
     transparent: true,
-    opacity: 0.1,
-    roughness: 0.05,
+    opacity: 0.9,
+    roughness: 0.58,
     metalness: 0,
     depthWrite: false,
+    envMapIntensity: 0.015,
   });
   const portalMaskMaterial = new MeshBasicMaterial({
     colorWrite: false,
@@ -338,30 +166,7 @@ export function createHallwayDoor(
     stencilZFail: KeepStencilOp,
     stencilZPass: ReplaceStencilOp,
   });
-  const recessShadowMaterial = new MeshBasicMaterial({
-    color: 0x000000,
-    transparent: true,
-    opacity: RECESS_SHADOW_OPACITY,
-    depthWrite: false,
-    polygonOffset: true,
-    polygonOffsetFactor: -2,
-    polygonOffsetUnits: -2,
-  });
-  const floorShadowMaterial = new MeshBasicMaterial({
-    color: 0x000000,
-    transparent: true,
-    opacity: 0.34,
-    depthWrite: false,
-    side: DoubleSide,
-  });
-  const materials: Material[] = [
-    lacquer,
-    gold,
-    glass,
-    portalMaskMaterial,
-    recessShadowMaterial,
-    floorShadowMaterial,
-  ];
+  const materials: Material[] = [lacquer, gold, glass, portalMaskMaterial];
 
   const group = new Group();
 
@@ -373,233 +178,85 @@ export function createHallwayDoor(
   const assembly = new Group();
   group.add(assembly);
 
-  const springHeight = DOOR_HEIGHT;
-
-  // This mesh never paints. It writes the doorway silhouette into the stencil
-  // before the corridor is rendered, allowing the shared DOM room to remain
-  // the exact visible entrance wall while WebGL appears only through the arch.
+  // This mesh never paints. It writes the doorway silhouette into the
+  // stencil before the corridor is rendered, so the shared DOM room stays
+  // the visible entrance wall and WebGL appears only through the arch.
   const portalShape = new Shape();
-  traceOpening(portalShape, OPENING_HALF, springHeight, 0);
+  traceOpening(portalShape, DOOR_OPENING_HALF, DOOR_SPRING_Z, 0);
   const portalMask = new Mesh(
     track(new ShapeGeometry(portalShape, 48)),
     portalMaskMaterial,
   );
-  portalMask.position.z = WALL_DEPTH * 0.25;
+  portalMask.position.z = -DOOR_WALL_DEPTH * 0.5;
   portalMask.renderOrder = -1_000;
   assembly.add(portalMask);
 
-  // A slim dark return around the casing supplies the contact shadow that the
-  // transparent WebGL canvas cannot cast onto the DOM-rendered brick wall.
-  // Because it follows the same arch exactly, it reads as the depth of a real
-  // opening rather than as a generic drop shadow around a floating object.
-  const recessShape = new Shape();
-  traceOpening(recessShape, OUTER_HALF + RECESS_GAP, springHeight, 0);
-  const recessHole = new Path();
-  traceOpening(recessHole, OUTER_HALF, springHeight, 0);
-  recessShape.holes.push(recessHole);
-  const recessShadow = new Mesh(
-    track(new ShapeGeometry(recessShape, 48)),
-    recessShadowMaterial,
-  );
-  recessShadow.position.z = WALL_DEPTH * 1.01;
-  assembly.add(recessShadow);
-
-  // The small floor shadow and threshold visually carry the wall opening down
-  // into the checkerboard, anchoring both jambs at the shared room's floor.
-  const floorShadow = new Mesh(
-    track(
-      new PlaneGeometry(
-        (OUTER_HALF + RECESS_GAP * 2.5) * 2,
-        FLOOR_SHADOW_DEPTH,
-      ),
-    ),
-    floorShadowMaterial,
-  );
-  floorShadow.rotation.x = -Math.PI / 2;
-  floorShadow.position.set(0, 0.001, FLOOR_SHADOW_DEPTH * 0.12);
-  assembly.add(floorShadow);
-
-  const threshold = new Mesh(
-    track(
-      new BoxGeometry(
-        (OPENING_HALF + RECESS_GAP * 0.75) * 2,
-        0.012,
-        WALL_DEPTH * 1.1,
-      ),
-    ),
-    lacquer,
-  );
-  threshold.position.set(0, 0.006, WALL_DEPTH * 0.5);
-  assembly.add(threshold);
-
-  const casingShape = new Shape();
-  traceOpening(casingShape, OUTER_HALF, springHeight, 0);
-  const casingHole = new Path();
-  traceOpening(casingHole, OPENING_HALF, springHeight, 0);
-  casingShape.holes.push(casingHole);
-  const casing = new Mesh(
-    track(
-      new ExtrudeGeometry(casingShape, {
-        depth: WALL_DEPTH * 1.25,
-        bevelEnabled: false,
-        curveSegments: 32,
-      }),
-    ),
-    lacquer,
-  );
-  assembly.add(casing);
-
-  const transom = new Mesh(
-    track(new BoxGeometry(OPENING_HALF * 2, TRANSOM, WALL_DEPTH * 1.2)),
-    lacquer,
-  );
-  transom.position.set(0, springHeight, (WALL_DEPTH * 1.2) / 2);
-  assembly.add(transom);
-
-  // --- fanlight: radial muntins plus one concentric arc, over faint glass
-  const fanlight = new Group();
-  fanlight.position.set(0, springHeight, 0);
-  assembly.add(fanlight);
-
-  const paneRadius = OPENING_HALF - MUNTIN / 2;
-  const pane = new Mesh(
-    track(new CircleGeometry(paneRadius, 48, 0, Math.PI)),
-    glass,
-  );
-  pane.position.z = MUNTIN_DEPTH * 0.4;
-  fanlight.add(pane);
-
-  const spokeGeometry = track(
-    new BoxGeometry(MUNTIN, OPENING_HALF, MUNTIN_DEPTH),
-  );
-  const SPOKES = 6;
-  for (let i = 1; i <= SPOKES; i += 1) {
-    const angle = (Math.PI * i) / (SPOKES + 1);
-    const spoke = new Mesh(spokeGeometry, lacquer);
-    spoke.position.set(
-      (Math.cos(angle) * OPENING_HALF) / 2,
-      (Math.sin(angle) * OPENING_HALF) / 2,
-      MUNTIN_DEPTH / 2,
-    );
-    spoke.rotation.z = angle - Math.PI / 2;
-    fanlight.add(spoke);
-  }
-
-  const arcRadius = OPENING_HALF * 0.5;
-  const arcShape = new Shape();
-  arcShape.absarc(0, 0, arcRadius + MUNTIN / 2, 0, Math.PI, false);
-  arcShape.absarc(0, 0, arcRadius - MUNTIN / 2, Math.PI, 0, true);
-  arcShape.closePath();
-  const arc = new Mesh(
-    track(
-      new ExtrudeGeometry(arcShape, {
-        depth: MUNTIN_DEPTH,
-        bevelEnabled: false,
-        curveSegments: 32,
-      }),
-    ),
-    lacquer,
-  );
-  fanlight.add(arc);
-
-  // --- one leaf, built hinge-at-origin, then mirrored for the other
-  const fHoleGeometry = track(
-    new ExtrudeGeometry(createFHoleShape(), {
-      depth: 0.06,
-      bevelEnabled: true,
-      bevelSize: 0.006,
-      bevelThickness: 0.009,
-      bevelSegments: 2,
-      curveSegments: 1,
-    }),
-  );
-
-  function createLeaf(withAstragal: boolean) {
-    const leaf = new Group();
-
-    const slab = new Mesh(
-      track(new BoxGeometry(LEAF_WIDTH, DOOR_HEIGHT, LEAF_DEPTH)),
-      lacquer,
-    );
-    slab.position.set(LEAF_WIDTH / 2, DOOR_HEIGHT / 2, LEAF_DEPTH / 2);
-    leaf.add(slab);
-
-    // Two applied panels, the classic tall-door split.
-    const stile = 0.032;
-    const panelWidth = LEAF_WIDTH - stile * 2;
-    // Panel extents as fractions of the leaf height: a long upper field
-    // over a shorter lower one.
-    const panels = [
-      [0.415, 0.7],
-      [0.04, 0.375],
-    ] as const;
-
-    for (const [bottom, top] of panels) {
-      const height = (top - bottom) * DOOR_HEIGHT;
-      const molding = new Mesh(
-        track(createFrameGeometry(panelWidth, height, 0.016, 0.006)),
-        lacquer,
-      );
-      molding.position.set(
-        LEAF_WIDTH / 2,
-        ((bottom + top) / 2) * DOOR_HEIGHT,
-        LEAF_DEPTH,
-      );
-      leaf.add(molding);
-    }
-
-    if (withAstragal) {
-      // Without this the shut line is a straight slot through to the
-      // corridor, which reads as a bright seam down the middle of the doors.
-      const astragal = new Mesh(
-        track(new BoxGeometry(ASTRAGAL_WIDTH, DOOR_HEIGHT, ASTRAGAL_DEPTH)),
-        lacquer,
-      );
-      astragal.position.set(
-        LEAF_WIDTH + LEAF_GAP,
-        DOOR_HEIGHT / 2,
-        LEAF_DEPTH + ASTRAGAL_DEPTH / 2,
-      );
-      leaf.add(astragal);
-    }
-
-    const handle = new Mesh(fHoleGeometry, gold);
-    handle.scale.setScalar(HANDLE_HEIGHT);
-    handle.position.set(
-      LEAF_WIDTH - HANDLE_INSET,
-      HANDLE_CENTRE * DOOR_HEIGHT,
-      LEAF_DEPTH,
-    );
-    leaf.add(handle);
-
-    return leaf;
-  }
-
-  const leafZ = WALL_DEPTH - LEAF_SETBACK - LEAF_DEPTH;
-
+  // --- the modelled door itself
   const leftHinge = new Object3D();
-  leftHinge.position.set(-OPENING_HALF, 0, leafZ);
-  leftHinge.add(createLeaf(true));
-  assembly.add(leftHinge);
-
   const rightHinge = new Object3D();
-  rightHinge.position.set(OPENING_HALF, 0, leafZ);
-  // A negative scale mirrors the leaf and its f-hole in one step; three
-  // flips the winding order for us, so the lighting stays correct.
-  rightHinge.scale.x = -1;
-  rightHinge.add(createLeaf(false));
-  assembly.add(rightHinge);
+  assembly.add(leftHinge, rightHinge);
 
-  // The jamb behind the leaves. Any perimeter gap now shows this rebate
-  // rather than a slice of lit corridor.
-  const stop = new Mesh(
-    track(
-      createFrameGeometry(OPENING_HALF * 2, springHeight, 0.02, leafZ * 0.9, 0),
-    ),
+  // The authored leaves stop just short of the centre line. Without a real
+  // astragal that hairline exposes the bright checkerboard behind the door,
+  // which aliases into the white dashed seam visible in screenshots.
+  const astragal = new Mesh(
+    track(new BoxGeometry(0.006, 0.596, 0.014)),
     lacquer,
   );
-  stop.position.set(0, springHeight / 2, 0);
-  assembly.add(stop);
+  astragal.position.set(0.247, 0.3894, -0.022);
+  leftHinge.add(astragal);
+
+  let loadedRoot: Object3D | null = null;
+
+  new GLTFLoader().load(
+    withBase(DOOR_MODEL_PATH),
+    (gltf) => {
+      const root = gltf.scene;
+      loadedRoot = root;
+
+      // The exporter writes Blender's material names through, which is the
+      // contract the build script promises. Overriding by name keeps the
+      // real-time look in code, where it can be tuned against the corridor
+      // rather than against Cycles.
+      root.traverse((object) => {
+        if (!(object instanceof Mesh)) return;
+        object.frustumCulled = false;
+        const current = Array.isArray(object.material)
+          ? object.material[0]
+          : object.material;
+        const name = current?.name ?? '';
+        if (name === 'Gold') object.material = gold;
+        else if (name === 'Glass') object.material = glass;
+        else object.material = lacquer;
+        track(object.geometry);
+      });
+
+      // Reparent the leaves under our own hinge objects. The GLB already
+      // places its hinge empties on the stiles, so the swing axis comes
+      // straight from the model and no offset has to be guessed here.
+      for (const [name, hinge] of [
+        ['HingeL', leftHinge],
+        ['HingeR', rightHinge],
+      ] as const) {
+        const source = root.getObjectByName(name);
+        if (!source) continue;
+        hinge.position.copy(source.position);
+        for (const child of [...source.children]) hinge.add(child);
+        source.removeFromParent();
+      }
+
+      // Whatever is left is the static surround and its glazing.
+      assembly.add(root);
+      onLoaded();
+    },
+    undefined,
+    (error) => {
+      // No model: the arch still cuts a real hole in the wall and every
+      // interaction keeps working, so this degrades to an open doorway
+      // rather than to a broken page.
+      console.warn('Entrance door model unavailable', error);
+    },
+  );
 
   // --- layout state
   const MAX_SWING = (Math.PI / 180) * 96;
@@ -627,8 +284,8 @@ export function createHallwayDoor(
     // `Vector3.unproject()` reads camera.matrixWorld directly. On the first
     // page load the renderer has not drawn a frame yet, so it has not had a
     // chance to update that matrix for the camera's new z position. Without
-    // this explicit update the fixed 680px anchor collapses to roughly one
-    // world unit and the doorway appears completely blank.
+    // this explicit update the DOM anchor collapses to roughly one world
+    // unit and the doorway appears completely blank.
     camera.updateMatrixWorld(true);
 
     const pointOnDoorPlane = (clientX: number, clientY: number) => {
@@ -664,7 +321,9 @@ export function createHallwayDoor(
     laidOut = signature;
 
     // The wall spans the corridor with a little overlap so no seam can show
-    // at the corners, and carries the casing's outline as its opening.
+    // at the corners, and carries the pilaster line as its opening. The
+    // impost blocks and base plinth are wider than that on purpose: they
+    // lap onto the wall face, which is how applied trim actually sits.
     const panelHalfWidth = halfWidth + 24;
     const shape = new Shape();
     shape.moveTo(-panelHalfWidth, -halfHeight);
@@ -676,8 +335,8 @@ export function createHallwayDoor(
     const hole = new Path();
     traceOpening(
       hole,
-      OUTER_HALF * scale,
-      floorY + springHeight * scale,
+      DOOR_OUTER_HALF * scale,
+      floorY + DOOR_SPRING_Z * scale,
       floorY,
       centerX,
     );
@@ -685,10 +344,15 @@ export function createHallwayDoor(
 
     wall.geometry.dispose();
     wall.geometry = new ExtrudeGeometry(shape, {
-      depth: WALL_DEPTH * scale,
+      depth: DOOR_WALL_DEPTH * scale,
       bevelEnabled: false,
       curveSegments: 48,
     });
+    // ExtrudeGeometry always grows along +z. Pulling the wall back by its
+    // own depth puts its face on the assembly's z = 0 -- the same plane the
+    // casing's face sits on -- so the door is flush with the brick instead
+    // of floating in front of it, and only the mouldings stand proud.
+    wall.position.z = -DOOR_WALL_DEPTH * scale;
   }
 
   function setOpen(amount: number) {
@@ -722,7 +386,7 @@ export function createHallwayDoor(
     },
     project(camera, viewWidth, viewHeight) {
       const z = group.position.z;
-      const halfWidth = OPENING_HALF * scale;
+      const halfWidth = DOOR_OPENING_HALF * scale;
       const top = floorY + scale;
       const corners = [
         new Vector3(centerX - halfWidth, floorY, z),
@@ -740,6 +404,7 @@ export function createHallwayDoor(
     },
     dispose() {
       wall.geometry.dispose();
+      loadedRoot?.removeFromParent();
       for (const geometry of geometries) geometry.dispose();
       for (const material of materials) material.dispose();
     },

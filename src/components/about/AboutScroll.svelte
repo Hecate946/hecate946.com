@@ -50,7 +50,6 @@
       <div class="page-scroll-paper__sheet about-scroll-paper__sheet">
         <div
           class="page-scroll-paper__viewport about-scroll-paper__viewport"
-          tabindex="0"
           aria-label="About content"
         >
           <header class="page-scroll-header about-scroll-header">

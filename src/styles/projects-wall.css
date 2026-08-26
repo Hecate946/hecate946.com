@@ -13,11 +13,11 @@ body.projects-wall-page,
 
 .project-index {
   --project-grid-line: var(--paper-rule);
-  --project-hover: color-mix(in srgb, var(--paper-accent) 5%, transparent);
+  --project-hover: color-mix(in srgb, var(--paper-accent) 7%, transparent);
 }
 
 .project-scroll-viewport {
-  padding-inline: clamp(1.45rem, 3.5vw, 2.7rem);
+  padding-inline: 0;
 }
 
 .project-sheet-scroll {
@@ -44,18 +44,21 @@ body.projects-wall-page,
 }
 
 .project-sheet__name-column {
-  width: 36%;
+  width: 42%;
 }
 
 .project-sheet__description-column {
-  width: 64%;
+  width: 58%;
+}
+
+.project-sheet thead {
+  display: none;
 }
 
 .project-sheet th,
 .project-sheet td {
-  padding: clamp(0.78rem, 1.35vw, 1.05rem) clamp(0.65rem, 1.2vw, 0.95rem);
-  border-right: 1px solid var(--project-grid-line);
-  border-bottom: 1px solid var(--project-grid-line);
+  padding: clamp(0.66rem, 1.2vw, 0.82rem) 0;
+  border-bottom: 1px dotted var(--project-grid-line);
   color: var(--paper-ink);
   font-size: clamp(0.94rem, 1vw, 1rem);
   font-weight: 400;
@@ -67,16 +70,11 @@ body.projects-wall-page,
 }
 
 .project-sheet tr > :first-child {
-  border-left: 1px solid var(--project-grid-line);
+  padding-right: clamp(1rem, 3vw, 2rem);
 }
 
-.project-sheet thead th {
-  border-top: 1px solid var(--project-grid-line);
-  color: var(--paper-accent);
-  font-size: clamp(0.82rem, 0.9vw, 0.9rem);
-  font-weight: 700;
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
+.project-sheet tbody tr:first-child > * {
+  border-top: 1px dotted var(--project-grid-line);
 }
 
 .project-sheet thead th,
@@ -112,8 +110,8 @@ body.projects-wall-page,
   gap: 0.75rem;
   color: var(--paper-ink);
   font-size: clamp(0.88rem, 1vw, 0.96rem);
-  font-weight: 700;
-  letter-spacing: 0.055em;
+  font-weight: 600;
+  letter-spacing: 0.045em;
   line-height: 1.2;
   text-decoration: none;
   text-transform: uppercase;
@@ -139,8 +137,7 @@ body.projects-wall-page,
 }
 
 .project-sheet__name-title {
-  text-decoration-line: underline;
-  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-line: none;
   text-decoration-thickness: 0.07em;
   text-underline-offset: 0.25em;
 }
@@ -168,6 +165,11 @@ body.projects-wall-page,
 .project-sheet__name:focus-visible .project-sheet__name-title,
 .project-sheet tbody tr:hover .project-sheet__name-title {
   text-decoration-color: currentColor;
+  text-decoration-line: underline;
+}
+
+.project-sheet__description {
+  color: var(--paper-muted) !important;
 }
 
 .project-sheet__name:hover .project-sheet__name-action,
@@ -184,13 +186,13 @@ body.projects-wall-page,
 
 @media (max-width: 64rem) {
   .project-scroll-viewport {
-    padding-inline: clamp(1.25rem, 3vw, 2rem);
+    padding-inline: 0;
   }
 }
 
 @media (max-width: 40rem) {
   .project-scroll-viewport {
-    padding-inline: clamp(0.9rem, 3.8vw, 1.2rem);
+    padding-inline: 0;
   }
 
   .project-sheet {
@@ -199,7 +201,8 @@ body.projects-wall-page,
 
   .project-sheet th,
   .project-sheet td {
-    padding: 0.72rem 0.6rem;
+    padding-block: 0.72rem;
+    padding-inline: 0;
     font-size: 0.88rem;
   }
 
@@ -209,11 +212,11 @@ body.projects-wall-page,
   }
 
   .project-sheet__name-column {
-    width: 42%;
+    width: 43%;
   }
 
   .project-sheet__description-column {
-    width: 58%;
+    width: 57%;
   }
 }
 

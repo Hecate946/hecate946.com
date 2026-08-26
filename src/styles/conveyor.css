@@ -3,6 +3,9 @@
   --hallway-half-width: max(55vw, 29rem);
   --hallway-half-height: max(58vh, 23rem);
   --hallway-grout-color: rgb(255 255 255 / 12%);
+  /* The corridor's far cap. Also the fog colour, so the walls dissolve
+     into it instead of meeting it at a visible edge. */
+  --hallway-end-color: #fff;
   --hallway-painting-width: 420px;
   --hallway-painting-height: 546px;
   --wall-control-bottom-gap: clamp(0.7rem, 1.7vh, 1.05rem);
@@ -25,6 +28,11 @@
 
 html[data-theme='light'] .wall-stage {
   --hallway-grout-color: rgb(7 31 35 / 14%);
+  --hallway-end-color: #fff;
+}
+
+html[data-theme='dark'] .wall-stage {
+  --hallway-end-color: #0b1c33;
 }
 
 /*
@@ -40,6 +48,8 @@ html[data-theme='light'] .wall-stage {
   width: var(--hallway-half-width);
   height: var(--hallway-half-height);
   border: 0 solid;
+  outline: 0 solid;
+  outline-color: var(--hallway-end-color);
   border-top-color: var(--wall-baseboard);
   border-right-color: var(--wall-trim-line);
   border-bottom-color: var(--hallway-grout-color);
@@ -69,6 +79,109 @@ html[data-theme='light'] .wall-stage {
 .home-door-anchor {
   left: 50%;
   transform: translateX(-50%);
+}
+
+/*
+ * A small server-rendered first frame keeps the entrance present before the
+ * deferred renderer is ready. It is deliberately restrained: no external
+ * outline or cast shadow, only a dark installed door occupying the same DOM
+ * anchor as the WebGL model.
+ */
+.home-door-first-frame {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: calc(100% - var(--floor-seam-top));
+  width: min(calc(100vw - 24px), 43vh);
+  height: min(
+    calc(var(--floor-seam-top) - var(--header-height) - 5vh),
+    calc((100vw - 24px) / 0.6428)
+  );
+  min-height: 1px;
+  overflow: hidden;
+  border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+  background: #010202;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 120ms linear;
+}
+
+.home-door-first-frame__fanlight {
+  position: absolute;
+  inset: 2.2% 2.2% 31.2%;
+  border-bottom: 2px solid #090b0b;
+  border-radius: 50% 50% 0 0 / 28% 28% 0 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.45%,
+      #0a0c0c 49.45% 50.55%,
+      transparent 50.55%
+    ),
+    repeating-linear-gradient(90deg, transparent 0 19.5%, #0a0c0c 19.5% 20.5%);
+  background-color: #020607;
+}
+
+.home-door-first-frame__leaves {
+  position: absolute;
+  inset: 31.4% 2.2% 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: #050606;
+}
+
+.home-door-first-frame__leaves span {
+  position: relative;
+  background:
+    linear-gradient(
+      90deg,
+      rgb(255 255 255 / 2.5%),
+      transparent 12% 88%,
+      rgb(0 0 0 / 38%)
+    ),
+    #010202;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 3%);
+}
+
+.home-door-first-frame__leaves i {
+  position: absolute;
+  right: 12%;
+  left: 12%;
+  height: 34%;
+  border: 1px solid rgb(255 255 255 / 3.5%);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 30%);
+}
+
+.home-door-first-frame__leaves i:first-child {
+  top: 8%;
+}
+.home-door-first-frame__leaves i:nth-child(2) {
+  bottom: 8%;
+}
+
+.home-door-first-frame__leaves svg {
+  position: absolute;
+  z-index: 1;
+  top: 29%;
+  right: 4%;
+  width: 10%;
+  height: 31%;
+  fill: #a9782f;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 80%));
+}
+
+.home-door-first-frame__leaves span:last-child svg {
+  right: auto;
+  left: 4%;
+  transform: scaleX(-1);
+}
+
+.wall-stage--door-ready .home-door-first-frame {
+  opacity: 0;
 }
 
 .home-floor-seam-probe {
@@ -102,6 +215,14 @@ html[data-theme='light'] .wall-stage {
   perspective-origin: 50% 49%;
   opacity: 1;
   pointer-events: none;
+  transition: opacity 180ms ease-out;
+}
+
+/* Keep the exact CSS room intact while Three.js and the GLB initialize.
+   Revealing the transparent canvas earlier exposes the portal before its
+   leaves exist, producing the empty arch/black flash seen on hard reload. */
+.wall-stage--entrance:not(.wall-stage--door-ready) .hallway-scene {
+  opacity: 0;
 }
 
 .wall-stage--hallway .hallway-scene {
@@ -339,6 +460,7 @@ html[data-theme='light'] .wall-stage {
 
 @media (prefers-reduced-motion: reduce) {
   .hallway-scene,
+  .home-door-first-frame,
   .wall-navigation-hint,
   .wall-corner-control {
     transition: none;

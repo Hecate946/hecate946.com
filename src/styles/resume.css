@@ -13,7 +13,7 @@ body.resume-wall-page,
 }
 
 .resume-scroll-viewport {
-  padding-inline: clamp(1.2rem, 2.8vw, 2.35rem);
+  padding-inline: 0;
 }
 
 .resume-gallery {
@@ -30,6 +30,8 @@ body.resume-wall-page,
   justify-content: space-between;
   gap: 1rem;
   color: var(--paper-ink);
+  padding-bottom: 0.7rem;
+  border-bottom: 1px dotted var(--paper-rule);
 }
 
 .resume-switcher__tabs {
@@ -130,9 +132,9 @@ body.resume-wall-page,
 }
 
 .resume-scroll__sheet {
-  overflow: hidden;
-  border: 1px solid var(--paper-rule);
-  background: #fff;
+  overflow: visible;
+  border: 0;
+  background: transparent;
 }
 
 .resume-scroll:focus-visible {
@@ -142,13 +144,13 @@ body.resume-wall-page,
 
 @media (max-width: 64rem) {
   .resume-scroll-viewport {
-    padding-inline: clamp(1.1rem, 2.7vw, 1.8rem);
+    padding-inline: 0;
   }
 }
 
 @media (max-width: 40rem) {
   .resume-scroll-viewport {
-    padding-inline: clamp(0.85rem, 3.5vw, 1.1rem);
+    padding-inline: 0;
   }
 
   .resume-gallery {

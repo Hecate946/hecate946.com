@@ -6,7 +6,6 @@ import ThemeBootstrap from '@/components/core/ThemeBootstrap.astro';
 import SharedRoomBackdrop from '@/features/wall/SharedRoomBackdrop.svelte';
 import PrimaryRoomEngine from '@/features/room/PrimaryRoomEngine.svelte';
 import { ClientRouter } from 'astro:transitions';
-import { WALL_START_X } from '@/features/wall/wall-config';
 import '@/styles/global.css';
 // Keep the primary room styles resident from the first paint. Astro's client
 // router otherwise has to wait for route-specific stylesheets during a swap,
@@ -76,7 +75,10 @@ const roomThemeClass = pathname.startsWith('/about')
         ? 'room-theme-contact'
         : undefined;
 
-const primaryRoomInitialCameraX = normalizedPathname === '/' ? WALL_START_X : 0;
+// Every primary room starts from the same world coordinate. Home previously
+// republished a viewport-dependent camera after hydration, which shifted the
+// bricks and checkerboard on reload and made them disagree with About.
+const primaryRoomInitialCameraX = 0;
 
 const hasSiteRoomBackdrop = !isPrimaryRoom;
 ---

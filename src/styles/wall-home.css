@@ -64,17 +64,41 @@ body.wall-home-page .wall-home-main {
 body.wall-home-page .wall-baseboard {
   -webkit-mask-image: linear-gradient(
     to right,
-    #000 0 calc(50% - var(--home-door-cutout-half, 0px)),
-    transparent calc(50% - var(--home-door-cutout-half, 0px))
-      calc(50% + var(--home-door-cutout-half, 0px)),
-    #000 calc(50% + var(--home-door-cutout-half, 0px)) 100%
+    #000 0
+      calc(
+        50% - var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
+      ),
+    transparent
+      calc(
+        50% - var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
+      )
+      calc(
+        50% + var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
+      ),
+    #000
+      calc(
+        50% + var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
+      )
+      100%
   );
   mask-image: linear-gradient(
     to right,
-    #000 0 calc(50% - var(--home-door-cutout-half, 0px)),
-    transparent calc(50% - var(--home-door-cutout-half, 0px))
-      calc(50% + var(--home-door-cutout-half, 0px)),
-    #000 calc(50% + var(--home-door-cutout-half, 0px)) 100%
+    #000 0
+      calc(
+        50% - var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
+      ),
+    transparent
+      calc(
+        50% - var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
+      )
+      calc(
+        50% + var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
+      ),
+    #000
+      calc(
+        50% + var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
+      )
+      100%
   );
 }
 
