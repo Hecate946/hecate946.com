@@ -89,14 +89,22 @@
   margin-top: 1.18em;
 }
 
+/* Lower the opening line while lifting the initial back to the portrait top.
+   This gives the H a true shared baseline instead of top-aligning "i, I'm". */
+.about-scroll-intro__lead {
+  padding-top: 0.55em;
+}
+
 .about-scroll-intro__lead::first-letter {
   float: left;
-  margin: 0.015em 0.06em 0 0;
+  margin: -0.18em 0.07em 0 0;
   color: var(--paper-accent);
-  font-size: 3.05em;
-  font-weight: 400;
-  line-height: 0.78;
-  letter-spacing: -0.045em;
+  font-size: 2.75em;
+  font-weight: 600;
+  /* One text-line float box: the glyph stays tall, but line two can begin
+     directly beneath it instead of remaining indented to its right. */
+  line-height: 0.55;
+  letter-spacing: -0.035em;
 }
 
 .about-scroll-sections {
