@@ -81,6 +81,7 @@
   let reducedMotion = false;
   let revealFrame = 0;
   let themeRefreshFrame = 0;
+  let resizeFrame = 0;
 
   function modulo(value: number, period: number) {
     return ((value % period) + period) % period;
@@ -116,6 +117,14 @@
     hallway?.resize();
     lastRenderedCameraZ = Number.NaN;
     renderCamera(true);
+  }
+
+  function scheduleRenderStateRefresh() {
+    if (resizeFrame) return;
+    resizeFrame = requestAnimationFrame(() => {
+      resizeFrame = 0;
+      refreshRenderState();
+    });
   }
 
   function scheduleThemeRefresh() {
@@ -538,7 +547,9 @@
     stage.addEventListener('pointerleave', onPointerLeave);
     window.addEventListener('keydown', onKeydown);
     window.addEventListener('blur', onWindowBlur);
-    window.addEventListener('resize', refreshRenderState, { passive: true });
+    window.addEventListener('resize', scheduleRenderStateRefresh, {
+      passive: true,
+    });
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('pageshow', restoreHallwayAfterHistoryNavigation);
 
@@ -554,7 +565,7 @@
       stage.removeEventListener('pointerleave', onPointerLeave);
       window.removeEventListener('keydown', onKeydown);
       window.removeEventListener('blur', onWindowBlur);
-      window.removeEventListener('resize', refreshRenderState);
+      window.removeEventListener('resize', scheduleRenderStateRefresh);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener(
         'pageshow',
@@ -563,6 +574,7 @@
       cancelAnimationFrame(rafId);
       cancelAnimationFrame(revealFrame);
       cancelAnimationFrame(themeRefreshFrame);
+      cancelAnimationFrame(resizeFrame);
       themeObserver.disconnect();
       document.removeEventListener('hecate:theme-change', scheduleThemeRefresh);
       hallway?.dispose();

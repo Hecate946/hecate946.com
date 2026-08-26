@@ -117,8 +117,10 @@ function paintHeaderLabel(
   const pixelWidth = Math.max(1, Math.round(width * pixelRatio));
   const pixelHeight = Math.max(1, Math.round(height * pixelRatio));
   const resized = canvas.width !== pixelWidth || canvas.height !== pixelHeight;
-  canvas.width = pixelWidth;
-  canvas.height = pixelHeight;
+  if (resized) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
 
   const context = canvas.getContext('2d');
   if (!context) return resized;
@@ -163,6 +165,8 @@ interface PaintingParts {
   labelMap: CanvasTexture;
   imageMap: Texture;
   distance: number;
+  opacity: number;
+  readonly materials: readonly MeshBasicMaterial[];
 }
 
 export interface HallwayPaintings {
@@ -193,10 +197,14 @@ export function createHallwayPaintings(
   const raycaster = new Raycaster();
   const geometries: BufferGeometry[] = [];
   const parts: PaintingParts[] = [];
+  const placeholderGeometry = new BufferGeometry();
+  geometries.push(placeholderGeometry);
 
   let hingeForwardOffset = 0;
   /** Frame aspect, kept so textures that decode later can still be fitted. */
   let glassAspect = 1;
+  let previousFrameWidth = Number.NaN;
+  let previousFrameHeight = Number.NaN;
 
   for (const spec of specs) {
     const root = new Object3D();
@@ -221,14 +229,14 @@ export function createHallwayPaintings(
     );
 
     const frame = new Mesh(
-      new BufferGeometry(),
+      placeholderGeometry,
       new MeshBasicMaterial({ color: FRAME_COLOR, transparent: true }),
     );
     const image = new Mesh(
-      new BufferGeometry(),
+      placeholderGeometry,
       new MeshBasicMaterial({ map: imageMap, transparent: true }),
     );
-    const header = new Mesh(new BufferGeometry(), frame.material);
+    const header = new Mesh(placeholderGeometry, frame.material);
     const labelCanvas = document.createElement('canvas');
     const labelMap = new CanvasTexture(labelCanvas);
     labelMap.colorSpace = SRGBColorSpace;
@@ -239,7 +247,7 @@ export function createHallwayPaintings(
     labelMap.generateMipmaps = true;
     labelMap.anisotropy = 8;
     const label = new Mesh(
-      new BufferGeometry(),
+      placeholderGeometry,
       // No polygon offset: the label is recessed inside the header's opening
       // now, so pulling it towards the camera would push it through the bevel.
       new MeshBasicMaterial({
@@ -266,8 +274,16 @@ export function createHallwayPaintings(
       labelMap,
       imageMap,
       distance: Infinity,
+      opacity: Number.NaN,
+      materials: [frame.material, image.material, label.material],
     });
   }
+
+  const pickTargets = parts.flatMap((part) => [
+    part.image,
+    part.header,
+    part.label,
+  ]);
 
   function layout(
     halfWidth: number,
@@ -283,39 +299,47 @@ export function createHallwayPaintings(
     const labelHeight = headerHeight - FRAME_BORDER * 2;
     glassAspect = glassWidth / glassHeight;
     hingeForwardOffset = frameWidth / 2;
+    const geometryChanged =
+      frameWidth !== previousFrameWidth || frameHeight !== previousFrameHeight;
 
-    for (const geometry of geometries) geometry.dispose();
-    geometries.length = 0;
+    let frameGeometry: BufferGeometry | undefined;
+    let glassGeometry: BufferGeometry | undefined;
+    let headerGeometry: BufferGeometry | undefined;
+    let labelGeometry: BufferGeometry | undefined;
 
-    const frameGeometry = createFrameGeometry(
-      frameWidth,
-      frameHeight,
-      FRAME_BORDER,
-      FRAME_DEPTH,
-      2.2,
-    );
-    const glassGeometry = new PlaneGeometry(glassWidth, glassHeight);
-    // The header is the same millwork as the frame below it, not a slab laid
-    // on top of it. A BoxGeometry of FRAME_DEPTH is centred on z, so its face
-    // sat at z = FRAME_DEPTH / 2 while the extruded frame -- which carries a
-    // bevel on each end -- reached z = FRAME_DEPTH + bevel. The header
-    // therefore read as a thinner plate set back from the frame. Extruding it
-    // through the identical call makes the two profiles literally the same
-    // moulding: same depth, same bevel, same border, one flush outer edge.
-    const headerGeometry = createFrameGeometry(
-      frameWidth,
-      headerHeight,
-      FRAME_BORDER,
-      FRAME_DEPTH,
-      2.2,
-    );
-    const labelGeometry = new PlaneGeometry(labelWidth, labelHeight);
-    geometries.push(
-      frameGeometry,
-      glassGeometry,
-      headerGeometry,
-      labelGeometry,
-    );
+    if (geometryChanged) {
+      for (const geometry of geometries) geometry.dispose();
+      geometries.length = 0;
+
+      frameGeometry = createFrameGeometry(
+        frameWidth,
+        frameHeight,
+        FRAME_BORDER,
+        FRAME_DEPTH,
+        2.2,
+      );
+      glassGeometry = new PlaneGeometry(glassWidth, glassHeight);
+      // The header is the same millwork as the frame below it, not a slab laid
+      // on top of it. Extruding it through the identical call makes the two
+      // profiles literally the same moulding: same depth, same bevel, one
+      // flush outer edge.
+      headerGeometry = createFrameGeometry(
+        frameWidth,
+        headerHeight,
+        FRAME_BORDER,
+        FRAME_DEPTH,
+        2.2,
+      );
+      labelGeometry = new PlaneGeometry(labelWidth, labelHeight);
+      geometries.push(
+        frameGeometry,
+        glassGeometry,
+        headerGeometry,
+        labelGeometry,
+      );
+      previousFrameWidth = frameWidth;
+      previousFrameHeight = frameHeight;
+    }
 
     for (const [index, part] of parts.entries()) {
       const side = specs[index].side;
@@ -329,21 +353,21 @@ export function createHallwayPaintings(
       // point inward instead of burying half the frame in the brickwork.
       const centreFromHinge =
         side === 'left' ? frameWidth / 2 : -frameWidth / 2;
-      part.frame.geometry = frameGeometry;
+      if (frameGeometry) part.frame.geometry = frameGeometry;
       part.frame.position.set(centreFromHinge, -headerHeight / 2, 0);
 
-      part.image.geometry = glassGeometry;
+      if (glassGeometry) part.image.geometry = glassGeometry;
       part.image.position.set(
         centreFromHinge,
         -headerHeight / 2,
         FRAME_DEPTH * 0.35,
       );
-      applyCover(part.imageMap, glassAspect);
+      if (geometryChanged) applyCover(part.imageMap, glassAspect);
 
-      part.header.geometry = headerGeometry;
+      if (headerGeometry) part.header.geometry = headerGeometry;
       part.header.position.set(centreFromHinge, frameHeight / 2, 0);
 
-      part.label.geometry = labelGeometry;
+      if (labelGeometry) part.label.geometry = labelGeometry;
       // The header now has a real opening, so the label sits inside it at the
       // artwork's depth instead of floating in front of a solid face.
       part.label.position.set(
@@ -351,13 +375,15 @@ export function createHallwayPaintings(
         frameHeight / 2,
         FRAME_DEPTH * 0.35,
       );
-      const labelResized = paintHeaderLabel(
-        part.labelCanvas,
-        specs[index].label,
-        labelWidth,
-        labelHeight,
-        Math.max(2.5, pixelRatio),
-      );
+      const labelResized = geometryChanged
+        ? paintHeaderLabel(
+            part.labelCanvas,
+            specs[index].label,
+            labelWidth,
+            labelHeight,
+            Math.max(2.5, pixelRatio),
+          )
+        : false;
 
       // The label canvas is sized from the frame, so it changes whenever the
       // responsive frame width does. WebGL allocates a canvas texture's
@@ -367,7 +393,7 @@ export function createHallwayPaintings(
       // titles stacked above one painting. Disposing forces the next render to
       // allocate storage at the current size.
       if (labelResized) part.labelMap.dispose();
-      part.labelMap.needsUpdate = true;
+      if (geometryChanged) part.labelMap.needsUpdate = true;
     }
   }
 
@@ -396,8 +422,9 @@ export function createHallwayPaintings(
         smoothstep(80, 240, distance) *
         Math.max(0.02, 1 - smoothstep(FADE_FAR_START, FADE_FAR_END, distance));
       part.root.visible = opacity > 0.02;
-      for (const mesh of [part.frame, part.image, part.header, part.label]) {
-        mesh.material.opacity = opacity;
+      if (opacity !== part.opacity) {
+        part.opacity = opacity;
+        for (const material of part.materials) material.opacity = opacity;
       }
     }
   }
@@ -408,15 +435,15 @@ export function createHallwayPaintings(
     update,
     pick(ndc, camera) {
       raycaster.setFromCamera(ndc, camera);
-      const targets = parts
-        .filter(
-          (part) =>
-            part.root.visible &&
-            part.distance > PICKABLE_NEAR &&
-            part.distance < PICKABLE_FAR,
-        )
-        .flatMap((part) => [part.image, part.header, part.label]);
-      const hit = raycaster.intersectObjects(targets, false)[0];
+      const hit = raycaster.intersectObjects(pickTargets, false).find((hit) => {
+        const index = hit.object.userData.paintingIndex as number;
+        const part = parts[index];
+        return (
+          part.root.visible &&
+          part.distance > PICKABLE_NEAR &&
+          part.distance < PICKABLE_FAR
+        );
+      });
       return hit ? (hit.object.userData.paintingIndex as number) : -1;
     },
     setHovered(index: number) {

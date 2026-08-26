@@ -340,6 +340,9 @@ export function createHallwayScene(options: {
   const scene = new Scene();
   const camera = new PerspectiveCamera();
   const fog = new Fog(0x000000, 1, 2);
+  const pointerNdc = new Vector2();
+  const seamPoint = new Vector3();
+  const seamDirection = new Vector3();
   scene.fog = fog;
 
   const leftWallCanvas = document.createElement('canvas');
@@ -428,6 +431,8 @@ export function createHallwayScene(options: {
 
   let wallHeight = 0;
   let paintedWallHeight = -1;
+  let renderedWidth = -1;
+  let renderedHeight = -1;
 
   function refreshTheme() {
     const palette = readPalette(probe);
@@ -510,17 +515,16 @@ export function createHallwayScene(options: {
     // This preserves the exact first-frame handoff without using doorway
     // geometry as an indirect floor measurement.
     camera.updateMatrixWorld(true);
-    const seamPoint = new Vector3(
+    seamPoint.set(
       0,
       -(((floorSeamRect.top - viewportRect.top) / height) * 2 - 1),
       0,
-    ).unproject(camera);
-    const seamDirection = seamPoint.sub(camera.position);
+    );
+    seamPoint.unproject(camera);
+    seamDirection.copy(seamPoint).sub(camera.position);
     const seamDistance =
       (FLOOR_SEAM_REFERENCE_Z - camera.position.z) / seamDirection.z;
-    const projectedFloor = camera.position
-      .clone()
-      .addScaledVector(seamDirection, seamDistance).y;
+    const projectedFloor = camera.position.y + seamDirection.y * seamDistance;
     const floorY = Number.isFinite(projectedFloor)
       ? projectedFloor
       : -halfHeight;
@@ -548,7 +552,11 @@ export function createHallwayScene(options: {
       frame.width,
       frame.height,
     );
-    renderer.setSize(width, height, false);
+    if (width !== renderedWidth || height !== renderedHeight) {
+      renderer.setSize(width, height, false);
+      renderedWidth = width;
+      renderedHeight = height;
+    }
     if (wallHeight !== paintedWallHeight) refreshTheme();
   }
 
@@ -572,13 +580,11 @@ export function createHallwayScene(options: {
     pickPainting(clientX: number, clientY: number) {
       const rect = viewport.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return -1;
-      return paintings.pick(
-        new Vector2(
-          ((clientX - rect.left) / rect.width) * 2 - 1,
-          -(((clientY - rect.top) / rect.height) * 2 - 1),
-        ),
-        camera,
+      pointerNdc.set(
+        ((clientX - rect.left) / rect.width) * 2 - 1,
+        -(((clientY - rect.top) / rect.height) * 2 - 1),
       );
+      return paintings.pick(pointerNdc, camera);
     },
     setHoveredPainting(index: number) {
       paintings.setHovered(index);

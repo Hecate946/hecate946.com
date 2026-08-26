@@ -1,5 +1,5 @@
 ---
-import AboutScroll from '@/components/about/AboutScroll.svelte';
+import AboutScroll from '@/components/about/AboutScroll.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { pdfViewerHref, withBase } from '@/lib/paths';
 
@@ -26,7 +26,6 @@ const chessProfileUrl = 'https://www.chess.com/member/Cyrus2020SD/stats?time=0';
   bodyClass="about-room-page"
 >
   <AboutScroll
-    client:load
     {portraitUrl}
     {softwareResumeUrl}
     {projectsUrl}

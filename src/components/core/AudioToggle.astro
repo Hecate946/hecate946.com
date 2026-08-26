@@ -1,0 +1,128 @@
+---
+import { withBase } from '@/lib/paths';
+
+const musicUrl = withBase('/audio/brahms-violin-sonata-no-3-mvt-3.mp3');
+const pieceTitle =
+  'Johannes Brahms — Violin Sonata No. 3 in D minor, Op. 108 — III. Un poco presto e con sentimento';
+---
+
+<div
+  class="audio-control"
+  data-audio-control
+  data-music-url={musicUrl}
+  data-piece-title={pieceTitle}
+  transition:persist="global-audio-toggle"
+>
+  <audio preload="none" loop hidden></audio>
+
+  <button
+    type="button"
+    class="header-action audio-action"
+    aria-label="Play background music"
+    aria-pressed="false"
+    title={`Play ${pieceTitle}`}
+  >
+    <span class="header-action-icon audio-icon" aria-hidden="true">
+      <svg
+        data-audio-playing-icon
+        style="display: none"
+        viewBox="0 0 24 24"
+        width="24"
+        height="24"
+        focusable="false"
+      >
+        <path d="M5 9.5h3.4L13 5.8v12.4l-4.6-3.7H5z" fill="currentColor"></path>
+        <path d="M16.2 9.1a4.1 4.1 0 0 1 0 5.8M18.5 6.8a7.3 7.3 0 0 1 0 10.4"></path>
+      </svg>
+      <svg
+        data-audio-paused-icon
+        viewBox="0 0 24 24"
+        width="24"
+        height="24"
+        focusable="false"
+      >
+        <path d="M5 9.5h3.4L13 5.8v12.4l-4.6-3.7H5z" fill="currentColor"></path>
+        <path d="m16.2 9.2 4.3 5.6M20.5 9.2l-4.3 5.6"></path>
+      </svg>
+    </span>
+  </button>
+</div>
+
+<script>
+  type AudioControlWindow = Window & {
+    __hecateAudioControlsInstalled?: boolean;
+  };
+
+  const MUSIC_VOLUME = 0.58;
+
+  function initializeAudioControls() {
+    document
+      .querySelectorAll<HTMLElement>(
+        '[data-audio-control]:not([data-audio-ready])',
+      )
+      .forEach((control) => {
+        control.dataset.audioReady = 'true';
+        const audio = control.querySelector<HTMLAudioElement>('audio');
+        const button = control.querySelector<HTMLButtonElement>('button');
+        const playingIcon = control.querySelector<SVGSVGElement>(
+          '[data-audio-playing-icon]',
+        );
+        const pausedIcon = control.querySelector<SVGSVGElement>(
+          '[data-audio-paused-icon]',
+        );
+        const musicUrl = control.dataset.musicUrl ?? '';
+        const pieceTitle = control.dataset.pieceTitle ?? '';
+        if (!audio || !button || !playingIcon || !pausedIcon) return;
+
+        let unavailable = false;
+
+        const synchronize = () => {
+          const playing = !audio.paused;
+          button.setAttribute('aria-pressed', String(playing));
+          button.setAttribute(
+            'aria-label',
+            playing ? 'Pause background music' : 'Play background music',
+          );
+          button.title = unavailable
+            ? 'Audio file unavailable'
+            : `${playing ? 'Pause' : 'Play'} ${pieceTitle}`;
+          playingIcon.style.display = playing ? 'block' : 'none';
+          pausedIcon.style.display = playing ? 'none' : 'block';
+        };
+
+        audio.addEventListener('play', synchronize);
+        audio.addEventListener('pause', synchronize);
+        audio.addEventListener('error', () => {
+          unavailable = true;
+          synchronize();
+        });
+
+        button.addEventListener('click', async () => {
+          if (!audio.paused) {
+            audio.pause();
+            return;
+          }
+
+          audio.volume = MUSIC_VOLUME;
+          if (!audio.src) audio.src = musicUrl;
+          try {
+            await audio.play();
+            unavailable = false;
+          } catch (error) {
+            unavailable = true;
+            console.warn(`Music could not be played from ${musicUrl}.`, error);
+          }
+          synchronize();
+        });
+
+        synchronize();
+      });
+  }
+
+  initializeAudioControls();
+  const audioControlWindow = window as AudioControlWindow;
+  if (!audioControlWindow.__hecateAudioControlsInstalled) {
+    audioControlWindow.__hecateAudioControlsInstalled = true;
+    document.addEventListener('astro:page-load', initializeAudioControls);
+  }
+</script>

@@ -1,0 +1,216 @@
+---
+import { createAboutSections } from './about-content';
+
+interface Props {
+  portraitUrl: string;
+  softwareResumeUrl: string;
+  projectsUrl: string;
+  musicResumeUrl: string;
+  musicVideoUrl: string;
+  pickleballArticleUrl: string;
+  chessProfileUrl: string;
+}
+
+const sections = createAboutSections(Astro.props);
+const intro = sections[0];
+const interests = sections.slice(1);
+---
+
+<div
+  class="page-scroll-installation about-scroll-installation"
+  data-about-scroll
+>
+  <div
+    class="page-scroll-hanging about-scroll-hanging"
+    aria-label="About Cyrus Asasi"
+  >
+    <article
+      class="page-scroll-paper about-scroll-paper"
+      aria-labelledby="about-scroll-title"
+    >
+      <div
+        class="page-scroll-paper__roll page-scroll-paper__roll--top about-scroll-paper__roll about-scroll-paper__roll--top"
+        aria-hidden="true"
+      ></div>
+
+      <div class="page-scroll-paper__sheet about-scroll-paper__sheet">
+        <div
+          class="page-scroll-paper__viewport about-scroll-paper__viewport"
+          aria-label="About content"
+        >
+          <header class="page-scroll-header about-scroll-header">
+            <h1 id="about-scroll-title">About</h1>
+            <div
+              class="page-scroll-header__rule about-scroll-header__rule"
+              aria-hidden="true"
+            ></div>
+          </header>
+
+          {
+            intro?.portrait && (
+              <figure class="about-scroll-portrait-wrap">
+                <span class="about-scroll-portrait-frame" aria-hidden="true">
+                  <span class="about-scroll-portrait-glass">
+                    <img
+                      class="about-scroll-portrait"
+                      src={intro.portrait.src}
+                      alt=""
+                      width="480"
+                      height="480"
+                      decoding="async"
+                    />
+                    <span class="about-scroll-portrait-shade"></span>
+                    <span class="about-scroll-portrait-reflection"></span>
+                  </span>
+                  <span class="about-scroll-portrait-sill"></span>
+                </span>
+                <span class="visually-hidden">{intro.portrait.alt}</span>
+              </figure>
+            )
+          }
+
+          {
+            intro && (
+              <div class="about-scroll-intro">
+                {intro.paragraphs.map((paragraph, index) => (
+                  <p
+                    class={
+                      index === 0 ? 'about-scroll-intro__lead' : undefined
+                    }
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            )
+          }
+
+          <div class="about-scroll-rule" aria-hidden="true"></div>
+
+          <div class="about-scroll-sections" aria-label="Interests">
+            {
+              interests.map((channel) => (
+                <section class="about-scroll-section">
+                  <button
+                    type="button"
+                    class="about-scroll-section__toggle"
+                    aria-expanded="false"
+                    aria-controls={`about-section-${channel.id}`}
+                    data-about-section-toggle
+                  >
+                    <span>{channel.label}</span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="m8 4 8 8-8 8"></path>
+                    </svg>
+                  </button>
+
+                  <div
+                    id={`about-section-${channel.id}`}
+                    class="about-scroll-section__panel"
+                    aria-hidden="true"
+                  >
+                    <div class="about-scroll-section__content">
+                      <div class="about-scroll-section__body">
+                        {channel.paragraphs.map((paragraph) => (
+                          <p>{paragraph}</p>
+                        ))}
+
+                        {channel.links?.length ? (
+                          <nav
+                            class="about-scroll-section__links"
+                            aria-label={`${channel.label} links`}
+                          >
+                            {channel.links.map((link) => (
+                              <a
+                                href={link.href}
+                                target={link.external ? '_blank' : undefined}
+                                rel={
+                                  link.external
+                                    ? 'noopener noreferrer'
+                                    : undefined
+                                }
+                                tabindex="-1"
+                              >
+                                <span>{link.label}</span>
+                                <svg
+                                  viewBox="0 0 16 16"
+                                  aria-hidden="true"
+                                  focusable="false"
+                                >
+                                  {link.external ? (
+                                    <path d="M4 12 12 4M6.25 4H12v5.75"></path>
+                                  ) : (
+                                    <path d="M2.5 8h10.5M9 4l4 4-4 4"></path>
+                                  )}
+                                </svg>
+                              </a>
+                            ))}
+                          </nav>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="page-scroll-paper__roll page-scroll-paper__roll--bottom about-scroll-paper__roll about-scroll-paper__roll--bottom"
+        aria-hidden="true"
+      ></div>
+    </article>
+  </div>
+</div>
+
+<script>
+  type AboutScrollWindow = Window & {
+    __hecateAboutScrollsInstalled?: boolean;
+  };
+
+  function initializeAboutScrolls() {
+    document
+      .querySelectorAll<HTMLElement>(
+        '[data-about-scroll]:not([data-about-scroll-ready])',
+      )
+      .forEach((scroll) => {
+        scroll.dataset.aboutScrollReady = 'true';
+        scroll
+          .querySelectorAll<HTMLButtonElement>('[data-about-section-toggle]')
+          .forEach((button) => {
+            button.addEventListener('click', () => {
+              const section = button.closest<HTMLElement>(
+                '.about-scroll-section',
+              );
+              const panelId = button.getAttribute('aria-controls');
+              const panel = panelId
+                ? scroll.querySelector<HTMLElement>(`#${panelId}`)
+                : null;
+              if (!section || !panel) return;
+
+              const isOpen = !section.classList.contains('is-open');
+              section.classList.toggle('is-open', isOpen);
+              button.setAttribute('aria-expanded', String(isOpen));
+              panel.setAttribute('aria-hidden', String(!isOpen));
+              panel.querySelectorAll<HTMLAnchorElement>('a').forEach((link) => {
+                if (isOpen) link.removeAttribute('tabindex');
+                else link.tabIndex = -1;
+              });
+            });
+          });
+      });
+  }
+
+  initializeAboutScrolls();
+  const aboutScrollWindow = window as AboutScrollWindow;
+  if (!aboutScrollWindow.__hecateAboutScrollsInstalled) {
+    aboutScrollWindow.__hecateAboutScrollsInstalled = true;
+    document.addEventListener('astro:page-load', initializeAboutScrolls);
+  }
+</script>

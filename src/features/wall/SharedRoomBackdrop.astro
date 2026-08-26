@@ -1,0 +1,128 @@
+---
+import FloorScene from '../floor/FloorScene.svelte';
+import WallBackdrop from './WallBackdrop.svelte';
+
+interface Props {
+  initialCameraX?: number;
+}
+
+const { initialCameraX = 0 } = Astro.props;
+---
+
+<div style="display: contents" transition:persist="global-room-backdrop">
+  <div
+    class="site-room-backdrop primary-room-backdrop wall-room-host"
+    aria-hidden="true"
+    data-room-backdrop
+    data-initial-camera-x={initialCameraX}
+  >
+    <WallBackdrop {initialCameraX} />
+    <FloorScene {initialCameraX} />
+  </div>
+</div>
+
+<script>
+  type RoomCameraWindow = Window & {
+    __hecateRoomCameraX?: number;
+    __hecateRoomCameraAbsolute?: boolean;
+    __hecateSetRoomCameraX?: (cameraX: number, absolute?: boolean) => void;
+    __hecateRoomBackdropsInstalled?: boolean;
+  };
+
+  const BRICK_PATTERN_WIDTH = 96;
+  const CHECKER_PERIOD = 168;
+
+  const modulo = (value: number, period: number) =>
+    ((value % period) + period) % period;
+
+  const normalizePath = (pathname: string) =>
+    pathname === '/' ? '/' : pathname.replace(/\/+$/, '');
+
+  function initializeRoomBackdrops() {
+    document
+      .querySelectorAll<HTMLElement>(
+        '[data-room-backdrop]:not([data-room-backdrop-ready])',
+      )
+      .forEach((roomBackdrop) => {
+        roomBackdrop.dataset.roomBackdropReady = 'true';
+        const brickPattern = roomBackdrop.querySelector<HTMLElement>(
+          '.wall-stage__brick-pattern',
+        );
+        const floorPlane = roomBackdrop.querySelector<HTMLElement>(
+          '.floor-scene__plane',
+        );
+        if (!brickPattern || !floorPlane) return;
+
+        const roomWindow = window as RoomCameraWindow;
+        const initialCameraX = Number(roomBackdrop.dataset.initialCameraX) || 0;
+        let baseCameraX = Number.isFinite(roomWindow.__hecateRoomCameraX)
+          ? (roomWindow.__hecateRoomCameraX as number)
+          : initialCameraX;
+        let absoluteCamera = roomWindow.__hecateRoomCameraAbsolute === true;
+        let widestRoomWidth = roomBackdrop.getBoundingClientRect().width;
+        let currentRoomWidth = widestRoomWidth;
+        let resizeFrame = 0;
+
+        const applyCamera = (cameraX: number) => {
+          const brickOffset = -modulo(cameraX, BRICK_PATTERN_WIDTH);
+          const floorOffset = -modulo(cameraX, CHECKER_PERIOD);
+          brickPattern.style.transform = `translate3d(${brickOffset}px, 0, 0)`;
+          floorPlane.style.transform = `translate3d(${floorOffset}px, 0, 0) rotateX(67.5deg)`;
+        };
+
+        const renderRoomCamera = () => {
+          applyCamera(
+            absoluteCamera
+              ? baseCameraX
+              : baseCameraX + widestRoomWidth - currentRoomWidth,
+          );
+        };
+
+        const measureRoom = () => {
+          resizeFrame = 0;
+          const nextWidth = roomBackdrop.getBoundingClientRect().width;
+          if (!Number.isFinite(nextWidth) || nextWidth <= 0) return;
+          currentRoomWidth = nextWidth;
+          widestRoomWidth = Math.max(widestRoomWidth, nextWidth);
+          renderRoomCamera();
+        };
+
+        const scheduleRoomMeasurement = () => {
+          if (resizeFrame) return;
+          resizeFrame = requestAnimationFrame(measureRoom);
+        };
+
+        const setCameraX = (cameraX: number, absolute = false) => {
+          baseCameraX = cameraX;
+          absoluteCamera = absolute;
+          roomWindow.__hecateRoomCameraX = baseCameraX;
+          roomWindow.__hecateRoomCameraAbsolute = absolute;
+          renderRoomCamera();
+        };
+
+        const resetStaticRoomBackdrop = () => {
+          if (normalizePath(window.location.pathname) === '/') return;
+          setCameraX(0);
+        };
+
+        roomWindow.__hecateRoomCameraX = baseCameraX;
+        roomWindow.__hecateSetRoomCameraX = setCameraX;
+        renderRoomCamera();
+
+        const resizeObserver = new ResizeObserver(scheduleRoomMeasurement);
+        resizeObserver.observe(roomBackdrop);
+        window.addEventListener('resize', scheduleRoomMeasurement, {
+          passive: true,
+        });
+        document.addEventListener('astro:page-load', resetStaticRoomBackdrop);
+        resetStaticRoomBackdrop();
+      });
+  }
+
+  initializeRoomBackdrops();
+  const roomBackdropWindow = window as RoomCameraWindow;
+  if (!roomBackdropWindow.__hecateRoomBackdropsInstalled) {
+    roomBackdropWindow.__hecateRoomBackdropsInstalled = true;
+    document.addEventListener('astro:page-load', initializeRoomBackdrops);
+  }
+</script>

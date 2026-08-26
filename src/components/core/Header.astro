@@ -2,8 +2,8 @@
 import { siteConfig } from '@/config/site';
 import { headerNavigation } from '@/config/navigation';
 import { isCurrentPath, withBase } from '@/lib/paths';
-import AudioToggle from './AudioToggle.svelte';
-import ColorModeToggle from './ColorModeToggle.svelte';
+import AudioToggle from './AudioToggle.astro';
+import ColorModeToggle from './ColorModeToggle.astro';
 import '@/styles/header.css';
 
 const currentPath = Astro.url.pathname;
@@ -19,7 +19,7 @@ function isHeaderItemCurrent(item: (typeof headerNavigation)[number]) {
       class="brand"
       href={withBase('/')}
       aria-label={`${siteConfig.name} home`}
-      data-astro-prefetch="load"
+      data-astro-prefetch="hover"
     >
       <span class="brand-full ui-text">{siteConfig.name}</span>
     </a>
@@ -32,7 +32,7 @@ function isHeaderItemCurrent(item: (typeof headerNavigation)[number]) {
               <a
                 href={withBase(item.href)}
                 aria-current={isHeaderItemCurrent(item) ? 'page' : undefined}
-                data-astro-prefetch="load"
+                data-astro-prefetch="hover"
               >
                 <span class="ui-text">{item.label}</span>
               </a>
@@ -47,8 +47,8 @@ function isHeaderItemCurrent(item: (typeof headerNavigation)[number]) {
       role="group"
       aria-label="Sound and appearance"
     >
-      <AudioToggle client:load transition:persist="global-audio-toggle" />
-      <ColorModeToggle client:idle />
+      <AudioToggle />
+      <ColorModeToggle />
     </div>
   </div>
 </header>
