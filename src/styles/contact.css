@@ -119,9 +119,15 @@ body.room-theme-contact main,
   color: var(--contact-ink);
 }
 
+/* Same control, shorter: the copy button shares a row with the email address
+   rather than standing alone under the form, so it takes a tighter block
+   padding. Everything that carries the styling -- border, fill, colour,
+   weight, size -- is still the shared rule above. */
 .contact-copy {
-  min-width: 5.5rem;
+  min-width: 5.25rem;
+  min-height: 2.25rem;
   flex: none;
+  padding-block: 0.4rem;
   margin: 0;
 }
 

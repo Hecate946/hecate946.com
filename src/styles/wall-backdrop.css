@@ -3,22 +3,31 @@
  * lighting, the baseboard, and the room vignette. It deliberately knows
  * nothing about the floor renderer or any future 3D floor objects.
  */
+/*
+ * Everything vertical on the wall is anchored to the top in absolute units,
+ * never as a percentage.
+ *
+ * This element is inset:0 on the body, so on a scrolling room its height is
+ * the height of the *document*, not of the wall. A stop written as `8%` or
+ * `18%` was therefore a fraction of the whole page: opening an About dropdown
+ * makes the document taller, every one of those stops slides down by tens of
+ * pixels, and the wall's shading visibly re-scales as the panel animates.
+ * Anchoring the wash to the top at a fixed height makes the wall render
+ * identically no matter how tall the page is, so nothing moves when a panel
+ * opens or closes.
+ *
+ * It is also one wash now instead of a radial glow stacked on a linear fade.
+ */
 .wall-stage__mortar-light {
   position: absolute;
   z-index: 2;
   inset: 0;
-  background:
-    radial-gradient(
-      ellipse at 50% 8%,
-      color-mix(in srgb, var(--wall-light, #f4f1e9) 2.2%, transparent),
-      transparent 43%
-    ),
-    linear-gradient(
+  background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--wall-light, #f4f1e9) 0.35%, transparent),
-      transparent 12% 78%,
-      rgb(0 0 0 / 24%)
-    );
+      color-mix(in srgb, var(--wall-light, #f4f1e9) 2.4%, transparent),
+      transparent
+    )
+    top center / 100% clamp(9rem, 26vh, 24rem) no-repeat;
   pointer-events: none;
 }
 
@@ -28,22 +37,22 @@
   inset: 0;
   overflow: hidden;
   background-color: var(--wall-dark, #010101);
+  /* Top-anchored at a fixed height, for the reason given above. */
   background-image: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--wall-light, #f4f1e9) 0.7%, transparent),
-    transparent 18%,
-    rgb(0 0 0 / 14%) 82%,
-    rgb(0 0 0 / 22%)
+    color-mix(in srgb, var(--wall-light, #f4f1e9) 0.9%, transparent),
+    transparent
   );
+  background-position: top center;
+  background-repeat: no-repeat;
+  background-size: 100% clamp(12rem, 32vh, 28rem);
   contain: layout paint style;
-  box-shadow:
-    inset 0 0 0 1px
-      color-mix(
-        in srgb,
-        var(--wall-outline, var(--wall-light, #f4f1e9)) 10%,
-        transparent
-      ),
-    inset 0 -8rem 12rem rgb(0 0 0 / 32%);
+  box-shadow: inset 0 0 0 1px
+    color-mix(
+      in srgb,
+      var(--wall-outline, var(--wall-light, #f4f1e9)) 10%,
+      transparent
+    );
   pointer-events: none;
 }
 
@@ -71,19 +80,6 @@
   mask-size: 96px 48px;
   pointer-events: none;
   will-change: transform;
-}
-
-.wall-stage__wall-surface::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgb(0 0 0 / 16%) 78%,
-    rgb(0 0 0 / 28%)
-  );
-  content: '';
-  pointer-events: none;
 }
 
 /*
@@ -213,23 +209,43 @@
   content: '';
 }
 
+/*
+ * Four separate layers used to darken the bottom of the wall -- the ambient
+ * light, the wall surface's own gradient, an 8rem inset box-shadow, and a
+ * dedicated ::after overlay -- and they stacked into one heavy band above the
+ * floor. All four are gone; the baseboard and the floor's own contact shadow
+ * are what read the junction now.
+ *
+ * The side vignette stays, but as an eased ramp rather than a straight one.
+ * A two-stop linear fade holds a constant slope and then stops dead, which is
+ * what banded and gave it a visible edge partway across the wall. These stops
+ * approximate a cubic falloff, so the darkening leaves the edge quickly and
+ * then thins out to nothing with no corner in it. The ramp is also a real
+ * length rather than a percentage of the viewport, so it stays the same
+ * architectural depth instead of swallowing half a phone screen.
+ */
 .wall-stage__vignette {
+  --room-vignette-depth: clamp(2.75rem, 12vw, 12rem);
+  --room-vignette-ramp:
+    rgb(0 0 0 / 34%) 0%, rgb(0 0 0 / 29%) 8%, rgb(0 0 0 / 23%) 17%,
+    rgb(0 0 0 / 16.5%) 27%, rgb(0 0 0 / 11%) 38%, rgb(0 0 0 / 6.6%) 50%,
+    rgb(0 0 0 / 3.6%) 62%, rgb(0 0 0 / 1.6%) 75%, rgb(0 0 0 / 0.5%) 88%,
+    transparent 100%;
+  --room-vignette-ceiling:
+    rgb(0 0 0 / 15%) 0%, rgb(0 0 0 / 11%) 14%, rgb(0 0 0 / 7.4%) 30%,
+    rgb(0 0 0 / 4.3%) 48%, rgb(0 0 0 / 2%) 68%, rgb(0 0 0 / 0.6%) 85%,
+    transparent 100%;
+
   position: absolute;
   z-index: 10;
   inset: 0;
   background:
-    linear-gradient(
-      90deg,
-      rgb(0 0 0 / 48%),
-      transparent 12% 88%,
-      rgb(0 0 0 / 48%)
-    ),
-    linear-gradient(
-      180deg,
-      rgb(0 0 0 / 20%),
-      transparent 22% 78%,
-      rgb(0 0 0 / 28%)
-    );
+    linear-gradient(90deg, var(--room-vignette-ramp)) left center /
+      var(--room-vignette-depth) 100% no-repeat,
+    linear-gradient(270deg, var(--room-vignette-ramp)) right center /
+      var(--room-vignette-depth) 100% no-repeat,
+    linear-gradient(180deg, var(--room-vignette-ceiling)) top center / 100%
+      clamp(4rem, 16vh, 11rem) no-repeat;
   pointer-events: none;
 }
 
@@ -238,37 +254,20 @@
 html[data-theme='light'] .wall-stage__wall-surface {
   background-image: linear-gradient(
     180deg,
-    rgb(255 255 255 / 32%),
-    transparent 24% 76%,
-    rgb(0 0 0 / 5%) 90%,
-    rgb(0 0 0 / 8%)
+    rgb(255 255 255 / 34%),
+    transparent
   );
-  box-shadow:
-    inset 0 0 0 1px rgb(0 0 0 / 9%),
-    inset 0 -8rem 12rem rgb(0 0 0 / 7%);
-}
-
-html[data-theme='light'] .wall-stage__wall-surface::after {
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgb(0 0 0 / 4%) 78%,
-    rgb(0 0 0 / 8%)
-  );
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 9%);
 }
 
 html[data-theme='light'] .wall-stage__vignette {
-  background:
-    linear-gradient(
-      90deg,
-      rgb(0 0 0 / 12%),
-      transparent 12% 88%,
-      rgb(0 0 0 / 12%)
-    ),
-    linear-gradient(
-      180deg,
-      rgb(0 0 0 / 6%),
-      transparent 22% 78%,
-      rgb(0 0 0 / 10%)
-    );
+  --room-vignette-ramp:
+    rgb(0 0 0 / 9%) 0%, rgb(0 0 0 / 7.7%) 8%, rgb(0 0 0 / 6.1%) 17%,
+    rgb(0 0 0 / 4.4%) 27%, rgb(0 0 0 / 2.9%) 38%, rgb(0 0 0 / 1.75%) 50%,
+    rgb(0 0 0 / 0.95%) 62%, rgb(0 0 0 / 0.4%) 75%, rgb(0 0 0 / 0.15%) 88%,
+    transparent 100%;
+  --room-vignette-ceiling:
+    rgb(0 0 0 / 4.5%) 0%, rgb(0 0 0 / 3.3%) 14%, rgb(0 0 0 / 2.2%) 30%,
+    rgb(0 0 0 / 1.3%) 48%, rgb(0 0 0 / 0.6%) 68%, rgb(0 0 0 / 0.2%) 85%,
+    transparent 100%;
 }

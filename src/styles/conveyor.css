@@ -8,6 +8,11 @@
   --hallway-end-color: var(--wall-dark);
   --hallway-painting-width: 520px;
   --hallway-painting-height: 628px;
+  /* The hint sits over the corridor's own surfaces, which invert with the
+     theme, so its ink and its halo do too. A single light grey was legible
+     against the deep-teal wall and nearly invisible against the pale one. */
+  --hallway-hint-ink: rgb(226 226 226 / 88%);
+  --hallway-hint-halo: rgb(0 0 0 / 55%);
   --wall-control-bottom-gap: clamp(0.7rem, 1.7vh, 1.05rem);
   --wall-control-safe-bottom: max(
     var(--wall-control-bottom-gap),
@@ -28,6 +33,8 @@
 
 html[data-theme='light'] .wall-stage {
   --hallway-grout-color: rgb(7 31 35 / 14%);
+  --hallway-hint-ink: rgb(12 16 16 / 76%);
+  --hallway-hint-halo: rgb(255 255 255 / 62%);
 }
 
 /*
@@ -166,14 +173,14 @@ html[data-theme='light'] .wall-stage {
   max-width: calc(100vw - 7rem);
   margin: 0;
   transform: translate(-50%, calc(-50% + 0.075em));
-  color: #d0d0d0;
+  color: var(--hallway-hint-ink, #d0d0d0);
   font-family: var(--font-site);
   font-size: clamp(0.68rem, 1vw, 0.78rem);
   font-weight: 400;
   letter-spacing: 0.045em;
   line-height: 1;
   text-align: center;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 68%);
+  text-shadow: 0 1px 3px var(--hallway-hint-halo, rgb(0 0 0 / 68%));
   white-space: nowrap;
   opacity: 0.88;
   pointer-events: none;
@@ -182,13 +189,23 @@ html[data-theme='light'] .wall-stage {
     opacity 320ms ease;
 }
 
+/* Once the corridor has been driven at all, the hint has done its job and
+   recedes further than it used to -- which is what buys it the more prominent
+   position without becoming furniture. */
 .wall-stage--hallway.wall-stage--interacted .wall-navigation-hint {
-  opacity: 0.56;
+  opacity: 0.4;
 }
 
+/*
+ * Below the navbar, not level with it. Home's main is `position: absolute;
+ * inset: 0`, so the corridor starts at the very top of the viewport and runs
+ * behind the transparent header -- an offset measured from the top of the
+ * stage lands the hint inside the nav row. Measuring from --header-height
+ * clears it on both the one-row desktop bar and the two-row mobile one.
+ */
 .wall-stage--hallway .wall-navigation-hint {
-  top: auto;
-  bottom: max(0.92rem, calc(env(safe-area-inset-bottom, 0px) + 0.72rem));
+  top: calc(var(--header-height) + clamp(0.7rem, 2.2vh, 1.35rem));
+  bottom: auto;
   transform: translateX(-50%);
 }
 
