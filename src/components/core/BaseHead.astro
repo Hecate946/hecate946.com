@@ -193,17 +193,6 @@ const structuredDataJson = JSON.stringify(structuredData).replace(
 />
 <link rel="me" href={siteConfig.social.github} />
 <link rel="me" href={siteConfig.social.linkedin} />
-{
-  isHomePage && (
-    <link
-      rel="preload"
-      href={withBase('/models/hallway-door.glb')}
-      as="fetch"
-      crossorigin="anonymous"
-    />
-  )
-}
-
 <title>{resolvedTitle}</title>
 
 <meta property="og:type" content={isAboutPage ? 'profile' : 'website'} />

@@ -19,11 +19,9 @@ import { createFrameGeometry } from './hallway-geometry';
 /**
  * The paintings, hung in the corridor as real geometry.
  *
- * They used to be DOM anchors floating in a CSS 3D layer above the canvas,
- * which meant nothing drawn in WebGL could ever occlude them -- the moment a
- * door stood in front of the corridor, the paintings showed straight through
- * it. As meshes they sort against the corridor and the door for free, and
- * their edges get the same mipmapping and antialiasing as everything else.
+ * They used to be DOM anchors floating in a CSS 3D layer above the canvas.
+ * As meshes, their edges now receive the same mipmapping and antialiasing as
+ * the rest of the corridor.
  *
  * The anchors stay in the DOM, visually hidden, so links, prefetch, focus
  * order, and screen readers keep working exactly as they did.
@@ -162,12 +160,23 @@ export function createHallwayPaintings(
     root.rotation.y = spec.side === 'left' ? Math.PI / 2 : -Math.PI / 2;
     root.position.y = VERTICAL_OFFSET;
 
-    const imageMap = loader.load(spec.src, (texture) => {
-      texture.colorSpace = SRGBColorSpace;
-      texture.anisotropy = 8;
-      applyCover(texture, glassAspect);
+    let settled = false;
+    const settleTexture = () => {
+      if (settled) return;
+      settled = true;
       onTextureReady();
-    });
+    };
+    const imageMap = loader.load(
+      spec.src,
+      (texture) => {
+        texture.colorSpace = SRGBColorSpace;
+        texture.anisotropy = 8;
+        applyCover(texture, glassAspect);
+        settleTexture();
+      },
+      undefined,
+      settleTexture,
+    );
 
     const frame = new Mesh(
       new BufferGeometry(),

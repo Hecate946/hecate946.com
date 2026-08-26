@@ -1,17 +1,11 @@
 import {
-  AmbientLight,
   BufferAttribute,
   CanvasTexture,
   ClampToEdgeWrapping,
-  DirectionalLight,
-  EqualStencilFunc,
   Fog,
-  KeepStencilOp,
   LinearMipmapLinearFilter,
-  Material,
   Mesh,
   MeshBasicMaterial,
-  PMREMGenerator,
   PerspectiveCamera,
   PlaneGeometry,
   RepeatWrapping,
@@ -19,11 +13,10 @@ import {
   Scene,
   Texture,
   Vector2,
+  Vector3,
   WebGLRenderer,
   type Wrapping,
 } from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { createHallwayDoor, type DoorRect } from './hallway-door';
 import { createHallwayPaintings, type PaintingSpec } from './hallway-paintings';
 
 /**
@@ -43,10 +36,17 @@ import { createHallwayPaintings, type PaintingSpec } from './hallway-paintings';
  * anchors sharing the same 3D space.
  */
 
-/** Corridor extents along the view axis, matching the previous CSS values. */
-const TUNNEL_DEPTH = 6_720;
-const TUNNEL_NEAR_Z = -20;
-const TUNNEL_CENTER_Z = TUNNEL_NEAR_Z - TUNNEL_DEPTH / 2;
+/**
+ * Corridor extents along the view axis. The visible wall/floor junction is
+ * still measured at the old CSS near plane, but the actual quads continue
+ * towards the camera. That extra foreground section prevents the loading
+ * room's checkerboard from appearing as a second floor below the canvas.
+ */
+const TUNNEL_FAR_Z = -6_740;
+const TUNNEL_NEAR_Z = 600;
+const FLOOR_SEAM_REFERENCE_Z = -20;
+const TUNNEL_DEPTH = TUNNEL_NEAR_Z - TUNNEL_FAR_Z;
+const TUNNEL_CENTER_Z = (TUNNEL_NEAR_Z + TUNNEL_FAR_Z) / 2;
 
 /** One brick module and one checker module, in world units. */
 const BRICK_TILE_WIDTH = 120;
@@ -54,7 +54,7 @@ const BRICK_TILE_HEIGHT = 60;
 const FLOOR_TILE = 240;
 
 /** The far-wall veil that used to hide aliasing becomes honest linear fog. */
-const FOG_START = -TUNNEL_NEAR_Z + TUNNEL_DEPTH * 0.42;
+const FOG_START = 6_720 * 0.42;
 
 /**
  * The corridor is four planes, so its vanishing point used to be a hole
@@ -67,7 +67,7 @@ const FOG_START = -TUNNEL_NEAR_Z + TUNNEL_DEPTH * 0.42;
  */
 // Sit just in front of the tiled planes' final edge. At exactly the same z,
 // sub-pixel depth ties could expose the last brick row across the cap.
-const END_WALL_Z = TUNNEL_NEAR_Z - TUNNEL_DEPTH + 4;
+const END_WALL_Z = TUNNEL_FAR_Z + 4;
 
 /** The checker is theme independent, exactly as the previous SVG was. */
 const FLOOR_DARK = '#080a0a';
@@ -98,12 +98,6 @@ export interface HallwayScene {
   refreshTheme(): void;
   /** Draw one frame for the given corridor position. */
   render(cameraZ: number): void;
-  /** 0 = shut, 1 = fully open. Hidden once the camera is through. */
-  setDoor(open: number, visible: boolean): void;
-  /** How far the camera travels between the entrance and the corridor. */
-  getEntryDistance(): number;
-  /** The doorway's on-screen box, for the entrance hit target. */
-  getDoorRect(): DoorRect;
   /** Index of the painting under a client-space point, or -1. */
   pickPainting(clientX: number, clientY: number): number;
   /** Highlight one painting, or -1 for none. */
@@ -132,6 +126,25 @@ function srgbToLinear(value: number) {
 
 function rootFontSize() {
   return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+}
+
+/**
+ * Mobile and lower-memory devices do not benefit from a full 2x backing
+ * buffer on this scene. Capping them here cuts fill-rate and canvas memory
+ * while CSS keeps the canvas at the exact same visual size.
+ */
+function choosePixelRatio() {
+  const dpr = window.devicePixelRatio || 1;
+  const device = navigator as Navigator & { deviceMemory?: number };
+  const memory = device.deviceMemory ?? 8;
+  const cores = navigator.hardwareConcurrency || 8;
+  const mobile = window.matchMedia(
+    '(max-width: 48rem), (pointer: coarse)',
+  ).matches;
+
+  if (memory <= 2 || cores <= 2) return Math.min(dpr, 1);
+  if (mobile || memory <= 4 || cores <= 4) return Math.min(dpr, 1.25);
+  return Math.min(dpr, 1.75);
 }
 
 /**
@@ -186,9 +199,10 @@ function paintWall(
     context.fillRect(90, y + 30, 2, 30);
   }
 
-  // inset 0 -6rem 8rem rgb(0 0 0 / 22%)
+  // A restrained contact shadow above the baseboard. The previous broad,
+  // 22% vignette read as a lighting error once the hallway filled the page.
   const rem = rootFontSize();
-  const shadowHeight = 10 * rem;
+  const shadowHeight = 4 * rem;
   const shadow = context.createLinearGradient(
     0,
     height - shadowHeight,
@@ -196,7 +210,7 @@ function paintWall(
     height,
   );
   shadow.addColorStop(0, 'rgb(0 0 0 / 0%)');
-  shadow.addColorStop(1, 'rgb(0 0 0 / 22%)');
+  shadow.addColorStop(1, 'rgb(0 0 0 / 10%)');
   context.fillStyle = shadow;
   context.fillRect(0, height - shadowHeight, width, shadowHeight);
 
@@ -240,14 +254,18 @@ function paintCeiling(
   if (!context) return;
   context.setTransform(scale, 0, 0, scale, 0, 0);
 
-  context.fillStyle = mix(palette.dark, BLACK, 0.08);
+  // Keep the ceiling only fractionally darker than the walls. A larger tint
+  // turns the ceiling/wall junction into a hard theatrical shadow.
+  context.fillStyle = mix(palette.dark, BLACK, 0.035);
   context.fillRect(0, 0, width, height);
 
+  // A narrow contact falloff gives the corner enough depth to read without
+  // stretching a dark wedge from each top corner to the vanishing point.
   const edges = context.createLinearGradient(0, 0, width, 0);
-  edges.addColorStop(0, 'rgb(0 0 0 / 16%)');
-  edges.addColorStop(0.2, 'rgb(0 0 0 / 0%)');
-  edges.addColorStop(0.8, 'rgb(0 0 0 / 0%)');
-  edges.addColorStop(1, 'rgb(0 0 0 / 16%)');
+  edges.addColorStop(0, 'rgb(0 0 0 / 3%)');
+  edges.addColorStop(0.08, 'rgb(0 0 0 / 0%)');
+  edges.addColorStop(0.92, 'rgb(0 0 0 / 0%)');
+  edges.addColorStop(1, 'rgb(0 0 0 / 3%)');
   context.fillStyle = edges;
   context.fillRect(0, 0, width, height);
 }
@@ -258,9 +276,9 @@ function createFloorGeometry() {
   const uv = geometry.attributes.uv;
   const colors = new Float32Array(uv.count * 3);
 
-  // The floor carried `linear-gradient(180deg, transparent, rgb(0 0 0 / 14%))`
-  // running from the far end to the near end. v = 0 is the near end here.
-  const near = srgbToLinear(0.86);
+  // Keep only a soft six-percent near-floor falloff. This preserves depth
+  // without producing the large artificial shadow visible in the old footer.
+  const near = srgbToLinear(0.94);
   for (let index = 0; index < uv.count; index += 1) {
     const shade = near + (1 - near) * uv.getY(index);
     colors[index * 3] = shade;
@@ -281,23 +299,23 @@ export function createHallwayScene(options: {
   probe: HTMLElement;
   /** The hidden element sized to `--hallway-painting-width` / `-height`. */
   frameProbe: HTMLElement;
-  /** Fixed screen-space doorway size and position. */
-  doorAnchor: HTMLElement;
+  /** The CSS wall/floor seam used to align the WebGL floor. */
+  floorSeam: HTMLElement;
   /** The gallery, in corridor order. */
   paintings: readonly PaintingSpec[];
   /** Called when a painting's texture decodes and a redraw is needed. */
+  onTextureUpdate: () => void;
+  /** Called after every painting texture settles and the first frame exists. */
   onReady: () => void;
-  /** Called only after the complete GLB doorway has joined the scene. */
-  onDoorReady?: () => void;
 }): HallwayScene {
   const {
     canvas,
     viewport,
     probe,
     frameProbe,
-    doorAnchor,
+    floorSeam,
     onReady,
-    onDoorReady,
+    onTextureUpdate,
   } = options;
 
   const renderer = new WebGLRenderer({
@@ -305,9 +323,9 @@ export function createHallwayScene(options: {
     alpha: true,
     antialias: true,
     powerPreference: 'high-performance',
-    stencil: true,
+    stencil: false,
   });
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  const pixelRatio = choosePixelRatio();
   renderer.setPixelRatio(pixelRatio);
 
   const scene = new Scene();
@@ -385,89 +403,20 @@ export function createHallwayScene(options: {
   scene.add(endWall);
 
   paintFloor(floorCanvas, pixelRatio);
-
-  // Black lacquer and gold are almost entirely reflection, so they need an
-  // environment far more than they need lamps. One small PMREM probe gives
-  // both a believable falloff; the two lights only add the direct highlight
-  // that picks out the panel moldings and the f-holes' bevel.
-  const pmrem = new PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.055;
-  pmrem.dispose();
-
-  // Deliberately dim and well off-axis. A strong light square-on to a flat
-  // panel puts its specular lobe dead centre, which is what turned the doors
-  // into a spotlit blob; the environment does the shaping instead and this
-  // only picks out the mouldings and the f-holes' bevel.
-  const keyLight = new DirectionalLight(0xfff4e2, 0.11);
-  keyLight.position.set(-1.15, 1.4, 0.85);
-  scene.add(keyLight, new AmbientLight(0xdfeff0, 0.09));
-
-  // The DOM backdrop remains the entrance wall and floor. This invisible mesh
-  // writes depth around the real arched opening, so the WebGL door is recessed
-  // into the exact same flat CSS room used by every other page.
-  const frontWallMaterial = new MeshBasicMaterial({
-    colorWrite: false,
-    depthWrite: true,
-  });
-  const revealMaterial = new MeshBasicMaterial({ color: 0x000000 });
-  // The door mesh arrives asynchronously; a redraw once it lands is all
-  // that is needed, because it inherits the transform already applied to
-  // the assembly by the most recent layout() call.
-  const door = createHallwayDoor([frontWallMaterial, revealMaterial], () => {
-    onDoorReady?.();
-    onReady();
-  });
-  scene.add(door.group);
-
+  let settledTextures = 0;
   const paintings = createHallwayPaintings(
     options.paintings,
     pixelRatio,
-    onReady,
+    () => {
+      settledTextures += 1;
+      onTextureUpdate();
+      if (settledTextures >= options.paintings.length) onReady();
+    },
   );
   scene.add(paintings.group);
 
-  const corridorRoots = [...surfaces, endWall, paintings.group];
-  let portalStencilEnabled = false;
-
-  function visitMaterials(
-    roots: readonly (Mesh | typeof paintings.group)[],
-    visit: (material: Material) => void,
-  ) {
-    for (const root of roots) {
-      root.traverse((object) => {
-        if (!(object instanceof Mesh)) return;
-        const meshMaterials = Array.isArray(object.material)
-          ? object.material
-          : [object.material];
-        for (const material of meshMaterials) visit(material);
-      });
-    }
-  }
-
-  function setPortalStencil(enabled: boolean) {
-    if (portalStencilEnabled === enabled) return;
-    portalStencilEnabled = enabled;
-
-    visitMaterials(corridorRoots, (material) => {
-      // Three.js enables the stencil test through stencilWrite. A zero write
-      // mask makes these materials read the portal stencil without changing it.
-      material.stencilWrite = enabled;
-      material.stencilWriteMask = 0x00;
-      material.stencilFunc = EqualStencilFunc;
-      material.stencilRef = 1;
-      material.stencilFuncMask = 0xff;
-      material.stencilFail = KeepStencilOp;
-      material.stencilZFail = KeepStencilOp;
-      material.stencilZPass = KeepStencilOp;
-      material.needsUpdate = true;
-    });
-  }
-
   let wallHeight = 0;
   let paintedWallHeight = -1;
-  let viewWidth = 0;
-  let viewHeight = 0;
 
   function refreshTheme() {
     const palette = readPalette(probe);
@@ -479,6 +428,10 @@ export function createHallwayScene(options: {
     ceilingMap.needsUpdate = true;
     fog.color.set(palette.endWall);
     endWallMaterial.color.set(palette.endWall);
+    // The ready canvas is intentionally opaque. If a sub-pixel gap opens at
+    // an edge, it reveals the same solid colour as the end cap, never the
+    // brick-patterned CSS loading room underneath.
+    renderer.setClearColor(palette.endWall, 1);
     paintings.setInk(palette.labelInk);
   }
 
@@ -486,16 +439,8 @@ export function createHallwayScene(options: {
     const viewportRect = viewport.getBoundingClientRect();
     const { width, height } = viewportRect;
     const box = probe.getBoundingClientRect();
-    const doorAnchorRect = doorAnchor.getBoundingClientRect();
-    if (
-      width === 0 ||
-      height === 0 ||
-      box.width === 0 ||
-      doorAnchorRect.height === 0
-    )
-      return;
-    viewWidth = width;
-    viewHeight = height;
+    const floorSeamRect = floorSeam.getBoundingClientRect();
+    if (width === 0 || height === 0 || box.width === 0) return;
 
     const halfWidth = box.width;
     const halfHeight = box.height;
@@ -516,25 +461,34 @@ export function createHallwayScene(options: {
       (2 * Math.atan(fullHeight / (2 * perspective)) * 180) / Math.PI;
     camera.aspect = fullWidth / fullHeight;
     camera.near = 1;
-    camera.far = perspective + TUNNEL_DEPTH + 1;
+    // Keep the blank far cap comfortably inside the clipping range.
+    camera.far = perspective - END_WALL_Z + 100;
     camera.position.set(0, 0, perspective);
     camera.setViewOffset(fullWidth, fullHeight, 0, 0, width, height);
     camera.updateProjectionMatrix();
 
     fog.near = perspective + FOG_START;
-    fog.far = perspective + TUNNEL_DEPTH;
-
-    door.layout(
-      halfWidth,
-      halfHeight,
-      perspective,
-      camera,
-      viewportRect,
-      doorAnchorRect,
-    );
+    fog.far = perspective - TUNNEL_FAR_Z;
 
     const ceilingY = halfHeight;
-    const floorY = door.floorY;
+    // Project the existing CSS floor seam onto the corridor's near plane.
+    // This preserves the exact first-frame handoff without using doorway
+    // geometry as an indirect floor measurement.
+    camera.updateMatrixWorld(true);
+    const seamPoint = new Vector3(
+      0,
+      -(((floorSeamRect.top - viewportRect.top) / height) * 2 - 1),
+      0,
+    ).unproject(camera);
+    const seamDirection = seamPoint.sub(camera.position);
+    const seamDistance =
+      (FLOOR_SEAM_REFERENCE_Z - camera.position.z) / seamDirection.z;
+    const projectedFloor = camera.position
+      .clone()
+      .addScaledVector(seamDirection, seamDistance).y;
+    const floorY = Number.isFinite(projectedFloor)
+      ? projectedFloor
+      : -halfHeight;
     wallHeight = ceilingY - floorY;
 
     leftWall.scale.set(TUNNEL_DEPTH, wallHeight, 1);
@@ -564,31 +518,17 @@ export function createHallwayScene(options: {
     leftWallMap.offset.x = (cameraZ / BRICK_TILE_WIDTH) % 1;
     rightWallMap.offset.x = (-cameraZ / BRICK_TILE_WIDTH) % 1;
     floorMap.offset.y = (cameraZ / FLOOR_TILE) % 1;
-    door.setCameraZ(cameraZ);
-    const portalActive =
-      door.group.visible && door.isBeforeCamera(camera.position.z);
-    door.setPortalMask(portalActive);
-    setPortalStencil(portalActive);
     paintings.update(cameraZ);
     renderer.render(scene, camera);
   }
 
   resize();
+  if (options.paintings.length === 0) queueMicrotask(onReady);
 
   return {
     resize,
     refreshTheme,
     render,
-    setDoor(open: number, visible: boolean) {
-      door.setOpen(open);
-      door.group.visible = visible;
-    },
-    getEntryDistance() {
-      return door.entryDistance;
-    },
-    getDoorRect() {
-      return door.project(camera, viewWidth, viewHeight);
-    },
     pickPainting(clientX: number, clientY: number) {
       const rect = viewport.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return -1;
@@ -605,10 +545,6 @@ export function createHallwayScene(options: {
     },
     dispose() {
       paintings.dispose();
-      door.dispose();
-      frontWallMaterial.dispose();
-      revealMaterial.dispose();
-      scene.environment?.dispose();
       unitPlane.dispose();
       floorGeometry.dispose();
       for (const surface of surfaces) {

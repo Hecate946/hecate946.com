@@ -1,4 +1,4 @@
-/* Homepage entrance and the WebGL hallway that sits behind it. */
+/* Homepage WebGL hallway layered over the shared CSS loading room. */
 .wall-stage {
   --hallway-half-width: max(55vw, 29rem);
   --hallway-half-height: max(58vh, 23rem);
@@ -61,122 +61,10 @@ html[data-theme='light'] .wall-stage {
   height: calc(var(--hallway-painting-height) - 2.4rem);
 }
 
-/* The DOM owns the architectural placement. Three.js inverse-projects this
-   rectangle onto the door plane, so ordinary viewport resizing never changes
-   the door's apparent size or its centered position. */
-.home-door-anchor,
 .home-floor-seam-probe {
   position: absolute;
   visibility: hidden;
   pointer-events: none;
-}
-
-.home-door-anchor {
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-/*
- * A small server-rendered first frame keeps the entrance present before the
- * deferred renderer is ready. It is deliberately restrained: no external
- * outline or cast shadow, only a dark installed door occupying the same DOM
- * anchor as the WebGL model.
- */
-.home-door-first-frame {
-  position: absolute;
-  z-index: 5;
-  left: 50%;
-  bottom: calc(100% - var(--floor-seam-top));
-  width: min(calc(100vw - 24px), 43vh);
-  height: min(
-    calc(var(--floor-seam-top) - var(--header-height) - 5vh),
-    calc((100vw - 24px) / 0.6428)
-  );
-  min-height: 1px;
-  overflow: hidden;
-  border-radius: 50% 50% 0 0 / 20% 20% 0 0;
-  background: #010202;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
-  transform: translateX(-50%);
-  transform-origin: 50% 100%;
-  opacity: 1;
-  pointer-events: none;
-  transition: opacity 120ms linear;
-}
-
-.home-door-first-frame__fanlight {
-  position: absolute;
-  inset: 2.2% 2.2% 31.2%;
-  border-bottom: 2px solid #090b0b;
-  border-radius: 50% 50% 0 0 / 28% 28% 0 0;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 49.45%,
-      #0a0c0c 49.45% 50.55%,
-      transparent 50.55%
-    ),
-    repeating-linear-gradient(90deg, transparent 0 19.5%, #0a0c0c 19.5% 20.5%);
-  background-color: #020607;
-}
-
-.home-door-first-frame__leaves {
-  position: absolute;
-  inset: 31.4% 2.2% 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px;
-  background: #050606;
-}
-
-.home-door-first-frame__leaves span {
-  position: relative;
-  background:
-    linear-gradient(
-      90deg,
-      rgb(255 255 255 / 2.5%),
-      transparent 12% 88%,
-      rgb(0 0 0 / 38%)
-    ),
-    #010202;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 3%);
-}
-
-.home-door-first-frame__leaves i {
-  position: absolute;
-  right: 12%;
-  left: 12%;
-  height: 34%;
-  border: 1px solid rgb(255 255 255 / 3.5%);
-  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 30%);
-}
-
-.home-door-first-frame__leaves i:first-child {
-  top: 8%;
-}
-.home-door-first-frame__leaves i:nth-child(2) {
-  bottom: 8%;
-}
-
-.home-door-first-frame__leaves svg {
-  position: absolute;
-  z-index: 1;
-  top: 29%;
-  right: 4%;
-  width: 10%;
-  height: 31%;
-  fill: #a9782f;
-  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 80%));
-}
-
-.home-door-first-frame__leaves span:last-child svg {
-  right: auto;
-  left: 4%;
-  transform: scaleX(-1);
-}
-
-.wall-stage--door-ready .home-door-first-frame {
-  opacity: 0;
 }
 
 .home-floor-seam-probe {
@@ -186,7 +74,7 @@ html[data-theme='light'] .wall-stage {
   height: 1px;
 }
 
-.wall-stage--hallway {
+.wall-stage--hallway.wall-stage--scene-ready {
   cursor: grab;
 }
 
@@ -194,41 +82,32 @@ html[data-theme='light'] .wall-stage {
   cursor: grabbing;
 }
 
-.wall-stage--hallway.wall-stage--pointing {
+.wall-stage--hallway.wall-stage--scene-ready.wall-stage--pointing {
   cursor: pointer;
 }
 
-/* The doorway is real geometry standing in the corridor, so the depth buffer
-   does the reveal that a clip-path used to fake. */
+/* The CSS room stays fully visible until the first complete hallway frame. */
 .hallway-scene {
   position: absolute;
   z-index: 6;
   inset: 0;
   overflow: hidden;
-  background: transparent;
+  /* Fades over the CSS loading room with the same blank colour used by the
+     renderer and far cap, so no brick texture can show through the corridor. */
+  background: var(--hallway-end-color);
   perspective: clamp(760px, 82vw, 1120px);
   perspective-origin: 50% 49%;
-  opacity: 1;
-  pointer-events: none;
-  transition: opacity 180ms ease-out;
-}
-
-/* Keep the exact CSS room intact while Three.js and the GLB initialize.
-   Revealing the transparent canvas earlier exposes the portal before its
-   leaves exist, producing the empty arch/black flash seen on hard reload. */
-.wall-stage--entrance:not(.wall-stage--door-ready) .hallway-scene {
   opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease-out;
 }
 
-.wall-stage--hallway .hallway-scene {
+.wall-stage--scene-ready .hallway-scene {
+  opacity: 1;
   pointer-events: auto;
 }
 
-/* One WebGL surface for the whole room -- corridor, doorway, and gallery.
-   With the paintings now meshes rather than a CSS layer above the canvas,
-   the depth buffer sorts them against the door instead of letting them show
-   through it. `.hallway-scene` still owns the perspective the camera is
-   derived from, so it keeps its perspective properties. */
+/* One WebGL surface for the whole corridor and gallery. */
 .hallway-canvas {
   position: absolute;
   z-index: 1;
@@ -278,30 +157,6 @@ html[data-theme='light'] .wall-stage {
   transform: translate(-50%, 6rem);
 }
 
-/* The entrance is drawn in WebGL, so the only DOM left is a hit target sized
-   to the projected doorway. It keeps the entrance keyboard reachable and
-   gives screen readers something to announce. */
-.home-entrance-hit {
-  position: absolute;
-  z-index: 10;
-  padding: 0;
-  border: 0;
-  outline: 2px solid transparent;
-  outline-offset: 0.4rem;
-  background: transparent;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.home-entrance-hit:disabled {
-  cursor: default;
-  pointer-events: none;
-}
-
-.home-entrance-hit:focus-visible {
-  outline-color: var(--room-outline);
-}
-
 /* Homepage guidance and the existing pause control keep their previous visual
    language so the interaction still feels like the same site. */
 .wall-navigation-hint {
@@ -326,16 +181,6 @@ html[data-theme='light'] .wall-stage {
   transition:
     top 420ms ease,
     opacity 320ms ease;
-}
-
-.wall-stage--entrance .wall-navigation-hint {
-  top: auto;
-  bottom: max(0.92rem, calc(env(safe-area-inset-bottom, 0px) + 0.72rem));
-  transform: translateX(-50%);
-}
-
-.wall-stage--opening .wall-navigation-hint {
-  opacity: 0;
 }
 
 .wall-stage--hallway.wall-stage--interacted .wall-navigation-hint {
@@ -455,7 +300,6 @@ html[data-theme='light'] .wall-stage {
 
 @media (prefers-reduced-motion: reduce) {
   .hallway-scene,
-  .home-door-first-frame,
   .wall-navigation-hint,
   .wall-corner-control {
     transition: none;

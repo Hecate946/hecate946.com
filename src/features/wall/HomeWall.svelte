@@ -4,7 +4,6 @@
   import type { HallwayScene } from './hallway-scene';
   import type { PaintingSpec } from './hallway-paintings';
   import { wallDestinations } from './wall-config';
-  import { DOOR_ASPECT } from './door-metrics';
 
   export let active = true;
 
@@ -12,7 +11,6 @@
   const HALLWAY_LOOP_DEPTH = 5_760;
   const PAINTING_SPACING = HALLWAY_LOOP_DEPTH / destinations.length;
   const PAINTING_START = 700;
-  const PAINTING_BEHIND_ALLOWANCE = 360;
   const DRAG_THRESHOLD = 8;
   const WHEEL_SCALE = 1.05;
   const POINTER_SCALE = 1.3;
@@ -20,22 +18,7 @@
   const DIRECTION_THRESHOLD = 42;
   const INERTIA_TIME_CONSTANT = 0.72;
   const MAX_MANUAL_SPEED = 2_500;
-  /** Doors swing, then the camera walks through. One timeline, two beats. */
-  const OPENING_DURATION = 1_900;
-  const SWING_FRACTION = 0.46;
-  const DOLLY_DELAY = 0.3;
-  /**
-   * The doorway is a piece of the wall, so it is sized as a fraction of the
-   * wall's own height rather than to a fixed pixel figure. DOOR_ASPECT is
-   * imported rather than restated: it is derived from the model's real
-   * proportions, and the two copies had already drifted apart.
-   */
-  const DOOR_WALL_FRACTION = 0.94;
-  const DOOR_MIN_HEIGHT = 260;
-  const DOOR_VIEWPORT_GUTTER = 24;
-  const DOOR_TOP_GAP = 16;
 
-  type SceneMode = 'entrance' | 'opening' | 'hallway';
   type GestureAxis = 'pending' | 'horizontal' | 'vertical';
 
   const paintings = destinations.map((destination, index) => ({
@@ -46,7 +29,6 @@
     indexLabel: String(index + 1).padStart(2, '0'),
   }));
 
-  /** The renderer takes the widest source; these are all small webp files. */
   const paintingSpecs: PaintingSpec[] = paintings.map((painting) => ({
     id: painting.destination.id,
     label: painting.destination.label,
@@ -65,17 +47,16 @@
   let hallwayCanvas: HTMLCanvasElement;
   let hallwayProbe: HTMLElement;
   let hallwayFrameProbe: HTMLElement;
-  let doorAnchor: HTMLElement;
-  let firstFrameDoor: HTMLElement;
   let floorSeamProbe: HTMLElement;
   let hallway: HallwayScene | null = null;
   let destinationLinks: HTMLAnchorElement[] = [];
   let hoveredPainting = -1;
-  let mode: SceneMode = 'entrance';
+  let sceneReady = false;
   let cameraZ = 0;
   let velocity = 0;
   let driftDirection = 1;
-  let isPaused = false;
+  let motionStarted = false;
+  let isPaused = true;
   let dragging = false;
   let activePointerId: number | null = null;
   let pointerX = 0;
@@ -88,11 +69,6 @@
   let hasInteracted = false;
   let rafId = 0;
   let lastFrame = 0;
-  let openingStarted = 0;
-  let doorOpen = 0;
-  let doorReady = false;
-  let entryDistance = 0;
-  let doorRect = { left: 0, top: 0, width: 0, height: 0 };
   let programmatic = false;
   let programmaticStart = 0;
   let programmaticDelta = 0;
@@ -101,36 +77,22 @@
   let programmaticResolve: (() => void) | null = null;
   let lastRenderedCameraZ = Number.NaN;
   let mounted = false;
+  let released = false;
   let reducedMotion = false;
+  let revealFrame = 0;
 
   function modulo(value: number, period: number) {
     return ((value % period) + period) % period;
   }
 
-  function smoothstep(edge0: number, edge1: number, value: number) {
-    const progress = Math.max(
-      0,
-      Math.min(1, (value - edge0) / (edge1 - edge0)),
-    );
-    return progress * progress * (3 - 2 * progress);
-  }
-
-  function easeOutCubic(progress: number) {
-    return 1 - Math.pow(1 - progress, 3);
-  }
-
-  function easeInOutCubic(progress: number) {
-    return progress < 0.5
-      ? 4 * progress * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-  }
-
-  function clamp01(value: number) {
-    return Math.min(1, Math.max(0, value));
-  }
-
   function markInteracted() {
     hasInteracted = true;
+  }
+
+  function beginUserMotion() {
+    markInteracted();
+    motionStarted = true;
+    if (!reducedMotion) isPaused = false;
   }
 
   function updateDriftDirection(nextVelocity: number) {
@@ -139,80 +101,24 @@
   }
 
   function getDriftVelocity() {
-    if (mode !== 'hallway' || isPaused || reducedMotion) return 0;
+    if (!motionStarted || isPaused || reducedMotion) return 0;
     return driftDirection * IDLE_DRIFT_SPEED;
   }
 
   function renderCamera(force = false) {
     if (!force && cameraZ === lastRenderedCameraZ && !programmatic) return;
-
-    hallway?.setDoor(doorOpen, mode !== 'hallway');
     hallway?.render(cameraZ);
     lastRenderedCameraZ = cameraZ;
   }
 
-  function layoutDoorAnchor() {
-    if (!stage || !doorAnchor || !floorSeamProbe) return;
-
-    const stageRect = stage.getBoundingClientRect();
-    const floorTop = floorSeamProbe.getBoundingClientRect().top - stageRect.top;
-    const headerBottom = Math.max(
-      0,
-      (document.querySelector('.site-header')?.getBoundingClientRect().bottom ??
-        stageRect.top) - stageRect.top,
-    );
-    const wallHeight = Math.max(1, floorTop - headerBottom);
-    const availableWidth = Math.max(1, stageRect.width - DOOR_VIEWPORT_GUTTER);
-    // Preferred size follows the wall; the hard limits only ever shrink it.
-    const preferred = Math.max(
-      DOOR_MIN_HEIGHT,
-      wallHeight * DOOR_WALL_FRACTION,
-    );
-    const height = Math.max(
-      1,
-      Math.min(
-        preferred,
-        wallHeight - DOOR_TOP_GAP,
-        availableWidth / DOOR_ASPECT,
-      ),
-    );
-    const width = height * DOOR_ASPECT;
-
-    doorAnchor.style.width = `${width}px`;
-    doorAnchor.style.height = `${height}px`;
-    doorAnchor.style.top = `${floorTop - height}px`;
-    if (firstFrameDoor) {
-      firstFrameDoor.style.width = `${width}px`;
-      firstFrameDoor.style.height = `${height}px`;
-      firstFrameDoor.style.top = `${floorTop - height}px`;
-    }
-    // Reserve the architectural opening from the first hydrated frame. This
-    // must not wait for the GLB or the baseboard visibly jumps on reload.
-    document.body.style.setProperty(
-      '--home-door-cutout-half',
-      `${width / 2}px`,
-    );
-  }
-
   function refreshRenderState() {
-    layoutDoorAnchor();
     hallway?.resize();
-
-    if (hallway) {
-      entryDistance = hallway.getEntryDistance();
-      // At the entrance the camera stands back from the door by exactly the
-      // distance it will travel, so the corridor lands on its usual origin
-      // the moment we arrive and the paintings keep their spacing.
-      if (mode === 'entrance') cameraZ = -entryDistance;
-    }
-
     lastRenderedCameraZ = Number.NaN;
     renderCamera(true);
-    if (hallway && mode === 'entrance') doorRect = hallway.getDoorRect();
   }
 
   function ensureAnimationLoop() {
-    if (rafId || document.hidden || !active || mode === 'entrance') return;
+    if (rafId || document.hidden || !active || !sceneReady) return;
     lastFrame = performance.now();
     rafId = requestAnimationFrame(animationFrame);
   }
@@ -228,35 +134,13 @@
 
     lastFrame = performance.now();
     refreshRenderState();
-    if (mode !== 'entrance') ensureAnimationLoop();
+    if (Math.abs(velocity) > 0.01 || programmatic) ensureAnimationLoop();
   }
 
   $: (active, syncActiveState());
 
-  function enterHallway() {
-    if (mode !== 'entrance' || !doorReady) return;
-    markInteracted();
-    isPaused = false;
-    driftDirection = 1;
-
-    if (reducedMotion) {
-      mode = 'hallway';
-      cameraZ = 0;
-      velocity = 0;
-      doorOpen = 1;
-      refreshRenderState();
-      return;
-    }
-
-    openingStarted = performance.now();
-    lastFrame = openingStarted;
-    mode = 'opening';
-    velocity = 0;
-    ensureAnimationLoop();
-  }
-
   function toggleMotion() {
-    if (mode !== 'hallway') return;
+    if (!sceneReady) return;
     isPaused = !isPaused;
 
     if (isPaused) {
@@ -265,7 +149,9 @@
       return;
     }
 
-    velocity = driftDirection * IDLE_DRIFT_SPEED;
+    motionStarted = true;
+    markInteracted();
+    velocity = getDriftVelocity();
     ensureAnimationLoop();
   }
 
@@ -278,9 +164,8 @@
   }
 
   function moveBy(amount: number) {
-    if (mode !== 'hallway') return;
+    if (!sceneReady) return;
     cancelCameraAnimation();
-    markInteracted();
     cameraZ += amount;
     ensureAnimationLoop();
   }
@@ -293,7 +178,7 @@
   }
 
   function animateCameraTo(targetZ: number, duration = 560) {
-    if (mode !== 'hallway') return Promise.resolve();
+    if (!sceneReady) return Promise.resolve();
     cancelCameraAnimation();
     programmaticStart = cameraZ;
     programmaticDelta = nearestDelta(targetZ);
@@ -301,6 +186,7 @@
     programmaticDuration = reducedMotion ? 1 : Math.max(1, duration);
     programmatic = true;
     velocity = 0;
+    markInteracted();
     ensureAnimationLoop();
 
     return new Promise<void>((resolve) => {
@@ -309,21 +195,20 @@
   }
 
   function focusDestination(event: FocusEvent, index: number) {
-    if (dragging || mode !== 'entrance') markInteracted();
-    if (dragging || mode !== 'hallway') return;
+    if (dragging) markInteracted();
+    if (dragging || !sceneReady) return;
     if (
       !(event.currentTarget instanceof HTMLElement) ||
       !event.currentTarget.matches(':focus-visible')
     )
       return;
 
-    markInteracted();
     const painting = paintings[index];
     if (painting) void animateCameraTo(painting.z - 400, 640);
   }
 
   function updateHover(event: PointerEvent) {
-    if (!hallway || mode !== 'hallway' || dragging) return;
+    if (!hallway || !sceneReady || dragging) return;
     const next = hallway.pickPainting(event.clientX, event.clientY);
     if (next === hoveredPainting) return;
     hoveredPainting = next;
@@ -332,41 +217,34 @@
   }
 
   function enterDestination(event: PointerEvent) {
-    if (!hallway || mode !== 'hallway') return;
-    if (dragDistance > DRAG_THRESHOLD) return;
-
+    if (!hallway || !sceneReady || dragDistance > DRAG_THRESHOLD) return;
     const index = hallway.pickPainting(event.clientX, event.clientY);
     if (index < 0) return;
 
     markInteracted();
-    // Click the real anchor rather than assigning location: that keeps
-    // Astro's client router, prefetching, and history exactly as they were.
     destinationLinks[index]?.click();
   }
 
   function onWheel(event: WheelEvent) {
-    if (mode !== 'hallway') return;
+    if (!sceneReady) return;
     event.preventDefault();
+    beginUserMotion();
 
     const dominantDelta =
       Math.abs(event.deltaY) >= Math.abs(event.deltaX)
         ? event.deltaY
         : event.deltaX;
-    // Match direct manipulation: scrolling down moves the hallway toward the
-    // viewer, and scrolling up moves into it. Pointer dragging uses the same
-    // signed convention below, so desktop and touch never feel reversed from
-    // one another.
     const normalized = Math.max(-210, Math.min(210, -dominantDelta));
     moveBy(normalized * WHEEL_SCALE);
-    velocity = Math.max(
-      -MAX_MANUAL_SPEED,
-      Math.min(MAX_MANUAL_SPEED, normalized * 9),
-    );
+    velocity = reducedMotion
+      ? 0
+      : Math.max(-MAX_MANUAL_SPEED, Math.min(MAX_MANUAL_SPEED, normalized * 9));
     updateDriftDirection(velocity);
+    if (reducedMotion) renderCamera(true);
   }
 
   function onPointerDown(event: PointerEvent) {
-    if (mode !== 'hallway' || event.button !== 0) return;
+    if (!sceneReady || event.button !== 0) return;
     if (
       event.target instanceof Element &&
       event.target.closest('.wall-corner-control')
@@ -384,8 +262,6 @@
     gestureAxis = 'pending';
     dragDistance = 0;
     velocity = 0;
-    markInteracted();
-    ensureAnimationLoop();
   }
 
   function capturePointer(event: PointerEvent) {
@@ -413,6 +289,8 @@
       if (Math.max(totalX, totalY) < 7) return;
       gestureAxis = totalY >= totalX ? 'vertical' : 'horizontal';
       capturePointer(event);
+      beginUserMotion();
+      ensureAnimationLoop();
     }
 
     event.preventDefault();
@@ -429,12 +307,15 @@
     dragDistance += Math.hypot(deltaX, deltaY);
     cameraZ += worldMovement;
 
-    const sampledVelocity = Math.max(
-      -MAX_MANUAL_SPEED,
-      Math.min(MAX_MANUAL_SPEED, (worldMovement / elapsedMs) * 1000),
-    );
-    velocity = velocity * 0.58 + sampledVelocity * 0.42;
+    const sampledVelocity = reducedMotion
+      ? 0
+      : Math.max(
+          -MAX_MANUAL_SPEED,
+          Math.min(MAX_MANUAL_SPEED, (worldMovement / elapsedMs) * 1000),
+        );
+    velocity = reducedMotion ? 0 : velocity * 0.58 + sampledVelocity * 0.42;
     updateDriftDirection(velocity);
+    if (reducedMotion) renderCamera(true);
   }
 
   function clearPointerDrag(pointerId?: number) {
@@ -453,7 +334,6 @@
     dragging = false;
     activePointerId = null;
     gestureAxis = 'pending';
-
     window.setTimeout(() => {
       dragDistance = 0;
     }, 0);
@@ -483,19 +363,16 @@
 
     lastFrame = performance.now();
     refreshRenderState();
-    if (mode !== 'entrance') ensureAnimationLoop();
+    if (Math.abs(velocity) > 0.01 || programmatic) ensureAnimationLoop();
   }
 
   function restoreHallwayAfterHistoryNavigation() {
     cancelCameraAnimation();
-    dragging = false;
-    activePointerId = null;
-    gestureAxis = 'pending';
-    dragDistance = 0;
+    clearPointerDrag();
     lastFrame = performance.now();
     velocity = getDriftVelocity();
     refreshRenderState();
-    if (mode !== 'entrance') ensureAnimationLoop();
+    if (Math.abs(velocity) > 0.01) ensureAnimationLoop();
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -517,8 +394,9 @@
       key === 'd'
     ) {
       event.preventDefault();
+      beginUserMotion();
       moveBy(event.shiftKey ? 420 : 170);
-      velocity = event.shiftKey ? 720 : 380;
+      velocity = reducedMotion ? 0 : event.shiftKey ? 720 : 380;
       updateDriftDirection(velocity);
     } else if (
       event.key === 'ArrowUp' ||
@@ -527,19 +405,19 @@
       key === 'a'
     ) {
       event.preventDefault();
+      beginUserMotion();
       moveBy(event.shiftKey ? -420 : -170);
-      velocity = event.shiftKey ? -720 : -380;
+      velocity = reducedMotion ? 0 : event.shiftKey ? -720 : -380;
       updateDriftDirection(velocity);
     } else if (event.key === 'Home') {
       event.preventDefault();
-      markInteracted();
       void animateCameraTo(0, 520);
     }
   }
 
   function animationFrame(now: number) {
     rafId = 0;
-    if (!active || mode === 'entrance') return;
+    if (!active || !sceneReady) return;
 
     const elapsedMs = lastFrame
       ? Math.min(50, Math.max(0, now - lastFrame))
@@ -547,25 +425,7 @@
     const dt = elapsedMs / 1000;
     lastFrame = now;
 
-    if (mode === 'opening') {
-      const progress = clamp01((now - openingStarted) / OPENING_DURATION);
-
-      // The leaves finish swinging before the walk-through completes, and
-      // the camera starts moving while they are still opening -- the overlap
-      // is what makes it read as walking in rather than two cutscenes.
-      doorOpen = easeOutCubic(clamp01(progress / SWING_FRACTION));
-      const dolly = easeInOutCubic(
-        clamp01((progress - DOLLY_DELAY) / (1 - DOLLY_DELAY)),
-      );
-      cameraZ = entryDistance * (dolly - 1);
-
-      if (progress >= 1) {
-        mode = 'hallway';
-        cameraZ = 0;
-        doorOpen = 1;
-        velocity = IDLE_DRIFT_SPEED;
-      }
-    } else if (programmatic) {
+    if (programmatic) {
       const progress = Math.min(
         1,
         (now - programmaticStarted) / programmaticDuration,
@@ -592,8 +452,7 @@
     renderCamera();
 
     if (
-      mode === 'hallway' &&
-      (isPaused || reducedMotion) &&
+      (isPaused || reducedMotion || !motionStarted) &&
       !dragging &&
       !programmatic &&
       Math.abs(velocity) < 0.01
@@ -620,9 +479,6 @@
       '(prefers-reduced-motion: reduce)',
     ).matches;
 
-    // Three.js is loaded off the critical path: the entrance renders first and
-    // the corridor attaches a moment later, behind the still-closed door.
-    let released = false;
     void (async () => {
       try {
         const { createHallwayScene } = await import('./hallway-scene');
@@ -632,24 +488,24 @@
           viewport: hallwayViewport,
           probe: hallwayProbe,
           frameProbe: hallwayFrameProbe,
-          doorAnchor,
+          floorSeam: floorSeamProbe,
           paintings: paintingSpecs,
-          onDoorReady: () => {
+          onReady: () => {
             if (released) return;
-            doorReady = true;
-            layoutDoorAnchor();
+            renderCamera(true);
+            cancelAnimationFrame(revealFrame);
+            revealFrame = requestAnimationFrame(() => {
+              if (!released) sceneReady = true;
+            });
           },
-          onReady: () => renderCamera(true),
+          onTextureUpdate: () => renderCamera(true),
         });
         refreshRenderState();
       } catch (error) {
-        // No WebGL: the scene's own background stands in for the corridor and
-        // every painting, link, and control keeps working.
         console.warn('Hallway renderer unavailable', error);
       }
     })();
 
-    // The corridor's palette comes from the theme, so repaint on a mode swap.
     const themeObserver = new MutationObserver(() => {
       hallway?.refreshTheme();
       renderCamera(true);
@@ -657,8 +513,6 @@
     themeObserver.observe(document.documentElement, {
       attributeFilter: ['data-theme'],
     });
-
-    refreshRenderState();
 
     stage.addEventListener('wheel', onWheel, { passive: false });
     stage.addEventListener('pointerdown', onPointerDown);
@@ -674,6 +528,8 @@
 
     return () => {
       mounted = false;
+      released = true;
+      sceneReady = false;
       stage.removeEventListener('wheel', onWheel);
       stage.removeEventListener('pointerdown', onPointerDown);
       stage.removeEventListener('pointermove', onPointerMove);
@@ -689,10 +545,8 @@
         restoreHallwayAfterHistoryNavigation,
       );
       cancelAnimationFrame(rafId);
+      cancelAnimationFrame(revealFrame);
       themeObserver.disconnect();
-      released = true;
-      doorReady = false;
-      document.body.style.removeProperty('--home-door-cutout-half');
       hallway?.dispose();
       hallway = null;
     };
@@ -701,18 +555,13 @@
 
 <section
   bind:this={stage}
-  class:wall-stage--entrance={mode === 'entrance'}
-  class:wall-stage--opening={mode === 'opening'}
-  class:wall-stage--hallway={mode === 'hallway'}
+  class:wall-stage--scene-ready={sceneReady}
   class:wall-stage--dragging={dragging}
   class:wall-stage--interacted={hasInteracted}
-  class:wall-stage--door-ready={doorReady}
   class:wall-stage--inactive={!active}
-  class="wall-stage wall-stage--home wall-room-host"
+  class="wall-stage wall-stage--home wall-stage--hallway wall-room-host"
   aria-hidden={!active ? 'true' : undefined}
-  aria-label={mode === 'entrance'
-    ? 'Entrance to Cyrus Asasi portfolio'
-    : 'Interactive portfolio hallway'}
+  aria-label="Interactive portfolio hallway"
 >
   <h1 class="visually-hidden">Cyrus Asasi</h1>
 
@@ -720,44 +569,8 @@
     <span bind:this={hallwayFrameProbe} class="hallway-metrics__frame"></span>
   </span>
   <span bind:this={floorSeamProbe} class="home-floor-seam-probe"></span>
-  <span bind:this={doorAnchor} class="home-door-anchor"></span>
 
-  <!--
-    Server-rendered first frame. It occupies the exact doorway anchor while
-    Three.js and the GLB initialize, then crossfades away only after the real
-    model is present. This prevents a reload from ever showing a blank wall.
-  -->
-  <div
-    bind:this={firstFrameDoor}
-    class="home-door-first-frame"
-    aria-hidden="true"
-  >
-    <div class="home-door-first-frame__fanlight"></div>
-    <div class="home-door-first-frame__leaves">
-      <span>
-        <i></i><i></i>
-        <svg viewBox="0 0 42 112" aria-hidden="true">
-          <path
-            d="M30 7c8 0 10 10 5 15-4 4-10 1-9-4 3 1 4-1 3-3-2-4-8-1-9 5-2 11 3 18 4 26 4 13 1 29-5 42-5 8-12 11-18 8-5-3-6-10-2-14 3-3 8-2 9 2 1 3-1 6-4 6-2-2-1-5 1-6 5-2 9 4 7 9-4 9-13 13-22 10-12-4-16-15-16-26 0-13 5-24 5-36 0-8-3-16-1-23C17 13 22 7 30 7Z"
-          />
-        </svg>
-      </span>
-      <span>
-        <i></i><i></i>
-        <svg viewBox="0 0 42 112" aria-hidden="true">
-          <path
-            d="M30 7c8 0 10 10 5 15-4 4-10 1-9-4 3 1 4-1 3-3-2-4-8-1-9 5-2 11 3 18 4 26 4 13 1 29-5 42-5 8-12 11-18 8-5-3-6-10-2-14 3-3 8-2 9 2 1 3-1 6-4 6-2-2-1-5 1-6 5-2 9 4 7 9-4 9-13 13-22 10-12-4-16-15-16-26 0-13 5-24 5-36 0-8-3-16-1-23C17 13 22 7 30 7Z"
-          />
-        </svg>
-      </span>
-    </div>
-  </div>
-
-  <div
-    bind:this={hallwayViewport}
-    class="hallway-scene"
-    aria-hidden={mode === 'entrance' ? 'true' : undefined}
-  >
+  <div bind:this={hallwayViewport} class="hallway-scene" aria-hidden="true">
     <canvas bind:this={hallwayCanvas} class="hallway-canvas" aria-hidden="true"
     ></canvas>
 
@@ -779,24 +592,11 @@
     </nav>
   </div>
 
-  {#if mode !== 'hallway'}
-    <button
-      class="home-entrance-hit"
-      type="button"
-      style={`left:${doorRect.left}px;top:${doorRect.top}px;width:${doorRect.width}px;height:${doorRect.height}px;`}
-      aria-label="Open the doors and enter the portfolio hallway"
-      disabled={mode !== 'entrance' || !doorReady}
-      onclick={enterHallway}
-    ></button>
-  {/if}
-
   <p class="wall-navigation-hint" aria-live="polite">
-    {mode === 'entrance'
-      ? 'Click the doors to enter'
-      : 'Scroll or drag to explore · click a painting'}
+    Scroll or drag to explore · click a painting
   </p>
 
-  {#if mode === 'hallway'}
+  {#if sceneReady && !reducedMotion}
     <button
       class="wall-motion-toggle wall-corner-control"
       type="button"

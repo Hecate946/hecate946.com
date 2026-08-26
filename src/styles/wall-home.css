@@ -58,48 +58,18 @@ body.wall-home-page .wall-home-main {
   padding: 0;
 }
 
-/* The baseboard is interrupted by the architectural opening instead of
-   continuing behind a door laid over the wall. The 3D jambs and threshold
-   cover this exact opening and supply its visible end returns. */
-body.wall-home-page .wall-baseboard {
-  -webkit-mask-image: linear-gradient(
-    to right,
-    #000 0
-      calc(
-        50% - var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
-      ),
-    transparent
-      calc(
-        50% - var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
-      )
-      calc(
-        50% + var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
-      ),
-    #000
-      calc(
-        50% + var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
-      )
-      100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    #000 0
-      calc(
-        50% - var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
-      ),
-    transparent
-      calc(
-        50% - var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
-      )
-      calc(
-        50% + var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
-      ),
-    #000
-      calc(
-        50% + var(--home-door-cutout-half, min(22vh, calc((100vw - 24px) / 2)))
-      )
-      100%
-  );
+/*
+ * Home no longer exposes the shared CSS room while Three.js initializes.
+ * Keep the persistent backdrop mounted for instant navigation to About,
+ * Projects, Resumes, and Contact, but reduce its Home presentation to one
+ * plain wall-coloured field: no bricks, baseboard, vignette, or floor.
+ */
+body.wall-home-page .primary-room-backdrop {
+  background: var(--wall-dark, #010101);
+}
+
+body.wall-home-page .primary-room-backdrop > * {
+  visibility: hidden;
 }
 
 .wall-home-main > astro-island {
