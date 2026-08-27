@@ -73,12 +73,6 @@ export const projects = [
       'OpenSCAD',
       'Three.js',
     ],
-    links: [
-      {
-        label: 'View source',
-        href: 'https://github.com/Hecate946/keycad',
-      },
-    ],
   },
   {
     slug: 'portfolio',
