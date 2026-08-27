@@ -72,12 +72,12 @@
 .generated-resume .center {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 0.2rem 0;
   padding-bottom: clamp(1.1rem, 3.5cqw, 1.7rem);
   border: 0;
-  text-align: center;
+  text-align: left;
 }
 
 .generated-resume .center p {
@@ -94,29 +94,24 @@
 }
 
 .generated-resume .center p:nth-child(n + 2) {
+  flex: 0 0 100%;
   color: var(--paper-muted);
   font-size: var(--resume-meta);
   line-height: 1.3;
 }
 
-/* The clarinet resume has only two contact links. Keep them as two explicit
-   lines at every width so the website always sits directly below the email,
-   matching the stacked contact treatment used by the software resume. */
-.generated-resume--clarinet .center p:nth-child(n + 2) {
-  flex: 0 0 100%;
+/* The clarinet export puts both contact links inside one paragraph, while the
+   software export gives each link its own paragraph. Turn that inner span into
+   a column so both resumes use the same left-aligned, stacked treatment. */
+.generated-resume--clarinet .center p:nth-child(2) span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.generated-resume--clarinet .center > p:nth-child(n + 3) a::before {
-  display: none;
-}
-
-.generated-resume .center p:nth-child(2) a + a::before,
+.generated-resume--clarinet .center p:nth-child(2) a + a::before,
 .generated-resume .center > p:nth-child(n + 3) a::before {
-  margin-inline: 0.65em;
-  color: var(--paper-rule);
-  content: '/';
-  pointer-events: none;
-  text-decoration: none;
+  display: none;
 }
 
 /* Section labels use the same restrained all-caps language as the site grids,
