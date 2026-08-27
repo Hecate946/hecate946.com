@@ -29,9 +29,7 @@ export type AboutAssets = {
  * Edit the About-page copy and links here. Animation and layout live in
  * separate files so content changes cannot disturb the scroll behavior.
  */
-export const createAboutSections = (
-  assets: AboutAssets,
-): AboutSection[] => [
+export const createAboutSections = (assets: AboutAssets): AboutSection[] => [
   {
     id: 'about',
     label: 'About',

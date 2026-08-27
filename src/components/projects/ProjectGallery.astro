@@ -28,10 +28,7 @@ const resolveHref = (href: string) =>
             <div class="page-scroll-header__rule" aria-hidden="true"></div>
           </header>
 
-          <div
-            class="project-sheet-scroll"
-            aria-label="Projects table"
-          >
+          <div class="project-sheet-scroll" aria-label="Projects table">
             <div class="project-sheet">
               <table>
                 <colgroup>
@@ -105,4 +102,3 @@ const resolveHref = (href: string) =>
   installProjectRowLinks();
   document.addEventListener('astro:after-swap', installProjectRowLinks);
 </script>
-

@@ -16,7 +16,8 @@
       }
     };
 
-    const resolveTheme = () => readPreference() ?? (darkModeQuery.matches ? 'dark' : 'light');
+    const resolveTheme = () =>
+      readPreference() ?? (darkModeQuery.matches ? 'dark' : 'light');
 
     const applyTheme = (targetDocument = document) => {
       const theme = resolveTheme();
@@ -25,7 +26,9 @@
       root.dataset.themeReady = 'true';
       root.style.colorScheme = theme;
 
-      const themeColor = targetDocument.querySelector('[data-browser-theme-color]');
+      const themeColor = targetDocument.querySelector(
+        '[data-browser-theme-color]',
+      );
       themeColor?.setAttribute('content', browserChromeColor[theme]);
     };
 

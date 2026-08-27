@@ -35,11 +35,7 @@
     label: painting.destination.label,
     side: painting.side,
     z: painting.z,
-    src: withBase(
-      [...painting.destination.painting.sources].sort(
-        (a, b) => b.width - a.width,
-      )[0].src,
-    ),
+    src: withBase(painting.destination.paintingSrc),
   }));
 
   let stage: HTMLElement;

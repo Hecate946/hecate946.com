@@ -25,7 +25,8 @@ const homeUrl = withBase('/');
       <WallBackdrop showBaseboard={false} />
     </div>
 
-    <main id="pdf-document" class="pdf-viewer-document" aria-label="PDF viewer"></main>
+    <main id="pdf-document" class="pdf-viewer-document" aria-label="PDF viewer">
+    </main>
 
     <div class="pdf-viewer-controls" aria-label="Document controls">
       <button
@@ -82,7 +83,9 @@ const homeUrl = withBase('/');
       if (!pdfSource || !documentHost || !downloadLink) {
         window.location.replace(homeUrl);
       } else {
-        const fileName = decodeURIComponent(pdfSource.pathname.split('/').pop() || 'document.pdf');
+        const fileName = decodeURIComponent(
+          pdfSource.pathname.split('/').pop() || 'document.pdf',
+        );
         downloadLink.href = pdfSource.href;
         downloadLink.download = fileName;
       }
@@ -91,8 +94,11 @@ const homeUrl = withBase('/');
         let sameSiteReferrer = null;
 
         try {
-          const referrer = document.referrer ? new URL(document.referrer) : null;
-          if (referrer?.origin === window.location.origin) sameSiteReferrer = referrer;
+          const referrer = document.referrer
+            ? new URL(document.referrer)
+            : null;
+          if (referrer?.origin === window.location.origin)
+            sameSiteReferrer = referrer;
         } catch {
           sameSiteReferrer = null;
         }
@@ -131,13 +137,23 @@ const homeUrl = withBase('/');
           const pagePadding = 16;
           const desktop = window.innerWidth > 640;
           const availableWidth = desktop
-            ? Math.min(window.innerWidth * 0.82, window.innerWidth - pagePadding * 2)
+            ? Math.min(
+                window.innerWidth * 0.82,
+                window.innerWidth - pagePadding * 2,
+              )
             : window.innerWidth - pagePadding;
-          const availableHeight = Math.max(1, window.innerHeight - pagePadding * 2);
+          const availableHeight = Math.max(
+            1,
+            window.innerHeight - pagePadding * 2,
+          );
 
           const fragment = document.createDocumentFragment();
 
-          for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          for (
+            let pageNumber = 1;
+            pageNumber <= pdf.numPages;
+            pageNumber += 1
+          ) {
             const page = await pdf.getPage(pageNumber);
             const naturalViewport = page.getViewport({ scale: 1 });
             const cssScale = Math.min(
@@ -145,12 +161,17 @@ const homeUrl = withBase('/');
               availableHeight / naturalViewport.height,
             );
             const cssViewport = page.getViewport({ scale: cssScale });
-            const renderViewport = page.getViewport({ scale: cssScale * pixelRatio });
+            const renderViewport = page.getViewport({
+              scale: cssScale * pixelRatio,
+            });
 
             const canvas = document.createElement('canvas');
             canvas.className = 'pdf-viewer-page-canvas';
             canvas.dataset.page = String(pageNumber);
-            canvas.setAttribute('aria-label', `Page ${pageNumber} of ${pdf.numPages}`);
+            canvas.setAttribute(
+              'aria-label',
+              `Page ${pageNumber} of ${pdf.numPages}`,
+            );
             canvas.width = Math.max(1, Math.floor(renderViewport.width));
             canvas.height = Math.max(1, Math.floor(renderViewport.height));
             canvas.style.width = `${Math.floor(cssViewport.width)}px`;

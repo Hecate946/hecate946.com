@@ -13,6 +13,8 @@ interface Props {
   socialImageHeight?: number;
   canonicalURL?: URL;
   noindex?: boolean;
+  mainEntityId?: string;
+  breadcrumbId?: string;
   structuredData?: Record<string, unknown> | readonly Record<string, unknown>[];
 }
 
@@ -27,6 +29,8 @@ const {
   socialImageHeight,
   canonicalURL = new URL(Astro.url.pathname, Astro.site),
   noindex = false,
+  mainEntityId,
+  breadcrumbId,
   structuredData: additionalStructuredData,
 } = Astro.props;
 
@@ -71,6 +75,8 @@ const socialImageUrl = new URL(resolvedImagePath, Astro.site).toString();
 const personId = `${siteUrl}#person`;
 const websiteId = `${siteUrl}#website`;
 const webPageId = `${canonicalHref}#webpage`;
+const primaryImageId = `${canonicalHref}#primaryimage`;
+const profilePageId = `${new URL('/about/', Astro.site).toString()}#webpage`;
 const portraitUrl = new URL(
   withBase('/images/about/cyrus-portrait-480.webp'),
   Astro.site,
@@ -86,6 +92,7 @@ const pageType = isAboutPage
 
 const structuredImage = {
   '@type': 'ImageObject',
+  '@id': primaryImageId,
   url: socialImageUrl,
   contentUrl: socialImageUrl,
   caption: resolvedImageAlt,
@@ -99,7 +106,9 @@ const personStructuredData = {
   name: siteConfig.name,
   url: siteUrl,
   image: portraitUrl,
+  email: `mailto:${siteConfig.email}`,
   jobTitle: 'Software Engineer and Classical Musician',
+  mainEntityOfPage: { '@id': profilePageId },
   sameAs: [siteConfig.social.github, siteConfig.social.linkedin],
 };
 
@@ -112,8 +121,11 @@ const pageStructuredData = {
   inLanguage: siteConfig.locale,
   isPartOf: { '@id': websiteId },
   author: { '@id': personId },
-  primaryImageOfPage: structuredImage,
-  ...(isAboutPage ? { mainEntity: { '@id': personId } } : {}),
+  primaryImageOfPage: { '@id': primaryImageId },
+  ...(mainEntityId || isAboutPage
+    ? { mainEntity: { '@id': mainEntityId ?? personId } }
+    : {}),
+  ...(breadcrumbId ? { breadcrumb: { '@id': breadcrumbId } } : {}),
 };
 
 const additionalGraph = additionalStructuredData
@@ -135,7 +147,9 @@ const structuredData = {
       description: siteConfig.description,
       inLanguage: siteConfig.locale,
       creator: { '@id': personId },
+      publisher: { '@id': personId },
     },
+    structuredImage,
     pageStructuredData,
     ...additionalGraph,
   ],
@@ -228,4 +242,12 @@ const structuredDataJson = JSON.stringify(structuredData).replace(
 <meta name="twitter:image" content={socialImageUrl} />
 <meta name="twitter:image:alt" content={resolvedImageAlt} />
 
-<script is:inline type="application/ld+json" set:html={structuredDataJson} />
+{
+  !noindex && (
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={structuredDataJson}
+    />
+  )
+}

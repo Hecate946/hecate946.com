@@ -198,11 +198,7 @@ body.project-detail-page {
    and use a restrained chalk wash as the selection background instead. */
 .project-chalkboard__copy::selection,
 .project-chalkboard__copy *::selection {
-  background: color-mix(
-    in srgb,
-    var(--project-board-chalk) 24%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--project-board-chalk) 24%, transparent);
   color: var(--project-board-chalk);
   text-shadow: none;
 }

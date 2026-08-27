@@ -19,28 +19,13 @@ const ROOT_FILES = [
   'tsconfig.json',
 ];
 
-const SOURCE_DIRECTORIES = [
-  '.github',
-  'public',
-  'scripts',
-  'src',
-];
+const SOURCE_DIRECTORIES = ['.github', 'public', 'scripts', 'src'];
 
-const EXCLUDED_BASENAMES = new Set([
-  '.DS_Store',
-  'Thumbs.db',
-]);
+const EXCLUDED_BASENAMES = new Set(['.DS_Store', 'Thumbs.db']);
 
-const EXCLUDED_RELATIVE_PATHS = new Set([
-  'public/generated/code-stats.json',
-]);
+const EXCLUDED_RELATIVE_PATHS = new Set(['public/generated/code-stats.json']);
 
-const EXCLUDED_SUFFIXES = [
-  '.log',
-  '.pyc',
-  '.pyo',
-  '~',
-];
+const EXCLUDED_SUFFIXES = ['.log', '.pyc', '.pyo', '~'];
 
 function normalize(relativePath) {
   return relativePath.split(path.sep).join('/');
@@ -52,7 +37,8 @@ function shouldInclude(relativePath) {
 
   if (EXCLUDED_BASENAMES.has(baseName)) return false;
   if (EXCLUDED_RELATIVE_PATHS.has(normalized)) return false;
-  if (EXCLUDED_SUFFIXES.some((suffix) => baseName.endsWith(suffix))) return false;
+  if (EXCLUDED_SUFFIXES.some((suffix) => baseName.endsWith(suffix)))
+    return false;
   if (/^hecate946-source.*\.zip$/i.test(baseName)) return false;
   return true;
 }
@@ -74,7 +60,7 @@ async function collectFiles(relativeDirectory) {
     if (!shouldInclude(relativePath)) continue;
 
     if (entry.isDirectory()) {
-      files.push(...await collectFiles(relativePath));
+      files.push(...(await collectFiles(relativePath)));
     } else if (entry.isFile()) {
       files.push(normalize(relativePath));
     }
@@ -96,7 +82,11 @@ async function runZip(outputPath, files) {
 
     child.once('error', (error) => {
       if (error?.code === 'ENOENT') {
-        reject(new Error('The `zip` command is not installed. Install it, then run `npm run site:zip` again.'));
+        reject(
+          new Error(
+            'The `zip` command is not installed. Install it, then run `npm run site:zip` again.',
+          ),
+        );
       } else {
         reject(error);
       }
@@ -115,14 +105,15 @@ const files = [];
 for (const rootFile of ROOT_FILES) {
   const absolute = path.join(projectRoot, rootFile);
   try {
-    if ((await stat(absolute)).isFile() && shouldInclude(rootFile)) files.push(rootFile);
+    if ((await stat(absolute)).isFile() && shouldInclude(rootFile))
+      files.push(rootFile);
   } catch (error) {
     if (error?.code !== 'ENOENT') throw error;
   }
 }
 
 for (const directory of SOURCE_DIRECTORIES) {
-  files.push(...await collectFiles(directory));
+  files.push(...(await collectFiles(directory)));
 }
 
 files.sort((a, b) => a.localeCompare(b));
@@ -137,5 +128,9 @@ const archiveSize = (await stat(outputPath)).size;
 const megabytes = (archiveSize / (1024 * 1024)).toFixed(2);
 
 console.log(`Created ${outputName}`);
-console.log(`Included ${files.length} source/config/public files (${megabytes} MB).`);
-console.log('Excluded dependencies, build output, caches, secrets, generated code stats, and previous source ZIPs.');
+console.log(
+  `Included ${files.length} source/config/public files (${megabytes} MB).`,
+);
+console.log(
+  'Excluded dependencies, build output, caches, secrets, generated code stats, and previous source ZIPs.',
+);

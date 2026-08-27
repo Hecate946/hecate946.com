@@ -31,7 +31,8 @@ const interests = sections.slice(1);
       <div
         class="page-scroll-paper__roll page-scroll-paper__roll--top about-scroll-paper__roll about-scroll-paper__roll--top"
         aria-hidden="true"
-      ></div>
+      >
+      </div>
 
       <div class="page-scroll-paper__sheet about-scroll-paper__sheet">
         <div
@@ -43,7 +44,8 @@ const interests = sections.slice(1);
             <div
               class="page-scroll-header__rule about-scroll-header__rule"
               aria-hidden="true"
-            ></div>
+            >
+            </div>
           </header>
 
           {
@@ -59,10 +61,10 @@ const interests = sections.slice(1);
                       height="480"
                       decoding="async"
                     />
-                    <span class="about-scroll-portrait-shade"></span>
-                    <span class="about-scroll-portrait-reflection"></span>
+                    <span class="about-scroll-portrait-shade" />
+                    <span class="about-scroll-portrait-reflection" />
                   </span>
-                  <span class="about-scroll-portrait-sill"></span>
+                  <span class="about-scroll-portrait-sill" />
                 </span>
                 <span class="visually-hidden">{intro.portrait.alt}</span>
               </figure>
@@ -74,9 +76,7 @@ const interests = sections.slice(1);
               <div class="about-scroll-intro">
                 {intro.paragraphs.map((paragraph, index) => (
                   <p
-                    class={
-                      index === 0 ? 'about-scroll-intro__lead' : undefined
-                    }
+                    class={index === 0 ? 'about-scroll-intro__lead' : undefined}
                   >
                     {paragraph}
                   </p>
@@ -104,7 +104,7 @@ const interests = sections.slice(1);
                       aria-hidden="true"
                       focusable="false"
                     >
-                      <path d="m8 4 8 8-8 8"></path>
+                      <path d="m8 4 8 8-8 8" />
                     </svg>
                   </button>
 
@@ -142,9 +142,9 @@ const interests = sections.slice(1);
                                   focusable="false"
                                 >
                                   {link.external ? (
-                                    <path d="M4 12 12 4M6.25 4H12v5.75"></path>
+                                    <path d="M4 12 12 4M6.25 4H12v5.75" />
                                   ) : (
-                                    <path d="M2.5 8h10.5M9 4l4 4-4 4"></path>
+                                    <path d="M2.5 8h10.5M9 4l4 4-4 4" />
                                   )}
                                 </svg>
                               </a>
@@ -164,7 +164,8 @@ const interests = sections.slice(1);
       <div
         class="page-scroll-paper__roll page-scroll-paper__roll--bottom about-scroll-paper__roll about-scroll-paper__roll--bottom"
         aria-hidden="true"
-      ></div>
+      >
+      </div>
     </article>
   </div>
 </div>

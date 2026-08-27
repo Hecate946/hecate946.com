@@ -1,21 +1,9 @@
-export interface WallPaintingSource {
-  src: string;
-  width: number;
-}
-
-export interface WallPainting {
-  src: string;
-  width: number;
-  height: number;
-  sources: readonly WallPaintingSource[];
-}
-
 export interface WallDestination {
   id: string;
   label: string;
   href: string;
   x: number;
-  painting: WallPainting;
+  paintingSrc: string;
 }
 
 type WallDestinationDefinition = Omit<WallDestination, 'x'>;
@@ -34,57 +22,25 @@ const destinationDefinitions = [
     id: 'about',
     label: 'About',
     href: '/about/',
-    painting: {
-      src: '/paintings/the-stare.webp',
-      width: 886,
-      height: 1080,
-      sources: [
-        { src: '/paintings/the-stare-480.webp', width: 480 },
-        { src: '/paintings/the-stare.webp', width: 886 },
-      ],
-    },
+    paintingSrc: '/paintings/the-stare.webp',
   },
   {
     id: 'projects',
     label: 'Projects',
     href: '/projects/',
-    painting: {
-      src: '/paintings/pastry-chef.webp',
-      width: 540,
-      height: 600,
-      sources: [
-        { src: '/paintings/pastry-chef-480.webp', width: 480 },
-        { src: '/paintings/pastry-chef.webp', width: 540 },
-      ],
-    },
+    paintingSrc: '/paintings/pastry-chef.webp',
   },
   {
     id: 'resume',
     label: 'Resumes',
     href: '/resumes/',
-    painting: {
-      src: '/paintings/resume-portrait-480.webp',
-      width: 480,
-      height: 602,
-      sources: [
-        { src: '/paintings/resume-portrait-480.webp', width: 480 },
-        { src: '/paintings/resume-portrait-720.webp', width: 720 },
-      ],
-    },
+    paintingSrc: '/paintings/resume-portrait-720.webp',
   },
   {
     id: 'contact',
     label: 'Contact',
     href: '/contact/',
-    painting: {
-      src: '/paintings/madame-le-peletier.webp',
-      width: 564,
-      height: 694,
-      sources: [
-        { src: '/paintings/madame-le-peletier-480.webp', width: 480 },
-        { src: '/paintings/madame-le-peletier.webp', width: 564 },
-      ],
-    },
+    paintingSrc: '/paintings/madame-le-peletier.webp',
   },
 ] satisfies readonly WallDestinationDefinition[];
 

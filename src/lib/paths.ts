@@ -15,4 +15,3 @@ export function pdfViewerHref(pdfPath: string) {
   const source = pdfPath.startsWith('/') ? withBase(pdfPath) : pdfPath;
   return `${withBase('/pdf/')}?src=${encodeURIComponent(source)}`;
 }
-

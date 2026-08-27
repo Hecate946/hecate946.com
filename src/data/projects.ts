@@ -17,7 +17,6 @@ export interface Project {
   description: string;
   period: string;
   category: string;
-  imageAlt: string;
   technologies: readonly string[];
   links?: readonly ProjectLink[];
 }
@@ -38,8 +37,6 @@ export const projects = [
       'A large Discord platform combining moderation, activity tracking, server analytics, logging, utilities, and music playback across hundreds of commands.',
     period: '2019–2021',
     category: 'Community platform',
-    imageAlt:
-      'Pastel pencil artwork showing a Discord logo, line graph, bar chart, and pie chart for Neutra.',
     technologies: ['Python', 'PostgreSQL', 'FFmpeg', 'Git'],
     links: [
       {
@@ -57,20 +54,17 @@ export const projects = [
       'A multi-user scheduling system that reverse engineered authenticated UCLA Recreation workflows and reliably booked tennis and pickleball courts when inventory opened.',
     period: '2025–Present',
     category: 'Automation system',
-    imageAlt:
-      'Pastel pencil artwork showing reverse-engineered code, a reservation countdown, and a pickleball court at sunset.',
     technologies: ['Python', 'Playwright', 'HTTP', 'systemd', 'Vultr'],
   },
   {
     slug: 'keycad',
     title: 'KeyCAD',
-    tagline: 'A modular computer-vision-to-CAD prototype for turning image contours into parametric geometry.',
+    tagline:
+      'A modular computer-vision-to-CAD prototype for turning image contours into parametric geometry.',
     description:
       'A modular prototype that extracts a foreground contour from an image, converts it to normalized geometry, and generates a deliberately non-lock-compatible OpenSCAD demonstration model with a Three.js preview.',
     period: '2022–2023; 2026',
     category: 'Computer vision and CAD',
-    imageAlt:
-      'Impressionist painting of a seated child in a coral-red smock, used as the KeyCAD project image.',
     technologies: [
       'Next.js',
       'TypeScript',
@@ -95,16 +89,7 @@ export const projects = [
       'A statically generated Astro and Svelte portfolio built as one continuous room, combining custom CSS environments with a Three.js/WebGL hallway, persistent audio and theme state, and responsive page-specific interfaces.',
     period: '2026–Present',
     category: 'Interactive web experience',
-    imageAlt:
-      'Portrait of a woman dressed in black beneath a broad black hat, set against an olive-green background, used as the Hecate946.com project image.',
-    technologies: [
-      'Astro',
-      'Svelte',
-      'TypeScript',
-      'Three.js',
-      'WebGL',
-      'CSS',
-    ],
+    technologies: ['Astro', 'Svelte', 'TypeScript', 'Three.js', 'WebGL', 'CSS'],
     links: [
       {
         label: 'Visit site',
@@ -125,7 +110,6 @@ export const projects = [
       'A minimal three-state habit grid with anonymous boards, quick thoughts, recovery tools, archiving, and cross-device synchronization.',
     period: '2026–Present',
     category: 'Habit tracking application',
-    imageAlt: 'The minimal three-state habit grid used by 3tap.',
     technologies: ['SvelteKit', 'TypeScript', 'Supabase', 'Cloudflare Workers'],
     links: [
       {
@@ -147,7 +131,6 @@ export const projects = [
       'An asynchronous Spotify statistics site with OAuth, top and recent listening views, liked music, profiles, genres, decades, and other personal listening breakdowns.',
     period: '2022',
     category: 'Music analytics application',
-    imageAlt: 'The Sketyl Spotify analytics interface.',
     technologies: ['Python', 'Quart', 'PostgreSQL', 'Spotify API', 'Jinja'],
     links: [
       {
@@ -165,7 +148,6 @@ export const projects = [
       'A from-scratch C web server that accepts socket connections, handles simple GET requests, serves static and binary files with MIME-aware HTTP responses, and caches recently requested content in memory.',
     period: '2023',
     category: 'Systems and networking',
-    imageAlt: 'Source code from the C web server project.',
     technologies: ['C', 'POSIX sockets', 'HTTP', 'HTML/CSS'],
     links: [
       {

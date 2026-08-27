@@ -1,5 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const personId = `${new URL('/', Astro.site).href}#person`;
 ---
 
 <BaseLayout
@@ -11,6 +13,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
   socialImageAlt="Cyrus Asasi portfolio wall with four framed destinations and a checkerboard floor"
   socialImageWidth={400}
   socialImageHeight={400}
+  mainEntityId={personId}
   mainClass="wall-home-main"
   bodyClass="wall-home-page"
 />

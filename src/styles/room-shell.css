@@ -6,9 +6,12 @@
   --baseboard-extra-height: 0.7rem;
   --floor-top-offset: 0rem;
   --baseboard-top: calc(
-    100% - var(--floor-height) + var(--floor-top-offset) - var(--baseboard-top-overlap)
+    100% - var(--floor-height) + var(--floor-top-offset) -
+      var(--baseboard-top-overlap)
   );
-  --baseboard-box-height: calc(var(--baseboard-height) + var(--baseboard-extra-height));
+  --baseboard-box-height: calc(
+    var(--baseboard-height) + var(--baseboard-extra-height)
+  );
   --floor-seam-top: calc(var(--baseboard-top) + var(--baseboard-box-height));
 
   position: relative;
