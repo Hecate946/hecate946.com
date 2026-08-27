@@ -1,8 +1,1 @@
-TODO:
-
-- update room lighting (for all colors)
-- fix embedded house images
-- museum? 
-- add objects??
-
-LAST PUSH WITH BAKED WEBP
+hi, this is my personal website. thanks for checking this stuff out :)
