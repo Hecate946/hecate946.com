@@ -24,7 +24,7 @@
     "@astrojs/check": "^0.9.9",
     "@types/three": "^0.185.4",
     "prettier": "^3.9.6",
-    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-astro": "^1.0.1",
     "prettier-plugin-svelte": "^4.1.1",
     "typescript": "^6.0.3"
   }
